@@ -1,0 +1,106 @@
+.my-decks-page {
+  padding: 1rem;
+  padding-bottom: 2rem;
+}
+
+.my-decks-page__top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.my-decks-page__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.my-decks-page__title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.my-decks-page__create {
+  margin-bottom: 1rem;
+}
+
+.my-decks-page__paywall {
+  padding: 1.5rem;
+}
+
+.my-decks-page__paywall-text {
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+
+.my-decks-page__paywall-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.my-decks-page__paywall-muted {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.my-decks-page__empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+.my-decks-page__empty-text {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.my-decks-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.my-decks-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.my-decks-item__link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.my-decks-item__title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.my-decks-item__count {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  background: var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.my-decks-item__edit {
+  flex-shrink: 0;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}

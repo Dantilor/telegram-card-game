@@ -1,0 +1,188 @@
+/* Default: neon-dark */
+:root,
+[data-theme="neon-dark"] {
+  --bg0: #070814;
+  --bg1: #120B2E;
+  --panel: rgba(255, 255, 255, 0.06);
+  --text: #F5F3FF;
+  --muted: rgba(245, 243, 255, 0.7);
+  --neonPink: #FF3CAC;
+  --neonCyan: #2BD2FF;
+  --neonPurple: #8A2BE2;
+  --primary: #FF3CAC;
+  --primary2: #8A2BE2;
+  --secondary: #2BD2FF;
+  --btn: #1a1a2e;
+  --btnText: #F5F3FF;
+  --danger: #FF4D4D;
+  --border: rgba(255, 255, 255, 0.12);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glowPink: rgba(255, 60, 172, 0.4);
+  --glowCyan: rgba(43, 210, 255, 0.35);
+  --glowPurple: rgba(138, 43, 226, 0.35);
+  --blob1: rgba(255, 200, 230, 0.2);
+  --blob2: rgba(200, 230, 255, 0.22);
+  --blob3: rgba(220, 200, 255, 0.18);
+}
+
+/* neon-light — почти дневная, светлый лавандово-голубой */
+[data-theme="neon-light"] {
+  --bg0: #e8e6f5;
+  --bg1: #d4d0ed;
+  --panel: rgba(255, 255, 255, 0.7);
+  --text: #1A102A;
+  --muted: rgba(26, 16, 42, 0.72);
+  --neonPink: #a855f7;
+  --neonCyan: #06b6d4;
+  --neonPurple: #7c3aed;
+  --primary: #a855f7;
+  --primary2: #7c3aed;
+  --secondary: #06b6d4;
+  --btn: #7c3aed;
+  --btnText: #fff;
+  --danger: #dc2626;
+  --border: rgba(26, 16, 42, 0.12);
+  --shadow: 0 4px 24px rgba(26, 16, 42, 0.08);
+  --glowPink: rgba(168, 85, 247, 0.2);
+  --glowCyan: rgba(6, 182, 212, 0.18);
+  --glowPurple: rgba(124, 58, 237, 0.2);
+  --blob1: rgba(168, 85, 247, 0.06);
+  --blob2: rgba(6, 182, 212, 0.06);
+  --blob3: rgba(124, 58, 237, 0.05);
+}
+
+/* portal — зелёно-циановые градиенты */
+[data-theme="portal"] {
+  --bg0: #061410;
+  --bg1: #0a1f1a;
+  --panel: rgba(255, 255, 255, 0.05);
+  --text: #e0fff4;
+  --muted: rgba(224, 255, 244, 0.72);
+  --neonPink: #00e5b0;
+  --neonCyan: #00ffcc;
+  --neonPurple: #00c9a0;
+  --primary: #00ffcc;
+  --primary2: #00c9a0;
+  --secondary: #00e5b0;
+  --btn: #0d261e;
+  --btnText: #061410;
+  --danger: #ff6b6b;
+  --border: rgba(0, 255, 204, 0.15);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --glowPink: rgba(0, 229, 176, 0.35);
+  --glowCyan: rgba(0, 255, 204, 0.4);
+  --glowPurple: rgba(0, 201, 160, 0.3);
+  --blob1: rgba(0, 255, 200, 0.12);
+  --blob2: rgba(0, 230, 180, 0.15);
+  --blob3: rgba(100, 255, 220, 0.1);
+}
+
+/* soft-light (premium) — мягкий светлый */
+[data-theme="soft-light"] {
+  --bg0: #f5f3ff;
+  --bg1: #ede9fe;
+  --panel: rgba(255, 255, 255, 0.85);
+  --text: #1e1b4b;
+  --muted: rgba(30, 27, 75, 0.7);
+  --neonPink: #c084fc;
+  --neonCyan: #22d3ee;
+  --neonPurple: #a78bfa;
+  --primary: #a78bfa;
+  --primary2: #7c3aed;
+  --secondary: #22d3ee;
+  --btn: #7c3aed;
+  --btnText: #fff;
+  --danger: #e11d48;
+  --border: rgba(30, 27, 75, 0.1);
+  --shadow: 0 4px 20px rgba(124, 58, 237, 0.12);
+  --glowPink: rgba(167, 139, 250, 0.25);
+  --glowCyan: rgba(34, 211, 238, 0.2);
+  --glowPurple: rgba(124, 58, 237, 0.2);
+  --blob1: rgba(167, 139, 250, 0.08);
+  --blob2: rgba(34, 211, 238, 0.08);
+  --blob3: rgba(124, 58, 237, 0.06);
+}
+
+/* sunset (premium) — тёплый закат */
+[data-theme="sunset"] {
+  --bg0: #1c1917;
+  --bg1: #292524;
+  --panel: rgba(255, 255, 255, 0.06);
+  --text: #fef3c7;
+  --muted: rgba(254, 243, 199, 0.72);
+  --neonPink: #fb923c;
+  --neonCyan: #fbbf24;
+  --neonPurple: #f97316;
+  --primary: #fb923c;
+  --primary2: #ea580c;
+  --secondary: #fbbf24;
+  --btn: #ea580c;
+  --btnText: #1c1917;
+  --danger: #f87171;
+  --border: rgba(251, 191, 36, 0.2);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glowPink: rgba(251, 146, 60, 0.35);
+  --glowCyan: rgba(251, 191, 36, 0.35);
+  --glowPurple: rgba(249, 115, 22, 0.35);
+  --blob1: rgba(251, 146, 60, 0.15);
+  --blob2: rgba(251, 191, 36, 0.12);
+  --blob3: rgba(249, 115, 22, 0.1);
+}
+
+/* minimal-calm (premium) — минималистичный спокойный */
+[data-theme="minimal-calm"] {
+  --bg0: #0f172a;
+  --bg1: #1e293b;
+  --panel: rgba(255, 255, 255, 0.05);
+  --text: #e2e8f0;
+  --muted: rgba(226, 232, 240, 0.7);
+  --neonPink: #94a3b8;
+  --neonCyan: #38bdf8;
+  --neonPurple: #818cf8;
+  --primary: #38bdf8;
+  --primary2: #818cf8;
+  --secondary: #94a3b8;
+  --btn: #334155;
+  --btnText: #e2e8f0;
+  --danger: #f87171;
+  --border: rgba(148, 163, 184, 0.2);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glowPink: rgba(56, 189, 248, 0.2);
+  --glowCyan: rgba(56, 189, 248, 0.3);
+  --glowPurple: rgba(129, 140, 248, 0.25);
+  --blob1: rgba(56, 189, 248, 0.08);
+  --blob2: rgba(129, 140, 248, 0.08);
+  --blob3: rgba(148, 163, 184, 0.06);
+}
+
+/* Gradient background + glow blobs (uses theme variables) + slow move */
+.app {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg0);
+  background-image:
+    linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 50%, var(--bg0) 100%),
+    radial-gradient(ellipse 70% 45% at 15% 15%, var(--blob1) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 75%, var(--blob2) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, var(--blob3) 0%, transparent 45%);
+  background-size: 100% 100%, 120% 120%, 110% 110%, 100% 100%;
+  background-position: 0 0, 0% 0%, 100% 100%, 50% 50%;
+  background-repeat: no-repeat;
+  animation: theme-bg-move 20s ease-in-out infinite;
+}
+
+@keyframes theme-bg-move {
+  0%, 100% { background-position: 0 0, 0% 0%, 100% 100%, 50% 50%; }
+  50% { background-position: 0 0, 10% 5%, 90% 95%, 55% 45%; }
+}
+
+/* Optional soft grain */
+.app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}

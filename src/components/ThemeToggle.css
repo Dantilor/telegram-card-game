@@ -1,0 +1,57 @@
+.theme-toggle-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.theme-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.theme-toggle__paywall {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.theme-toggle__paywall a {
+  color: var(--neonCyan);
+  text-decoration: none;
+}
+
+.theme-toggle__btn {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-toggle__btn:hover {
+  color: var(--text);
+}
+
+.theme-toggle__btn--active {
+  color: var(--btnText);
+  background: linear-gradient(135deg, var(--neonPink) 0%, var(--neonPurple) 100%);
+  box-shadow: 0 0 12px var(--glowPink);
+}
+
+[data-theme="portal"] .theme-toggle__btn--active {
+  background: linear-gradient(135deg, var(--neonCyan) 0%, var(--neonPurple) 100%);
+  color: var(--btnText);
+  box-shadow: 0 0 12px var(--glowCyan);
+}

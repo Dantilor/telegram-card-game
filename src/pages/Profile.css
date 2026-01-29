@@ -1,0 +1,128 @@
+.profile-page {
+  padding: 1rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.profile-page__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-page__back {
+  flex-shrink: 0;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.profile-page__title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 0 20px var(--glowCyan);
+}
+
+[data-theme="neon-light"] .profile-page__title {
+  text-shadow: none;
+}
+
+.profile-card {
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+  border-radius: 14px;
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.25s ease, border-color 0.2s ease;
+}
+
+.profile-card:hover {
+  box-shadow: var(--shadow), 0 0 24px var(--glowCyan);
+  border-color: rgba(43, 210, 255, 0.2);
+}
+
+.profile-card__heading {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.profile-card__user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-card__photo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+
+.profile-card__user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-card__name {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.profile-card__username {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.profile-card__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.profile-card__row {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.profile-card__label {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.profile-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.profile-card__btn {
+  width: 100%;
+}
+
+/* Danger only for destructive reset — not aggressive */
+.profile-card__actions .btn--danger {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 77, 77, 0.3);
+}
+
+.profile-card__actions .btn--danger:hover:not(:disabled) {
+  box-shadow: 0 0 18px rgba(255, 77, 77, 0.4);
+}

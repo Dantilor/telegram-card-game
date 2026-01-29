@@ -1,0 +1,31 @@
+.micro-confetti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.micro-confetti__particle {
+  position: absolute;
+  top: -8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: confetti-fall forwards ease-out;
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(120px) translateX(var(--confetti-dx, 0)) rotate(360deg);
+  }
+}

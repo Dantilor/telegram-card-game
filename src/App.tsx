@@ -10,9 +10,15 @@ import Play from './pages/Play'
 import Profile from './pages/Profile'
 import './App.css'
 
-function App() {
-  console.log('[APP RENDER]', { location: window.location.href })
+function isDebug(): boolean {
+  if (typeof window === 'undefined') return false
+  const search =
+    window.location.search ||
+    (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '')
+  return new URLSearchParams(search).get('debug') === '1'
+}
 
+function App() {
   useSyncPremium()
   useEffect(() => {
     try {
@@ -22,14 +28,31 @@ function App() {
     }
   }, [])
 
+  const debug = isDebug()
+  const tg = typeof window !== 'undefined' ? (window as any).Telegram : null
+
   return (
-    <div style={{ padding: 16, color: 'white' }}>
-      <h1>APP FORCE RENDER</h1>
-      <pre>{JSON.stringify({
-        hasTelegram: !!(window as any).Telegram,
-        initData: (window as any).Telegram?.WebApp?.initDataUnsafe,
-        hash: window.location.hash,
-      }, null, 2)}</pre>
+    <div className="app">
+      {debug && (
+        <div style={{ padding: 16, color: 'white', background: '#1a1a1a', fontSize: 12 }}>
+          <h2>APP DEBUG</h2>
+          <pre>{JSON.stringify({
+            hasTelegram: !!tg,
+            initDataPresent: !!tg?.WebApp?.initDataUnsafe,
+            hash: window.location.hash,
+            href: window.location.href,
+          }, null, 2)}</pre>
+        </div>
+      )}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/decks" element={<Decks />} />
+        <Route path="/decks/custom" element={<MyDecks />} />
+        <Route path="/decks/custom/new" element={<CustomDeckEditor />} />
+        <Route path="/decks/custom/:id/edit" element={<CustomDeckEditor />} />
+        <Route path="/play/:deckId" element={<Play />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
     </div>
   )
 }

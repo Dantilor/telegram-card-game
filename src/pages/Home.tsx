@@ -1,8 +1,11 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import './Home.css'
+
+const PREFETCH_KEY = 'PREFETCHED_PLAY'
 
 const COMING_SOON = [
   { id: 'quiz', title: 'Викторины', label: 'в разработке' },
@@ -11,6 +14,22 @@ const COMING_SOON = [
 ]
 
 function Home() {
+  useEffect(() => {
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(PREFETCH_KEY) !== '1') {
+        import('./Play').then(() => {
+          try {
+            sessionStorage.setItem(PREFETCH_KEY, '1')
+          } catch {
+            // ignore
+          }
+        }).catch(() => {})
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
   return (
     <div className="home-page">
       <div className="home-page__top-row">

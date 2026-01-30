@@ -9,7 +9,8 @@
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:ngrok": "vite preview -- --host 0.0.0.0 --port 4173"
   },
   "dependencies": {
     "@twa-dev/sdk": "^7.0.0",

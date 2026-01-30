@@ -4,8 +4,8 @@ import { getDeckFull } from '../data/decks'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { useSwipeCard } from '../hooks/useSwipeCard'
-import { getTg, haptic } from '../utils/telegram'
 import { createInvoice, openInvoice } from '../api/subscription'
+import { getTg, haptic } from '../utils/telegram'
 import MicroConfetti from '../components/MicroConfetti'
 import HomeButton from '../components/HomeButton'
 import './Play.css'
@@ -27,7 +27,8 @@ function createInitialProgress(n: number) {
 }
 
 function Play() {
-  const { deckId } = useParams<{ deckId: string }>()
+  const params = useParams<{ deckId?: string }>()
+  const deckId = params.deckId ?? ''
   const deckFull = useMemo(
     () => (deckId ? getDeckFull(deckId) : null),
     [deckId]
@@ -51,7 +52,7 @@ function Play() {
   const navigate = useNavigate()
   const swipeWrapRef = useRef<HTMLDivElement>(null)
 
-  const progress = deckId ? state.progress[deckId] : undefined
+  const progress: { order: number[]; index: number } | undefined = deckId ? state.progress?.[deckId] : undefined
   const N = deckFull?.questions.length ?? 0
   const isEnd = !!progress && N > 0 && progress.index >= N
 
@@ -69,12 +70,14 @@ function Play() {
   }, [setState])
 
   useEffect(() => {
-    const tg = getTg()
-    if (!tg?.BackButton) return
-    tg.BackButton.show()
-    tg.BackButton.onClick(() => navigate('/decks'))
+    const tg = window.Telegram?.WebApp
+    const handler = () => navigate('/decks')
+    if (tg?.BackButton) {
+      tg.BackButton.show()
+      tg.BackButton.onClick(handler)
+    }
     return () => {
-      tg.BackButton.hide()
+      if (tg?.BackButton) tg.BackButton.hide()
     }
   }, [navigate])
 
@@ -90,13 +93,32 @@ function Play() {
 
   useEffect(() => {
     if (!deckId || !deckFull) return
-    if (state.progress[deckId] !== undefined) return
+    if (state.progress?.[deckId] !== undefined) return
     const progress = createInitialProgress(deckFull.questions.length)
     setState({
       ...state,
-      progress: { ...state.progress, [deckId]: progress },
+      progress: { ...(state.progress ?? {}), [deckId]: progress },
     })
   }, [deckId, deckFull, state, setState])
+
+  if (!deckId) {
+    return (
+      <div className="play-page">
+        <div className="play-page__top-bar">
+          <HomeButton />
+        </div>
+        <p className="play-page__message">Колода не выбрана</p>
+        <div className="play-page__actions">
+          <button type="button" className="btn btn--primary" onClick={() => { haptic('light'); navigate('/'); }}>
+            Домой
+          </button>
+          <button type="button" className="btn btn--ghost" onClick={() => { haptic('light'); navigate(-1); }}>
+            Назад
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (!deck) {
     return (
@@ -208,7 +230,7 @@ function Play() {
   const { order, index } = progress
   const questionIndex = order[index]
   const currentQuestion = deckFull.questions[questionIndex]
-  const deckFavorites = state.favorites[deckId] ?? []
+  const deckFavorites: number[] = state.favorites?.[deckId] ?? []
   const isCurrentInFavorites = deckFavorites.includes(questionIndex)
 
   const handleNext = () => {
@@ -216,7 +238,7 @@ function Play() {
     setState({
       ...state,
       progress: {
-        ...state.progress,
+        ...(state.progress ?? {}),
         [deckId]: { order, index: index + 1 },
       },
     })
@@ -247,7 +269,7 @@ function Play() {
     setState({
       ...state,
       favorites: {
-        ...state.favorites,
+        ...(state.favorites ?? {}),
         [deckId]: [...deckFavorites, questionIndex],
       },
     })
@@ -257,13 +279,13 @@ function Play() {
     const newProgress = createInitialProgress(N)
     setState({
       ...state,
-      progress: { ...state.progress, [deckId]: newProgress },
+      progress: { ...(state.progress ?? {}), [deckId]: newProgress },
     })
   }
 
   if (isEnd) {
     if (showFavoritesView) {
-      const favoriteQuestions = deckFavorites.map((i) => deckFull.questions[i])
+      const favoriteQuestions = deckFavorites.map((i: number) => deckFull.questions[i])
       return (
         <div className="play-page">
           <div className="play-page__top-bar">
@@ -271,7 +293,7 @@ function Play() {
           </div>
           <h2 className="play-page__subtitle">Избранное</h2>
           <ul className="play-page__fav-list">
-            {favoriteQuestions.map((q, k) => (
+            {favoriteQuestions.map((q: string, k: number) => (
               <li key={k}>{q}</li>
             ))}
           </ul>

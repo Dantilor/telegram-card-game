@@ -36,16 +36,17 @@ export default function DebugOverlay() {
         top: 10,
         left: 10,
         maxWidth: 520,
-        maxHeight: '60vh',
-        overflow: 'auto',
+        zIndex: 999999,
         background: 'rgba(0,0,0,0.55)',
-        color: '#0f0',
-        fontSize: 10,
-        fontFamily: 'monospace',
+        color: '#fff',
         padding: 10,
         borderRadius: 10,
-        zIndex: 9999,
+        fontSize: 12,
+        lineHeight: 1.35,
+        whiteSpace: 'pre-wrap',
         pointerEvents: 'none',
+        fontFamily: 'monospace',
+        overflow: 'auto',
       }}
     >
       <div style={{ marginBottom: 4 }}>

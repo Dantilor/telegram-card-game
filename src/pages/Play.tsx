@@ -1,11 +1,13 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState, useRef } from 'react'
+import { startTransition } from 'react'
 import { getDeckFull } from '../data/decks'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { useSwipeCard } from '../hooks/useSwipeCard'
 import { createInvoice, openInvoice } from '../api/subscription'
 import { getTg, getInitData, haptic } from '../utils/telegram'
+import { mark } from '../utils/perf'
 import MicroConfetti from '../components/MicroConfetti'
 import HomeButton from '../components/HomeButton'
 import './Play.css'
@@ -27,12 +29,14 @@ function createInitialProgress(n: number) {
 }
 
 function Play() {
+  mark('play-render-start')
   const params = useParams<{ deckId?: string }>()
   const deckId = params.deckId ?? ''
-  const deckFull = useMemo(
-    () => (deckId ? getDeckFull(deckId) : null),
-    [deckId]
-  )
+  const deckFull = useMemo(() => {
+    const r = deckId ? getDeckFull(deckId) : null
+    mark('play-deck-built')
+    return r
+  }, [deckId])
   const deck = deckFull
     ? {
         id: deckFull.id,
@@ -89,15 +93,26 @@ function Play() {
     }
   }, [isEnd, showFavoritesView, deck])
 
+  const progressInitDone = useRef(false)
   useEffect(() => {
     if (!deckId || !deckFull) return
-    if (state.progress?.[deckId] !== undefined) return
+    if (progressInitDone.current) return
+    progressInitDone.current = true
+    mark('play-progress-init-start')
     const progress = createInitialProgress(deckFull.questions.length)
-    setState({
-      ...state,
-      progress: { ...(state.progress ?? {}), [deckId]: progress },
+    startTransition(() => {
+      setState((prev) => {
+        mark('play-progress-set')
+        return {
+          ...prev,
+          progress: { ...(prev.progress ?? {}), [deckId]: progress },
+        }
+      })
     })
-  }, [deckId, deckFull, state, setState])
+    return () => {
+      progressInitDone.current = false
+    }
+  }, [deckId, deckFull, setState])
 
   if (!deckId) {
     return (
@@ -243,13 +258,13 @@ function Play() {
 
   const handleNext = () => {
     if (index >= N) return
-    setState({
-      ...state,
+    setState((prev) => ({
+      ...prev,
       progress: {
-        ...(state.progress ?? {}),
+        ...(prev.progress ?? {}),
         [deckId]: { order, index: index + 1 },
       },
-    })
+    }))
   }
 
   const handleNextWithAnimation = () => {
@@ -274,26 +289,30 @@ function Play() {
   const handleAddToFavorites = () => {
     haptic('light')
     if (isCurrentInFavorites) return
-    setState({
-      ...state,
+    setState((prev) => ({
+      ...prev,
       favorites: {
-        ...(state.favorites ?? {}),
-        [deckId]: [...deckFavorites, questionIndex],
+        ...(prev.favorites ?? {}),
+        [deckId]: [...(prev.favorites?.[deckId] ?? []), questionIndex],
       },
-    })
+    }))
   }
 
   const handleRestart = () => {
     const newProgress = createInitialProgress(N)
-    setState({
-      ...state,
-      progress: { ...(state.progress ?? {}), [deckId]: newProgress },
-    })
+    setState((prev) => ({
+      ...prev,
+      progress: { ...(prev.progress ?? {}), [deckId]: newProgress },
+    }))
   }
+
+  const favoriteQuestions = useMemo(
+    () => deckFavorites.map((i: number) => deckFull.questions[i]),
+    [deckFavorites, deckFull.questions]
+  )
 
   if (isEnd) {
     if (showFavoritesView) {
-      const favoriteQuestions = deckFavorites.map((i: number) => deckFull.questions[i])
       return (
         <div className="play-page">
           <div className="play-page__top-bar">

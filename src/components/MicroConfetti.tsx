@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import './MicroConfetti.css'
 
 const PARTICLE_COUNT = 20
@@ -6,15 +6,9 @@ const COLORS = ['var(--primary)', 'var(--primary2)', 'var(--secondary)']
 
 function MicroConfetti({ duration = 2000 }: { duration?: number }) {
   const [visible, setVisible] = useState(true)
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(false), duration)
-    return () => clearTimeout(t)
-  }, [duration])
-
-  if (!visible) return null
-
-  const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
+  const particles = useMemo(
+    () =>
+      Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
     size: 5 + Math.random() * 5,
@@ -22,7 +16,16 @@ function MicroConfetti({ duration = 2000 }: { duration?: number }) {
     delay: Math.random() * 0.3,
     dx: (Math.random() - 0.5) * 40,
     duration: 1.2 + Math.random() * 0.6,
-  }))
+  })),
+    []
+  )
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(false), duration)
+    return () => clearTimeout(t)
+  }, [duration])
+
+  if (!visible) return null
 
   return (
     <div className="micro-confetti" aria-hidden>

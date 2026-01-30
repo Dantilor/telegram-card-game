@@ -29,7 +29,7 @@ declare global {
 }
 
 export function getTg() {
-  return window.Telegram?.WebApp ?? null
+  return (typeof window !== 'undefined' && (window as any)?.Telegram?.WebApp) ?? null
 }
 
 export function getTgUser() {
@@ -45,7 +45,7 @@ export function readyAndExpand() {
 }
 
 export function haptic(type: 'light' | 'medium' | 'heavy' = 'light') {
-  getTg()?.HapticFeedback?.impactOccurred(type)
+  getTg()?.HapticFeedback?.impactOccurred?.(type)
 }
 
 export function setHeaderColor(color: string) {

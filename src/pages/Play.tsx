@@ -70,14 +70,12 @@ function Play() {
   }, [setState])
 
   useEffect(() => {
-    const tg = window.Telegram?.WebApp
+    const tg = getTg()
     const handler = () => navigate('/decks')
-    if (tg?.BackButton) {
-      tg.BackButton.show()
-      tg.BackButton.onClick(handler)
-    }
+    tg?.BackButton?.show?.()
+    tg?.BackButton?.onClick?.(handler)
     return () => {
-      if (tg?.BackButton) tg.BackButton.hide()
+      tg?.BackButton?.hide?.()
     }
   }, [navigate])
 

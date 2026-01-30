@@ -1,7 +1,7 @@
-import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { getDeckFull } from '../data/decks'
-import { defaultUserState, type UserState, type DeckFull } from '../data/types'
+import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { useSwipeCard } from '../hooks/useSwipeCard'
 import { createInvoice, openInvoice } from '../api/subscription'
@@ -10,12 +10,6 @@ import { timeStart, timeEnd } from '../utils/perf'
 import MicroConfetti from '../components/MicroConfetti'
 import HomeButton from '../components/HomeButton'
 import './Play.css'
-
-const LOAD_TIMEOUT_MS = 2500
-const END_SCREEN_TIMEOUT_MS = 2000
-const LOAD_ERROR_MSG = 'Не удалось загрузить игру с первого раза. Нажмите «Повторить».'
-
-type Phase = 'boot' | 'loading' | 'ready' | 'finishing' | 'done' | 'error'
 
 function shuffleFisherYates<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -26,20 +20,17 @@ function shuffleFisherYates<T>(arr: T[]): T[] {
   return a
 }
 
-function prepareDeck(deckFull: DeckFull): { order: number[]; index: number } {
-  const n = deckFull.questions.length
-  const order = shuffleFisherYates(Array.from({ length: n }, (_, i) => i))
-  return { order, index: 0 }
+function createInitialProgress(n: number) {
+  return {
+    order: shuffleFisherYates(Array.from({ length: n }, (_, i) => i)),
+    index: 0,
+  }
 }
 
-const nextFrame = (): Promise<void> =>
-  new Promise((r) => {
-    requestAnimationFrame(() => r())
-  })
+const MIN_LOADING_MS = 180
 
 function Play() {
   const params = useParams<{ deckId?: string }>()
-  const [searchParams] = useSearchParams()
   const deckId = params.deckId ?? ''
   const deckFull = useMemo(() => (deckId ? getDeckFull(deckId) : null), [deckId])
   const deck = deckFull
@@ -52,26 +43,20 @@ function Play() {
       }
     : undefined
 
-  const [phase, setPhase] = useState<Phase>('boot')
-  const [errorText, setErrorText] = useState<string | null>(null)
-  const [initAttempt, setInitAttempt] = useState(0)
-  const startedAtRef = useRef<number>(0)
+  const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
   const [showFavoritesView, setShowFavoritesView] = useState(false)
   const [invoiceLoading, setInvoiceLoading] = useState<'month' | 'year' | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [isEntering, setIsEntering] = useState(false)
+  const [gameReady, setGameReady] = useState(false)
   const [endScreenReady, setEndScreenReady] = useState(false)
-  const [endScreenError, setEndScreenError] = useState(false)
-  const [debugOverlayHidden, setDebugOverlayHidden] = useState(false)
   const navigate = useNavigate()
   const swipeWrapRef = useRef<HTMLDivElement>(null)
 
-  const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
   const progress: { order: number[]; index: number } | undefined = deckId ? state.progress?.[deckId] : undefined
   const N = deckFull?.questions.length ?? 0
   const isEnd = !!progress && N > 0 && progress.index >= N
-  const isDebug = searchParams.get('debug') === '1'
 
   useEffect(() => {
     const onPremiumUpdated = () => {
@@ -106,88 +91,48 @@ function Play() {
     }
   }, [isEnd, showFavoritesView, deck])
 
-  const endScreenReadyRef = useRef(false)
   useEffect(() => {
     if (!isEnd) {
       setEndScreenReady(false)
-      setEndScreenError(false)
-      endScreenReadyRef.current = false
       return
     }
-    endScreenReadyRef.current = false
-    let cancelled = false
     timeStart('play-end-screen')
     const t = setTimeout(() => {
-      if (cancelled) return
-      try {
-        endScreenReadyRef.current = true
-        setEndScreenReady(true)
-        setEndScreenError(false)
-      } catch {
-        setEndScreenError(true)
-      }
+      setEndScreenReady(true)
       timeEnd('play-end-screen')
     }, 120)
-    const guard = setTimeout(() => {
-      if (cancelled) return
-      if (!endScreenReadyRef.current) setEndScreenError(true)
-    }, END_SCREEN_TIMEOUT_MS)
-    return () => {
-      cancelled = true
-      clearTimeout(t)
-      clearTimeout(guard)
-    }
+    return () => clearTimeout(t)
   }, [isEnd])
 
+  const progressInitDone = useRef(false)
   useEffect(() => {
     if (!deckId || !deckFull) return
+    if (progressInitDone.current) return
+    progressInitDone.current = true
+    setGameReady(false)
     let cancelled = false
-    startedAtRef.current = Date.now()
-    setPhase('loading')
-    setErrorText(null)
-
-    const run = async () => {
-      try {
-        await nextFrame()
-        if (cancelled) return
-        timeStart('play-deck-prep')
-        const progressData = prepareDeck(deckFull)
-        if (cancelled) return
-        setState((prev) => ({
-          ...prev,
-          progress: { ...(prev.progress ?? {}), [deckId]: progressData },
-        }))
-        timeEnd('play-deck-prep')
-        if (!cancelled) setPhase('ready')
-      } catch (e) {
-        if (cancelled) return
-        setPhase('error')
-        setErrorText(e instanceof Error ? e.message : 'Ошибка инициализации')
-      }
-    }
-    run()
+    const t0 = performance.now()
+    timeStart('play-deck-prep')
+    const id = setTimeout(() => {
+      if (cancelled) return
+      const progress = createInitialProgress(deckFull.questions.length)
+      setState((prev) => ({
+        ...prev,
+        progress: { ...(prev.progress ?? {}), [deckId]: progress },
+      }))
+      timeEnd('play-deck-prep')
+      const elapsed = performance.now() - t0
+      const delay = Math.max(0, MIN_LOADING_MS - elapsed)
+      setTimeout(() => {
+        if (!cancelled) setGameReady(true)
+      }, delay)
+    }, 0)
     return () => {
       cancelled = true
+      clearTimeout(id)
+      progressInitDone.current = false
     }
-  }, [deckId, deckFull, initAttempt, setState])
-
-  useEffect(() => {
-    if (phase !== 'loading') return
-    const t = setTimeout(() => {
-      setPhase((p) => {
-        if (p !== 'loading') return p
-        setErrorText(LOAD_ERROR_MSG)
-        return 'error'
-      })
-    }, LOAD_TIMEOUT_MS)
-    return () => clearTimeout(t)
-  }, [phase, initAttempt])
-
-  const handleRetry = useCallback(() => {
-    haptic('light')
-    setErrorText(null)
-    setInitAttempt((a) => a + 1)
-  }, [])
+  }, [deckId, deckFull, setState])
 
   if (!deckId) {
     return (
@@ -314,68 +259,7 @@ function Play() {
     )
   }
 
-  if (phase === 'boot' || phase === 'loading') {
-    return (
-      <div className="play-page">
-        {isDebug && !debugOverlayHidden && (
-          <div
-            className="play-page__debug"
-            role="button"
-            tabIndex={0}
-            onClick={() => setDebugOverlayHidden(true)}
-            onKeyDown={(e) => e.key === 'Enter' && setDebugOverlayHidden(true)}
-            title="Скрыть"
-          >
-            phase={phase} attempt={initAttempt} ×
-          </div>
-        )}
-        <div className="play-page__top-bar">
-          <HomeButton />
-        </div>
-        <p className="play-page__message">Загрузка…</p>
-      </div>
-    )
-  }
-
-  if (phase === 'error') {
-    return (
-      <div className="play-page">
-        {isDebug && !debugOverlayHidden && (
-          <div
-            className="play-page__debug"
-            role="button"
-            tabIndex={0}
-            onClick={() => setDebugOverlayHidden(true)}
-            onKeyDown={(e) => e.key === 'Enter' && setDebugOverlayHidden(true)}
-            title="Скрыть"
-          >
-            phase={phase} attempt={initAttempt} err={errorText ?? ''} ×
-          </div>
-        )}
-        <div className="play-page__top-bar">
-          <HomeButton />
-        </div>
-        <p className="play-page__message">{errorText ?? LOAD_ERROR_MSG}</p>
-        <div className="play-page__actions">
-          <button type="button" className="btn btn--primary" onClick={handleRetry}>
-            Повторить
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={() => {
-              haptic('light')
-              navigate('/')
-            }}
-          >
-            Домой
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (phase !== 'ready' || !progress) {
+  if (!progress || !gameReady) {
     return (
       <div className="play-page">
         <div className="play-page__top-bar">
@@ -435,7 +319,7 @@ function Play() {
   }
 
   const handleRestart = () => {
-    const newProgress = prepareDeck(deckFull)
+    const newProgress = createInitialProgress(N)
     setState((prev) => ({
       ...prev,
       progress: { ...(prev.progress ?? {}), [deckId]: newProgress },
@@ -448,59 +332,9 @@ function Play() {
   )
 
   if (isEnd) {
-    if (endScreenError) {
-      return (
-        <div className="play-page">
-          {isDebug && !debugOverlayHidden && (
-            <div
-              className="play-page__debug"
-              role="button"
-              tabIndex={0}
-              onClick={() => setDebugOverlayHidden(true)}
-              onKeyDown={(e) => e.key === 'Enter' && setDebugOverlayHidden(true)}
-              title="Скрыть"
-            >
-              phase=finishing err ×
-            </div>
-          )}
-          <div className="play-page__top-bar">
-            <HomeButton />
-          </div>
-          <p className="play-page__message">Не удалось показать итоги.</p>
-          <div className="play-page__actions">
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() => {
-                haptic('light')
-                setEndScreenError(false)
-                setEndScreenReady(true)
-              }}
-            >
-              Повторить
-            </button>
-            <Link to="/decks" className="btn btn--ghost play-page__back" onClick={() => haptic('light')}>
-              Назад к колодам
-            </Link>
-          </div>
-        </div>
-      )
-    }
     if (!endScreenReady) {
       return (
         <div className="play-page">
-          {isDebug && !debugOverlayHidden && (
-            <div
-              className="play-page__debug"
-              role="button"
-              tabIndex={0}
-              onClick={() => setDebugOverlayHidden(true)}
-              onKeyDown={(e) => e.key === 'Enter' && setDebugOverlayHidden(true)}
-              title="Скрыть"
-            >
-              phase=finishing ×
-            </div>
-          )}
           <div className="play-page__top-bar">
             <HomeButton />
           </div>
@@ -576,18 +410,6 @@ function Play() {
 
   return (
     <div className="play-page">
-      {isDebug && !debugOverlayHidden && (
-        <div
-          className="play-page__debug"
-          role="button"
-          tabIndex={0}
-          onClick={() => setDebugOverlayHidden(true)}
-          onKeyDown={(e) => e.key === 'Enter' && setDebugOverlayHidden(true)}
-          title="Скрыть"
-        >
-          phase={phase} attempt={initAttempt} ×
-        </div>
-      )}
       <div className="play-page__top-bar">
         <HomeButton />
       </div>

@@ -4,24 +4,6 @@
   box-sizing: border-box;
 }
 
-.play-page__debug {
-  position: fixed;
-  top: 6px;
-  left: 6px;
-  z-index: 9999;
-  font-size: 11px;
-  opacity: 0.85;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  max-width: 90vw;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .play-page__top-bar {
   display: flex;
   align-items: center;

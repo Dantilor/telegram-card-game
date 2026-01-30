@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
+import { extractTgFromHashOnce } from './utils/telegramHash'
 import { initTheme } from './hooks/useTheme'
 import './index.css'
 import './styles/tg.css'
@@ -30,6 +31,8 @@ try {
 } catch {
   // no-op: don't block render
 }
+
+extractTgFromHashOnce()
 
 const rootEl = document.getElementById('root')!
 if (boot) boot.textContent = 'REACT RENDER CALLED'

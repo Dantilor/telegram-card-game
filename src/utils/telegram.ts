@@ -38,6 +38,8 @@ export function getTg() {
   return (typeof window !== 'undefined' && (window as any)?.Telegram?.WebApp) ?? null
 }
 
+import { getTgHashPayload } from './telegramHash'
+
 export type InitDataFromHash = {
   user?: { id?: number; first_name?: string; last_name?: string; username?: string; photo_url?: string }
   chat_instance?: string
@@ -47,6 +49,7 @@ export type InitDataFromHash = {
   raw?: string
 }
 
+/** Parse init data from current location.hash (fallback when sessionStorage wasn't used) */
 export function parseTgWebAppDataFromHash(): InitDataFromHash | null {
   if (typeof window === 'undefined') return null
   try {
@@ -90,6 +93,7 @@ export type InitData = {
   chatType?: string
   source: 'telegram' | 'hash' | 'none'
   initDataRaw?: string
+  themeParams?: Record<string, string>
 }
 
 export function getInitData(): InitData {
@@ -105,6 +109,27 @@ export function getInitData(): InitData {
       chatType: c?.type,
       source: 'telegram',
       initDataRaw: tg.initData || undefined,
+    }
+  }
+  const payload = getTgHashPayload()
+  if (payload?.parsed && (payload.parsed.user || payload.parsed.auth_date)) {
+    const userId = payload.parsed.user?.id != null ? payload.parsed.user.id : undefined
+    let themeParams: Record<string, string> | undefined
+    if (payload.tgWebAppThemeParams) {
+      try {
+        themeParams = JSON.parse(decodeURIComponent(payload.tgWebAppThemeParams)) as Record<string, string>
+      } catch {
+        // ignore
+      }
+    }
+    return {
+      userId,
+      user: payload.parsed.user,
+      chatInstance: payload.parsed.chat_instance,
+      chatType: payload.parsed.chat_type,
+      source: 'hash',
+      initDataRaw: payload.parsed.raw ?? payload.tgWebAppData,
+      themeParams,
     }
   }
   const fromHash = parseTgWebAppDataFromHash()

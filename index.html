@@ -2,6 +2,9 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
@@ -10,6 +13,7 @@
   <body>
     <div id="preboot-overlay" style="position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;font-family:monospace;font-size:11px;padding:12px;overflow:auto;pointer-events:none;">
       <div id="preboot-status">PREBOOT OK</div>
+      <div id="preboot-version" style="font-weight:bold;">VERSION: -</div>
       <div id="preboot-url"></div>
       <div id="preboot-ua"></div>
       <div id="preboot-time"></div>
@@ -24,7 +28,8 @@
         function esc(s) { return (s == null ? '' : String(s)).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
         function update() {
           var u = document.getElementById('preboot-url'), ua = document.getElementById('preboot-ua'), t = document.getElementById('preboot-time');
-          var e = document.getElementById('preboot-errors'), l = document.getElementById('preboot-logs'), m = document.getElementById('preboot-mounted');
+          var e = document.getElementById('preboot-errors'), l = document.getElementById('preboot-logs'), m = document.getElementById('preboot-mounted'), v = document.getElementById('preboot-version');
+          if (v) v.textContent = 'VERSION: ' + (window.__APP_VERSION__ != null ? window.__APP_VERSION__ : '(not set)');
           if (u) u.textContent = 'href: ' + (window.location.href || '');
           if (ua) ua.textContent = 'ua: ' + (navigator.userAgent || '').slice(0, 120);
           if (t) t.textContent = 'time: ' + new Date().toISOString();
@@ -40,6 +45,8 @@
         window.addEventListener('unhandledrejection', function(ev) { errors.push({ message: 'Unhandled: ' + (ev.reason && (ev.reason.message || ev.reason)), stack: ev.reason && ev.reason.stack }); update(); });
         update();
         setTimeout(update, 3000);
+        var iv = setInterval(update, 500);
+        setTimeout(function(){ clearInterval(iv); }, 8000);
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>

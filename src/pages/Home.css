@@ -1,26 +1,35 @@
 .home-page {
-  padding-bottom: clamp(1.5rem, 5vw, 2rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
   min-height: var(--app-height, 100vh);
   max-width: 100%;
   overflow-x: hidden;
 }
 
 .home-page__top-row {
-  position: absolute;
-  --edge: max(clamp(0.75rem, 3vw, 1rem), env(safe-area-inset-left));
-  top: max(clamp(0.75rem, 3vw, 1rem), env(safe-area-inset-top));
-  left: var(--edge);
-  right: max(clamp(0.75rem, 3vw, 1rem), env(safe-area-inset-right));
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: clamp(0.4rem, 2vw, 0.6rem);
   z-index: 2;
+}
+
+.home-page__top-row .home-btn {
+  order: 1;
+}
+
+.home-page__top-row .theme-toggle-wrap {
+  order: 2;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Hero */
 .home-hero {
   position: relative;
-  padding: clamp(2rem, 6vw, 3rem) clamp(0.75rem, 4vw, 1rem) clamp(2rem, 5vw, 2.5rem);
+  padding: clamp(1rem, 4vw, 2rem) clamp(0.5rem, 3vw, 1rem) clamp(1.25rem, 4vw, 2rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -94,38 +103,41 @@
   z-index: 1;
   width: 100%;
   max-width: min(20rem, calc(100vw - 2rem));
-  padding: 0 clamp(0.5rem, 2vw, 1rem);
+  padding: 0 clamp(0.25rem, 2vw, 0.5rem);
 }
 
 .home-hero__title {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  margin: 0 0 0.25rem;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
   font-weight: 700;
   color: var(--text);
   letter-spacing: 0.02em;
+  line-height: 1.2;
   text-shadow: 0 0 32px var(--glowCyan), 0 0 48px var(--glowPink);
 }
 
 .home-hero__subtitle {
-  margin: 0 0 clamp(1rem, 4vw, 1.5rem);
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
-  line-height: 1.45;
+  margin: 0 0 clamp(0.75rem, 3vw, 1.25rem);
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
+  line-height: 1.4;
   color: var(--muted);
 }
 
 .home-hero__actions {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.5rem, 2vw, 0.6rem);
+  gap: clamp(0.4rem, 2vw, 0.55rem);
   align-items: center;
   width: 100%;
-  max-width: 18rem;
+  max-width: 20rem;
 }
 
 .home-hero__btn {
   width: 100%;
   min-width: 0;
-  max-width: 14rem;
+  max-width: 20rem;
+  padding: clamp(0.5rem, 2vw, 0.65rem) clamp(0.75rem, 3vw, 1rem);
+  font-size: clamp(0.875rem, 2.5vw, 0.95rem);
 }
 
 /* Coming soon */

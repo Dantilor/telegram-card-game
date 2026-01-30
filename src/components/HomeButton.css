@@ -1,5 +1,5 @@
 .home-btn {
   flex-shrink: 0;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.9rem;
+  padding: clamp(0.3rem, 2vw, 0.4rem) clamp(0.5rem, 2vw, 0.6rem);
+  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
 }

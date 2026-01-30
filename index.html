@@ -8,7 +8,40 @@
     <title>Card Game</title>
   </head>
   <body>
+    <div id="preboot-overlay" style="position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;font-family:monospace;font-size:11px;padding:12px;overflow:auto;pointer-events:none;">
+      <div id="preboot-status">PREBOOT OK</div>
+      <div id="preboot-url"></div>
+      <div id="preboot-ua"></div>
+      <div id="preboot-time"></div>
+      <div id="preboot-mounted" style="margin-top:8px;font-weight:bold;"></div>
+      <div id="preboot-errors" style="color:#f88;margin-top:8px;"></div>
+      <div id="preboot-logs" style="margin-top:8px;color:#ccc;white-space:pre-wrap;word-break:break-all;"></div>
+    </div>
     <div id="root"></div>
+    <script>
+      (function() {
+        var MAX_LOGS = 30, logs = [], errors = [];
+        function esc(s) { return (s == null ? '' : String(s)).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function update() {
+          var u = document.getElementById('preboot-url'), ua = document.getElementById('preboot-ua'), t = document.getElementById('preboot-time');
+          var e = document.getElementById('preboot-errors'), l = document.getElementById('preboot-logs'), m = document.getElementById('preboot-mounted');
+          if (u) u.textContent = 'href: ' + (window.location.href || '');
+          if (ua) ua.textContent = 'ua: ' + (navigator.userAgent || '').slice(0, 120);
+          if (t) t.textContent = 'time: ' + new Date().toISOString();
+          if (m) m.textContent = 'APP_MOUNTED: ' + (window.__APP_MOUNTED__ === true ? 'yes' : 'no');
+          if (e) e.innerHTML = errors.length ? 'Errors:<br>' + errors.slice(-10).map(function(x){ return esc(x.message) + (x.stack ? '<br>' + esc(x.stack).slice(0,300) : ''); }).join('<br>---<br>') : '';
+          if (l) l.textContent = logs.slice(-MAX_LOGS).map(function(x){ return '[' + x.type + '] ' + (x.args && x.args[0] != null ? String(x.args[0]) : ''); }).join('\n');
+        }
+        var origLog = console.log, origWarn = console.warn, origErr = console.error;
+        console.log = function() { logs.push({ type: 'log', args: [].slice.call(arguments) }); if (logs.length > MAX_LOGS) logs.shift(); update(); return origLog.apply(console, arguments); };
+        console.warn = function() { logs.push({ type: 'warn', args: [].slice.call(arguments) }); if (logs.length > MAX_LOGS) logs.shift(); update(); return origWarn.apply(console, arguments); };
+        console.error = function() { logs.push({ type: 'error', args: [].slice.call(arguments) }); if (logs.length > MAX_LOGS) logs.shift(); update(); return origErr.apply(console, arguments); };
+        window.onerror = function(msg, src, line, col, err) { errors.push({ message: msg + ' at ' + src + ':' + line, stack: err && err.stack }); update(); };
+        window.addEventListener('unhandledrejection', function(ev) { errors.push({ message: 'Unhandled: ' + (ev.reason && (ev.reason.message || ev.reason)), stack: ev.reason && ev.reason.stack }); update(); });
+        update();
+        setTimeout(update, 3000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

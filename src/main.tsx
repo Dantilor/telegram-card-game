@@ -1,3 +1,12 @@
+;(function () {
+  try {
+    ;(window as any).__APP_MOUNTED__ = true
+    console.log('MAIN STARTED')
+  } catch {
+    // no-op
+  }
+})()
+
 ;(function setupDebugCapture() {
   if (typeof window === 'undefined') return
   const win = window as any

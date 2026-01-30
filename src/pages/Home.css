@@ -27,27 +27,38 @@
 }
 
 @media (max-width: 430px) {
+  /* Верхняя панель становится нормальным блоком, 2 строки */
   .home-page__top-row {
+    position: static !important;
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-start;
     gap: 0.35rem;
-    margin-bottom: 0.35rem;
+    margin: 0 0 0.5rem 0;
+    padding: 0 0.25rem;
   }
 
+  /* 1 строка: Домой */
   .home-page__top-row .home-btn {
-    width: 100%;
-    justify-content: center;
+    order: 1;
+    flex: 0 0 auto;
   }
 
+  /* 2 строка: темы — на всю ширину */
   .home-page__top-row .theme-toggle-wrap {
+    order: 2;
+    flex: 1 1 100%;
     width: 100%;
-    align-items: stretch;
+    max-width: 100%;
+    min-width: 0;
+    display: flex;
+    justify-content: flex-start;
   }
 
+  /* Гарантируем, что заголовок ниже верхней панели */
   .home-hero {
-    padding-top: 0.75rem;
+    padding-top: 0.75rem !important;
   }
 }
 

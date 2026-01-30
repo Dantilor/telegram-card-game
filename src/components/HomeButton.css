@@ -6,15 +6,9 @@
 
 @media (max-width: 430px) {
   .home-btn {
-    padding: 0.28rem 0.5rem;
-    font-size: 0.82rem;
+    padding: 0.22rem 0.5rem;
+    font-size: 0.8rem;
     border-radius: 10px;
-    min-height: 34px;
-  }
-
-  .home-btn svg,
-  .home-btn img {
-    width: 16px;
-    height: 16px;
+    min-height: 32px;
   }
 }

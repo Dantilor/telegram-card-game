@@ -1,6 +1,6 @@
 import { getInitData } from '../utils/telegram'
 
-const baseURL = ''
+const baseURL = import.meta.env.VITE_API_BASE ?? ''
 
 export function tgHeaders(): Record<string, string> {
   const init = getInitData()

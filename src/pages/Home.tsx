@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
-import { preloadPlayRoute } from '../utils/preload'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import './Home.css'
@@ -30,12 +29,7 @@ function Home() {
             <Link
               to="/decks"
               className="btn btn--primary home-hero__btn"
-              onPointerEnter={() => preloadPlayRoute()}
-              onTouchStart={() => preloadPlayRoute()}
-              onClick={() => {
-                preloadPlayRoute()
-                haptic('light')
-              }}
+              onClick={() => haptic('light')}
             >
               Начать игру
             </Link>

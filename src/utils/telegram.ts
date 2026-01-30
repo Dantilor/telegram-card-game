@@ -51,24 +51,28 @@ export type InitData = {
 }
 
 export function getInitData(): InitData {
-  const tg = getTg()
-  if (tg?.initDataUnsafe) {
-    const u = tg.initDataUnsafe.user
-    const c = tg.initDataUnsafe.chat
-    const userId = u != null && typeof (u as { id?: number }).id === 'number' ? (u as { id: number }).id : undefined
-    return {
-      userId: userId ?? (c != null && typeof c.id === 'number' ? c.id : undefined),
-      user: u ?? undefined,
-      chatInstance: c?.id != null ? String(c.id) : undefined,
-      chatType: c?.type,
-      source: 'telegram',
-      initDataRaw: tg.initData || undefined,
+  try {
+    const tg = getTg()
+    if (tg?.initDataUnsafe) {
+      const u = tg.initDataUnsafe.user
+      const c = tg.initDataUnsafe.chat
+      const userId = u != null && typeof (u as { id?: number }).id === 'number' ? (u as { id: number }).id : undefined
+      return {
+        userId: userId ?? (c != null && typeof c.id === 'number' ? c.id : undefined),
+        user: u ?? undefined,
+        chatInstance: c?.id != null ? String(c.id) : undefined,
+        chatType: c?.type,
+        source: 'telegram',
+        initDataRaw: tg.initData || undefined,
+      }
     }
+    const cached = getCachedInitData()
+    if (cached) return cached
+    const fromHash = parseAndCacheFromHash()
+    if (fromHash) return fromHash
+  } catch {
+    // ignore
   }
-  const cached = getCachedInitData()
-  if (cached) return cached
-  const fromHash = parseAndCacheFromHash()
-  if (fromHash) return fromHash
   return { source: 'none' }
 }
 

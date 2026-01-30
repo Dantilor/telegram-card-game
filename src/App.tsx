@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useSyncPremium } from './hooks/useSyncPremium'
 import { useAppHeight } from './hooks/useAppHeight'
@@ -6,11 +6,11 @@ import { readyAndExpand } from './utils/telegram'
 import Home from './pages/Home'
 import Decks from './pages/Decks'
 import MyDecks from './pages/MyDecks'
+import Play from './pages/Play'
 import CustomDeckEditor from './pages/CustomDeckEditor'
 import Profile from './pages/Profile'
+import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import './App.css'
-
-const Play = lazy(() => import('./pages/Play'))
 
 function App() {
   useAppHeight()
@@ -34,9 +34,9 @@ function App() {
         <Route
           path="/play/:deckId"
           element={
-            <Suspense fallback={<div className="page-loading">Загрузка…</div>}>
+            <PlayErrorBoundary>
               <Play />
-            </Suspense>
+            </PlayErrorBoundary>
           }
         />
         <Route path="/profile" element={<Profile />} />

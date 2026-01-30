@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { decks } from '../data/decks'
 import { haptic } from '../utils/telegram'
@@ -15,10 +14,6 @@ const DECK_ICONS: Record<string, string> = {
 
 function Decks() {
   const navigate = useNavigate()
-
-  useEffect(() => {
-    import('../pages/Play').catch(() => {})
-  }, [])
 
   const handleBack = () => {
     haptic('light')

@@ -11,6 +11,8 @@ import Profile from './pages/Profile'
 import './App.css'
 
 function App() {
+  console.log('[APP RENDER]', { location: window.location.href })
+
   useSyncPremium()
   useEffect(() => {
     try {
@@ -21,16 +23,13 @@ function App() {
   }, [])
 
   return (
-    <div className="app">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/decks" element={<Decks />} />
-        <Route path="/decks/custom" element={<MyDecks />} />
-        <Route path="/decks/custom/new" element={<CustomDeckEditor />} />
-        <Route path="/decks/custom/:id/edit" element={<CustomDeckEditor />} />
-        <Route path="/play/:deckId" element={<Play />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
+    <div style={{ padding: 16, color: 'white' }}>
+      <h1>APP FORCE RENDER</h1>
+      <pre>{JSON.stringify({
+        hasTelegram: !!(window as any).Telegram,
+        initData: (window as any).Telegram?.WebApp?.initDataUnsafe,
+        hash: window.location.hash,
+      }, null, 2)}</pre>
     </div>
   )
 }

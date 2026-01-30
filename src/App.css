@@ -1,13 +1,13 @@
 .app {
   position: relative;
   z-index: 1;
-  padding: 1rem;
-  padding-top: max(1rem, env(safe-area-inset-top));
-  padding-right: max(1rem, env(safe-area-inset-right));
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  padding-left: max(1rem, env(safe-area-inset-left));
+  --pad: clamp(0.75rem, 3vw, 1rem);
+  padding: max(var(--pad), env(safe-area-inset-top)) max(var(--pad), env(safe-area-inset-right)) max(var(--pad), env(safe-area-inset-bottom)) max(var(--pad), env(safe-area-inset-left));
   min-height: 100vh;
+  min-height: var(--app-height);
   box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .app h1 {

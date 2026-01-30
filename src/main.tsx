@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
-import { extractTgFromHashOnce } from './utils/telegramHash'
+import { parseAndCacheFromHash } from './utils/telegramInitCache'
 import { initTheme } from './hooks/useTheme'
 import './index.css'
 import './styles/tg.css'
@@ -13,7 +13,7 @@ try {
   // no-op: don't block render
 }
 
-extractTgFromHashOnce()
+parseAndCacheFromHash()
 
 const rootEl = document.getElementById('root')!
 createRoot(rootEl).render(

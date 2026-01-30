@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useSyncPremium } from './hooks/useSyncPremium'
+import { useAppHeight } from './hooks/useAppHeight'
 import { readyAndExpand } from './utils/telegram'
 import Home from './pages/Home'
 import Decks from './pages/Decks'
@@ -11,6 +12,7 @@ import Profile from './pages/Profile'
 import './App.css'
 
 function App() {
+  useAppHeight()
   useSyncPremium()
   useEffect(() => {
     try {

@@ -1,5 +1,7 @@
 .decks-page {
-  padding-bottom: 1.5rem;
+  padding-bottom: clamp(1rem, 4vw, 1.5rem);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .decks-page__top {
@@ -83,11 +85,11 @@
 .deck-card__link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: clamp(0.5rem, 2vw, 0.75rem);
+  padding: clamp(0.75rem, 3vw, 1rem);
   color: inherit;
   text-decoration: none;
-  min-height: 4rem;
+  min-height: 3.5rem;
 }
 
 .deck-card__chip {
@@ -117,14 +119,14 @@
 
 .deck-card__title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 2.5vw, 1.1rem);
   font-weight: 600;
   color: var(--text);
 }
 
 .deck-card__description {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: clamp(0.8rem, 2vw, 0.875rem);
   color: var(--muted);
   line-height: 1.35;
 }

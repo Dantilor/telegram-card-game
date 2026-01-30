@@ -1,5 +1,27 @@
 # Отчёт: Telegram Card Game (Mini App)
 
+## Исправление подвисаний (Telegram WebView, 2025)
+
+### Причины подвисаний
+1. **Синхронная запись в localStorage при каждом setState** — блокировала главный поток на мобилке (45+ записей за игру).
+2. **useEffect с зависимостью от state** — лишние перезапуски при инициализации прогресса колоды.
+3. **Первый рендер Play** — тяжёлый чанк загружался при клике, блокируя UI.
+4. **getMe 404 на GitHub Pages** — запрос к несуществующему /api/me при hostname github.io.
+
+### Внесённые изменения
+- **useLocalState**: debounce 600ms + flush на visibilitychange/beforeunload. Запись в localStorage батчами.
+- **Play**: progress init через useRef + startTransition, функциональные setState, useMemo для favoriteQuestions.
+- **React.lazy + Suspense** для Play, prefetch при заходе на Decks.
+- **useSyncPremium**: не вызывает getMe на github.io без VITE_API_BASE.
+- **api/client**: baseURL из VITE_API_BASE.
+- **MicroConfetti**: useMemo для particles (не пересоздавать при каждом render).
+- **perf.ts**: performance.mark под ?debug=1 / DEV.
+
+### WebSocket
+Ошибки WebSocket из web.telegram.org — не от нашего приложения. В коде нет ws/WebSocket.
+
+---
+
 ## DONE
 
 - Проект на **Vite + React + TypeScript**

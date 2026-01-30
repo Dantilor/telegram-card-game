@@ -51,6 +51,8 @@ function Play() {
   const [endScreenReady, setEndScreenReady] = useState(false)
   const navigate = useNavigate()
   const swipeWrapRef = useRef<HTMLDivElement>(null)
+  const deckFullRef = useRef(deckFull)
+  deckFullRef.current = deckFull
 
   const progress: { order: number[]; index: number } | undefined = deckId ? state.progress?.[deckId] : undefined
   const N = deckFull?.questions.length ?? 0
@@ -103,37 +105,38 @@ function Play() {
   }, [isEnd])
 
   useEffect(() => {
-    if (!deckId || !deckFull) return
+    const df = deckFullRef.current
+    if (!deckId || !df) return
     let cancelled = false
     setIsPreparing(true)
 
     const run = () => {
       if (cancelled) return
       try {
+        const current = deckFullRef.current
+        if (!current || cancelled) return
         timeStart('play-deck-prep')
-        const progressData = createInitialProgress(deckFull.questions.length)
+        const progressData = createInitialProgress(current.questions.length)
         if (cancelled) return
         setState((prev) => ({
           ...prev,
           progress: { ...(prev.progress ?? {}), [deckId]: progressData },
         }))
         timeEnd('play-deck-prep')
+      } catch {
+        // avoid sticking on loading
       } finally {
         if (!cancelled) setIsPreparing(false)
       }
     }
 
-    const w = window as Window & { requestIdleCallback?: typeof requestIdleCallback; cancelIdleCallback?: typeof cancelIdleCallback }
-    const id = w.requestIdleCallback
-      ? w.requestIdleCallback(run, { timeout: 500 })
-      : window.setTimeout(run, 0)
+    const id = window.setTimeout(run, 0)
 
     return () => {
       cancelled = true
-      if (w.cancelIdleCallback) w.cancelIdleCallback(id)
-      else clearTimeout(id)
+      clearTimeout(id)
     }
-  }, [deckId, deckFull, setState])
+  }, [deckId, deckFull?.id ?? '', deckFull?.questions?.length ?? 0, setState])
 
   if (!deckId) {
     return (

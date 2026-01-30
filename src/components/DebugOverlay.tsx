@@ -9,30 +9,18 @@ declare global {
   }
 }
 
-function isInTelegram(): boolean {
-  if (typeof window === 'undefined') return false
-  return !!(window as any)?.Telegram?.WebApp
-}
-
 export default function DebugOverlay() {
   const [, setTick] = useState(0)
-  const [inTg, setInTg] = useState(false)
 
   useEffect(() => {
-    const check = () => setInTg(isInTelegram())
-    check()
-    const t = setTimeout(check, 500)
     const onLog = () => setTick((n) => n + 1)
     window.addEventListener('tgg-debug-log', onLog)
     window.addEventListener('tgg-debug-error', onLog)
     return () => {
-      clearTimeout(t)
       window.removeEventListener('tgg-debug-log', onLog)
       window.removeEventListener('tgg-debug-error', onLog)
     }
   }, [])
-
-  if (!inTg) return null
 
   const logs = window.__DEBUG_LOGS__ ?? []
   const errors = window.__DEBUG_ERRORS__ ?? []
@@ -45,18 +33,19 @@ export default function DebugOverlay() {
     <div
       style={{
         position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        maxHeight: '40vh',
+        top: 10,
+        left: 10,
+        maxWidth: 520,
+        maxHeight: '60vh',
         overflow: 'auto',
-        background: 'rgba(0,0,0,0.9)',
+        background: 'rgba(0,0,0,0.55)',
         color: '#0f0',
         fontSize: 10,
         fontFamily: 'monospace',
-        padding: 6,
-        zIndex: 99999,
-        borderTop: '1px solid #333',
+        padding: 10,
+        borderRadius: 10,
+        zIndex: 9999,
+        pointerEvents: 'none',
       }}
     >
       <div style={{ marginBottom: 4 }}>

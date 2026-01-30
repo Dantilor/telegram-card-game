@@ -1,6 +1,10 @@
+import { APP_VERSION } from './version'
+
 ;(function () {
   try {
+    ;(window as any).__APP_VERSION__ = APP_VERSION
     ;(window as any).__APP_MOUNTED__ = true
+    console.log('APP_VERSION', APP_VERSION)
     console.log('MAIN STARTED')
   } catch {
     // no-op
@@ -53,11 +57,18 @@ try {
   // no-op: don't block render
 }
 
+const search =
+  typeof window !== 'undefined'
+    ? window.location.search ||
+      (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '')
+    : ''
+const debug = typeof window !== 'undefined' && new URLSearchParams(search).get('debug') === '1'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
       <App />
     </HashRouter>
-    <DebugOverlay />
+    {debug && <DebugOverlay />}
   </StrictMode>,
 )

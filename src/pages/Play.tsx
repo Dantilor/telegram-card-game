@@ -27,8 +27,6 @@ function createInitialProgress(n: number) {
   }
 }
 
-const MIN_LOADING_MS = 180
-
 function Play() {
   const params = useParams<{ deckId?: string }>()
   const deckId = params.deckId ?? ''
@@ -49,7 +47,7 @@ function Play() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [isEntering, setIsEntering] = useState(false)
-  const [gameReady, setGameReady] = useState(false)
+  const [isPreparing, setIsPreparing] = useState(true)
   const [endScreenReady, setEndScreenReady] = useState(false)
   const navigate = useNavigate()
   const swipeWrapRef = useRef<HTMLDivElement>(null)
@@ -104,33 +102,36 @@ function Play() {
     return () => clearTimeout(t)
   }, [isEnd])
 
-  const progressInitDone = useRef(false)
   useEffect(() => {
     if (!deckId || !deckFull) return
-    if (progressInitDone.current) return
-    progressInitDone.current = true
-    setGameReady(false)
     let cancelled = false
-    const t0 = performance.now()
-    timeStart('play-deck-prep')
-    const id = setTimeout(() => {
+    setIsPreparing(true)
+
+    const run = () => {
       if (cancelled) return
-      const progress = createInitialProgress(deckFull.questions.length)
-      setState((prev) => ({
-        ...prev,
-        progress: { ...(prev.progress ?? {}), [deckId]: progress },
-      }))
-      timeEnd('play-deck-prep')
-      const elapsed = performance.now() - t0
-      const delay = Math.max(0, MIN_LOADING_MS - elapsed)
-      setTimeout(() => {
-        if (!cancelled) setGameReady(true)
-      }, delay)
-    }, 0)
+      try {
+        timeStart('play-deck-prep')
+        const progressData = createInitialProgress(deckFull.questions.length)
+        if (cancelled) return
+        setState((prev) => ({
+          ...prev,
+          progress: { ...(prev.progress ?? {}), [deckId]: progressData },
+        }))
+        timeEnd('play-deck-prep')
+      } finally {
+        if (!cancelled) setIsPreparing(false)
+      }
+    }
+
+    const w = window as Window & { requestIdleCallback?: typeof requestIdleCallback; cancelIdleCallback?: typeof cancelIdleCallback }
+    const id = w.requestIdleCallback
+      ? w.requestIdleCallback(run, { timeout: 500 })
+      : window.setTimeout(run, 0)
+
     return () => {
       cancelled = true
-      clearTimeout(id)
-      progressInitDone.current = false
+      if (w.cancelIdleCallback) w.cancelIdleCallback(id)
+      else clearTimeout(id)
     }
   }, [deckId, deckFull, setState])
 
@@ -259,15 +260,8 @@ function Play() {
     )
   }
 
-  if (!progress || !gameReady) {
-    return (
-      <div className="play-page">
-        <div className="play-page__top-bar">
-          <HomeButton />
-        </div>
-        <p className="play-page__message">Загрузка…</p>
-      </div>
-    )
+  if (isPreparing || !progress) {
+    return <div className="page-loading">Загрузка…</div>
   }
 
   const { order, index } = progress

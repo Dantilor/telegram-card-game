@@ -34,7 +34,7 @@ function App() {
         <Route
           path="/play/:deckId"
           element={
-            <Suspense fallback={<div className="play-page"><p className="play-page__message">Загрузка…</p></div>}>
+            <Suspense fallback={<div className="page-loading">Загрузка…</div>}>
               <Play />
             </Suspense>
           }

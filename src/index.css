@@ -37,3 +37,12 @@ body {
 .font-mono {
   font-family: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
 }
+
+.page-loading {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  opacity: 0.85;
+}

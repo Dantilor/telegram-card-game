@@ -52,7 +52,7 @@ function parseTgWebAppData(raw: string): NonNullable<TgHashPayload['parsed']> | 
 
 /**
  * If location.hash contains tgWebAppData, extract params, save to sessionStorage,
- * replace hash with #/ (preserving ?debug=1 in search), and return true.
+ * replace hash with #/ (preserving search params), and return true.
  * Otherwise return false. Safe to call multiple times; extraction runs once per page load.
  */
 export function extractTgFromHashOnce(): boolean {

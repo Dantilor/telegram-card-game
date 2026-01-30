@@ -132,7 +132,16 @@ function Play() {
     )
   }
 
-  if (!deckFull) return null
+  if (!deckFull) {
+    return (
+      <div className="play-page">
+        <div className="play-page__top-bar">
+          <HomeButton />
+        </div>
+        <p className="play-page__message">Подготовка колоды...</p>
+      </div>
+    )
+  }
 
   const isPremiumRequired = deck.isPremium && !state.premium
   const inTelegram = !!getTg()?.initData

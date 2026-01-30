@@ -22,13 +22,12 @@ export async function createInvoice(
 
 export function openInvoice(invoiceLink: string): void {
   const tg = getTg()
-  if (tg?.openInvoice) {
-    tg.openInvoice(invoiceLink, (status: string) => {
-      if (status === 'paid') {
-        window.dispatchEvent(new CustomEvent('tcg_premium_sync'))
-      }
-    })
-  } else {
+  tg?.openInvoice?.(invoiceLink, (status: string) => {
+    if (status === 'paid') {
+      window.dispatchEvent(new CustomEvent('tcg_premium_sync'))
+    }
+  })
+  if (!tg?.openInvoice) {
     window.location.href = invoiceLink
   }
 }

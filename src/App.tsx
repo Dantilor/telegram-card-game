@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useSyncPremium } from './hooks/useSyncPremium'
+import { readyAndExpand } from './utils/telegram'
 import Home from './pages/Home'
 import Decks from './pages/Decks'
 import MyDecks from './pages/MyDecks'
@@ -10,6 +12,13 @@ import './App.css'
 
 function App() {
   useSyncPremium()
+  useEffect(() => {
+    try {
+      readyAndExpand()
+    } catch {
+      // no-op: don't block UI
+    }
+  }, [])
 
   return (
     <div className="app">

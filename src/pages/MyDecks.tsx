@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useLocalState } from '../hooks/useLocalState'
 import { defaultUserState, type UserState } from '../data/types'
 import { useCustomDecks } from '../hooks/useCustomDecks'
-import { getTg, haptic } from '../utils/telegram'
+import { getInitData, haptic } from '../utils/telegram'
 import { createInvoice, openInvoice } from '../api/subscription'
 import HomeButton from '../components/HomeButton'
 import './MyDecks.css'
@@ -12,7 +12,8 @@ function MyDecks() {
   const navigate = useNavigate()
   const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
   const { decks } = useCustomDecks()
-  const inTelegram = !!getTg()?.initData
+  const init = getInitData()
+  const inTelegram = init.source !== 'none' && !!init.initDataRaw
   const [invoiceLoading, setInvoiceLoading] = useState<'month' | 'year' | null>(null)
 
   const handleBack = () => {

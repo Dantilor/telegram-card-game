@@ -5,7 +5,7 @@ import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { useSwipeCard } from '../hooks/useSwipeCard'
 import { createInvoice, openInvoice } from '../api/subscription'
-import { getTg, haptic } from '../utils/telegram'
+import { getTg, getInitData, haptic } from '../utils/telegram'
 import MicroConfetti from '../components/MicroConfetti'
 import HomeButton from '../components/HomeButton'
 import './Play.css'
@@ -144,7 +144,8 @@ function Play() {
   }
 
   const isPremiumRequired = deck.isPremium && !state.premium
-  const inTelegram = !!getTg()?.initData
+  const init = getInitData()
+  const inTelegram = init.source !== 'none' && !!init.initDataRaw
   if (isPremiumRequired) {
     const handleBuy = (plan: 'month' | 'year') => {
       haptic('light')

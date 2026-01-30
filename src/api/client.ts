@@ -1,10 +1,10 @@
-import { getTg } from '../utils/telegram'
+import { getInitData } from '../utils/telegram'
 
 const baseURL = ''
 
 export function tgHeaders(): Record<string, string> {
-  const tg = getTg()
-  const initData = tg?.initData
+  const init = getInitData()
+  const initData = init.initDataRaw
   if (!initData) return {}
   return { 'X-Telegram-Init-Data': initData }
 }

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useSyncPremium } from './hooks/useSyncPremium'
-import { readyAndExpand } from './utils/telegram'
+import { getInitData, readyAndExpand } from './utils/telegram'
 import Home from './pages/Home'
 import Decks from './pages/Decks'
 import MyDecks from './pages/MyDecks'
@@ -30,6 +30,7 @@ function App() {
 
   const debug = isDebug()
   const tg = typeof window !== 'undefined' ? (window as any).Telegram : null
+  const init = getInitData()
 
   return (
     <div className="app">
@@ -38,7 +39,10 @@ function App() {
           <h2>APP DEBUG</h2>
           <pre>{JSON.stringify({
             hasTelegram: !!tg,
-            initDataPresent: !!tg?.WebApp?.initDataUnsafe,
+            source: init.source,
+            userId: init.userId,
+            hashLength: init.initDataRaw?.length ?? 0,
+            initDataPresent: !!init.initDataRaw,
             hash: window.location.hash,
             href: window.location.href,
           }, null, 2)}</pre>

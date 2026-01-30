@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
-import { getTg } from '../utils/telegram'
+import { getInitData } from '../utils/telegram'
 import { getMe } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 
 const STORAGE_KEY = 'tcg_state'
 
 function syncPremiumFromBackend(): void {
-  const tg = getTg()
-  if (!tg?.initData) return
+  const init = getInitData()
+  if (!init.initDataRaw) return
 
   getMe()
     .then((data) => {
@@ -30,12 +30,12 @@ function syncPremiumFromBackend(): void {
 
 export function useSyncPremium(): void {
   useEffect(() => {
-    if (!getTg()?.initData) return
+    if (!getInitData().initDataRaw) return
 
     syncPremiumFromBackend()
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible') syncPremiumFromBackend()
+      if (document.visibilityState === 'visible' && getInitData().initDataRaw) syncPremiumFromBackend()
     }
     document.addEventListener('visibilitychange', onVisible)
 

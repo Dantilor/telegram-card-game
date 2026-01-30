@@ -9,7 +9,7 @@ function syncPremiumFromBackend(): void {
   const init = getInitData()
   if (!init.initDataRaw) return
   const base = import.meta.env.VITE_API_BASE ?? ''
-  if (!base && typeof window !== 'undefined' && /github\.io$/i.test(window.location.hostname)) return
+  if (typeof window !== 'undefined' && !base && /github\.io/i.test(window.location.hostname)) return
 
   getMe()
     .then((data) => {

@@ -1,4 +1,4 @@
-function isDebug(): boolean {
+export function isDebug(): boolean {
   if (typeof window === 'undefined') return false
   if (import.meta.env.DEV) return true
   const search =
@@ -7,18 +7,14 @@ function isDebug(): boolean {
   return new URLSearchParams(search).get('debug') === '1'
 }
 
-export function mark(name: string): void {
-  if (isDebug() && typeof performance !== 'undefined' && performance.mark) {
-    performance.mark(name)
+export function timeStart(label: string): void {
+  if (isDebug() && typeof console !== 'undefined' && console.time) {
+    console.time(label)
   }
 }
 
-export function measure(name: string, start: string, end?: string): void {
-  if (isDebug() && typeof performance !== 'undefined' && performance.measure) {
-    try {
-      performance.measure(name, start, end)
-    } catch {
-      // ignore
-    }
+export function timeEnd(label: string): void {
+  if (isDebug() && typeof console !== 'undefined' && console.timeEnd) {
+    console.timeEnd(label)
   }
 }

@@ -1,13 +1,12 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { startTransition } from 'react'
 import { getDeckFull } from '../data/decks'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { useSwipeCard } from '../hooks/useSwipeCard'
 import { createInvoice, openInvoice } from '../api/subscription'
 import { getTg, getInitData, haptic } from '../utils/telegram'
-import { mark } from '../utils/perf'
+import { timeStart, timeEnd } from '../utils/perf'
 import MicroConfetti from '../components/MicroConfetti'
 import HomeButton from '../components/HomeButton'
 import './Play.css'
@@ -28,15 +27,12 @@ function createInitialProgress(n: number) {
   }
 }
 
+const MIN_LOADING_MS = 180
+
 function Play() {
-  mark('play-render-start')
   const params = useParams<{ deckId?: string }>()
   const deckId = params.deckId ?? ''
-  const deckFull = useMemo(() => {
-    const r = deckId ? getDeckFull(deckId) : null
-    mark('play-deck-built')
-    return r
-  }, [deckId])
+  const deckFull = useMemo(() => (deckId ? getDeckFull(deckId) : null), [deckId])
   const deck = deckFull
     ? {
         id: deckFull.id,
@@ -53,6 +49,8 @@ function Play() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [isEntering, setIsEntering] = useState(false)
+  const [gameReady, setGameReady] = useState(false)
+  const [endScreenReady, setEndScreenReady] = useState(false)
   const navigate = useNavigate()
   const swipeWrapRef = useRef<HTMLDivElement>(null)
 
@@ -93,23 +91,45 @@ function Play() {
     }
   }, [isEnd, showFavoritesView, deck])
 
+  useEffect(() => {
+    if (!isEnd) {
+      setEndScreenReady(false)
+      return
+    }
+    timeStart('play-end-screen')
+    const t = setTimeout(() => {
+      setEndScreenReady(true)
+      timeEnd('play-end-screen')
+    }, 120)
+    return () => clearTimeout(t)
+  }, [isEnd])
+
   const progressInitDone = useRef(false)
   useEffect(() => {
     if (!deckId || !deckFull) return
     if (progressInitDone.current) return
     progressInitDone.current = true
-    mark('play-progress-init-start')
-    const progress = createInitialProgress(deckFull.questions.length)
-    startTransition(() => {
-      setState((prev) => {
-        mark('play-progress-set')
-        return {
-          ...prev,
-          progress: { ...(prev.progress ?? {}), [deckId]: progress },
-        }
-      })
-    })
+    setGameReady(false)
+    let cancelled = false
+    const t0 = performance.now()
+    timeStart('play-deck-prep')
+    const id = setTimeout(() => {
+      if (cancelled) return
+      const progress = createInitialProgress(deckFull.questions.length)
+      setState((prev) => ({
+        ...prev,
+        progress: { ...(prev.progress ?? {}), [deckId]: progress },
+      }))
+      timeEnd('play-deck-prep')
+      const elapsed = performance.now() - t0
+      const delay = Math.max(0, MIN_LOADING_MS - elapsed)
+      setTimeout(() => {
+        if (!cancelled) setGameReady(true)
+      }, delay)
+    }, 0)
     return () => {
+      cancelled = true
+      clearTimeout(id)
       progressInitDone.current = false
     }
   }, [deckId, deckFull, setState])
@@ -239,13 +259,13 @@ function Play() {
     )
   }
 
-  if (!progress) {
+  if (!progress || !gameReady) {
     return (
       <div className="play-page">
         <div className="play-page__top-bar">
           <HomeButton />
         </div>
-        <p className="play-page__message">Подготовка колоды...</p>
+        <p className="play-page__message">Загрузка…</p>
       </div>
     )
   }
@@ -312,6 +332,16 @@ function Play() {
   )
 
   if (isEnd) {
+    if (!endScreenReady) {
+      return (
+        <div className="play-page">
+          <div className="play-page__top-bar">
+            <HomeButton />
+          </div>
+          <p className="play-page__message">Подведение итогов…</p>
+        </div>
+      )
+    }
     if (showFavoritesView) {
       return (
         <div className="play-page">

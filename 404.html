@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0;url=/telegram-card-game/#/" />
+  <script>
+    (function() {
+      var base = '/telegram-card-game/';
+      var pathname = window.location.pathname;
+      var pathPart = pathname.replace(/^\/telegram-card-game\/?/, '') || '';
+      var hashRoute = '#/' + (pathPart ? pathPart : '');
+      var search = window.location.search || '';
+      var hash = window.location.hash || '';
+      window.location.replace(base + hashRoute + search + hash);
+    })();
+  </script>
+  <title>Redirect…</title>
+</head>
+<body>
+  <p>Redirecting to <a href="/telegram-card-game/">app</a>…</p>
+</body>
+</html>

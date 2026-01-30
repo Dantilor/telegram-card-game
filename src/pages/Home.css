@@ -26,6 +26,27 @@
   max-width: 100%;
 }
 
+@media (max-width: 430px) {
+  .home-page__top-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .home-page__top-row .home-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .home-page__top-row .theme-toggle-wrap {
+    width: 100%;
+    align-items: stretch;
+  }
+}
+
 /* Hero */
 .home-hero {
   position: relative;

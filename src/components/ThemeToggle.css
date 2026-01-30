@@ -50,6 +50,8 @@
   border-radius: 4px;
   cursor: pointer;
   transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .theme-toggle__btn:hover {
@@ -66,4 +68,36 @@
   background: linear-gradient(135deg, var(--neonCyan) 0%, var(--neonPurple) 100%);
   color: var(--btnText);
   box-shadow: 0 0 8px var(--glowCyan);
+}
+
+@media (max-width: 430px) {
+  .theme-toggle-wrap {
+    gap: 0.25rem;
+  }
+
+  .theme-toggle {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2px;
+    border-radius: 10px;
+    gap: 2px;
+  }
+
+  .theme-toggle::-webkit-scrollbar {
+    display: none;
+  }
+
+  .theme-toggle__btn {
+    padding: 0.22rem 0.4rem;
+    font-size: 0.7rem;
+    border-radius: 8px;
+  }
+
+  .theme-toggle__btn--active {
+    box-shadow: 0 0 8px var(--glowPink);
+  }
 }

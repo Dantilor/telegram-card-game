@@ -20,6 +20,9 @@ function setBootDebug(text: string): void {
   if (el && el.style.display !== 'none') el.textContent = text
 }
 
+const boot = document.getElementById('html-boot')
+if (boot) boot.textContent = 'JS STARTED'
+
 if (isDebug()) setBootDebug('MAIN START')
 
 try {
@@ -29,6 +32,7 @@ try {
 }
 
 const rootEl = document.getElementById('root')!
+if (boot) boot.textContent = 'REACT RENDER CALLED'
 createRoot(rootEl).render(
   <StrictMode>
     <HashRouter>

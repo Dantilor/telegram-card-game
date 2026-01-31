@@ -54,7 +54,7 @@ function Decks() {
                 <div className="deck-card__header">
                   <h2 className="deck-card__title">{deck.title}</h2>
                   {deck.isPremium && (
-                    <span className="badge-premium">VIP</span>
+                    <span className="badge badge--pro">PRO</span>
                   )}
                 </div>
                 <p className="deck-card__description">{deck.description}</p>

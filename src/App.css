@@ -25,11 +25,16 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius, 12px);
   box-shadow: var(--shadow);
   padding: 1rem;
-  transition: box-shadow 0.25s ease, border-color 0.2s ease;
-  animation: card-glow-soft 8s ease-in-out infinite;
+  transition: transform var(--transition-fast), box-shadow var(--transition-med), border-color var(--transition-med);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card {
+    animation: card-glow-soft 8s ease-in-out infinite;
+  }
 }
 
 @keyframes card-glow-soft {
@@ -40,32 +45,68 @@
 .card:hover {
   box-shadow: var(--shadow), 0 0 24px var(--glowCyan);
   border-color: rgba(43, 210, 255, 0.2);
-  animation: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card:hover {
+    animation: none;
+  }
 }
 
 [data-theme="neon-light"] .card:hover {
   box-shadow: var(--shadow), 0 0 16px var(--glowCyan);
 }
 
-/* Premium badge + sparkle */
-.badge-premium {
+/* Active tile: subtle sparkle in corner */
+.tile--active::after {
+  content: "";
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tile--active::after {
+    animation: sparkle-pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Badges: PRO (premium), NEW, SOON */
+.badge-premium,
+.badge--pro {
   position: relative;
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.6rem;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border-radius: 6px;
+  border-radius: var(--radius-sm, 6px);
   background: linear-gradient(135deg, var(--neonPink) 0%, var(--neonPurple) 100%);
   color: #fff;
   box-shadow: 0 0 12px var(--glowPink);
-  animation: badge-shimmer 2.5s ease-in-out infinite;
   overflow: hidden;
 }
 
-.badge-premium::after {
+@media (prefers-reduced-motion: no-preference) {
+  .badge-premium, .badge--pro {
+    animation: badge-shimmer 2.5s ease-in-out infinite;
+  }
+}
+
+.badge-premium::after,
+.badge--pro::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -78,17 +119,46 @@
     transparent 100%
   );
   background-size: 200% 100%;
-  animation: badge-sparkle 2.6s ease-in-out infinite;
   pointer-events: none;
   opacity: 0.28;
 }
 
-[data-theme="neon-light"] .badge-premium::after {
+@media (prefers-reduced-motion: no-preference) {
+  .badge-premium::after, .badge--pro::after {
+    animation: badge-sparkle 2.6s ease-in-out infinite;
+  }
+}
+
+[data-theme="neon-light"] .badge-premium::after, [data-theme="neon-light"] .badge--pro::after {
   opacity: 0.2;
 }
 
-[data-theme="portal"] .badge-premium::after {
+[data-theme="portal"] .badge-premium::after, [data-theme="portal"] .badge--pro::after {
   opacity: 0.35;
+}
+
+.badge--new {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 6px);
+  background: rgba(43, 210, 255, 0.2);
+  color: var(--neonCyan);
+  border: 1px solid rgba(43, 210, 255, 0.4);
+}
+
+.badge--soon {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 6px);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  border: 1px solid var(--border);
 }
 
 @keyframes badge-shimmer {
@@ -110,11 +180,11 @@
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 600;
-  border-radius: 14px;
+  border-radius: var(--radius, 12px);
   cursor: pointer;
   text-align: center;
   text-decoration: none;
-  transition: transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: transform var(--transition-fast), box-shadow var(--transition-med), opacity var(--transition-med);
 }
 
 .btn:active:not(:disabled) {

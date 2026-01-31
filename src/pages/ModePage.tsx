@@ -1,0 +1,148 @@
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getDecksByMode } from '../data/decksIndex'
+import { MODES } from '../data/modes'
+import { getDeckFull } from '../data/decks'
+import { useLocalState } from '../hooks/useLocalState'
+import { defaultUserState, type UserState } from '../data/types'
+import { haptic } from '../utils/telegram'
+import { hapticSelection } from '../utils/haptics'
+import HomeButton from '../components/HomeButton'
+import './ModePage.css'
+
+const DECK_ICONS: Record<string, string> = {
+  couples: '💑',
+  friends: '👥',
+  party: '🎉',
+  self: '🪞',
+  intimacy: '💜',
+}
+
+function ModePage() {
+  const navigate = useNavigate()
+  const { modeId } = useParams<{ modeId: string }>()
+  const [localState] = useLocalState<UserState>('tcg_state', defaultUserState)
+
+  const mode = MODES.find((m) => m.id === modeId)
+  const decks = modeId ? getDecksByMode(modeId as import('../data/modes').ModeId) : []
+
+  const handleBack = () => {
+    haptic('light')
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/')
+    }
+  }
+
+  const getProgressIndex = (deckId: string): number => {
+    const p = localState.progress?.[deckId]
+    return p != null && typeof p.index === 'number' ? p.index : 0
+  }
+
+  const getQuestionsCount = (deckId: string): number => {
+    const full = getDeckFull(deckId)
+    return full?.questions?.length ?? 0
+  }
+
+  if (!mode) {
+    return (
+      <div className="mode-page">
+        <div className="mode-page__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mode-page__back" onClick={handleBack}>
+            ← Назад
+          </button>
+        </div>
+        <p className="mode-page__error">Режим не найден</p>
+        <button type="button" className="btn btn--primary" onClick={() => navigate('/')}>
+          На главную
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mode-page">
+      <div className="mode-page__top">
+        <HomeButton />
+        <button type="button" className="btn btn--ghost mode-page__back" onClick={handleBack}>
+          ← Назад
+        </button>
+      </div>
+      <header className="mode-page__header">
+        <h1 className="mode-page__title">
+          <span aria-hidden>{mode.emoji}</span> {mode.title}
+        </h1>
+        <p className="mode-page__tagline">Выбери колоду</p>
+        <Link to="/decks/custom" className="btn btn--ghost mode-page__my-link" onClick={() => haptic('light')}>
+          Мои колоды
+        </Link>
+      </header>
+      <ul className="mode-page__list">
+        {decks.map((deck, i) => {
+          const progressIndex = getProgressIndex(deck.id)
+          const hasProgress = progressIndex > 0
+          const questionsCount = getQuestionsCount(deck.id)
+          const isStub = deck.isPremium && questionsCount === 0
+
+          const content = (
+            <>
+              <span className="mode-page__chip" aria-hidden>
+                {DECK_ICONS[deck.id] ?? '📇'}
+              </span>
+              <div className="mode-page__body">
+                <div className="mode-page__deck-header">
+                  <h2 className="mode-page__deck-title">{deck.title}</h2>
+                  {deck.isPremium && <span className="badge badge--pro">PRO</span>}
+                </div>
+                {hasProgress && (
+                  <span className="mode-page__continue">Продолжить</span>
+                )}
+              </div>
+              {questionsCount > 0 ? (
+                <span className="mode-page__pill font-mono">{questionsCount}</span>
+              ) : (
+                <span className="mode-page__pill mode-page__pill--stub">—</span>
+              )}
+            </>
+          )
+
+          if (isStub) {
+            return (
+              <li
+                key={deck.id}
+                className={`mode-page__card card ${deck.isPremium ? 'mode-page__card--premium' : ''}`}
+                style={{ animationDelay: `${i * 0.06}s` }}
+              >
+                <button
+                  type="button"
+                  className="mode-page__link"
+                  onClick={() => {
+                    hapticSelection()
+                    navigate(`/play/${deck.id}`)
+                  }}
+                >
+                  {content}
+                </button>
+              </li>
+            )
+          }
+
+          return (
+            <li
+              key={deck.id}
+              className={`mode-page__card card ${deck.isPremium ? 'mode-page__card--premium' : ''}`}
+              style={{ animationDelay: `${i * 0.06}s` }}
+            >
+              <Link to={`/play/${deck.id}`} className="mode-page__link" onClick={() => hapticSelection()}>
+                {content}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+export default ModePage

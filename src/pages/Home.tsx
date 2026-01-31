@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
+import { hapticImpact } from '../utils/haptics'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import './Home.css'
@@ -21,15 +22,15 @@ function Home() {
       <section className="home-hero">
         <div className="home-hero__orb" aria-hidden />
         <div className="home-hero__content">
-          <h1 className="home-hero__title">Card Game</h1>
+          <h1 className="home-hero__title">GameNight Host</h1>
           <p className="home-hero__subtitle">
-            Колоды вопросов для пар, друзей и вечеринок
+            Колоды вопросов, Мафия, Алиас и другие игры
           </p>
           <div className="home-hero__actions">
             <Link
-              to="/decks"
+              to="/games"
               className="btn btn--primary home-hero__btn"
-              onClick={() => haptic('light')}
+              onClick={() => hapticImpact('light')}
             >
               Начать игру
             </Link>

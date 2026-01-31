@@ -14,6 +14,7 @@ declare global {
         }
         HapticFeedback?: {
           impactOccurred: (style: 'light' | 'medium' | 'heavy') => void
+          selectionChanged?: () => void
         }
         initDataUnsafe?: {
           user?: {

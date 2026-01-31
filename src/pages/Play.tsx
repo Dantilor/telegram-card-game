@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getDeckFull } from '../data/decks'
+import { getDeckFromIndex } from '../data/decksIndex'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { haptic } from '../utils/telegram'
 import './Play.css'
 
 type Card = { id: string; text: string }
-type TransitionPhase = 'idle' | 'leaving' | 'entering'
+type TransitionPhase = 'idle' | 'leaving' | 'entering' | 'back'
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -28,6 +29,7 @@ type GameState =
   | { status: 'loading' }
   | { status: 'ready'; deckId: string; title: string; cards: Card[]; index: number; finished: boolean }
   | { status: 'error'; message: string }
+  | { status: 'stub' }
 
 const ANIMATION_NAME_LEAVE = 'cardLeave'
 const ANIMATION_NAME_ENTER = 'cardEnter'
@@ -59,19 +61,42 @@ export default function Play() {
           return
         }
         const deck = getDeckById(deckId)
-        const cards: Card[] = deck?.questions
+        const rawCards: Card[] = deck?.questions
           ? deck.questions
               .map((q, idx) => ({ id: String(idx), text: String(q ?? '').trim() }))
               .filter((c) => c.text.length > 0)
           : []
 
-        if (!deck || cards.length === 0) {
-          if (!cancelled) setState({ status: 'error', message: 'Колода не найдена или пуста' })
+        if (!deck || rawCards.length === 0) {
+          if (!cancelled) {
+            if (getDeckFromIndex(deckId)) {
+              setState({ status: 'stub' })
+            } else {
+              setState({ status: 'error', message: 'Колода не найдена или пуста' })
+            }
+          }
           return
         }
 
         const title = deck.title || 'Игра'
-        const prepared = shuffle([...cards])
+        const saved = localState.progress?.[deckId]
+        const savedOrder = saved?.order
+        const hasValidProgress =
+          Array.isArray(savedOrder) &&
+          savedOrder.length === rawCards.length &&
+          savedOrder.every((i) => i >= 0 && i < rawCards.length)
+        const startIndex =
+          hasValidProgress && typeof saved.index === 'number'
+            ? Math.min(Math.max(0, saved.index), savedOrder.length - 1)
+            : 0
+
+        let prepared: Card[]
+        if (hasValidProgress && savedOrder) {
+          prepared = savedOrder.map((origIdx) => rawCards[origIdx]).filter(Boolean)
+          if (prepared.length !== rawCards.length) prepared = shuffle([...rawCards])
+        } else {
+          prepared = shuffle([...rawCards])
+        }
 
         if (!cancelled) {
           setState({
@@ -79,12 +104,21 @@ export default function Play() {
             deckId,
             title,
             cards: prepared,
-            index: 0,
+            index: startIndex,
             finished: false,
           })
-          setDisplayIndex(0)
+          setDisplayIndex(startIndex)
           setTransitionPhase('idle')
           animationPhaseRef.current = 'idle'
+          if (!hasValidProgress) {
+            setLocalState((prev) => ({
+              ...prev,
+              progress: {
+                ...(prev.progress ?? {}),
+                [deckId]: { order: prepared.map((c) => Number(c.id)), index: 0 },
+              },
+            }))
+          }
         }
       } catch (e: unknown) {
         if (!cancelled) {
@@ -139,10 +173,49 @@ export default function Play() {
         setDisplayIndex(nextIdx)
         setTransitionPhase('entering')
         animationPhaseRef.current = 'entering'
+        if (state.status === 'ready') {
+          setLocalState((prev) => ({
+            ...prev,
+            progress: {
+              ...(prev.progress ?? {}),
+              [state.deckId]: {
+                order: state.cards.map((c) => Number(c.id)),
+                index: nextIdx,
+              },
+            },
+          }))
+        }
       }
     } else if (name === ANIMATION_NAME_ENTER && phase === 'entering') {
       setTransitionPhase('idle')
       animationPhaseRef.current = 'idle'
+    }
+  }
+
+  const handleBackClick = () => {
+    if (state.status !== 'ready' || transitionPhase !== 'idle') return
+    haptic('light')
+    if (state.index > 0) {
+      const prevIndex = state.index - 1
+      setState((s) => (s.status === 'ready' ? { ...s, index: prevIndex } : s))
+      setDisplayIndex(prevIndex)
+      setTransitionPhase('back')
+      setLocalState((prev) => ({
+        ...prev,
+        progress: {
+          ...(prev.progress ?? {}),
+          [state.deckId]: {
+            order: state.cards.map((c) => Number(c.id)),
+            index: prevIndex,
+          },
+        },
+      }))
+      window.setTimeout(() => {
+        setTransitionPhase('idle')
+        animationPhaseRef.current = 'idle'
+      }, 200)
+    } else {
+      nav('/decks')
     }
   }
 
@@ -169,7 +242,15 @@ export default function Play() {
   const restart = () => {
     setState((s) => {
       if (s.status !== 'ready') return s
-      return { ...s, cards: shuffle([...s.cards]), index: 0, finished: false }
+      const shuffled = shuffle([...s.cards])
+      setLocalState((prev) => ({
+        ...prev,
+        progress: {
+          ...(prev.progress ?? {}),
+          [s.deckId]: { order: shuffled.map((c) => Number(c.id)), index: 0 },
+        },
+      }))
+      return { ...s, cards: shuffled, index: 0, finished: false }
     })
     setDisplayIndex(0)
     setTransitionPhase('idle')
@@ -182,6 +263,20 @@ export default function Play() {
         <div className="play-loading">
           <div className="play-loading__title">Загрузка игры…</div>
           <div className="play-loading__hint">Подготавливаем карточки</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (state.status === 'stub') {
+    return (
+      <div className="play-page">
+        <div className="play-error">
+          <div className="play-error__title">Колода в разработке / Премиум</div>
+          <div className="play-error__msg">Вопросы для этой колоды пока не добавлены.</div>
+          <button type="button" className="btn btn--primary play-error__btn" onClick={() => nav(-1)}>
+            Назад
+          </button>
         </div>
       </div>
     )
@@ -229,7 +324,9 @@ export default function Play() {
       ? 'play-card--leave'
       : transitionPhase === 'entering'
         ? 'play-card--enter'
-        : 'play-card--idle'
+        : transitionPhase === 'back'
+          ? 'play-card--back'
+          : 'play-card--idle'
   const isLastCard = state.status === 'ready' && state.index >= state.cards.length - 1
   const deckFavorites: number[] =
     state.status === 'ready' ? localState.favorites?.[state.deckId] ?? [] : []
@@ -239,7 +336,16 @@ export default function Play() {
   return (
     <div className="play-page play">
       <div className="play-page__top-bar">
-        <Link to="/" className="btn btn--ghost" onClick={() => haptic('light')}>
+        <button
+          type="button"
+          className="play-page__back-btn btn btn--ghost"
+          onClick={handleBackClick}
+          disabled={transitionPhase !== 'idle'}
+          aria-label="Назад"
+        >
+          ← Назад
+        </button>
+        <Link to="/" className="btn btn--ghost play-page__home-btn" onClick={() => haptic('light')}>
           Домой
         </Link>
       </div>

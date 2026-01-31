@@ -1,0 +1,98 @@
+.card-entry-page {
+  padding: clamp(1rem, 4vw, 1.5rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-entry-page {
+    animation: page-enter 0.35s ease-out;
+  }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-entry-page__top {
+  margin-bottom: 0.75rem;
+}
+
+.card-entry-page__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.card-entry-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.card-entry-page__title {
+  margin: 0 0 0.35rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 24px var(--glowCyan);
+}
+
+[data-theme="neon-light"] .card-entry-page__title {
+  text-shadow: none;
+}
+
+.card-entry-page__tagline {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.card-entry-page__modes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(0.5rem, 2vw, 0.75rem);
+  max-width: 20rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 480px) {
+  .card-entry-page__modes {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 22rem;
+  }
+}
+
+.card-entry-page__mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 3vw, 1rem);
+  text-decoration: none;
+  color: inherit;
+  min-height: 4rem;
+  transition: transform var(--transition-fast), box-shadow var(--transition-med), border-color var(--transition-med);
+}
+
+.card-entry-page__mode-card:active {
+  transform: scale(0.98);
+}
+
+.card-entry-page__mode-card:hover {
+  box-shadow: var(--shadow), 0 0 20px var(--glowCyan);
+  border-color: rgba(43, 210, 255, 0.3);
+}
+
+.card-entry-page__emoji {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.card-entry-page__mode-title {
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+}

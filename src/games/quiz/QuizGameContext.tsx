@@ -1,0 +1,411 @@
+import {
+  createContext,
+  useContext,
+  useReducer,
+  type ReactNode,
+} from 'react'
+import type { GameState, Player, Multiplier, RoundAnswers } from './types'
+import { getQuestionsByTags, shuffleQuestions } from './data/questions'
+import { calculatePoints, getFiftyFiftyIndices, getRandomBooster } from './gameEngine'
+
+type QuizAction =
+  | { type: 'START_SOLO'; tags: string[]; totalQuestions: number }
+  | { type: 'START_ROOM'; tags: string[]; totalQuestions: number }
+  | { type: 'SET_ROOM_PLAYERS'; names: string[] }
+  | { type: 'SELECT_BET'; multiplier: Multiplier }
+  | { type: 'USE_FIFTY_FIFTY' }
+  | { type: 'USE_PAUSE' }
+  | { type: 'USE_INSURANCE' }
+  | { type: 'ANSWER'; playerId: string; answerIndex: number; timeMs: number }
+  | { type: 'TIMER_TICK'; leftSec: number }
+  | { type: 'TIMER_TIMEOUT' }
+  | { type: 'NEXT_QUESTION' }
+  | { type: 'REVENGE' }
+  | { type: 'CONTINUE_5' }
+  | { type: 'RESET' }
+
+function createPlayer(id: string, name: string): Player {
+  return {
+    id,
+    name,
+    score: 0,
+    streak: 0,
+    boosters: { fiftyFifty: 0, pause: 0, insurance: 0 },
+    usedBoostersThisGame: { fiftyFifty: 0, pause: 0, insurance: 0 },
+    nextQuestionBonusMultiplier: 1,
+    totalBoostersEarnedThisGame: 0,
+  }
+}
+
+function applyStreakBonus(player: Player, isCorrect: boolean): Player {
+  if (isCorrect) {
+    const newStreak = player.streak + 1
+    let nextBonus = player.nextQuestionBonusMultiplier
+    let boosters = { ...player.boosters }
+    let totalBoosters = player.totalBoostersEarnedThisGame
+    if (newStreak === 3) nextBonus = 1.2
+    if (newStreak === 5 && totalBoosters < 2) {
+      const b = getRandomBooster()
+      boosters = { ...boosters, [b]: boosters[b] + 1 }
+      totalBoosters++
+    }
+    return { ...player, streak: newStreak, nextQuestionBonusMultiplier: nextBonus, boosters, totalBoostersEarnedThisGame: totalBoosters }
+  }
+  return { ...player, streak: 0, nextQuestionBonusMultiplier: 1 }
+}
+
+const initialTimer = { totalSec: 15, leftSec: 15, running: false }
+
+function quizReducer(state: GameState, action: QuizAction): GameState {
+  switch (action.type) {
+    case 'START_SOLO': {
+      const questions = getQuestionsByTags(action.tags, Math.max(action.totalQuestions, 50))
+      if (questions.length < action.totalQuestions) {
+        return state
+      }
+      const q = shuffleQuestions(questions).slice(0, action.totalQuestions)
+      const player = createPlayer('solo-1', 'Игрок')
+      return {
+        mode: 'solo',
+        selectedTags: action.tags,
+        players: [player],
+        currentPlayerIndex: 0,
+        questionQueue: q,
+        currentQuestionIndex: 0,
+        timer: { ...initialTimer },
+        currentMultiplier: null,
+        round: {},
+        uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+        phase: 'question',
+        questionStartTime: Date.now(),
+        totalQuestions: action.totalQuestions,
+        questionsAnswered: 0,
+      }
+    }
+    case 'START_ROOM': {
+      return {
+        ...state,
+        mode: 'room',
+        selectedTags: action.tags,
+        phase: 'room_setup',
+        questionQueue: [],
+        totalQuestions: action.totalQuestions,
+      }
+    }
+    case 'SET_ROOM_PLAYERS': {
+      const pool = getQuestionsByTags(state.selectedTags, 100)
+      if (pool.length < state.totalQuestions) return state
+      const q = shuffleQuestions(pool).slice(0, state.totalQuestions)
+      const players = action.names.map((name, i) => createPlayer(`p-${i}-${Date.now()}`, name))
+      return {
+        ...state,
+        players,
+        questionQueue: q,
+        currentQuestionIndex: 0,
+        timer: { ...initialTimer },
+        currentMultiplier: null,
+        round: {},
+        uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+        phase: 'question',
+        questionStartTime: Date.now(),
+        questionsAnswered: 0,
+      }
+    }
+    case 'SELECT_BET':
+      return { ...state, currentMultiplier: action.multiplier }
+    case 'USE_FIFTY_FIFTY': {
+      const cur = state.questionQueue[state.currentQuestionIndex]
+      if (!cur) return state
+      const pid = state.players[state.currentPlayerIndex]?.id
+      const player = pid ? state.players.find((p) => p.id === pid) : null
+      if (!player || player.boosters.fiftyFifty <= player.usedBoostersThisGame.fiftyFifty) return state
+      const indices = getFiftyFiftyIndices(cur.correctIndex)
+      return {
+        ...state,
+        uiFlags: { ...state.uiFlags, fiftyFiftyHiddenIndices: indices },
+        players: state.players.map((p) =>
+          p.id === pid
+            ? {
+                ...p,
+                usedBoostersThisGame: { ...p.usedBoostersThisGame, fiftyFifty: p.usedBoostersThisGame.fiftyFifty + 1 },
+              }
+            : p
+        ),
+      }
+    }
+    case 'USE_PAUSE': {
+      const pid = state.players[state.currentPlayerIndex]?.id
+      const player = pid ? state.players.find((p) => p.id === pid) : null
+      if (!player || player.boosters.pause <= player.usedBoostersThisGame.pause) return state
+      return {
+        ...state,
+        timer: { ...state.timer, leftSec: Math.min(25, state.timer.leftSec + 10) },
+        uiFlags: { ...state.uiFlags, pauseUsedThisQuestionByPlayerId: pid, pauseBonusSeconds: (state.uiFlags.pauseBonusSeconds ?? 0) + 10 },
+        players: state.players.map((p) =>
+          p.id === pid
+            ? { ...p, usedBoostersThisGame: { ...p.usedBoostersThisGame, pause: p.usedBoostersThisGame.pause + 1 } }
+            : p
+        ),
+      }
+    }
+    case 'USE_INSURANCE': {
+      const pid = state.players[state.currentPlayerIndex]?.id
+      const player = pid ? state.players.find((p) => p.id === pid) : null
+      if (!player || player.boosters.insurance <= player.usedBoostersThisGame.insurance) return state
+      return {
+        ...state,
+        uiFlags: { ...state.uiFlags, insuranceArmedByPlayerId: pid },
+        players: state.players.map((p) =>
+          p.id === pid
+            ? {
+                ...p,
+                usedBoostersThisGame: { ...p.usedBoostersThisGame, insurance: p.usedBoostersThisGame.insurance + 1 },
+              }
+            : p
+        ),
+      }
+    }
+    case 'ANSWER': {
+      // In room mode, record answer. Move to next player or result.
+      if (state.mode === 'room') {
+        const cur = state.questionQueue[state.currentQuestionIndex]
+        if (!cur) return state
+        const mult = state.currentMultiplier ?? 1
+        const player = state.players.find((p) => p.id === action.playerId)
+        if (!player) return state
+        const isCorrect = action.answerIndex === cur.correctIndex
+        const insurance = state.uiFlags.insuranceArmedByPlayerId === action.playerId
+        const streakBonus = player.nextQuestionBonusMultiplier > 1
+        const firstCorrect = !Object.values(state.round).some((r) => r.isCorrect)
+        const { earned, lost } = calculatePoints(cur, mult, isCorrect, {
+          streakBonus,
+          speedBonus: isCorrect && firstCorrect,
+          insurance: !isCorrect && insurance,
+        })
+        let newPlayers = state.players.map((p) => {
+          if (p.id !== action.playerId) return p
+          const updated = { ...p, score: Math.max(0, p.score + earned - lost) }
+          return applyStreakBonus(updated, isCorrect)
+        })
+        const round: RoundAnswers = {
+          ...state.round,
+          [action.playerId]: {
+            answerIndex: action.answerIndex,
+            timeMs: action.timeMs,
+            isCorrect,
+            pointsEarned: earned,
+            pointsLost: lost,
+            wasFirstCorrect: isCorrect && firstCorrect,
+          },
+        }
+        const allAnswered = state.players.every((p) => round[p.id])
+        const nextIdx = state.currentPlayerIndex + 1
+        return {
+          ...state,
+          round,
+          players: newPlayers,
+          timer: allAnswered ? { ...state.timer, running: false } : { ...initialTimer },
+          phase: allAnswered ? 'result' : 'question',
+          currentPlayerIndex: allAnswered ? state.currentPlayerIndex : nextIdx,
+          currentMultiplier: allAnswered ? state.currentMultiplier : null,
+          uiFlags: allAnswered ? state.uiFlags : { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+          questionStartTime: allAnswered ? state.questionStartTime : Date.now(),
+        }
+      }
+      // Solo branch
+      const cur = state.questionQueue[state.currentQuestionIndex]
+      if (!cur) return state
+      const mult = state.currentMultiplier ?? 1
+      const player = state.players.find((p) => p.id === action.playerId)
+      if (!player) return state
+      const isCorrect = action.answerIndex === cur.correctIndex
+      const insurance = state.uiFlags.insuranceArmedByPlayerId === action.playerId
+      const streakBonus = player.nextQuestionBonusMultiplier > 1
+      const { earned, lost } = calculatePoints(cur, mult, isCorrect, {
+        streakBonus,
+        speedBonus: false,
+        insurance: !isCorrect && insurance,
+      })
+      const newPlayers = state.players.map((p) => {
+        if (p.id !== action.playerId) return p
+        const updated = { ...p, score: Math.max(0, p.score + earned - lost) }
+        return applyStreakBonus(updated, isCorrect)
+      })
+      const round: RoundAnswers = {
+        ...state.round,
+        [action.playerId]: {
+          answerIndex: action.answerIndex,
+          timeMs: action.timeMs,
+          isCorrect,
+          pointsEarned: earned,
+          pointsLost: lost,
+          wasFirstCorrect: false,
+        },
+      }
+      return {
+        ...state,
+        round,
+        players: newPlayers,
+        timer: { ...state.timer, running: false },
+        phase: 'result',
+      }
+    }
+    case 'TIMER_TICK':
+      return { ...state, timer: { ...state.timer, leftSec: action.leftSec } }
+    case 'TIMER_TIMEOUT': {
+      const cur = state.questionQueue[state.currentQuestionIndex]
+      if (!cur) return state
+      const mult = state.currentMultiplier ?? 1
+      const currentPlayer = state.players[state.currentPlayerIndex]
+      if (!currentPlayer) return state
+      const insurance = state.uiFlags.insuranceArmedByPlayerId === currentPlayer.id
+      const { lost } = calculatePoints(cur, mult, false, { insurance })
+      const updated = applyStreakBonus({ ...currentPlayer, score: Math.max(0, currentPlayer.score - lost) }, false)
+      const round: RoundAnswers = {
+        ...state.round,
+        [currentPlayer.id]: { answerIndex: -1, timeMs: 0, isCorrect: false, pointsEarned: 0, pointsLost: lost },
+      }
+      if (state.mode === 'solo') {
+        return {
+          ...state,
+          round,
+          players: [updated],
+          timer: { ...state.timer, running: false },
+          phase: 'result',
+        }
+      }
+      const newPlayers = state.players.map((p) => (p.id === currentPlayer.id ? updated : p))
+      const allAnswered = state.players.every((p) => round[p.id])
+      const nextIdx = state.currentPlayerIndex + 1
+      return {
+        ...state,
+        round,
+        players: newPlayers,
+        timer: allAnswered ? { ...state.timer, running: false } : { ...initialTimer },
+        phase: allAnswered ? 'result' : 'question',
+        currentPlayerIndex: allAnswered ? state.currentPlayerIndex : nextIdx,
+        currentMultiplier: allAnswered ? state.currentMultiplier : null,
+        uiFlags: allAnswered ? state.uiFlags : { fiftyFiftyHiddenIndices: [] },
+        questionStartTime: allAnswered ? state.questionStartTime : Date.now(),
+      }
+    }
+    case 'NEXT_QUESTION': {
+      const nextIdx = state.currentQuestionIndex + 1
+      const questionsAnswered = state.questionsAnswered + 1
+      if (nextIdx >= state.questionQueue.length) {
+        return { ...state, phase: 'final', questionsAnswered }
+      }
+      if (state.mode === 'room' && questionsAnswered > 0 && questionsAnswered % 5 === 0) {
+        return { ...state, phase: 'mini_summary', questionsAnswered }
+      }
+      return {
+        ...state,
+        currentQuestionIndex: nextIdx,
+        currentPlayerIndex: 0,
+        currentMultiplier: null,
+        round: {},
+        uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+        phase: 'question',
+        questionStartTime: Date.now(),
+        timer: { ...initialTimer },
+        questionsAnswered,
+      }
+    }
+    case 'REVENGE': {
+      const players = state.players.map((p) => ({
+        ...p,
+        score: 0,
+        streak: 0,
+        usedBoostersThisGame: { fiftyFifty: 0, pause: 0, insurance: 0 } as const,
+        nextQuestionBonusMultiplier: 1,
+      }))
+      const pool = getQuestionsByTags(state.selectedTags, 100)
+      const q = shuffleQuestions(pool).slice(0, state.totalQuestions)
+      if (q.length < 5) return state
+      return {
+        ...state,
+        players,
+        questionQueue: q,
+        currentQuestionIndex: 0,
+        currentMultiplier: null,
+        round: {},
+        uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+        phase: 'question',
+        questionStartTime: Date.now(),
+        timer: { ...initialTimer },
+        questionsAnswered: 0,
+      }
+    }
+    case 'CONTINUE_5': {
+      const pool = getQuestionsByTags(state.selectedTags, 100)
+      const usedIds = new Set(state.questionQueue.map((x) => x.id))
+      const extra = pool.filter((x) => !usedIds.has(x.id))
+      const more = shuffleQuestions(extra).slice(0, 5)
+      const q = [...state.questionQueue, ...more]
+      return {
+        ...state,
+        questionQueue: q,
+        totalQuestions: state.totalQuestions + 5,
+        phase: 'question',
+        currentQuestionIndex: state.currentQuestionIndex + 1,
+        currentMultiplier: null,
+        round: {},
+        uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+        questionStartTime: Date.now(),
+        timer: { ...initialTimer },
+      }
+    }
+    case 'RESET':
+      return {
+        mode: 'solo',
+        selectedTags: [],
+        players: [],
+        currentPlayerIndex: 0,
+        questionQueue: [],
+        currentQuestionIndex: 0,
+        timer: initialTimer,
+        currentMultiplier: null,
+        round: {},
+        uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+        phase: 'setup',
+        questionStartTime: 0,
+        totalQuestions: 5,
+        questionsAnswered: 0,
+      }
+    default:
+      return state
+  }
+}
+
+const initialState: GameState = {
+  mode: 'solo',
+  selectedTags: [],
+  players: [],
+  currentPlayerIndex: 0,
+  questionQueue: [],
+  currentQuestionIndex: 0,
+  timer: initialTimer,
+  currentMultiplier: null,
+  round: {},
+  uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+  phase: 'setup',
+  questionStartTime: 0,
+  totalQuestions: 5,
+  questionsAnswered: 0,
+}
+
+const QuizContext = createContext<{
+  state: GameState
+  dispatch: React.Dispatch<QuizAction>
+} | null>(null)
+
+export function QuizGameProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(quizReducer, initialState)
+  return <QuizContext.Provider value={{ state, dispatch }}>{children}</QuizContext.Provider>
+}
+
+export function useQuizGame() {
+  const ctx = useContext(QuizContext)
+  if (!ctx) throw new Error('useQuizGame must be used within QuizGameProvider')
+  return ctx
+}

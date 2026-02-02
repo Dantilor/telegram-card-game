@@ -1,0 +1,77 @@
+.activity-result {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.activity-result__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.activity-result__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.activity-result__card {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .activity-result__card {
+    animation: activity-result-in 0.5s ease-out;
+  }
+}
+
+@keyframes activity-result-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.activity-result__title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.activity-result__score {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--neonCyan);
+}
+
+.activity-result__scores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-result__scores p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.activity-result__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-result__btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}

@@ -1,0 +1,162 @@
+.activity-play {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.activity-play__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.activity-play__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.activity-play__teams {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.activity-play__team--active {
+  color: var(--neonCyan);
+  font-weight: 700;
+}
+
+.activity-play__timer-wrap {
+  height: 2rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.activity-play__timer-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, var(--neonCyan), var(--neonPurple));
+  border-radius: 999px;
+  transition: width 0.3s linear;
+}
+
+.activity-play__timer-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.activity-play__card {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .activity-play__card {
+    animation: activity-card-in 0.4s ease-out;
+  }
+}
+
+@keyframes activity-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.activity-play__task {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--neonCyan);
+  text-shadow: 0 0 20px var(--glowCyan);
+}
+
+.activity-play__word {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.activity-play__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.activity-play__btn {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 1.1rem;
+}
+
+.activity-play__footer {
+  margin-top: auto;
+}
+
+.activity-play__finish {
+  width: 100%;
+}
+
+.activity-play__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .activity-play__overlay {
+    animation: activity-overlay-in 0.3s ease-out;
+  }
+}
+
+@keyframes activity-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.activity-play__overlay-card {
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 20rem;
+  width: 100%;
+}
+
+.activity-play__overlay-title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+}
+
+.activity-play__overlay-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

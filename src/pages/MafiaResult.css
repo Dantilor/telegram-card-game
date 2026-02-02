@@ -1,0 +1,120 @@
+.mafia-result {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.mafia-result__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.mafia-result__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.mafia-result__card {
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mafia-result__card {
+    animation: mafia-result-in 0.5s ease-out;
+  }
+}
+
+@keyframes mafia-result-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.mafia-result__card--win {
+  border-color: rgba(43, 210, 255, 0.4);
+  box-shadow: 0 0 24px var(--glowCyan);
+}
+
+.mafia-result__card--lose {
+  border-color: rgba(138, 43, 226, 0.4);
+}
+
+.mafia-result__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.mafia-result__card--win .mafia-result__title {
+  color: var(--neonCyan);
+}
+
+.mafia-result__card--lose .mafia-result__title {
+  color: var(--neonPurple);
+}
+
+.mafia-result__roles {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+}
+
+.mafia-result__roles-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.mafia-result__roles-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mafia-result__roles-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mafia-result__roles-item:last-child {
+  border-bottom: none;
+}
+
+.mafia-result__roles-emoji {
+  font-size: 1.25rem;
+}
+
+.mafia-result__roles-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.mafia-result__roles-role {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.mafia-result__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mafia-result__btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}

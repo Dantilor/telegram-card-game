@@ -1,0 +1,83 @@
+.truth-dare-turn {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+}
+
+.truth-dare-turn__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.truth-dare-turn__back {
+  padding: 0.4rem 0.6rem;
+}
+
+.truth-dare-turn__meta {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.truth-dare-turn__player {
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.truth-dare-turn__name {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.truth-dare-turn__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.truth-dare-turn__shame {
+  margin-bottom: 1.5rem;
+}
+
+.truth-dare-turn__shame-text {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: var(--neonPink);
+  text-align: center;
+}
+
+.truth-dare-turn__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.truth-dare-turn__choice-btn {
+  padding: 1rem 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.truth-dare-turn__choice--truth {
+  background: rgba(43, 210, 255, 0.15);
+  border-color: var(--neonCyan);
+}
+
+.truth-dare-turn__choice--truth:hover {
+  background: rgba(43, 210, 255, 0.25);
+}
+
+.truth-dare-turn__choice--dare {
+  background: rgba(255, 60, 172, 0.15);
+  border-color: var(--neonPink);
+}
+
+.truth-dare-turn__choice--dare:hover {
+  background: rgba(255, 60, 172, 0.25);
+}

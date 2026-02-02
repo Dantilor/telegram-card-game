@@ -1,0 +1,125 @@
+.sabotage-role {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sabotage-role__top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sabotage-role__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.sabotage-role__card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 360px;
+  padding: 2rem;
+  transition: filter 0.4s ease, transform 0.4s ease;
+}
+
+.sabotage-role__card--reveal {
+  animation: sabotage-reveal 0.6s ease-out;
+}
+
+@keyframes sabotage-reveal {
+  0% {
+    filter: blur(4px);
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  100% {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sabotage-role__card--reveal {
+    animation: none;
+  }
+}
+
+.sabotage-role__pass {
+  text-align: center;
+}
+
+.sabotage-role__pass-label {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.sabotage-role__pass-name {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 0 20px var(--glowPink);
+}
+
+.sabotage-role__reveal {
+  text-align: center;
+}
+
+.sabotage-role__reveal--saboteur {
+  color: var(--neonPink);
+}
+
+.sabotage-role__reveal--saboteur .sabotage-role__role {
+  color: var(--neonPink);
+  text-shadow: 0 0 24px var(--glowPink);
+}
+
+.sabotage-role__emoji {
+  display: block;
+  font-size: 4rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.sabotage-role__role {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sabotage-role__hint {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 260px;
+}
+
+.sabotage-role__next {
+  margin-top: 1.5rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.sabotage-role__next-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}
+
+.sabotage-role__progress {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}

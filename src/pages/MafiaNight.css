@@ -1,0 +1,105 @@
+.mafia-night {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.mafia-night--dark {
+  background: linear-gradient(180deg, #0a0a14 0%, #15102a 100%);
+}
+
+.mafia-night__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mafia-night__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.mafia-night__intro {
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem auto;
+  max-width: 18rem;
+}
+
+.mafia-night__intro-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mafia-night__intro-text {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.mafia-night__intro-timer {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+}
+
+.mafia-night__phase-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+}
+
+.mafia-night__targets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.mafia-night__target {
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.9rem 1.25rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--panel);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.mafia-night__target:hover {
+  border-color: rgba(43, 210, 255, 0.5);
+}
+
+.mafia-night__target.is-active {
+  border-color: var(--neonCyan);
+  background: rgba(43, 210, 255, 0.15);
+  box-shadow: 0 0 16px var(--glowCyan);
+  color: var(--neonCyan);
+}
+
+.mafia-night__sheriff-result {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.mafia-night__next {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}

@@ -1,0 +1,62 @@
+.truth-dare-vote {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+}
+
+.truth-dare-vote__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.truth-dare-vote__back {
+  padding: 0.4rem 0.6rem;
+}
+
+.truth-dare-vote__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.truth-dare-vote__subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.truth-dare-vote__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.truth-dare-vote__btn {
+  padding: 1rem 1.25rem;
+  font-size: 1.1rem;
+}
+
+.truth-dare-vote__btn--ok {
+  background: rgba(43, 210, 255, 0.15);
+  border-color: var(--neonCyan);
+}
+
+.truth-dare-vote__btn--harder {
+  background: rgba(255, 60, 172, 0.15);
+  border-color: var(--neonPink);
+}
+
+.truth-dare-vote__hint {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.truth-dare-vote__finish {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}

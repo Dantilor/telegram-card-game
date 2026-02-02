@@ -1,0 +1,85 @@
+.mafia-roles {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mafia-roles__top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mafia-roles__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.mafia-roles__card {
+  width: 100%;
+  max-width: 20rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  min-height: 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease;
+}
+
+.mafia-roles__card--dimmed {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mafia-roles__card {
+    transition: none;
+  }
+}
+
+.mafia-roles__player {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.mafia-roles__emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.mafia-roles__role {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mafia-roles__pass {
+  margin-top: 0.5rem;
+}
+
+.mafia-roles__pass-text {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.mafia-roles__pass-btn {
+  padding: 0.6rem 1.5rem;
+}
+
+.mafia-roles__hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}

@@ -1,0 +1,109 @@
+.truth-dare-setup {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+}
+
+.truth-dare-setup__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.truth-dare-setup__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.truth-dare-setup__header {
+  margin-bottom: 1.25rem;
+}
+
+.truth-dare-setup__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 0 24px var(--glowPink);
+}
+
+.truth-dare-setup__tagline {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.truth-dare-setup__section {
+  margin-bottom: 1.25rem;
+}
+
+.truth-dare-setup__section-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.truth-dare-setup__count-row,
+.truth-dare-setup__steps-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.truth-dare-setup__count-btn,
+.truth-dare-setup__step-btn {
+  min-width: 2.5rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.truth-dare-setup__count-btn.is-active,
+.truth-dare-setup__step-btn.is-active {
+  background: rgba(255, 60, 172, 0.2) !important;
+  border-color: var(--neonPink);
+  color: var(--neonPink);
+}
+
+.truth-dare-setup__names {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.truth-dare-setup__input {
+  padding: 0.6rem 0.85rem;
+  font-size: 1rem;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  background: var(--panel);
+}
+
+.truth-dare-setup__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.truth-dare-setup__tag-btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.truth-dare-setup__tag-btn.is-active {
+  background: rgba(255, 60, 172, 0.15);
+  border-color: var(--neonPink);
+  color: var(--neonPink);
+}
+
+.truth-dare-setup__actions {
+  margin-top: 1.5rem;
+}
+
+.truth-dare-setup__start {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}

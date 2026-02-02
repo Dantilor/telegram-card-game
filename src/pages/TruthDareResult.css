@@ -1,0 +1,74 @@
+.truth-dare-result {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+}
+
+.truth-dare-result__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.truth-dare-result__back {
+  padding: 0.4rem 0.6rem;
+}
+
+.truth-dare-result__title {
+  margin: 0 0 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+.truth-dare-result__titles,
+.truth-dare-result__table {
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.truth-dare-result__section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.truth-dare-result__award {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.truth-dare-result__award-label {
+  color: var(--muted);
+  margin-right: 0.5rem;
+}
+
+.truth-dare-result__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.truth-dare-result__row:last-child {
+  border-bottom: none;
+}
+
+.truth-dare-result__name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.truth-dare-result__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.truth-dare-result__btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}

@@ -1,0 +1,61 @@
+.mafia-day {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.mafia-day__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mafia-day__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.mafia-day__result {
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+}
+
+.mafia-day__result-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mafia-day__result-text {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.mafia-day__timer {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.mafia-day__timer-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.mafia-day__timer-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+}
+
+.mafia-day__vote-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+}

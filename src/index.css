@@ -9,6 +9,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-size-adjust: 100%;
   --app-height: 100vh;
   --app-height: 100dvh;
   /* Design tokens */
@@ -64,6 +65,17 @@ h1, h2, .font-heading {
   opacity: 0.95;
   color: var(--text, #e4e4e4);
   padding: 1rem;
+}
+
+/* Inputs inherit readable colors */
+input,
+textarea {
+  color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
 }
 
 /* Improved text contrast on mobile */

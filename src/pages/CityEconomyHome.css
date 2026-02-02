@@ -1,0 +1,77 @@
+.city-economy-home {
+  padding: clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  min-height: var(--app-height, 100vh);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.city-economy-home__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.city-economy-home__back {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.city-economy-home__header {
+  margin-bottom: 1.25rem;
+}
+
+.city-economy-home__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 0 24px var(--glowCyan);
+}
+
+.city-economy-home__tagline {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.city-economy-home__section {
+  margin-bottom: 1.25rem;
+}
+
+.city-economy-home__section-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.city-economy-home__options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.city-economy-home__opt {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  border: 2px solid transparent;
+}
+
+.city-economy-home__opt.is-active {
+  background: rgba(43, 210, 255, 0.2) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan);
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+
+.city-economy-home__actions {
+  margin: 1.5rem 0;
+}
+
+.city-economy-home__start {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}

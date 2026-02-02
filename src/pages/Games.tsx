@@ -44,7 +44,111 @@ function Games() {
                 <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
                 <h2 className="games-grid__title">{game.title}</h2>
                 <p className="games-grid__desc">{game.description}</p>
-                <span className="badge badge--new">NEW</span>
+              </Link>
+            )
+          }
+          if (isReady && game.id === 'alias') {
+            return (
+              <Link
+                key={game.id}
+                to="/alias"
+                className="games-grid__card card games-grid__card--ready tile--active"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                onClick={() => hapticSelection()}
+              >
+                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+                <h2 className="games-grid__title">{game.title}</h2>
+                <p className="games-grid__desc">{game.description}</p>
+              </Link>
+            )
+          }
+          if (isReady && game.id === 'city-economy') {
+            return (
+              <Link
+                key={game.id}
+                to="/city-economy"
+                className="games-grid__card card games-grid__card--ready tile--active"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                onClick={() => hapticSelection()}
+              >
+                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+                <h2 className="games-grid__title">{game.title}</h2>
+                <p className="games-grid__desc">{game.description}</p>
+              </Link>
+            )
+          }
+          if (isReady && game.id === 'activity') {
+            return (
+              <Link
+                key={game.id}
+                to="/activity"
+                className="games-grid__card card games-grid__card--ready tile--active"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                onClick={() => hapticSelection()}
+              >
+                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+                <h2 className="games-grid__title">{game.title}</h2>
+                <p className="games-grid__desc">{game.description}</p>
+              </Link>
+            )
+          }
+          if (isReady && game.id === 'mafia') {
+            return (
+              <Link
+                key={game.id}
+                to="/mafia"
+                className="games-grid__card card games-grid__card--ready tile--active"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                onClick={() => hapticSelection()}
+              >
+                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+                <h2 className="games-grid__title">{game.title}</h2>
+                <p className="games-grid__desc">{game.description}</p>
+              </Link>
+            )
+          }
+          if (isReady && game.id === 'quiz') {
+            return (
+              <Link
+                key={game.id}
+                to="/quiz"
+                className="games-grid__card card games-grid__card--ready tile--active"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                onClick={() => hapticSelection()}
+              >
+                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+                <h2 className="games-grid__title">{game.title}</h2>
+                <p className="games-grid__desc">{game.description}</p>
+              </Link>
+            )
+          }
+          if (isReady && game.id === 'truth-dare') {
+            return (
+              <Link
+                key={game.id}
+                to="/truth-dare"
+                className="games-grid__card card games-grid__card--ready tile--active"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                onClick={() => hapticSelection()}
+              >
+                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+                <h2 className="games-grid__title">{game.title}</h2>
+                <p className="games-grid__desc">{game.description}</p>
+              </Link>
+            )
+          }
+          if (isReady && game.id === 'sabotage') {
+            return (
+              <Link
+                key={game.id}
+                to="/sabotage"
+                className="games-grid__card card games-grid__card--ready tile--active"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                onClick={() => hapticSelection()}
+              >
+                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+                <h2 className="games-grid__title">{game.title}</h2>
+                <p className="games-grid__desc">{game.description}</p>
               </Link>
             )
           }

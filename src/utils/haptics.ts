@@ -32,3 +32,17 @@ export function hapticImpact(style: 'light' | 'medium' | 'heavy' = 'light'): voi
     // no-op
   }
 }
+
+/** notificationOccurred('success') — use when user scores (e.g. "Угадали"). */
+export function hapticSuccess(): void {
+  try {
+    const h = getHaptic() as { notificationOccurred?: (t: string) => void } | null
+    if (h?.notificationOccurred) {
+      h.notificationOccurred('success')
+    } else {
+      hapticImpact('medium')
+    }
+  } catch {
+    hapticImpact('medium')
+  }
+}

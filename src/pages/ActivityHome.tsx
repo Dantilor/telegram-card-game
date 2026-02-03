@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ACTIVITY_CATEGORIES, getCategoryById, type ActivityCategoryId } from '../games/activity/data/activityWords'
 import type { ActivityMode } from '../games/activity/types'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -13,12 +14,9 @@ function ActivityHome() {
   const navigate = useNavigate()
   const [mode, setMode] = useState<ActivityMode>('solo')
   const [timerSeconds, setTimerSeconds] = useState<TimerOption>(60)
-  const [categoryId, setCategoryId] = useState<ActivityCategoryId | null>('basic')
+  const [categoryId, setCategoryId] = useState<ActivityCategoryId | null>('emotions')
 
-  const handleBack = () => {
-    haptic('light')
-    navigate(-1)
-  }
+  const handleBack = useBack('/games')
 
   const handleCategoryClick = (id: ActivityCategoryId) => {
     hapticSelection()

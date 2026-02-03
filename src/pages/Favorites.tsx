@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useLocalState } from '../hooks/useLocalState'
+import { useBack } from '../hooks/useBack'
 import { defaultUserState, type UserState } from '../data/types'
 import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
@@ -16,15 +17,9 @@ type FavoriteItem = {
 }
 
 function Favorites() {
-  const navigate = useNavigate()
+  const handleBack = useBack('/')
   const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
   const [search, setSearch] = useState('')
-
-  const handleBack = () => {
-    haptic('light')
-    if (window.history.length > 1) navigate(-1)
-    else navigate('/')
-  }
 
   const favorites = state.favorites ?? {}
   const deckIds = Object.keys(favorites).filter((id) => {

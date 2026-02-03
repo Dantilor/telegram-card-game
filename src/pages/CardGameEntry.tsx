@@ -1,21 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { MODES } from '../data/modes'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './CardGameEntry.css'
 
 function CardGameEntry() {
-  const navigate = useNavigate()
-
-  const handleBack = () => {
-    haptic('light')
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate('/games')
-    }
-  }
+  const handleBack = useBack('/games')
 
   return (
     <div className="card-entry-page">

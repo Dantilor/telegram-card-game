@@ -20,7 +20,8 @@ function MafiaResult() {
   const handleBackToGames = () => {
     haptic('light')
     dispatch({ type: 'RESET' })
-    navigate('/games')
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/games')
   }
 
   const roleEmoji: Record<string, string> = {
@@ -37,7 +38,7 @@ function MafiaResult() {
         <button
           type="button"
           className="btn btn--ghost mafia-result__back"
-          onClick={() => navigate('/mafia')}
+          onClick={() => { haptic('light'); dispatch({ type: 'RESET' }); navigate('/mafia') }}
         >
           ← Назад
         </button>

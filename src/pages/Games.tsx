@@ -1,21 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './Games.css'
 
 function Games() {
   const navigate = useNavigate()
-
-  const handleBack = () => {
-    haptic('light')
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate('/')
-    }
-  }
+  const handleBack = useBack('/')
 
   return (
     <div className="games-page">

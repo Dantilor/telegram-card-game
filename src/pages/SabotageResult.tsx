@@ -33,7 +33,8 @@ function SabotageResult() {
   const handleBackToGames = () => {
     haptic('light')
     dispatch({ type: 'RESET' })
-    navigate('/games')
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/games')
   }
 
   return (

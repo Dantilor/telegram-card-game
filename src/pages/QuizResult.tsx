@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuizGame } from '../games/quiz/QuizGameContext'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './QuizResult.css'
@@ -28,10 +28,7 @@ function QuizResult() {
     dispatch({ type: 'NEXT_QUESTION' })
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/quiz')
-  }
+  const handleBack = useBack('/quiz/play')
 
   const isLastQuestion = state.currentQuestionIndex + 1 >= state.questionQueue.length
   const showMiniSummary = state.mode === 'room' && (state.questionsAnswered + 1) % 5 === 0 && !isLastQuestion

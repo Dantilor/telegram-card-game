@@ -1,24 +1,15 @@
-import { useNavigate } from 'react-router-dom'
 import { useLocalState } from '../hooks/useLocalState'
-import { getTgUser, haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
+import { getTgUser } from '../utils/telegram'
 import { defaultUserState, type UserState } from '../data/types'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import './Profile.css'
 
 function Profile() {
-  const navigate = useNavigate()
+  const handleBack = useBack('/')
   const user = getTgUser()
   const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
-
-  const handleBack = () => {
-    haptic('light')
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate('/decks')
-    }
-  }
 
   return (
     <div className="profile-page">

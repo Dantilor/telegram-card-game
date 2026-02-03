@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useCustomDecks } from '../hooks/useCustomDecks'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
 import './CustomDeckEditor.css'
@@ -27,11 +28,7 @@ function CustomDeckEditor() {
     }
   }, [existingDeck])
 
-  const handleBack = () => {
-    haptic('light')
-    if (window.history.length > 1) navigate(-1)
-    else navigate('/favorites')
-  }
+  const handleBack = useBack('/favorites')
 
   const addQuestion = () => {
     haptic('light')

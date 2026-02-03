@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAliasState } from '../games/alias/useAliasState'
 import { ALIAS_CATEGORIES, shuffleFisherYates, type AliasCategoryId } from '../games/alias/data/words'
 import { saveAliasState, type AliasMode } from '../games/alias/state'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -13,10 +14,7 @@ function AliasHome() {
   const [state, setState] = useAliasState()
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
 
-  const handleBack = () => {
-    haptic('light')
-    navigate(-1)
-  }
+  const handleBack = useBack('/games')
 
   const handleModeChange = (mode: AliasMode) => {
     hapticSelection()

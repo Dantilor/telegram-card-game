@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuizGame } from '../games/quiz/QuizGameContext'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './QuizMiniSummary.css'
@@ -23,10 +23,7 @@ function QuizMiniSummary() {
     navigate('/quiz/play')
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/quiz')
-  }
+  const handleBack = useBack('/quiz/play')
 
   return (
     <div className="quiz-mini-summary">

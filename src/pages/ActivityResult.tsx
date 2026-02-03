@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './ActivityResult.css'
@@ -21,10 +21,8 @@ function ActivityResult() {
     navigate('/activity')
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/games')
-  }
+  const handleBackToActivity = useBack('/activity')
+  const handleBackToMenu = useBack('/games')
 
   return (
     <div className="activity-result">
@@ -33,7 +31,7 @@ function ActivityResult() {
         <button
           type="button"
           className="btn btn--ghost activity-result__back"
-          onClick={() => navigate('/activity')}
+          onClick={handleBackToActivity}
         >
           ← Назад
         </button>
@@ -62,7 +60,7 @@ function ActivityResult() {
         <button
           type="button"
           className="btn btn--ghost activity-result__btn"
-          onClick={handleBack}
+          onClick={handleBackToMenu}
         >
           Назад в меню
         </button>

@@ -52,7 +52,8 @@ function QuizRoomSetup() {
   const handleBack = () => {
     haptic('light')
     dispatch({ type: 'RESET' })
-    navigate('/quiz')
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/quiz')
   }
 
   return (

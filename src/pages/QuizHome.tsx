@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuizGame } from '../games/quiz/QuizGameContext'
 import { TAGS, TAG_LABELS } from '../games/quiz/types'
 import { getQuestionsByTags } from '../games/quiz/data/questions'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -43,10 +44,7 @@ function QuizHome() {
     }
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/games')
-  }
+  const handleBack = useBack('/games')
 
   return (
     <div className="quiz-home">

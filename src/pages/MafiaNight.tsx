@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './MafiaNight.css'
@@ -55,10 +55,7 @@ function MafiaNight() {
     }
   }, [state.phase, state.winner, navigate])
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/mafia')
-  }
+  const handleBack = useBack('/mafia/roles')
 
   const goToNextNightStep = () => {
     setShowConfirm(false)

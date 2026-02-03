@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuizGame } from '../games/quiz/QuizGameContext'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './QuizQuestion.css'
@@ -81,10 +81,7 @@ function QuizQuestion() {
     dispatch({ type: 'USE_INSURANCE' })
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/quiz')
-  }
+  const handleBack = useBack('/quiz')
 
   if (!question || !currentPlayer) {
     navigate('/quiz')

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { ROLE_LABELS } from '../games/mafia/types'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './MafiaRoles.css'
@@ -51,10 +51,7 @@ function MafiaRoles() {
     dispatch({ type: 'NEXT_ROLE_VIEW' })
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/mafia')
-  }
+  const handleBack = useBack('/mafia')
 
   if (!player) {
     navigate('/mafia')

@@ -1,18 +1,13 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { getGameById } from '../data/games'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import HomeButton from '../components/HomeButton'
 import './GameStub.css'
 
 function GameStub() {
-  const navigate = useNavigate()
+  const handleBack = useBack('/games')
   const { gameId } = useParams<{ gameId: string }>()
   const game = gameId ? getGameById(gameId) : null
-
-  const handleBack = () => {
-    haptic('light')
-    navigate('/games')
-  }
 
   return (
     <div className="game-stub-page">

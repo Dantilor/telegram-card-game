@@ -3,6 +3,7 @@ import { getDecksByMode } from '../data/decksIndex'
 import { MODES } from '../data/modes'
 import { getDeckFull } from '../data/decks'
 import { useLocalState } from '../hooks/useLocalState'
+import { useBack } from '../hooks/useBack'
 import { defaultUserState, type UserState } from '../data/types'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
@@ -10,11 +11,52 @@ import HomeButton from '../components/HomeButton'
 import './ModePage.css'
 
 const DECK_ICONS: Record<string, string> = {
-  couples: '💑',
-  friends: '👥',
-  party: '🎉',
-  self: '🪞',
-  intimacy: '💜',
+  aboutUs: '💕',
+  feelings: '💗',
+  past: '📜',
+  future: '🔮',
+  conflictsHonesty: '⚡',
+  desiresDreams: '✨',
+  iUnderstandYou: '💬',
+  mostLikely: '🎲',
+  factsAboutUs: '📋',
+  lifeStories: '📖',
+  awkwardSituations: '😅',
+  funnyAccusations: '😏',
+  voting: '🗳️',
+  noFilter: '🔥',
+  absurdHumor: '🤪',
+  finalRound: '⚡',
+  fantasies: '✨',
+  taboo: '🚫',
+  experience: '💡',
+  boundaries: '🛡️',
+  desires: '💝',
+  roleplay: '🎭',
+  provocations: '😈',
+  honestlyOrSkip: '🤫',
+  intimateWithoutWords: '👁️',
+  whatIfScenarios: '🎬',
+  fears: '🦋',
+  confidence: '💪',
+  values: '💎',
+  choices: '🔀',
+  personalBoundaries: '🚧',
+  innerChild: '🌱',
+  fatigue: '😴',
+  wishes: '🌟',
+  selfHonesty: '🪞',
+  growth: '📈',
+  career: '💼',
+  money: '💰',
+  relationships: '💫',
+  freedom: '🕊️',
+  responsibility: '⚖️',
+  risk: '🎲',
+  comfort: '🏠',
+  happiness: '☀️',
+  meaning: '🌌',
+  decisiveChoice: '🎯',
 }
 
 function ModePage() {
@@ -25,24 +67,13 @@ function ModePage() {
   const mode = MODES.find((m) => m.id === modeId)
   const decks = modeId ? getDecksByMode(modeId as import('../data/modes').ModeId) : []
 
-  const handleBack = () => {
-    haptic('light')
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate('/')
-    }
-  }
+  const handleBack = useBack('/card')
 
   const getProgressIndex = (deckId: string): number => {
     const p = localState.progress?.[deckId]
     return p != null && typeof p.index === 'number' ? p.index : 0
   }
 
-  const getQuestionsCount = (deckId: string): number => {
-    const full = getDeckFull(deckId)
-    return full?.questions?.length ?? 0
-  }
 
   if (!mode) {
     return (
@@ -82,8 +113,10 @@ function ModePage() {
         {decks.map((deck, i) => {
           const progressIndex = getProgressIndex(deck.id)
           const hasProgress = progressIndex > 0
-          const questionsCount = getQuestionsCount(deck.id)
+          const fullDeck = getDeckFull(deck.id)
+          const questionsCount = fullDeck?.questions?.length ?? 0
           const isStub = deck.isPremium && questionsCount === 0
+          const description = fullDeck?.description
 
           const content = (
             <>
@@ -93,9 +126,12 @@ function ModePage() {
               <div className="mode-page__body">
                 <div className="mode-page__deck-header">
                   <h2 className="mode-page__deck-title">{deck.title}</h2>
+                  {hasProgress && (
+                    <span className="mode-page__continue">Продолжить</span>
+                  )}
                 </div>
-                {hasProgress && (
-                  <span className="mode-page__continue">Продолжить</span>
+                {description && (
+                  <p className="mode-page__deck-desc">{description}</p>
                 )}
               </div>
               {questionsCount > 0 ? (

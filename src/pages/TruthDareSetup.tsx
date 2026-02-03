@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTruthDare } from '../games/truth-dare/TruthDareContext'
 import { TAGS, TAG_LABELS } from '../games/truth-dare/types'
 import { loadSettings, saveSettings } from '../games/truth-dare/settings'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -61,10 +62,7 @@ function TruthDareSetup() {
     navigate('/truth-dare/turn')
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/games')
-  }
+  const handleBack = useBack('/games')
 
   return (
     <div className="truth-dare-setup">

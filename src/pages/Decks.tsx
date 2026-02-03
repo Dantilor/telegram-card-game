@@ -1,28 +1,61 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { decks } from '../data/decks'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
 import './Decks.css'
 
 const DECK_ICONS: Record<string, string> = {
-  couples: '💑',
-  friends: '👥',
-  party: '🎉',
-  self: '🪞',
-  intimacy: '💜',
+  aboutUs: '💕',
+  feelings: '💗',
+  past: '📜',
+  future: '🔮',
+  conflictsHonesty: '⚡',
+  desiresDreams: '✨',
+  iUnderstandYou: '💬',
+  mostLikely: '🎲',
+  factsAboutUs: '📋',
+  lifeStories: '📖',
+  awkwardSituations: '😅',
+  funnyAccusations: '😏',
+  voting: '🗳️',
+  noFilter: '🔥',
+  absurdHumor: '🤪',
+  finalRound: '⚡',
+  fantasies: '✨',
+  taboo: '🚫',
+  experience: '💡',
+  boundaries: '🛡️',
+  desires: '💝',
+  roleplay: '🎭',
+  provocations: '😈',
+  honestlyOrSkip: '🤫',
+  intimateWithoutWords: '👁️',
+  whatIfScenarios: '🎬',
+  fears: '🦋',
+  confidence: '💪',
+  values: '💎',
+  choices: '🔀',
+  personalBoundaries: '🚧',
+  innerChild: '🌱',
+  fatigue: '😴',
+  wishes: '🌟',
+  selfHonesty: '🪞',
+  growth: '📈',
+  career: '💼',
+  money: '💰',
+  relationships: '💫',
+  freedom: '🕊️',
+  responsibility: '⚖️',
+  risk: '🎲',
+  comfort: '🏠',
+  happiness: '☀️',
+  meaning: '🌌',
+  decisiveChoice: '🎯',
 }
 
 function Decks() {
-  const navigate = useNavigate()
-
-  const handleBack = () => {
-    haptic('light')
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate('/')
-    }
-  }
+  const handleBack = useBack('/games')
 
   return (
     <div className="decks-page">

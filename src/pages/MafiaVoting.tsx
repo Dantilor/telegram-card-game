@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './MafiaVoting.css'
@@ -10,10 +10,7 @@ function MafiaVoting() {
   const navigate = useNavigate()
   const { state, dispatch } = useMafiaGame()
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/mafia')
-  }
+  const handleBack = useBack('/mafia/day')
 
   if (!state.players.length) {
     navigate('/mafia')

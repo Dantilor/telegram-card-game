@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -37,10 +38,7 @@ function SabotageTask() {
     }
   }, [secondsLeft, navigate])
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/sabotage')
-  }
+  const handleBack = useBack('/sabotage/role')
 
   const handleVote = () => {
     haptic('medium')

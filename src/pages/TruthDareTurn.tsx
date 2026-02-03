@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTruthDare } from '../games/truth-dare/TruthDareContext'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './TruthDareTurn.css'
@@ -27,10 +27,7 @@ function TruthDareTurn() {
     navigate('/truth-dare/card')
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/truth-dare')
-  }
+  const handleBack = useBack('/truth-dare')
 
   if (!player) {
     navigate('/truth-dare')

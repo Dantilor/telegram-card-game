@@ -215,7 +215,8 @@ export default function Play() {
         animationPhaseRef.current = 'idle'
       }, 200)
     } else {
-      nav('/decks')
+      if (window.history.length > 1) nav(-1)
+      else nav('/games')
     }
   }
 
@@ -274,7 +275,11 @@ export default function Play() {
         <div className="play-error">
           <div className="play-error__title">Колода в разработке / Премиум</div>
           <div className="play-error__msg">Вопросы для этой колоды пока не добавлены.</div>
-          <button type="button" className="btn btn--primary play-error__btn" onClick={() => nav(-1)}>
+          <button
+            type="button"
+            className="btn btn--primary play-error__btn"
+            onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+          >
             Назад
           </button>
         </div>
@@ -288,8 +293,12 @@ export default function Play() {
         <div className="play-error">
           <div className="play-error__title">Не удалось загрузить игру</div>
           <div className="play-error__msg">{state.message}</div>
-          <button type="button" className="btn btn--primary play-error__btn" onClick={() => nav('/decks')}>
-            Назад к колодам
+          <button
+            type="button"
+            className="btn btn--primary play-error__btn"
+            onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+          >
+            Назад
           </button>
         </div>
       </div>
@@ -306,8 +315,12 @@ export default function Play() {
             <button type="button" className="btn btn--primary play-finish__btn" onClick={restart}>
               Начать заново
             </button>
-            <button type="button" className="btn btn--ghost play-finish__btn" onClick={() => nav('/decks')}>
-              К колодам
+            <button
+              type="button"
+              className="btn btn--ghost play-finish__btn"
+              onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+            >
+              Назад
             </button>
             <button type="button" className="btn btn--ghost play-finish__btn" onClick={() => nav('/')}>
               Домой
@@ -396,9 +409,13 @@ export default function Play() {
           >
             {isInFavorites ? '⭐ В избранном' : '⭐ В избранное'}
           </button>
-          <Link to="/decks" className="btn btn--ghost play-page__back" onClick={() => haptic('light')}>
-            Назад к колодам
-          </Link>
+          <button
+            type="button"
+            className="btn btn--ghost play-page__back"
+            onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+          >
+            Назад
+          </button>
         </div>
       )}
     </div>

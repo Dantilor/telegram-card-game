@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
 import { ROLE_LABELS } from '../games/sabotage/types'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './SabotageRole.css'
@@ -38,10 +38,7 @@ function SabotageRole() {
     }
   }, [state.phase, navigate])
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/sabotage')
-  }
+  const handleBack = useBack('/sabotage')
 
   if (!player) {
     navigate('/sabotage')

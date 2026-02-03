@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
-import { haptic } from '../utils/telegram'
+import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './MafiaDay.css'
@@ -43,10 +43,7 @@ function MafiaDay() {
     navigate('/mafia/voting')
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/mafia')
-  }
+  const handleBack = useBack('/mafia/night')
 
   return (
     <div className="mafia-day">

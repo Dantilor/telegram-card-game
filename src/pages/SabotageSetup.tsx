@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -47,10 +48,7 @@ function SabotageSetup() {
     navigate('/sabotage/role')
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/games')
-  }
+  const handleBack = useBack('/games')
 
   const formatTimer = (sec: number) => `${Math.floor(sec / 60)} мин`
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -44,10 +45,7 @@ function MafiaSetup() {
     navigate('/mafia/roles')
   }
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/games')
-  }
+  const handleBack = useBack('/games')
 
   return (
     <div className="mafia-setup">

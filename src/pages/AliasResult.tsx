@@ -30,7 +30,7 @@ function AliasResult() {
         <button
           type="button"
           className="btn btn--ghost alias-result__back"
-          onClick={() => navigate('/alias')}
+          onClick={() => { haptic('light'); window.history.length > 1 ? navigate(-1) : navigate('/alias') }}
         >
           ← Назад
         </button>

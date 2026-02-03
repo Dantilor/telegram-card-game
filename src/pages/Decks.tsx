@@ -35,8 +35,8 @@ function Decks() {
       <header className="decks-page__header">
         <h1 className="decks-page__title">Card Game</h1>
         <p className="decks-page__tagline">Выбери колоду и поехали</p>
-        <Link to="/decks/custom" className="btn btn--ghost decks-page__my-link" onClick={() => haptic('light')}>
-          Мои колоды
+        <Link to="/favorites" className="btn btn--ghost decks-page__my-link" onClick={() => haptic('light')}>
+          Моё избранное
         </Link>
       </header>
       <ul className="decks-list">
@@ -53,9 +53,6 @@ function Decks() {
               <div className="deck-card__body">
                 <div className="deck-card__header">
                   <h2 className="deck-card__title">{deck.title}</h2>
-                  {deck.isPremium && (
-                    <span className="badge badge--pro">PRO</span>
-                  )}
                 </div>
                 <p className="deck-card__description">{deck.description}</p>
               </div>

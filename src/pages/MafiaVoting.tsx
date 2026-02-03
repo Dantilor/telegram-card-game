@@ -9,6 +9,12 @@ import './MafiaVoting.css'
 function MafiaVoting() {
   const navigate = useNavigate()
   const { state, dispatch } = useMafiaGame()
+
+  const handleBack = () => {
+    haptic('light')
+    navigate('/mafia')
+  }
+
   if (!state.players.length) {
     navigate('/mafia')
     return null
@@ -26,9 +32,36 @@ function MafiaVoting() {
     }
   }, [state.phase, state.winner, navigate])
 
-  const handleBack = () => {
-    haptic('light')
-    navigate('/mafia')
+  if (state.phase === 'voting_summary') {
+    const targetPlayer = state.votingSummaryTargetId
+      ? state.players.find((p) => p.id === state.votingSummaryTargetId)
+      : null
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <div className="mafia-voting__summary card">
+          <h2 className="mafia-voting__summary-title">Результат голосования</h2>
+          <p className="mafia-voting__summary-text">
+            {targetPlayer ? `Большинство выбрало: ${targetPlayer.name}` : 'Ничья. Никого не исключили.'}
+          </p>
+          <button
+            type="button"
+            className="btn btn--primary mafia-voting__summary-btn"
+            onClick={() => {
+              hapticSelection()
+              dispatch({ type: 'CONFIRM_VOTING' })
+            }}
+          >
+            Подтвердить
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const handleVote = (targetId: string) => {

@@ -36,6 +36,34 @@
   color: var(--muted);
 }
 
+.sabotage-setup__how {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
+}
+
+.sabotage-setup__how-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sabotage-setup__how-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.sabotage-setup__how-list li {
+  margin-bottom: 0.25rem;
+}
+
+.sabotage-setup__how-list li:last-child {
+  margin-bottom: 0;
+}
+
 .sabotage-setup__section {
   margin-bottom: 1.25rem;
 }

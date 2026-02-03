@@ -67,3 +67,29 @@
   font-size: 0.85rem;
   color: var(--muted);
 }
+
+.mafia-voting__summary {
+  padding: 2rem;
+  text-align: center;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.mafia-voting__summary-title {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mafia-voting__summary-text {
+  margin: 0 0 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--neonCyan);
+  word-break: break-word;
+}
+
+.mafia-voting__summary-btn {
+  padding: 0.75rem 1.5rem;
+}

@@ -30,7 +30,7 @@ function CustomDeckEditor() {
   const handleBack = () => {
     haptic('light')
     if (window.history.length > 1) navigate(-1)
-    else navigate('/decks/custom')
+    else navigate('/favorites')
   }
 
   const addQuestion = () => {
@@ -56,14 +56,14 @@ function CustomDeckEditor() {
         description: description.trim() || undefined,
         questions,
       })
-      navigate('/decks/custom')
+      navigate('/favorites')
     } else if (editId) {
       updateDeck(editId, {
         title: t,
         description: description.trim() || undefined,
         questions,
       })
-      navigate('/decks/custom')
+      navigate('/favorites')
     }
   }
 
@@ -142,7 +142,7 @@ function CustomDeckEditor() {
           >
             Сохранить
           </button>
-          <Link to="/decks/custom" className="btn btn--ghost" onClick={() => haptic('light')}>
+          <Link to="/favorites" className="btn btn--ghost" onClick={() => haptic('light')}>
             Отмена
           </Link>
         </div>

@@ -17,6 +17,7 @@ type MafiaAction =
   | { type: 'SET_PHASE'; phase: GameState['phase'] }
   | { type: 'SET_VOTE'; voterId: string; targetId: string }
   | { type: 'NEXT_VOTE_COLLECT' }
+  | { type: 'CONFIRM_VOTING' }
   | { type: 'APPLY_VOTING' }
   | { type: 'RESET' }
 
@@ -45,6 +46,7 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         discussionSeconds: 90,
         votes: {},
         voteCollectIndex: 0,
+        votingSummaryTargetId: null,
         winner: null,
       }
     }
@@ -103,7 +105,6 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
     case 'NEXT_VOTE_COLLECT': {
       const alive = state.players.filter((p) => p.alive)
       if (state.voteCollectIndex >= alive.length - 1) {
-        const newState = { ...state, voteCollectIndex: 0 }
         const voteCounts: Record<string, number> = {}
         alive.forEach((p) => { voteCounts[p.id] = 0 })
         Object.values(state.votes).forEach((id) => {
@@ -113,23 +114,33 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         const tied = Object.entries(voteCounts).filter(([, c]) => c === max)
         let eliminated: string | null = null
         if (tied.length === 1 && max > 0) eliminated = tied[0][0]
-        const players = state.players.map((p) =>
-          p.id === eliminated ? { ...p, alive: false } : p
-        )
-        const mafiaLeft = players.filter((p) => p.alive && p.role === 'mafia').length
-        const peacefulLeft = players.filter((p) => p.alive && p.role !== 'mafia').length
-        let winner: 'peaceful' | 'mafia' | null = null
-        if (mafiaLeft === 0) winner = 'peaceful'
-        else if (mafiaLeft >= peacefulLeft) winner = 'mafia'
         return {
-          ...newState,
-          players,
-          votes: {},
-          phase: winner ? 'result' : 'night_intro',
-          winner: winner ?? newState.winner,
+          ...state,
+          voteCollectIndex: 0,
+          phase: 'voting_summary',
+          votingSummaryTargetId: eliminated,
         }
       }
       return { ...state, voteCollectIndex: state.voteCollectIndex + 1 }
+    }
+    case 'CONFIRM_VOTING': {
+      const eliminated = state.votingSummaryTargetId
+      const players = state.players.map((p) =>
+        p.id === eliminated ? { ...p, alive: false } : p
+      )
+      const mafiaLeft = players.filter((p) => p.alive && p.role === 'mafia').length
+      const peacefulLeft = players.filter((p) => p.alive && p.role !== 'mafia').length
+      let winner: 'peaceful' | 'mafia' | null = null
+      if (mafiaLeft === 0) winner = 'peaceful'
+      else if (mafiaLeft >= peacefulLeft) winner = 'mafia'
+      return {
+        ...state,
+        players,
+        votes: {},
+        votingSummaryTargetId: null,
+        phase: winner ? 'result' : 'night_intro',
+        winner: winner ?? state.winner,
+      }
     }
     case 'APPLY_VOTING':
       return state
@@ -143,6 +154,7 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         discussionSeconds: 90,
         votes: {},
         voteCollectIndex: 0,
+        votingSummaryTargetId: null,
         winner: null,
       }
     default:
@@ -159,6 +171,7 @@ const initialState: GameState = {
   discussionSeconds: 90,
   votes: {},
   voteCollectIndex: 0,
+  votingSummaryTargetId: null,
   winner: null,
 }
 

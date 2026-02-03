@@ -62,21 +62,6 @@ function Games() {
               </Link>
             )
           }
-          if (isReady && game.id === 'city-economy') {
-            return (
-              <Link
-                key={game.id}
-                to="/city-economy"
-                className="games-grid__card card games-grid__card--ready tile--active"
-                style={{ animationDelay: `${i * 0.05}s` }}
-                onClick={() => hapticSelection()}
-              >
-                <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
-                <h2 className="games-grid__title">{game.title}</h2>
-                <p className="games-grid__desc">{game.description}</p>
-              </Link>
-            )
-          }
           if (isReady && game.id === 'activity') {
             return (
               <Link

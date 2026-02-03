@@ -14,19 +14,14 @@ function ActivityHome() {
   const [mode, setMode] = useState<ActivityMode>('solo')
   const [timerSeconds, setTimerSeconds] = useState<TimerOption>(60)
   const [categoryId, setCategoryId] = useState<ActivityCategoryId | null>('basic')
-  const [showPaidModal, setShowPaidModal] = useState(false)
 
   const handleBack = () => {
     haptic('light')
     navigate(-1)
   }
 
-  const handleCategoryClick = (id: ActivityCategoryId, paid: boolean) => {
+  const handleCategoryClick = (id: ActivityCategoryId) => {
     hapticSelection()
-    if (paid) {
-      setShowPaidModal(true)
-      return
-    }
     setCategoryId(id)
   }
 
@@ -93,12 +88,11 @@ function ActivityHome() {
             <button
               key={cat.id}
               type="button"
-              className={`activity-home__cat card ${categoryId === cat.id ? 'is-active' : ''} ${cat.paid ? 'activity-home__cat--locked' : ''}`}
-              onClick={() => handleCategoryClick(cat.id, cat.paid)}
+              className={`activity-home__cat card ${categoryId === cat.id ? 'is-active' : ''}`}
+              onClick={() => handleCategoryClick(cat.id)}
             >
               <span className="activity-home__cat-emoji">{cat.emoji}</span>
               <span className="activity-home__cat-title">{cat.title}</span>
-              {cat.paid && <span className="activity-home__lock">🔒</span>}
             </button>
           ))}
         </div>
@@ -114,17 +108,6 @@ function ActivityHome() {
           Начать игру
         </button>
       </div>
-
-      {showPaidModal && (
-        <div className="activity-home__modal-overlay" onClick={() => setShowPaidModal(false)}>
-          <div className="activity-home__modal card" onClick={(e) => e.stopPropagation()}>
-            <p>Пак будет доступен позже</p>
-            <button type="button" className="btn btn--primary" onClick={() => setShowPaidModal(false)}>
-              Ок
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

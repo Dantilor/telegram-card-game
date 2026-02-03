@@ -31,13 +31,6 @@ export const GAMES: Game[] = [
     status: 'ready',
   },
   {
-    id: 'city-economy',
-    title: 'Экономика города',
-    emoji: '🏙️',
-    description: 'Лайт-монополия в картах',
-    status: 'ready',
-  },
-  {
     id: 'activity',
     title: 'Activity',
     emoji: '🎯',

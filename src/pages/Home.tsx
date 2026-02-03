@@ -5,10 +5,14 @@ import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import './Home.css'
 
-const COMING_SOON = [
-  { id: 'quiz', title: 'Викторины', label: 'в разработке' },
-  { id: 'battles', title: 'Баттлы', label: 'в разработке' },
-  { id: 'stories', title: 'Истории', label: 'в разработке' },
+const APP_FEATURES = [
+  'Колоды вопросов',
+  'Alias / Крокодил',
+  'Мафия',
+  'Activity',
+  'Саботаж',
+  'Викторина',
+  'Правда или действие',
 ]
 
 function Home() {
@@ -35,11 +39,11 @@ function Home() {
               Начать игру
             </Link>
             <Link
-              to="/decks/custom"
+              to="/favorites"
               className="btn btn--secondary home-hero__btn"
               onClick={() => haptic('light')}
             >
-              Мои колоды
+              Моё избранное
             </Link>
             <Link
               to="/profile"
@@ -52,16 +56,18 @@ function Home() {
         </div>
       </section>
 
-      <section className="home-coming">
-        <h2 className="home-coming__title">Скоро</h2>
-        <ul className="home-coming__list">
-          {COMING_SOON.map((item) => (
-            <li key={item.id} className="home-coming__card card">
-              <span className="home-coming__card-title">{item.title}</span>
-              <span className="home-coming__card-label">{item.label}</span>
-            </li>
+      <section className="home-about">
+        <h2 className="home-about__subtitle">Игры для компании, пары и вечеринок</h2>
+        <div className="home-about__chips">
+          {APP_FEATURES.map((label) => (
+            <span key={label} className="home-about__chip">
+              {label}
+            </span>
           ))}
-        </ul>
+        </div>
+        <p className="home-about__text">
+          Выбирай игру → настрой режим → играй. Избранные вопросы сохраняются.
+        </p>
       </section>
     </div>
   )

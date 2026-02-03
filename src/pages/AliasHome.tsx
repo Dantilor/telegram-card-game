@@ -11,7 +11,6 @@ import './AliasHome.css'
 function AliasHome() {
   const navigate = useNavigate()
   const [state, setState] = useAliasState()
-  const [showPaidModal, setShowPaidModal] = useState(false)
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
 
   const handleBack = () => {
@@ -29,14 +28,10 @@ function AliasHome() {
     setState((prev) => ({ ...prev, timerSeconds }))
   }
 
-  const handleCategoryClick = (categoryId: AliasCategoryId, paid: boolean, adult?: boolean) => {
+  const handleCategoryClick = (categoryId: AliasCategoryId, _paid: boolean, adult?: boolean) => {
     hapticSelection()
-    if (paid) {
-      if (adult) {
-        setShowAdultConfirm(categoryId)
-      } else {
-        setShowPaidModal(true)
-      }
+    if (adult) {
+      setShowAdultConfirm(categoryId)
       return
     }
     setState((prev) => ({ ...prev, categoryId }))
@@ -125,12 +120,11 @@ function AliasHome() {
             <button
               key={cat.id}
               type="button"
-              className={`alias-home__category-card card ${state.categoryId === cat.id ? 'alias-home__category-card--active' : ''} ${cat.paid ? 'alias-home__category-card--locked' : ''}`}
+              className={`alias-home__category-card card ${state.categoryId === cat.id ? 'alias-home__category-card--active' : ''}`}
               onClick={() => handleCategoryClick(cat.id, cat.paid, cat.adult)}
             >
               <span className="alias-home__category-emoji" aria-hidden>{cat.emoji}</span>
               <span className="alias-home__category-title">{cat.title}</span>
-              {cat.paid && <span className="alias-home__lock" aria-hidden>🔒</span>}
             </button>
           ))}
         </div>
@@ -153,17 +147,6 @@ function AliasHome() {
           Объясняй слово жестами или словами, но без однокоренных. За каждое угаданное — очко. Пропуск — без очка.
         </p>
       </section>
-
-      {showPaidModal && (
-        <div className="alias-home__modal-overlay" onClick={() => setShowPaidModal(false)}>
-          <div className="alias-home__modal card" onClick={(e) => e.stopPropagation()}>
-            <p className="alias-home__modal-text">Пак будет доступен позже</p>
-            <button type="button" className="btn btn--primary" onClick={() => setShowPaidModal(false)}>
-              Ок
-            </button>
-          </div>
-        </div>
-      )}
 
       {showAdultConfirm && (
         <div className="alias-home__modal-overlay" onClick={() => handleAdultConfirm(false)}>

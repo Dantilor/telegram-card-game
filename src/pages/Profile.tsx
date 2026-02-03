@@ -9,7 +9,7 @@ import './Profile.css'
 function Profile() {
   const navigate = useNavigate()
   const user = getTgUser()
-  const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
 
   const handleBack = () => {
     haptic('light')
@@ -18,18 +18,6 @@ function Profile() {
     } else {
       navigate('/decks')
     }
-  }
-
-  const handleResetProgress = () => {
-    setState({ ...state, progress: {} })
-  }
-
-  const handleClearFavorites = () => {
-    setState({ ...state, favorites: {} })
-  }
-
-  const handleResetAll = () => {
-    setState(defaultUserState)
   }
 
   return (
@@ -75,31 +63,11 @@ function Profile() {
         <h2 className="profile-card__heading">Состояние</h2>
         <p className="profile-card__row">
           <span className="profile-card__label">Premium:</span>{' '}
-          {state.premium ? 'да' : 'нет'}
+          {state.premium ? 'есть' : 'нет'}
         </p>
-        <div className="profile-card__actions">
-          <button
-            type="button"
-            className="btn btn--ghost profile-card__btn"
-            onClick={handleResetProgress}
-          >
-            Сбросить прогресс
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost profile-card__btn"
-            onClick={handleClearFavorites}
-          >
-            Очистить избранное
-          </button>
-          <button
-            type="button"
-            className="btn btn--danger profile-card__btn"
-            onClick={handleResetAll}
-          >
-            Сбросить всё
-          </button>
-        </div>
+        <p className="profile-card__hint">
+          Откройте Mini App в Telegram, чтобы подтянуть профиль
+        </p>
       </section>
     </div>
   )

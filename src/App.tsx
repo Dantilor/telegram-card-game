@@ -9,14 +9,11 @@ import CardGameEntry from './pages/CardGameEntry'
 import GameStub from './pages/GameStub'
 import Decks from './pages/Decks'
 import ModePage from './pages/ModePage'
-import MyDecks from './pages/MyDecks'
+import Favorites from './pages/Favorites'
 import Play from './pages/Play'
 import AliasHome from './pages/AliasHome'
 import AliasPlay from './pages/AliasPlay'
 import AliasResult from './pages/AliasResult'
-import CityEconomyHome from './pages/CityEconomyHome'
-import CityEconomyPlay from './pages/CityEconomyPlay'
-import CityEconomyResult from './pages/CityEconomyResult'
 import ActivityHome from './pages/ActivityHome'
 import ActivityPlay from './pages/ActivityPlay'
 import ActivityResult from './pages/ActivityResult'
@@ -71,15 +68,13 @@ function App() {
         <Route path="/game/:gameId" element={<GameStub />} />
         <Route path="/decks" element={<Decks />} />
         <Route path="/mode/:modeId" element={<ModePage />} />
-        <Route path="/decks/custom" element={<MyDecks />} />
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/decks/custom" element={<Favorites />} />
         <Route path="/decks/custom/new" element={<CustomDeckEditor />} />
         <Route path="/decks/custom/:id/edit" element={<CustomDeckEditor />} />
         <Route path="/alias" element={<AliasHome />} />
         <Route path="/alias/play" element={<AliasPlay />} />
         <Route path="/alias/result" element={<AliasResult />} />
-        <Route path="/city-economy" element={<CityEconomyHome />} />
-        <Route path="/city-economy/play" element={<CityEconomyPlay />} />
-        <Route path="/city-economy/result" element={<CityEconomyResult />} />
         <Route path="/activity" element={<ActivityHome />} />
         <Route path="/activity/play" element={<ActivityPlay />} />
         <Route path="/activity/result" element={<ActivityResult />} />

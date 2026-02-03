@@ -74,8 +74,8 @@ function ModePage() {
           <span aria-hidden>{mode.emoji}</span> {mode.title}
         </h1>
         <p className="mode-page__tagline">Выбери колоду</p>
-        <Link to="/decks/custom" className="btn btn--ghost mode-page__my-link" onClick={() => haptic('light')}>
-          Мои колоды
+        <Link to="/favorites" className="btn btn--ghost mode-page__my-link" onClick={() => haptic('light')}>
+          Моё избранное
         </Link>
       </header>
       <ul className="mode-page__list">
@@ -93,7 +93,6 @@ function ModePage() {
               <div className="mode-page__body">
                 <div className="mode-page__deck-header">
                   <h2 className="mode-page__deck-title">{deck.title}</h2>
-                  {deck.isPremium && <span className="badge badge--pro">PRO</span>}
                 </div>
                 {hasProgress && (
                   <span className="mode-page__continue">Продолжить</span>

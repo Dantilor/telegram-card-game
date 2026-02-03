@@ -203,49 +203,46 @@
   font-size: clamp(0.875rem, 2.5vw, 0.95rem);
 }
 
-/* Coming soon */
-.home-coming {
-  margin-top: clamp(0.75rem, 3vw, 1rem);
+/* About */
+.home-about {
+  margin-top: clamp(1rem, 4vw, 1.5rem);
   padding: 0 clamp(0.5rem, 2vw, 0.75rem);
   max-width: 100%;
 }
 
-.home-coming__title {
+.home-about__subtitle {
   margin: 0 0 0.75rem;
-  font-size: clamp(1rem, 2.5vw, 1.1rem);
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
   font-weight: 600;
   color: var(--muted);
-}
-
-.home-coming__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(0.4rem, 2vw, 0.5rem);
-}
-
-.home-coming__card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(0.6rem, 2vw, 0.85rem) clamp(0.35rem, 1.5vw, 0.5rem);
   text-align: center;
-  min-height: 3.5rem;
-  min-width: 0;
 }
 
-.home-coming__card-title {
-  font-size: clamp(0.7rem, 2vw, 0.8rem);
-  font-weight: 600;
+.home-about__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.home-about__chip {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: var(--text);
-  margin-bottom: 0.15rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
 }
 
-.home-coming__card-label {
-  font-size: clamp(0.55rem, 1.5vw, 0.65rem);
+.home-about__text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
   color: var(--muted);
-  text-transform: lowercase;
+  text-align: center;
+  max-width: 22rem;
+  margin-left: auto;
+  margin-right: auto;
 }

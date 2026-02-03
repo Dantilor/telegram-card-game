@@ -63,7 +63,7 @@ function MafiaDay() {
       </div>
 
       <div className="mafia-day__timer card">
-        <span className="mafia-day__timer-label">Обсуждение</span>
+        <span className="mafia-day__timer-label">День. Обсуждение</span>
         <span className="mafia-day__timer-value">{Math.floor(secondsLeft / 60)}:{(secondsLeft % 60).toString().padStart(2, '0')}</span>
       </div>
 

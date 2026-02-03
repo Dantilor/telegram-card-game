@@ -18,12 +18,16 @@ export type Phase =
   | 'setup'
   | 'roles'
   | 'night_intro'
+  | 'night_mafia_intro'
   | 'night_mafia'
+  | 'night_doctor_intro'
   | 'night_doctor'
+  | 'night_sheriff_intro'
   | 'night_sheriff'
   | 'day'
   | 'voting'
   | 'voting_collect'
+  | 'voting_summary'
   | 'result'
 
 export type GameState = {
@@ -35,6 +39,7 @@ export type GameState = {
   discussionSeconds: number
   votes: Record<string, string>
   voteCollectIndex: number
+  votingSummaryTargetId: string | null
   winner: 'peaceful' | 'mafia' | null
 }
 

@@ -49,6 +49,67 @@
   color: var(--neonCyan);
 }
 
+.mafia-night__intro-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.mafia-night__progress {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.mafia-night__intercept {
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 20rem;
+  margin: 0 auto 1rem;
+}
+
+.mafia-night__intercept-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mafia-night__intercept-phrase {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: var(--neonCyan);
+  font-style: italic;
+}
+
+.mafia-night__intercept-instruction {
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.mafia-night__intercept-btn {
+  padding: 0.75rem 1.5rem;
+}
+
+.mafia-night__confirm {
+  padding: 2rem;
+  text-align: center;
+  max-width: 20rem;
+  margin: 0 auto 1rem;
+}
+
+.mafia-night__confirm-text {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--neonCyan);
+}
+
+.mafia-night__confirm-btn {
+  padding: 0.75rem 1.5rem;
+}
+
 .mafia-night__phase-title {
   margin: 0 0 1rem;
   font-size: 1.25rem;

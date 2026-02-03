@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { ROLE_LABELS } from '../games/mafia/types'
 import { haptic } from '../utils/telegram'
-import { hapticSelection } from '../utils/haptics'
+import { hapticSelection, hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './MafiaRoles.css'
 
@@ -12,7 +12,8 @@ const ROLE_DISPLAY_MS = 5000
 function MafiaRoles() {
   const navigate = useNavigate()
   const { state, dispatch } = useMafiaGame()
-  const [showRole, setShowRole] = useState(true)
+  const [roleRevealed, setRoleRevealed] = useState(false)
+  const [roleDimmed, setRoleDimmed] = useState(false)
 
   if (!state.players.length) {
     navigate('/mafia')
@@ -23,19 +24,30 @@ function MafiaRoles() {
   const isLast = state.roleViewIndex >= state.players.length - 1
 
   useEffect(() => {
-    setShowRole(true)
-    const t = setTimeout(() => setShowRole(false), ROLE_DISPLAY_MS)
-    return () => clearTimeout(t)
-  }, [state.roleViewIndex])
-
-  useEffect(() => {
     if (state.phase === 'night_intro') {
       navigate('/mafia/night')
     }
   }, [state.phase, navigate])
 
+  useEffect(() => {
+    if (roleRevealed) {
+      setRoleDimmed(false)
+      const t = setTimeout(() => setRoleDimmed(true), ROLE_DISPLAY_MS)
+      return () => clearTimeout(t)
+    } else {
+      setRoleDimmed(false)
+    }
+  }, [roleRevealed])
+
+  const handleShowRole = () => {
+    hapticImpact('medium')
+    setRoleRevealed(true)
+  }
+
   const handleNext = () => {
     hapticSelection()
+    setRoleRevealed(false)
+    setRoleDimmed(false)
     dispatch({ type: 'NEXT_ROLE_VIEW' })
   }
 
@@ -61,30 +73,32 @@ function MafiaRoles() {
         </button>
       </div>
 
-      <div className={`mafia-roles__card card ${!showRole ? 'mafia-roles__card--dimmed' : ''}`}>
-        <p className="mafia-roles__player">Игрок: {player.name}</p>
-        {showRole ? (
-          <>
+      <p className="mafia-roles__progress">Игрок {state.roleViewIndex + 1} / {state.players.length}</p>
+
+      <div className="mafia-roles__card card">
+        <h2 className="mafia-roles__player-name">Игрок: {player.name}</h2>
+        {roleRevealed ? (
+          <div className={`mafia-roles__reveal ${roleDimmed ? 'mafia-roles__reveal--dimmed' : ''}`}>
             <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
-            <h2 className="mafia-roles__role">{roleLabel}</h2>
-          </>
-        ) : (
-          <div className="mafia-roles__pass">
-            <p className="mafia-roles__pass-text">Передай следующему</p>
+            <p className="mafia-roles__role">{roleLabel}</p>
             <button
               type="button"
-              className="btn btn--primary mafia-roles__pass-btn"
+              className="btn btn--primary mafia-roles__next-btn"
               onClick={handleNext}
             >
-              {isLast ? 'Начать игру' : 'Готово'}
+              {isLast ? 'Начать игру' : 'Передать следующему'}
             </button>
           </div>
+        ) : (
+          <button
+            type="button"
+            className="btn btn--primary mafia-roles__show-btn"
+            onClick={handleShowRole}
+          >
+            Показать мою роль
+          </button>
         )}
       </div>
-
-      <p className="mafia-roles__hint">
-        {state.roleViewIndex + 1} / {state.players.length}
-      </p>
     </div>
   )
 }

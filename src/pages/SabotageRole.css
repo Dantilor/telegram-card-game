@@ -100,22 +100,32 @@
   color: var(--text);
 }
 
-.sabotage-role__hint {
-  margin: 1rem 0 0;
-  font-size: 0.85rem;
+.sabotage-role__hint-text {
+  margin: 0.5rem 0 1rem;
+  font-size: 0.9rem;
   color: var(--muted);
   max-width: 260px;
 }
 
-.sabotage-role__next {
-  margin-top: 1.5rem;
-  width: 100%;
-  max-width: 280px;
+.sabotage-role__player-name {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.sabotage-role__show-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.25rem;
+}
+
+.sabotage-role__next-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.25rem;
 }
 
 .sabotage-role__next-btn {
   width: 100%;
-  padding: 0.75rem 1rem;
+  max-width: 280px;
 }
 
 .sabotage-role__progress {

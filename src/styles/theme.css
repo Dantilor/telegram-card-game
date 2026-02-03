@@ -24,6 +24,14 @@
   --blob1: rgba(255, 200, 230, 0.2);
   --blob2: rgba(200, 230, 255, 0.22);
   --blob3: rgba(220, 200, 255, 0.18);
+  --td-panel-bg: rgba(0, 0, 0, 0.45);
+  --td-text-strong: #fff;
+  --td-text-muted: rgba(255, 255, 255, 0.9);
+  --td-placeholder: rgba(255, 255, 255, 0.7);
+  --td-input-bg: rgba(0, 0, 0, 0.4);
+  --td-btn-ghost-bg: rgba(255, 255, 255, 0.12);
+  --td-border: rgba(255, 255, 255, 0.2);
+  --td-active-bg: rgba(255, 60, 172, 0.25);
 }
 
 /* neon-light — почти дневная, светлый лавандово-голубой */
@@ -51,6 +59,14 @@
   --blob1: rgba(168, 85, 247, 0.06);
   --blob2: rgba(6, 182, 212, 0.06);
   --blob3: rgba(124, 58, 237, 0.05);
+  --td-panel-bg: rgba(255, 255, 255, 0.75);
+  --td-text-strong: #1A102A;
+  --td-text-muted: rgba(26, 16, 42, 0.85);
+  --td-placeholder: rgba(26, 16, 42, 0.6);
+  --td-input-bg: rgba(255, 255, 255, 0.9);
+  --td-btn-ghost-bg: rgba(26, 16, 42, 0.08);
+  --td-border: rgba(26, 16, 42, 0.2);
+  --td-active-bg: rgba(124, 58, 237, 0.2);
 }
 
 /* portal — зелёно-циановые градиенты */
@@ -78,9 +94,17 @@
   --blob1: rgba(0, 255, 200, 0.12);
   --blob2: rgba(0, 230, 180, 0.15);
   --blob3: rgba(100, 255, 220, 0.1);
+  --td-panel-bg: rgba(0, 0, 0, 0.4);
+  --td-text-strong: #e8fff8;
+  --td-text-muted: rgba(224, 255, 244, 0.9);
+  --td-placeholder: rgba(224, 255, 244, 0.7);
+  --td-input-bg: rgba(0, 0, 0, 0.35);
+  --td-btn-ghost-bg: rgba(255, 255, 255, 0.1);
+  --td-border: rgba(255, 255, 255, 0.18);
+  --td-active-bg: rgba(0, 255, 204, 0.25);
 }
 
-/* soft-light (premium) — мягкий светлый */
+/* soft-light — мягкий светлый */
 [data-theme="soft-light"] {
   --bg0: #f5f3ff;
   --bg1: #ede9fe;
@@ -105,9 +129,17 @@
   --blob1: rgba(167, 139, 250, 0.08);
   --blob2: rgba(34, 211, 238, 0.08);
   --blob3: rgba(124, 58, 237, 0.06);
+  --td-panel-bg: rgba(255, 255, 255, 0.85);
+  --td-text-strong: #1e1b4b;
+  --td-text-muted: rgba(30, 27, 75, 0.85);
+  --td-placeholder: rgba(30, 27, 75, 0.6);
+  --td-input-bg: rgba(255, 255, 255, 0.9);
+  --td-btn-ghost-bg: rgba(30, 27, 75, 0.08);
+  --td-border: rgba(30, 27, 75, 0.18);
+  --td-active-bg: rgba(124, 58, 237, 0.18);
 }
 
-/* sunset (premium) — тёплый закат */
+/* sunset — тёплый закат */
 [data-theme="sunset"] {
   --bg0: #1c1917;
   --bg1: #292524;
@@ -132,9 +164,17 @@
   --blob1: rgba(251, 146, 60, 0.15);
   --blob2: rgba(251, 191, 36, 0.12);
   --blob3: rgba(249, 115, 22, 0.1);
+  --td-panel-bg: rgba(0, 0, 0, 0.35);
+  --td-text-strong: #fef9e7;
+  --td-text-muted: rgba(254, 243, 199, 0.9);
+  --td-placeholder: rgba(254, 243, 199, 0.7);
+  --td-input-bg: rgba(0, 0, 0, 0.3);
+  --td-btn-ghost-bg: rgba(255, 255, 255, 0.1);
+  --td-border: rgba(255, 255, 255, 0.18);
+  --td-active-bg: rgba(251, 191, 36, 0.25);
 }
 
-/* minimal-calm (premium) — минималистичный спокойный */
+/* minimal-calm — минималистичный спокойный */
 [data-theme="minimal-calm"] {
   --bg0: #0f172a;
   --bg1: #1e293b;
@@ -159,6 +199,14 @@
   --blob1: rgba(56, 189, 248, 0.08);
   --blob2: rgba(129, 140, 248, 0.08);
   --blob3: rgba(148, 163, 184, 0.06);
+  --td-panel-bg: rgba(0, 0, 0, 0.4);
+  --td-text-strong: #f1f5f9;
+  --td-text-muted: rgba(226, 232, 240, 0.9);
+  --td-placeholder: rgba(226, 232, 240, 0.7);
+  --td-input-bg: rgba(0, 0, 0, 0.35);
+  --td-btn-ghost-bg: rgba(255, 255, 255, 0.1);
+  --td-border: rgba(255, 255, 255, 0.15);
+  --td-active-bg: rgba(56, 189, 248, 0.25);
 }
 
 /* Gradient background + glow blobs (uses theme variables) + slow move */

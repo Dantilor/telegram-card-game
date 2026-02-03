@@ -7,8 +7,6 @@ import { hapticSelection, hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './SabotageRole.css'
 
-const PASS_DISPLAY_MS = 2000
-
 function SabotageRole() {
   const navigate = useNavigate()
   const { state, dispatch } = useSabotageGame()
@@ -22,28 +20,23 @@ function SabotageRole() {
   const player = state.players[state.roleViewIndex]
   const isLast = state.roleViewIndex >= state.players.length - 1
 
-  useEffect(() => {
+  const handleNext = () => {
+    hapticSelection()
     setPhase('pass')
-    const t = setTimeout(() => setPhase('role'), PASS_DISPLAY_MS)
-    return () => clearTimeout(t)
-  }, [state.roleViewIndex])
+    dispatch({ type: 'NEXT_ROLE_VIEW' })
+  }
 
-  useEffect(() => {
-    if (phase === 'role') {
-      hapticImpact('medium')
-    }
-  }, [phase])
+  const handleRevealFromPass = () => {
+    hapticSelection()
+    hapticImpact('medium')
+    setPhase('role')
+  }
 
   useEffect(() => {
     if (state.phase === 'task') {
       navigate('/sabotage/task')
     }
   }, [state.phase, navigate])
-
-  const handleNext = () => {
-    hapticSelection()
-    dispatch({ type: 'NEXT_ROLE_VIEW' })
-  }
 
   const handleBack = () => {
     haptic('light')
@@ -66,36 +59,41 @@ function SabotageRole() {
         </button>
       </div>
 
+      <p className="sabotage-role__progress">Игрок {state.roleViewIndex + 1} / {state.players.length}</p>
+
       <div className={`sabotage-role__card card ${phase === 'role' ? 'sabotage-role__card--reveal' : ''}`}>
         {phase === 'pass' ? (
           <div className="sabotage-role__pass">
             <p className="sabotage-role__pass-label">Передай телефон игроку:</p>
             <h2 className="sabotage-role__pass-name">{player.name}</h2>
+            <button
+              type="button"
+              className="btn btn--primary sabotage-role__show-btn"
+              onClick={handleRevealFromPass}
+            >
+              Показать мою роль
+            </button>
           </div>
         ) : (
           <div className={`sabotage-role__reveal ${isSaboteur ? 'sabotage-role__reveal--saboteur' : ''}`}>
+            <p className="sabotage-role__player-name">Игрок: {player.name}</p>
             <span className="sabotage-role__emoji" aria-hidden>
               {isSaboteur ? '😈' : '👤'}
             </span>
             <h2 className="sabotage-role__role">{ROLE_LABELS[player.role]}</h2>
             {isSaboteur && (
-              <p className="sabotage-role__hint">Мешай аккуратно: сомневайся, отвлекай, усложняй</p>
+              <p className="sabotage-role__hint-text">Мешай аккуратно: сомневайся, отвлекай, усложняй</p>
             )}
+            <button
+              type="button"
+              className="btn btn--primary sabotage-role__next-btn"
+              onClick={handleNext}
+            >
+              {isLast ? 'Начать задание' : 'Передать следующему игроку'}
+            </button>
           </div>
         )}
       </div>
-
-      {phase === 'role' && (
-        <div className="sabotage-role__next">
-          <button type="button" className="btn btn--primary sabotage-role__next-btn" onClick={handleNext}>
-            {isLast ? 'Начать задание' : 'Готово'}
-          </button>
-        </div>
-      )}
-
-      <p className="sabotage-role__progress">
-        {state.roleViewIndex + 1} / {state.players.length}
-      </p>
     </div>
   )
 }

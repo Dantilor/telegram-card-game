@@ -67,6 +67,16 @@ function SabotageSetup() {
         <p className="sabotage-setup__tagline">Один знает задание и мешает тайно</p>
       </header>
 
+      <div className="sabotage-setup__how card">
+        <h3 className="sabotage-setup__how-title">Как играть</h3>
+        <ul className="sabotage-setup__how-list">
+          <li>Всем выдаётся одно задание</li>
+          <li>Один игрок — Саботёр (узнаёт об этом тайно)</li>
+          <li>Саботёр аккуратно мешает, остальные пытаются его вычислить</li>
+          <li>После таймера — голосование, затем раскрытие</li>
+        </ul>
+      </div>
+
       <section className="sabotage-setup__section">
         <h2 className="sabotage-setup__section-title">Игроки</h2>
         <div className="sabotage-setup__count-row">

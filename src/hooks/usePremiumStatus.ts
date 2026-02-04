@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getInitData } from '../utils/telegram'
-import { getPremiumStatus } from '../api/subscription'
+import { getMe, ApiAuthError } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 
 const CACHE_KEY = 'tcg_premium_status'
@@ -54,15 +54,16 @@ export function usePremiumStatus(): {
   isPremium: boolean
   activeUntil: string | null
   loading: boolean
+  authError: boolean
   refetch: () => void
 } {
-  const baseURL = import.meta.env.VITE_API_BASE ?? ''
   const mountedRef = useRef(true)
 
   const [state, setState] = useState<{
     isPremium: boolean
     activeUntil: string | null
     loading: boolean
+    authError: boolean
   }>(() => {
     const cached = readCache()
     if (cached) {
@@ -70,18 +71,20 @@ export function usePremiumStatus(): {
         isPremium: cached.isPremium,
         activeUntil: cached.activeUntil,
         loading: false,
+        authError: false,
       }
     }
     return {
       isPremium: false,
       activeUntil: null,
       loading: true,
+      authError: false,
     }
   })
 
-  const doneLoading = useCallback((data: { isPremium: boolean; activeUntil: string | null }) => {
+  const doneLoading = useCallback((data: { isPremium: boolean; activeUntil: string | null; authError?: boolean }) => {
     if (mountedRef.current) {
-      setState({ ...data, loading: false })
+      setState({ ...data, loading: false, authError: data.authError ?? false })
     }
   }, [])
 
@@ -91,38 +94,37 @@ export function usePremiumStatus(): {
 
     if (!initData) {
       if (isDev) console.log('[TCG] Premium: no initData (open in Telegram)')
-      doneLoading({ isPremium: false, activeUntil: null })
-      return
-    }
-    if (!baseURL) {
-      if (isDev) console.log('[TCG] Premium: VITE_API_BASE not set, using isPremium=false')
-      doneLoading({ isPremium: false, activeUntil: null })
+      doneLoading({ isPremium: false, activeUntil: null, authError: true })
       return
     }
 
     const cached = readCache()
     if (cached) {
       updateTcgState(cached.isPremium)
-      doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil })
+      doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false })
       return
     }
 
     setState((s) => ({ ...s, loading: true }))
     try {
-      const res = await getPremiumStatus()
+      const me = await getMe()
       const data = {
-        isPremium: res.isPremium,
-        activeUntil: res.activeUntil ?? null,
+        isPremium: me.premium,
+        activeUntil: me.premiumUntil ?? null,
       }
       writeCache(data)
       updateTcgState(data.isPremium)
       if (isDev) console.log('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
-      doneLoading(data)
+      doneLoading({ ...data, authError: false })
     } catch (e) {
       if (isDev) console.warn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
-      doneLoading({ isPremium: false, activeUntil: null })
+      doneLoading({
+        isPremium: false,
+        activeUntil: null,
+        authError: e instanceof ApiAuthError,
+      })
     }
-  }, [baseURL, doneLoading])
+  }, [doneLoading])
 
   useEffect(() => {
     mountedRef.current = true
@@ -153,6 +155,7 @@ export function usePremiumStatus(): {
     isPremium: state.isPremium,
     activeUntil: state.activeUntil,
     loading: state.loading,
+    authError: state.authError,
     refetch: fetchStatus,
   }
 }

@@ -8,7 +8,7 @@ import './Profile.css'
 function Profile() {
   const handleBack = useBack('/')
   const user = getTgUser()
-  const { isPremium } = usePremium()
+  const { isPremium, authError } = usePremium()
   const userId = getInitData().userId
 
   return (
@@ -50,6 +50,11 @@ function Profile() {
         )}
       </section>
 
+      {authError && (
+        <p className="profile-card__hint" style={{ marginTop: '0.5rem', color: 'var(--accent, #ff6b9d)' }}>
+          Откройте приложение внутри Telegram
+        </p>
+      )}
       <section className={`profile-premium ${isPremium ? 'profile-premium--active' : ''}`}>
         {isPremium ? (
           <p className="profile-premium__status-only">Premium: активен</p>

@@ -1,53 +1,35 @@
-import { getInitData } from '../utils/telegram'
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  'https://telegram-card-game.onrender.com'
+).replace(/\/$/, '')
 
-const baseURL = import.meta.env.VITE_API_BASE ?? ''
-const isDev = import.meta.env.DEV
-
-const FETCH_TIMEOUT_MS = 10000
-
-export function tgHeaders(): Record<string, string> {
-  const init = getInitData()
-  const initData = init.initDataRaw
-  if (!initData) return {}
-  return { 'X-Telegram-Init-Data': initData }
+function getInitData(): string {
+  return (typeof window !== 'undefined' && (window as Window & { Telegram?: { WebApp?: { initData?: string } } })?.Telegram?.WebApp?.initData) || ''
 }
 
-export async function fetchJSON<T = unknown>(
-  path: string,
-  options: RequestInit & { timeoutMs?: number } = {}
-): Promise<T> {
-  const { timeoutMs = FETCH_TIMEOUT_MS, ...fetchOptions } = options
-  const url = path.startsWith('http') ? path : `${baseURL}${path}`
+export async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
+  const initData = getInitData()
+  const headers = new Headers(options.headers ?? {})
+  headers.set('Content-Type', 'application/json')
+  if (initData) headers.set('x-telegram-init-data', initData)
 
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`
+  const res = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'omit',
+  })
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...tgHeaders(),
-    ...(typeof fetchOptions.headers === 'object' && !(fetchOptions.headers instanceof Headers)
-      ? (fetchOptions.headers as Record<string, string>)
-      : {}),
+  if (!res.ok) {
+    const text = await res.text()
+    const err = new Error(`API ${res.status}: ${text}`) as Error & { status?: number }
+    err.status = res.status
+    throw err
   }
+  return res.json() as Promise<T>
+}
 
-  try {
-    const res = await fetch(url, {
-      ...fetchOptions,
-      headers,
-      signal: controller.signal,
-    })
-    clearTimeout(timeoutId)
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }))
-      throw new Error((err as { error?: string }).error ?? res.statusText)
-    }
-    return res.json() as Promise<T>
-  } catch (e) {
-    clearTimeout(timeoutId)
-    if (e instanceof Error && e.name === 'AbortError' && isDev) {
-      console.warn('[TCG] API timeout:', path)
-    }
-    throw e
-  }
+export function getApiBaseUrl(): string {
+  return API_BASE_URL
 }

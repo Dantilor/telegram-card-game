@@ -5,6 +5,7 @@ type PremiumContextValue = {
   isPremium: boolean
   activeUntil: string | null
   loading: boolean
+  authError: boolean
   refetch: () => void
 }
 
@@ -12,6 +13,7 @@ const PremiumContext = createContext<PremiumContextValue>({
   isPremium: false,
   activeUntil: null,
   loading: false,
+  authError: false,
   refetch: () => {},
 })
 

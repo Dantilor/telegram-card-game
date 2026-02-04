@@ -1,5 +1,5 @@
 import { getTg } from '../utils/telegram'
-import { fetchJSON } from './client'
+import { apiFetch } from './client'
 
 export type MeResponse = {
   telegramId: number
@@ -12,18 +12,37 @@ export type PremiumStatusResponse = {
   activeUntil: string | null
 }
 
+export class ApiAuthError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ApiAuthError'
+  }
+}
+
 export async function getMe(): Promise<MeResponse> {
-  return fetchJSON<MeResponse>('/api/me', { method: 'GET' })
+  try {
+    return await apiFetch<MeResponse>('/api/me', { method: 'GET' })
+  } catch (e) {
+    const err = e as Error & { status?: number }
+    if (err.status === 401) {
+      throw new ApiAuthError('Откройте приложение внутри Telegram')
+    }
+    throw e
+  }
 }
 
 export async function getPremiumStatus(): Promise<PremiumStatusResponse> {
-  return fetchJSON<PremiumStatusResponse>('/premium-status', { method: 'GET' })
+  const me = await getMe()
+  return {
+    isPremium: me.premium,
+    activeUntil: me.premiumUntil ?? null,
+  }
 }
 
 export async function createInvoice(
   plan: 'month' | 'year'
 ): Promise<{ invoiceLink: string }> {
-  return fetchJSON<{ invoiceLink: string }>('/api/invoice', {
+  return apiFetch<{ invoiceLink: string }>('/api/invoice', {
     method: 'POST',
     body: JSON.stringify({ plan }),
   })

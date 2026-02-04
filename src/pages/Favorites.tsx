@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocalState } from '../hooks/useLocalState'
 import { useBack } from '../hooks/useBack'
+import { usePremium } from '../contexts/PremiumContext'
 import { defaultUserState, type UserState } from '../data/types'
 import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
@@ -21,14 +22,15 @@ type FavoriteItem = {
 function Favorites() {
   const handleBack = useBack('/')
   const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const { isPremium } = usePremium()
   const [search, setSearch] = useState('')
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   useEffect(() => {
-    if (isFavoritesLocked(state.premium)) {
+    if (isFavoritesLocked(isPremium)) {
       setPremiumOverlayOpen(true)
     }
-  }, [state.premium])
+  }, [isPremium])
 
   const favorites = state.favorites ?? {}
   const deckIds = Object.keys(favorites).filter((id) => {

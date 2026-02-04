@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MODES } from '../data/modes'
 import { useBack } from '../hooks/useBack'
-import { useLocalState } from '../hooks/useLocalState'
-import { defaultUserState, type UserState } from '../data/types'
+import { usePremium } from '../contexts/PremiumContext'
 import { isModeLocked } from '../utils/access'
 import type { ModeId } from '../data/modes'
 import { hapticSelection } from '../utils/haptics'
@@ -13,7 +12,7 @@ import './CardGameEntry.css'
 
 function CardGameEntry() {
   const handleBack = useBack('/games')
-  const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   return (
@@ -30,7 +29,7 @@ function CardGameEntry() {
       </header>
       <div className="card-entry-page__modes">
         {MODES.map((mode) => {
-          const locked = isModeLocked(mode.id as ModeId, state.premium)
+          const locked = isModeLocked(mode.id as ModeId, isPremium)
           if (locked) {
             return (
               <button

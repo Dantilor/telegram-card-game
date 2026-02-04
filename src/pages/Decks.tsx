@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom'
 import { decks } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
 import { useBack } from '../hooks/useBack'
-import { useLocalState } from '../hooks/useLocalState'
-import { defaultUserState, type UserState } from '../data/types'
+import { usePremium } from '../contexts/PremiumContext'
 import { isDeckLocked, isFavoritesLocked } from '../utils/access'
 import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
@@ -71,7 +70,7 @@ const DECK_ICONS: Record<string, string> = {
 
 function Decks() {
   const handleBack = useBack('/games')
-  const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   return (
@@ -85,7 +84,7 @@ function Decks() {
       <header className="decks-page__header">
         <h1 className="decks-page__title">Card Game</h1>
         <p className="decks-page__tagline">Выбери колоду и поехали</p>
-        {isFavoritesLocked(state.premium) ? (
+        {isFavoritesLocked(isPremium) ? (
           <button
             type="button"
             className="btn btn--ghost decks-page__my-link"
@@ -106,7 +105,7 @@ function Decks() {
         {decks.map((deck, i) => {
           const indexEntry = getDeckFromIndex(deck.id)
           const modeId = (indexEntry?.modeId ?? 'party') as ModeId
-          const locked = isDeckLocked(modeId, deck.id, state.premium)
+          const locked = isDeckLocked(modeId, deck.id, isPremium)
 
           if (locked) {
             return (

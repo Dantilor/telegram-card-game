@@ -1,7 +1,6 @@
-import { useLocalState } from '../hooks/useLocalState'
 import { useBack } from '../hooks/useBack'
-import { getTgUser } from '../utils/telegram'
-import { defaultUserState, type UserState } from '../data/types'
+import { usePremium } from '../contexts/PremiumContext'
+import { getTgUser, getInitData } from '../utils/telegram'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import './Profile.css'
@@ -9,7 +8,8 @@ import './Profile.css'
 function Profile() {
   const handleBack = useBack('/')
   const user = getTgUser()
-  const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const { isPremium } = usePremium()
+  const userId = getInitData().userId
 
   return (
     <div className="profile-page">
@@ -50,8 +50,8 @@ function Profile() {
         )}
       </section>
 
-      <section className={`profile-premium ${state.premium ? 'profile-premium--active' : ''}`}>
-        {state.premium ? (
+      <section className={`profile-premium ${isPremium ? 'profile-premium--active' : ''}`}>
+        {isPremium ? (
           <p className="profile-premium__status-only">Premium: активен</p>
         ) : (
           <>
@@ -87,6 +87,11 @@ function Profile() {
           </>
         )}
       </section>
+      {import.meta.env.DEV && userId != null && (
+        <p className="profile-card__hint" style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7 }}>
+          id {userId}
+        </p>
+      )}
     </div>
   )
 }

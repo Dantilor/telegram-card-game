@@ -5,6 +5,7 @@ import { MODES } from '../data/modes'
 import { getDeckFull } from '../data/decks'
 import { useLocalState } from '../hooks/useLocalState'
 import { useBack } from '../hooks/useBack'
+import { usePremium } from '../contexts/PremiumContext'
 import { defaultUserState, type UserState } from '../data/types'
 import { isDeckLocked, isFavoritesLocked } from '../utils/access'
 import type { ModeId } from '../data/modes'
@@ -74,6 +75,7 @@ function ModePage() {
   const navigate = useNavigate()
   const { modeId } = useParams<{ modeId: string }>()
   const [localState] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   const mode = MODES.find((m) => m.id === modeId)
@@ -117,7 +119,7 @@ function ModePage() {
           <span aria-hidden>{mode.emoji}</span> {mode.title}
         </h1>
         <p className="mode-page__tagline">Выбери колоду</p>
-        {isFavoritesLocked(localState.premium) ? (
+        {isFavoritesLocked(isPremium) ? (
           <button
             type="button"
             className="btn btn--ghost mode-page__my-link"
@@ -167,7 +169,7 @@ function ModePage() {
             </>
           )
 
-          const locked = isDeckLocked(modeId as ModeId, deck.id, localState.premium)
+          const locked = isDeckLocked(modeId as ModeId, deck.id, isPremium)
 
           if (locked) {
             return (

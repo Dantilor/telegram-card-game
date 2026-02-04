@@ -7,8 +7,17 @@ export type MeResponse = {
   premiumUntil?: string
 }
 
+export type PremiumStatusResponse = {
+  isPremium: boolean
+  activeUntil: string | null
+}
+
 export async function getMe(): Promise<MeResponse> {
   return fetchJSON<MeResponse>('/api/me', { method: 'GET' })
+}
+
+export async function getPremiumStatus(): Promise<PremiumStatusResponse> {
+  return fetchJSON<PremiumStatusResponse>('/premium-status', { method: 'GET' })
 }
 
 export async function createInvoice(

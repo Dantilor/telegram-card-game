@@ -1,7 +1,7 @@
-import { Telegraf } from 'telegraf'
+import { Telegraf, type Context } from 'telegraf'
 import { setUserPremium, getUser } from './storage.js'
 
-const BOT_TOKEN = process.env.BOT_TOKEN
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
 const WEBAPP_URL = process.env.WEBAPP_URL || ''
 
 if (!BOT_TOKEN) {
@@ -11,7 +11,7 @@ if (!BOT_TOKEN) {
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null
 
 if (bot && WEBAPP_URL) {
-  bot.start((ctx) => {
+  bot.start((ctx: Context) => {
     return ctx.reply('Откройте Mini App', {
       reply_markup: {
         inline_keyboard: [
@@ -26,8 +26,8 @@ if (bot && WEBAPP_URL) {
     })
   })
 
-  bot.on('successful_payment', async (ctx) => {
-    const msg = ctx.message
+  bot.on('successful_payment', async (ctx: Context) => {
+    const msg = ctx.message as { successful_payment?: { invoice_payload?: string }; from?: { id?: number } } | undefined
     if (!msg?.successful_payment?.invoice_payload) return
     let payload: { plan?: string; telegramId?: number }
     try {

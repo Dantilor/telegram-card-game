@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
-import { useLocalState } from '../hooks/useLocalState'
-import { defaultUserState, type UserState } from '../data/types'
+import { usePremium } from '../contexts/PremiumContext'
 import { isFavoritesLocked } from '../utils/access'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
@@ -21,9 +20,9 @@ const APP_FEATURES = [
 ]
 
 function Home() {
-  const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
-  const favoritesLocked = isFavoritesLocked(state.premium)
+  const favoritesLocked = isFavoritesLocked(isPremium)
 
   return (
     <div className="home-page">

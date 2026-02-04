@@ -1,26 +1,36 @@
 import 'dotenv/config'
 import express from 'express'
-import { launchBot } from './bot.js'
-import api from './api.js'
+import cors from 'cors'
+import authRouter from './routes/auth.js'
+import premiumRouter from './routes/premium.js'
+import meRouter from './routes/me.js'
 
-const PORT = parseInt(process.env.PORT || '3000', 10)
+const isDev = process.env.NODE_ENV !== 'production'
+const port = Number(process.env.PORT) || 3001
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
 
 const app = express()
+app.use(cors({ origin: corsOrigin }))
 app.use(express.json())
-app.use('/api', api)
 
+// Health check first — always 200, no DB
 app.get('/health', (_req, res) => {
-  res.json({ ok: true })
+  res.status(200).json({ ok: true })
 })
 
-async function main() {
-  await launchBot()
-  app.listen(PORT, () => {
-    console.log(`Server listening on http://localhost:${PORT}`)
-  })
-}
+app.use('/', authRouter)
+app.use('/', premiumRouter)
+app.use('/', meRouter)
 
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
+app.listen(port, () => {
+  console.log(`[TCG] Server listening on port ${port}`)
+  if (isDev) {
+    console.log(`[TCG] Health: http://localhost:${port}/health`)
+    if (!process.env.DATABASE_URL) {
+      console.warn('[TCG] DATABASE_URL not set — DB routes will fail')
+    }
+    if (!process.env.TELEGRAM_BOT_TOKEN) {
+      console.warn('[TCG] TELEGRAM_BOT_TOKEN not set — auth/premium will fail')
+    }
+  }
 })

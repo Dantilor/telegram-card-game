@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { useSyncPremium } from './hooks/useSyncPremium'
 import { useAppHeight } from './hooks/useAppHeight'
+import { PremiumProvider } from './contexts/PremiumContext'
 import { readyAndExpand } from './utils/telegram'
 import Home from './pages/Home'
 import Games from './pages/Games'
@@ -50,7 +50,6 @@ import './App.css'
 
 function App() {
   useAppHeight()
-  useSyncPremium()
   useEffect(() => {
     try {
       readyAndExpand()
@@ -60,8 +59,9 @@ function App() {
   }, [])
 
   return (
-    <div className="app">
-      <Routes>
+    <PremiumProvider>
+      <div className="app">
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />
         <Route path="/card" element={<CardGameEntry />} />
@@ -117,8 +117,9 @@ function App() {
           }
         />
         <Route path="/profile" element={<Profile />} />
-      </Routes>
-    </div>
+        </Routes>
+      </div>
+    </PremiumProvider>
   )
 }
 

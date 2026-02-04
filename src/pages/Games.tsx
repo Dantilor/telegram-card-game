@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
 import { useBack } from '../hooks/useBack'
-import { useLocalState } from '../hooks/useLocalState'
-import { defaultUserState, type UserState } from '../data/types'
+import { usePremium } from '../contexts/PremiumContext'
 import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -13,12 +12,12 @@ import './Games.css'
 function Games() {
   const navigate = useNavigate()
   const handleBack = useBack('/')
-  const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   const renderGameCard = (game: (typeof GAMES)[0], i: number) => {
     const isReady = game.status === 'ready'
-    const isLocked = isReady && isGameLocked(game.id, state.premium)
+    const isLocked = isReady && isGameLocked(game.id, isPremium)
     const cardClass = `games-grid__card card ${isReady ? 'games-grid__card--ready tile--active' : 'games-grid__card--stub'}`
     const cardContent = (
       <>

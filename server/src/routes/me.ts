@@ -17,20 +17,23 @@ function getInitDataFromRequest(req: Request): string | null {
 const router = Router()
 
 router.get('/api/me', async (req: Request, res: Response) => {
+  const initData = getInitDataFromRequest(req)
+  if (!initData) {
+    res.status(401).json({ error: 'initData required' })
+    return
+  }
+
+  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? ''
+  let telegram_id: number
   try {
-    const initData = getInitDataFromRequest(req)
-    if (!initData) {
-      res.status(401).json({ error: 'initData required' })
-      return
-    }
-    const botToken = process.env.TELEGRAM_BOT_TOKEN
-    if (!botToken) {
-      res.status(500).json({ error: 'Server misconfiguration' })
-      return
-    }
+    const parsed = verifyInitData(initData, botToken)
+    telegram_id = parsed.telegram_id
+  } catch (e: unknown) {
+    res.status(401).json({ error: 'Unauthorized' })
+    return
+  }
 
-    const { telegram_id } = verifyInitData(initData, botToken)
-
+  try {
     await query(
       `INSERT INTO users (telegram_id) VALUES ($1)
        ON CONFLICT (telegram_id) DO NOTHING`,
@@ -45,14 +48,15 @@ router.get('/api/me', async (req: Request, res: Response) => {
     const sub = rows.rows[0]
     const now = new Date()
     const premium = !!sub && new Date(sub.active_until) > now
-    const premiumUntil = sub ? sub.active_until.toISOString() : undefined
+    const premiumUntil = sub ? sub.active_until.toISOString() : null
 
-    res.json({ telegramId: telegram_id, premium, premiumUntil })
+    res.status(200).json({ telegramId: telegram_id, premium, premiumUntil })
   } catch (e: unknown) {
-    const err = e as Error & { status?: number }
-    const status = err.status ?? 500
-    res.status(status).json({
-      error: status === 401 ? 'Unauthorized' : 'Internal error',
+    console.error('[TCG] /api/me error:', e)
+    res.status(200).json({
+      telegramId: telegram_id,
+      premium: false,
+      premiumUntil: null,
     })
   }
 })

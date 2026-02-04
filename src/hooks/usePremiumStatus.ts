@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { getInitData } from '../utils/telegram'
+import { getInitData } from '../lib/telegram'
 import { getMe, ApiAuthError } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 
@@ -55,6 +55,7 @@ export function usePremiumStatus(): {
   activeUntil: string | null
   loading: boolean
   authError: boolean
+  authError401: boolean
   refetch: () => void
 } {
   const mountedRef = useRef(true)
@@ -64,6 +65,7 @@ export function usePremiumStatus(): {
     activeUntil: string | null
     loading: boolean
     authError: boolean
+    authError401: boolean
   }>(() => {
     const cached = readCache()
     if (cached) {
@@ -72,6 +74,7 @@ export function usePremiumStatus(): {
         activeUntil: cached.activeUntil,
         loading: false,
         authError: false,
+        authError401: false,
       }
     }
     return {
@@ -79,29 +82,29 @@ export function usePremiumStatus(): {
       activeUntil: null,
       loading: true,
       authError: false,
+      authError401: false,
     }
   })
 
-  const doneLoading = useCallback((data: { isPremium: boolean; activeUntil: string | null; authError?: boolean }) => {
+  const doneLoading = useCallback((data: { isPremium: boolean; activeUntil: string | null; authError?: boolean; authError401?: boolean }) => {
     if (mountedRef.current) {
-      setState({ ...data, loading: false, authError: data.authError ?? false })
+      setState({ ...data, loading: false, authError: data.authError ?? false, authError401: data.authError401 ?? false })
     }
   }, [])
 
   const fetchStatus = useCallback(async () => {
-    const init = getInitData()
-    const initData = init.initDataRaw
+    const initData = getInitData()
 
     if (!initData) {
       if (isDev) console.log('[TCG] Premium: no initData (open in Telegram)')
-      doneLoading({ isPremium: false, activeUntil: null, authError: true })
+      doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false })
       return
     }
 
     const cached = readCache()
     if (cached) {
       updateTcgState(cached.isPremium)
-      doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false })
+      doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false })
       return
     }
 
@@ -115,13 +118,14 @@ export function usePremiumStatus(): {
       writeCache(data)
       updateTcgState(data.isPremium)
       if (isDev) console.log('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
-      doneLoading({ ...data, authError: false })
+      doneLoading({ ...data, authError: false, authError401: false })
     } catch (e) {
       if (isDev) console.warn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
       doneLoading({
         isPremium: false,
         activeUntil: null,
-        authError: e instanceof ApiAuthError,
+        authError: true,
+        authError401: e instanceof ApiAuthError,
       })
     }
   }, [doneLoading])
@@ -156,6 +160,7 @@ export function usePremiumStatus(): {
     activeUntil: state.activeUntil,
     loading: state.loading,
     authError: state.authError,
+    authError401: state.authError401,
     refetch: fetchStatus,
   }
 }

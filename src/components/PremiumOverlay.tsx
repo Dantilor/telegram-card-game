@@ -1,16 +1,20 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { PREMIUM_PLAN } from '../config/premium'
 import { haptic } from '../utils/telegram'
+import { getTelegramWebApp, getInitData } from '../lib/telegram'
+import { getBaseUrl, apiPost } from '../lib/api'
 import './PremiumOverlay.css'
 
 type Props = {
   isOpen: boolean
   onClose: () => void
-  /** Заглушка для будущего Telegram Payments. Пока не вызывает оплату. */
   onBuyPremium?: () => void
 }
 
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     if (isOpen) {
       const handleEsc = (e: KeyboardEvent) => {
@@ -32,13 +36,48 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
     }
   }
 
-  const handleBuyPremium = () => {
+  const handleBuyPremium = async () => {
     haptic('medium')
     if (onBuyPremium) {
       onBuyPremium()
-    } else {
-      // TODO: подключить Telegram Payments
-      console.log('[PremiumOverlay] onBuyPremium — заглушка')
+      return
+    }
+
+    const initData = getInitData()
+    if (!initData) {
+      setError('Откройте приложение внутри Telegram для оплаты')
+      return
+    }
+
+    setError(null)
+    setLoading(true)
+    const baseUrl = getBaseUrl()
+    try {
+      const res = await apiPost<{ invoiceLink: string }>('/invoice', { plan: 'month' })
+      const invoiceLink = res.invoiceLink
+      console.log('[PremiumOverlay] baseUrl:', baseUrl, 'initData.length:', initData.length, 'response:', { invoiceLink: invoiceLink ? '***' : null })
+
+      const tg = getTelegramWebApp()
+      if (tg?.openInvoice) {
+        tg.openInvoice(invoiceLink, (status: string) => {
+          if (status === 'paid') {
+            window.dispatchEvent(new CustomEvent('tcg_premium_sync'))
+          }
+        })
+      } else {
+        window.location.href = invoiceLink
+      }
+      onClose()
+    } catch (e) {
+      const err = e as Error & { status?: number }
+      console.error('[PremiumOverlay] invoice error:', err.message)
+      if (err.status === 401) {
+        setError('Откройте приложение внутри Telegram для оплаты')
+      } else {
+        setError(err.message || 'Не удалось создать счёт')
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -69,6 +108,11 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           Premium-доступ
         </h2>
         <p className="premium-overlay__subtitle">Этот контент доступен по подписке</p>
+        {error && (
+          <p className="premium-overlay__error" style={{ color: 'var(--accent)', marginBottom: '0.5rem' }}>
+            {error}
+          </p>
+        )}
         <div className="premium-overlay__description">
           <p>
             С подпиской открывается полный доступ ко всем играм и режимам.
@@ -98,8 +142,9 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           type="button"
           className="btn btn--primary premium-overlay__btn premium-overlay__btn--buy"
           onClick={handleBuyPremium}
+          disabled={loading}
         >
-          Открыть Premium · {PREMIUM_PLAN.priceRub} ₽ / {PREMIUM_PLAN.durationMonths} месяцев
+          {loading ? 'Загрузка…' : `Открыть Premium · ${PREMIUM_PLAN.priceRub} ₽ / ${PREMIUM_PLAN.durationMonths} месяцев`}
         </button>
         <button
           type="button"

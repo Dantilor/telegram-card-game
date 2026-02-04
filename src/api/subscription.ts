@@ -1,5 +1,5 @@
 import { getTg } from '../utils/telegram'
-import { apiFetch } from './client'
+import { apiGet, apiPost } from '../lib/api'
 
 export type MeResponse = {
   telegramId: number
@@ -21,11 +21,11 @@ export class ApiAuthError extends Error {
 
 export async function getMe(): Promise<MeResponse> {
   try {
-    return await apiFetch<MeResponse>('/api/me', { method: 'GET' })
+    return await apiGet<MeResponse>('/api/me')
   } catch (e) {
     const err = e as Error & { status?: number }
     if (err.status === 401) {
-      throw new ApiAuthError('Откройте приложение внутри Telegram')
+      throw new ApiAuthError('Не удалось подтвердить Telegram initData')
     }
     throw e
   }
@@ -42,10 +42,7 @@ export async function getPremiumStatus(): Promise<PremiumStatusResponse> {
 export async function createInvoice(
   plan: 'month' | 'year'
 ): Promise<{ invoiceLink: string }> {
-  return apiFetch<{ invoiceLink: string }>('/api/invoice', {
-    method: 'POST',
-    body: JSON.stringify({ plan }),
-  })
+  return apiPost<{ invoiceLink: string }>('/invoice', { plan })
 }
 
 export function openInvoice(invoiceLink: string): void {

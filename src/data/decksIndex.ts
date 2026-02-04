@@ -20,6 +20,14 @@ export const DECK_INDEX: DeckIndexEntry[] = [
   { id: 'conflictsHonesty', modeId: 'couples', title: 'Разговоры, которые мы избегали', isPremium: false },
   { id: 'desiresDreams', modeId: 'couples', title: 'Топливо нашей жизни', isPremium: false },
   { id: 'iUnderstandYou', modeId: 'couples', title: 'Переводчик твоих чувств', isPremium: false },
+  /* Режим "Для свиданий" */
+  { id: 'sparkFirstImpression', modeId: 'dates', title: 'Искра и первое впечатление', isPremium: false },
+  { id: 'lightFlirt', modeId: 'dates', title: 'Лёгкий флирт и притяжение', isPremium: false },
+  { id: 'genuineInterest', modeId: 'dates', title: 'Настоящий интерес', isPremium: false },
+  { id: 'emotionsCloseness', modeId: 'dates', title: 'Эмоции и близость', isPremium: false },
+  { id: 'personalLight', modeId: 'dates', title: 'Личное, но не тяжёлое', isPremium: false },
+  { id: 'whatIfIntrigue', modeId: 'dates', title: '«А если…» и лёгкая интрига', isPremium: false },
+  { id: 'sincereFinal', modeId: 'dates', title: 'Искренний финал', isPremium: false },
   /* Режим "Для компании" */
   { id: 'mostLikely', modeId: 'party', title: 'Самый вероятный', isPremium: false },
   { id: 'factsAboutUs', modeId: 'party', title: 'Факты про нас', isPremium: false },
@@ -63,8 +71,6 @@ export const DECK_INDEX: DeckIndexEntry[] = [
   { id: 'happiness', modeId: 'lifeChoice', title: 'Счастье', isPremium: false },
   { id: 'meaning', modeId: 'lifeChoice', title: 'Смысл', isPremium: false },
   { id: 'decisiveChoice', modeId: 'lifeChoice', title: 'Решающий выбор', isPremium: false },
-  /* Режим "Лайт" — заглушка */
-  { id: 'lite-premium-1', modeId: 'lite', title: 'Лёгкие вопросы', isPremium: true },
 ]
 
 export function getDecksByMode(modeId: ModeId): DeckIndexEntry[] {

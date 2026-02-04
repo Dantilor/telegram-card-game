@@ -46,6 +46,13 @@ import { comfortQuestions } from './questions/comfort'
 import { happinessQuestions } from './questions/happiness'
 import { meaningQuestions } from './questions/meaning'
 import { decisiveChoiceQuestions } from './questions/decisiveChoice'
+import { sparkFirstImpressionQuestions } from './questions/sparkFirstImpression'
+import { lightFlirtQuestions } from './questions/lightFlirt'
+import { genuineInterestQuestions } from './questions/genuineInterest'
+import { emotionsClosenessQuestions } from './questions/emotionsCloseness'
+import { personalLightQuestions } from './questions/personalLight'
+import { whatIfIntrigueQuestions } from './questions/whatIfIntrigue'
+import { sincereFinalQuestions } from './questions/sincereFinal'
 
 export type Deck = {
   id: string
@@ -104,6 +111,13 @@ const questionsByDeckId: Record<string, string[]> = {
   happiness: happinessQuestions,
   meaning: meaningQuestions,
   decisiveChoice: decisiveChoiceQuestions,
+  sparkFirstImpression: sparkFirstImpressionQuestions,
+  lightFlirt: lightFlirtQuestions,
+  genuineInterest: genuineInterestQuestions,
+  emotionsCloseness: emotionsClosenessQuestions,
+  personalLight: personalLightQuestions,
+  whatIfIntrigue: whatIfIntrigueQuestions,
+  sincereFinal: sincereFinalQuestions,
 }
 
 export const decks: Deck[] = [
@@ -153,6 +167,55 @@ export const decks: Deck[] = [
     id: 'iUnderstandYou',
     title: 'Переводчик твоих чувств',
     description: 'Я рядом — даже когда сложно.',
+    isPremium: false,
+    questionsCount: 50,
+  },
+  {
+    id: 'sparkFirstImpression',
+    title: 'Искра и первое впечатление',
+    description: 'Первая встреча, химия и момент знакомства.',
+    isPremium: false,
+    questionsCount: 50,
+  },
+  {
+    id: 'lightFlirt',
+    title: 'Лёгкий флирт и притяжение',
+    description: 'Намёки, комплименты и игра взглядов.',
+    isPremium: false,
+    questionsCount: 50,
+  },
+  {
+    id: 'genuineInterest',
+    title: 'Настоящий интерес',
+    description: 'Внимание, глубина и живой диалог.',
+    isPremium: false,
+    questionsCount: 50,
+  },
+  {
+    id: 'emotionsCloseness',
+    title: 'Эмоции и близость',
+    description: 'Доверие, открытость и эмоциональный контакт.',
+    isPremium: false,
+    questionsCount: 50,
+  },
+  {
+    id: 'personalLight',
+    title: 'Личное, но не тяжёлое',
+    description: 'Простые радости, комфорт и лёгкость.',
+    isPremium: false,
+    questionsCount: 50,
+  },
+  {
+    id: 'whatIfIntrigue',
+    title: '«А если…» и лёгкая интрига',
+    description: 'Гипотетические сценарии и смелые шаги.',
+    isPremium: false,
+    questionsCount: 50,
+  },
+  {
+    id: 'sincereFinal',
+    title: 'Искренний финал',
+    description: 'Подведение итогов встречи и чувства в конце.',
     isPremium: false,
     questionsCount: 50,
   },

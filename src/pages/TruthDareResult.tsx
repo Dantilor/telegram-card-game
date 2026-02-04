@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTruthDare } from '../games/truth-dare/TruthDareContext'
+import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -29,17 +30,16 @@ function TruthDareResult() {
     navigate('/truth-dare')
   }
 
-  const handleBack = () => {
-    haptic('light')
+  const handleBack = useBack('/games')
+  const onBack = () => {
     dispatch({ type: 'RESET' })
-    if (window.history.length > 1) navigate(-1)
-    else navigate('/games')
+    handleBack()
   }
 
   return (
     <div className="truth-dare-result">
       <div className="truth-dare-result__top">
-        <button type="button" className="btn btn--ghost truth-dare-result__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost truth-dare-result__back" onClick={onBack}>
           ←
         </button>
         <HomeButton />

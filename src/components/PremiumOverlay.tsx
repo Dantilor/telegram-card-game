@@ -53,7 +53,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
     setLoading(true)
     const baseUrl = getBaseUrl()
     try {
-      const res = await apiPost<{ invoiceLink: string }>('/invoice', { plan: 'month' })
+      const res = await apiPost<{ invoiceLink: string }>('/api/invoice', { plan: 'month' })
       const invoiceLink = res.invoiceLink
       console.log('[PremiumOverlay] baseUrl:', baseUrl, 'initData.length:', initData.length, 'response:', { invoiceLink: invoiceLink ? '***' : null })
 

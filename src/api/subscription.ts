@@ -42,7 +42,7 @@ export async function getPremiumStatus(): Promise<PremiumStatusResponse> {
 export async function createInvoice(
   plan: 'month' | 'year'
 ): Promise<{ invoiceLink: string }> {
-  return apiPost<{ invoiceLink: string }>('/invoice', { plan })
+  return apiPost<{ invoiceLink: string }>('/api/invoice', { plan })
 }
 
 export function openInvoice(invoiceLink: string): void {

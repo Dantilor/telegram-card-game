@@ -4,7 +4,10 @@ import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
+import { isQuestionBeyondFreeLimit, isFavoritesLocked } from '../utils/access'
+import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
+import PremiumOverlay from '../components/PremiumOverlay'
 import './Play.css'
 
 type Card = { id: string; text: string }
@@ -49,6 +52,7 @@ export default function Play() {
   const [transitionPhase, setTransitionPhase] = useState<TransitionPhase>('idle')
   const animationPhaseRef = useRef<TransitionPhase>('idle')
   const [localState, setLocalState] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -147,6 +151,17 @@ export default function Play() {
 
   const handleNextClick = () => {
     if (state.status !== 'ready' || transitionPhase !== 'idle') return
+    const nextIndex = state.index + 1
+    const indexEntry = getDeckFromIndex(state.deckId)
+    const modeId = (indexEntry?.modeId ?? 'party') as ModeId
+    if (
+      nextIndex >= 15 &&
+      isQuestionBeyondFreeLimit(modeId, state.deckId, nextIndex, localState.premium)
+    ) {
+      haptic('light')
+      setPremiumOverlayOpen(true)
+      return
+    }
     const last = state.index >= state.cards.length - 1
     if (last) {
       setTransitionPhase('leaving')
@@ -222,6 +237,11 @@ export default function Play() {
 
   const handleAddToFavorites = () => {
     if (state.status !== 'ready' || transitionPhase !== 'idle') return
+    if (isFavoritesLocked(localState.premium)) {
+      haptic('light')
+      setPremiumOverlayOpen(true)
+      return
+    }
     haptic('light')
     const current = state.cards[displayIndex]
     if (!current) return
@@ -418,6 +438,7 @@ export default function Play() {
           </button>
         </div>
       )}
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

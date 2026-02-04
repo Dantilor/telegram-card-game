@@ -84,7 +84,8 @@
 
 /* Badges: PRO (premium), NEW, SOON */
 .badge-premium,
-.badge--pro {
+.badge--pro,
+.badge--premium {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -101,13 +102,14 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .badge-premium, .badge--pro {
+  .badge-premium, .badge--pro, .badge--premium {
     animation: badge-shimmer 2.5s ease-in-out infinite;
   }
 }
 
 .badge-premium::after,
-.badge--pro::after {
+.badge--pro::after,
+.badge--premium::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -125,16 +127,16 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .badge-premium::after, .badge--pro::after {
+  .badge-premium::after, .badge--pro::after, .badge--premium::after {
     animation: badge-sparkle 2.6s ease-in-out infinite;
   }
 }
 
-[data-theme="neon-light"] .badge-premium::after, [data-theme="neon-light"] .badge--pro::after {
+[data-theme="neon-light"] .badge-premium::after, [data-theme="neon-light"] .badge--pro::after, [data-theme="neon-light"] .badge--premium::after {
   opacity: 0.2;
 }
 
-[data-theme="portal"] .badge-premium::after, [data-theme="portal"] .badge--pro::after {
+[data-theme="portal"] .badge-premium::after, [data-theme="portal"] .badge--pro::after, [data-theme="portal"] .badge--premium::after {
   opacity: 0.35;
 }
 

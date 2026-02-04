@@ -1,8 +1,13 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
+import { useLocalState } from '../hooks/useLocalState'
+import { defaultUserState, type UserState } from '../data/types'
+import { isFavoritesLocked } from '../utils/access'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
+import PremiumOverlay from '../components/PremiumOverlay'
 import './Home.css'
 
 const APP_FEATURES = [
@@ -16,6 +21,10 @@ const APP_FEATURES = [
 ]
 
 function Home() {
+  const [state] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const favoritesLocked = isFavoritesLocked(state.premium)
+
   return (
     <div className="home-page">
       <div className="home-page__top-row">
@@ -38,13 +47,26 @@ function Home() {
             >
               Начать игру
             </Link>
-            <Link
-              to="/favorites"
-              className="btn btn--secondary home-hero__btn"
-              onClick={() => haptic('light')}
-            >
-              Моё избранное
-            </Link>
+            {favoritesLocked ? (
+              <button
+                type="button"
+                className="btn btn--secondary home-hero__btn"
+                onClick={() => {
+                  haptic('light')
+                  setPremiumOverlayOpen(true)
+                }}
+              >
+                Моё избранное
+              </button>
+            ) : (
+              <Link
+                to="/favorites"
+                className="btn btn--secondary home-hero__btn"
+                onClick={() => haptic('light')}
+              >
+                Моё избранное
+              </Link>
+            )}
             <Link
               to="/profile"
               className="btn btn--secondary home-hero__btn"
@@ -69,6 +91,7 @@ function Home() {
           Выбирай игру → настрой режим → играй. Избранные вопросы сохраняются.
         </p>
       </section>
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

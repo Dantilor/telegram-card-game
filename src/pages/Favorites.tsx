@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocalState } from '../hooks/useLocalState'
 import { useBack } from '../hooks/useBack'
 import { defaultUserState, type UserState } from '../data/types'
 import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
+import { isFavoritesLocked } from '../utils/access'
 import { haptic } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
+import PremiumOverlay from '../components/PremiumOverlay'
 import './Favorites.css'
 
 type FavoriteItem = {
@@ -20,6 +22,13 @@ function Favorites() {
   const handleBack = useBack('/')
   const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
   const [search, setSearch] = useState('')
+  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+
+  useEffect(() => {
+    if (isFavoritesLocked(state.premium)) {
+      setPremiumOverlayOpen(true)
+    }
+  }, [state.premium])
 
   const favorites = state.favorites ?? {}
   const deckIds = Object.keys(favorites).filter((id) => {
@@ -141,6 +150,7 @@ function Favorites() {
           </div>
         </>
       )}
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

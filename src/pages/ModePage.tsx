@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getDecksByMode } from '../data/decksIndex'
 import { MODES } from '../data/modes'
@@ -5,9 +6,12 @@ import { getDeckFull } from '../data/decks'
 import { useLocalState } from '../hooks/useLocalState'
 import { useBack } from '../hooks/useBack'
 import { defaultUserState, type UserState } from '../data/types'
+import { isDeckLocked, isFavoritesLocked } from '../utils/access'
+import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import PremiumOverlay from '../components/PremiumOverlay'
 import './ModePage.css'
 
 const DECK_ICONS: Record<string, string> = {
@@ -70,6 +74,7 @@ function ModePage() {
   const navigate = useNavigate()
   const { modeId } = useParams<{ modeId: string }>()
   const [localState] = useLocalState<UserState>('tcg_state', defaultUserState)
+  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   const mode = MODES.find((m) => m.id === modeId)
   const decks = modeId ? getDecksByMode(modeId as import('../data/modes').ModeId) : []
@@ -112,9 +117,22 @@ function ModePage() {
           <span aria-hidden>{mode.emoji}</span> {mode.title}
         </h1>
         <p className="mode-page__tagline">Выбери колоду</p>
-        <Link to="/favorites" className="btn btn--ghost mode-page__my-link" onClick={() => haptic('light')}>
-          Моё избранное
-        </Link>
+        {isFavoritesLocked(localState.premium) ? (
+          <button
+            type="button"
+            className="btn btn--ghost mode-page__my-link"
+            onClick={() => {
+              haptic('light')
+              setPremiumOverlayOpen(true)
+            }}
+          >
+            Моё избранное
+          </button>
+        ) : (
+          <Link to="/favorites" className="btn btn--ghost mode-page__my-link" onClick={() => haptic('light')}>
+            Моё избранное
+          </Link>
+        )}
       </header>
       <ul className="mode-page__list">
         {decks.map((deck, i) => {
@@ -148,6 +166,30 @@ function ModePage() {
               )}
             </>
           )
+
+          const locked = isDeckLocked(modeId as ModeId, deck.id, localState.premium)
+
+          if (locked) {
+            return (
+              <li
+                key={deck.id}
+                className={`mode-page__card card mode-page__card--locked ${deck.isPremium ? 'mode-page__card--premium' : ''}`}
+                style={{ animationDelay: `${i * 0.06}s` }}
+              >
+                <button
+                  type="button"
+                  className="mode-page__link"
+                  onClick={() => {
+                    hapticSelection()
+                    setPremiumOverlayOpen(true)
+                  }}
+                >
+                  {content}
+                  <span className="badge badge--premium">Premium</span>
+                </button>
+              </li>
+            )
+          }
 
           if (isStub) {
             return (
@@ -183,6 +225,7 @@ function ModePage() {
           )
         })}
       </ul>
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

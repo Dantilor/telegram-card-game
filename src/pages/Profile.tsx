@@ -50,15 +50,42 @@ function Profile() {
         )}
       </section>
 
-      <section className="profile-card">
-        <h2 className="profile-card__heading">Состояние</h2>
-        <p className="profile-card__row">
-          <span className="profile-card__label">Premium:</span>{' '}
-          {state.premium ? 'есть' : 'нет'}
-        </p>
-        <p className="profile-card__hint">
-          Откройте Mini App в Telegram, чтобы подтянуть профиль
-        </p>
+      <section className={`profile-premium ${state.premium ? 'profile-premium--active' : ''}`}>
+        {state.premium ? (
+          <p className="profile-premium__status-only">Premium: активен</p>
+        ) : (
+          <>
+            <h2 className="profile-premium__heading">
+              <span className="profile-premium__icon" aria-hidden>💎</span>
+              Premium-доступ
+            </h2>
+            <p className="profile-premium__status">Статус: не активен</p>
+            <div className="profile-premium__description">
+              <p>
+                Открой полный доступ ко всем играм и режимам без ограничений.
+              </p>
+              <p>В подписку входит:</p>
+              <ul className="profile-premium__includes">
+                <li>Разблокировка всех тем в карточных играх</li>
+                <li>Доступ к играм для компании, пар и вечеринок</li>
+                <li>Возможность добавлять интересные вопросы в избранное и просматривать их в любое время</li>
+              </ul>
+              <p>Игры и режимы:</p>
+              <ul className="profile-premium__games">
+                <li>Колоды вопросов</li>
+                <li>Alias / Крокодил</li>
+                <li>Мафия</li>
+                <li>Activity</li>
+                <li>Саботаж</li>
+                <li>Викторина</li>
+                <li>Правда или действие</li>
+              </ul>
+              <p className="profile-premium__footer">
+                Подписка открывает весь контент и новые наборы, которые будут появляться со временем.
+              </p>
+            </div>
+          </>
+        )}
       </section>
     </div>
   )

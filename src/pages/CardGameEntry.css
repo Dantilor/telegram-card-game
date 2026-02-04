@@ -96,3 +96,7 @@
   color: var(--text);
   text-align: center;
 }
+
+.card-entry-page__mode-card--locked .badge--premium {
+  margin-top: 0.35rem;
+}

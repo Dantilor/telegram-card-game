@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { PREMIUM_PLAN } from '../config/premium'
 import { haptic } from '../utils/telegram'
+import { openLegalLink } from '../lib/legal'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
 import { trackEvent } from '../lib/analytics'
 import { apiPost, apiGet } from '../lib/api'
@@ -200,6 +201,16 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
         </div>
         <p className="premium-overlay__footer">
           Вы можете продолжить играть бесплатно или открыть полный доступ
+        </p>
+        <p className="premium-overlay__legal">
+          Оплачивая Premium, вы соглашаетесь с{' '}
+          <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('terms')}>
+            Условиями
+          </button>{' '}
+          и{' '}
+          <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('privacy')}>
+            Политикой конфиденциальности
+          </button>
         </p>
         <button
           type="button"

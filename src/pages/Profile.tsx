@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
+import { openLegalLink } from '../lib/legal'
 import { haptic, getTgUser, getInitData } from '../utils/telegram'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
@@ -142,6 +143,33 @@ function Profile() {
             </button>
           </div>
         )}
+      </section>
+
+      <section className="profile-card profile-card--documents">
+        <h2 className="profile-card__heading">Документы</h2>
+        <div className="profile-card__links">
+          <button
+            type="button"
+            className="btn btn--ghost profile-card__link"
+            onClick={() => { haptic('light'); openLegalLink('privacy') }}
+          >
+            Политика конфиденциальности
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost profile-card__link"
+            onClick={() => { haptic('light'); openLegalLink('terms') }}
+          >
+            Условия использования
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost profile-card__link"
+            onClick={() => { haptic('light'); openLegalLink('premium') }}
+          >
+            Условия Premium
+          </button>
+        </div>
       </section>
 
       <section className="profile-card profile-card--support">

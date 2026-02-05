@@ -94,6 +94,18 @@
   color: var(--muted);
 }
 
+.profile-card__links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-card__link {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
 .profile-card__row {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;

@@ -9,6 +9,7 @@ export function getTelegramWebApp(): {
   expand?: () => void
   openInvoice?: (url: string, cb?: (status: string) => void) => void
   openTelegramLink?: (url: string) => void
+  openLink?: (url: string) => void
 } | null {
   try {
     const w = typeof window !== 'undefined' ? window : null

@@ -46,6 +46,9 @@ import TruthDareVote from './pages/TruthDareVote'
 import TruthDareResult from './pages/TruthDareResult'
 import CustomDeckEditor from './pages/CustomDeckEditor'
 import Profile from './pages/Profile'
+import LegalPrivacy from './pages/LegalPrivacy'
+import LegalTerms from './pages/LegalTerms'
+import LegalPremium from './pages/LegalPremium'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import './App.css'
 
@@ -119,6 +122,9 @@ function App() {
           }
         />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/legal/privacy" element={<LegalPrivacy />} />
+        <Route path="/legal/terms" element={<LegalTerms />} />
+        <Route path="/legal/premium" element={<LegalPremium />} />
         </Routes>
       </div>
     </PremiumProvider>

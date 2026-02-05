@@ -8,8 +8,10 @@ import apiRouter from './api.js'
 import { launchBot } from './bot.js'
 
 const isDev = process.env.NODE_ENV !== 'production'
-const port = Number(process.env.PORT) || 3000
+const port = Number(process.env.PORT || 3001)
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
+
+console.log('[TCG] ENV PORT =', process.env.PORT)
 
 const app = express()
 app.use(cors({ origin: corsOrigin }))
@@ -34,7 +36,7 @@ async function start() {
     console.error('[BOT] launch failed:', e)
   }
 
-  app.listen(port, '0.0.0.0', () => console.log(`[TCG] Server listening on port ${port}`))
+  app.listen(port, '0.0.0.0', () => console.log(`[TCG] listening on ${port}`))
 }
 
 start()

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { PREMIUM_PLAN } from '../config/premium'
-
-const isDev = import.meta.env.DEV
 import { haptic } from '../utils/telegram'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
 import { apiPost } from '../lib/api'
+import { usePremium } from '../contexts/PremiumContext'
 import './PremiumOverlay.css'
+
+const isDev = import.meta.env.DEV
 
 type Props = {
   isOpen: boolean
@@ -14,8 +15,10 @@ type Props = {
 }
 
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props) {
+  const { refresh } = usePremium()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -61,12 +64,15 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
       if (tg?.openInvoice) {
         tg.openInvoice(invoiceLink, (status: string) => {
           if (isDev) console.log('[PremiumOverlay] invoice status:', status)
-          const paid = status === 'paid' || status === 'successful'
-          const failed = status === 'failed' || status === 'cancelled'
-          if (paid) {
-            window.dispatchEvent(new CustomEvent('tcg_premium_sync'))
-            onClose()
-          } else if (failed) {
+          if (status === 'paid') {
+            refresh()
+            setSuccess(true)
+            setError(null)
+            setTimeout(() => {
+              onClose()
+              setSuccess(false)
+            }, 1500)
+          } else if (status === 'cancelled' || status === 'failed') {
             setError('Оплата отменена или не прошла')
             setLoading(false)
           }
@@ -115,6 +121,11 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           Premium-доступ
         </h2>
         <p className="premium-overlay__subtitle">Этот контент доступен по подписке</p>
+        {success && (
+          <p className="premium-overlay__success" style={{ color: 'var(--success, #22c55e)', marginBottom: '0.5rem' }}>
+            Premium активирован
+          </p>
+        )}
         {error && (
           <p className="premium-overlay__error" style={{ color: 'var(--accent)', marginBottom: '0.5rem' }}>
             {error}

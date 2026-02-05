@@ -8,6 +8,7 @@ type PremiumContextValue = {
   authError: boolean
   authError401: boolean
   refetch: () => void
+  refresh: () => void
 }
 
 const PremiumContext = createContext<PremiumContextValue>({
@@ -17,6 +18,7 @@ const PremiumContext = createContext<PremiumContextValue>({
   authError: false,
   authError401: false,
   refetch: () => {},
+  refresh: () => {},
 })
 
 export function PremiumProvider({ children }: { children: ReactNode }) {

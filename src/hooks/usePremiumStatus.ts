@@ -65,6 +65,7 @@ export function usePremiumStatus(): {
   authError: boolean
   authError401: boolean
   refetch: () => void
+  refresh: () => void
 } {
   const mountedRef = useRef(true)
 
@@ -100,7 +101,7 @@ export function usePremiumStatus(): {
     }
   }, [])
 
-  const fetchStatus = useCallback(async () => {
+  const fetchStatus = useCallback(async (bypassCache = false) => {
     const initData = getInitData()
 
     if (!initData) {
@@ -109,11 +110,13 @@ export function usePremiumStatus(): {
       return
     }
 
-    const cached = readCache()
-    if (cached) {
-      updateTcgState(cached.isPremium)
-      doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false })
-      return
+    if (!bypassCache) {
+      const cached = readCache()
+      if (cached) {
+        updateTcgState(cached.isPremium)
+        doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false })
+        return
+      }
     }
 
     setState((s) => ({ ...s, loading: true }))
@@ -160,10 +163,15 @@ export function usePremiumStatus(): {
   useEffect(() => {
     const onSync = () => {
       clearCache()
-      fetchStatus()
+      fetchStatus(true)
     }
     window.addEventListener('tcg_premium_sync', onSync)
     return () => window.removeEventListener('tcg_premium_sync', onSync)
+  }, [fetchStatus])
+
+  const refresh = useCallback(() => {
+    clearCache()
+    fetchStatus(true)
   }, [fetchStatus])
 
   return {
@@ -173,5 +181,6 @@ export function usePremiumStatus(): {
     authError: state.authError,
     authError401: state.authError401,
     refetch: fetchStatus,
+    refresh,
   }
 }

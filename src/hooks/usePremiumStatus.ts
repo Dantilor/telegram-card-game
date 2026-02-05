@@ -5,6 +5,14 @@ import { defaultUserState } from '../data/types'
 
 const CACHE_KEY = 'tcg_premium_status'
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
+function clearCache(): void {
+  try {
+    sessionStorage.removeItem(CACHE_KEY)
+  } catch {
+    // ignore
+  }
+}
 const STATE_KEY = 'tcg_state'
 const isDev = import.meta.env.DEV
 
@@ -150,7 +158,10 @@ export function usePremiumStatus(): {
   }, [fetchStatus])
 
   useEffect(() => {
-    const onSync = () => fetchStatus()
+    const onSync = () => {
+      clearCache()
+      fetchStatus()
+    }
     window.addEventListener('tcg_premium_sync', onSync)
     return () => window.removeEventListener('tcg_premium_sync', onSync)
   }, [fetchStatus])

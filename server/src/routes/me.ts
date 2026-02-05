@@ -35,10 +35,14 @@ router.get('/me', async (req: Request, res: Response) => {
     const user = getUser(telegram_id)
     const premium = isPremium(telegram_id)
     const premiumUntil = user?.premiumUntil ? new Date(user.premiumUntil).toISOString() : null
+    console.log(`[API] /api/me returns premium=${premium} premiumUntil=${premiumUntil ?? 'null'}`)
     res.status(200).json({ telegramId: telegram_id, premium, premiumUntil })
   } catch (e) {
     console.warn('[DB] unavailable, fallback:', e instanceof Error ? e.message : e)
-    res.status(200).json({ telegramId: telegram_id, premium: false, premiumUntil: null })
+    const fallbackUser = getUser(telegram_id)
+    const fallbackPremium = fallbackUser?.premiumUntil ? fallbackUser.premiumUntil > Date.now() : false
+    const fallbackUntil = fallbackUser?.premiumUntil ? new Date(fallbackUser.premiumUntil).toISOString() : null
+    res.status(200).json({ telegramId: telegram_id, premium: fallbackPremium, premiumUntil: fallbackUntil })
   }
 })
 

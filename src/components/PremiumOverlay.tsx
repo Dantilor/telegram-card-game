@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { PREMIUM_PLAN } from '../config/premium'
+
+const isDev = import.meta.env.DEV
 import { haptic } from '../utils/telegram'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
-import { getBaseUrl, apiPost } from '../lib/api'
+import { apiPost } from '../lib/api'
 import './PremiumOverlay.css'
 
 type Props = {
@@ -51,23 +53,28 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
 
     setError(null)
     setLoading(true)
-    const baseUrl = getBaseUrl()
     try {
       const res = await apiPost<{ invoiceLink: string }>('/api/invoice', { plan: 'month' })
       const invoiceLink = res.invoiceLink
-      console.log('[PremiumOverlay] baseUrl:', baseUrl, 'initData.length:', initData.length, 'response:', { invoiceLink: invoiceLink ? '***' : null })
 
       const tg = getTelegramWebApp()
       if (tg?.openInvoice) {
         tg.openInvoice(invoiceLink, (status: string) => {
-          if (status === 'paid') {
+          if (isDev) console.log('[PremiumOverlay] invoice status:', status)
+          const paid = status === 'paid' || status === 'successful'
+          const failed = status === 'failed' || status === 'cancelled'
+          if (paid) {
             window.dispatchEvent(new CustomEvent('tcg_premium_sync'))
+            onClose()
+          } else if (failed) {
+            setError('Оплата отменена или не прошла')
+            setLoading(false)
           }
         })
       } else {
         window.location.href = invoiceLink
+        onClose()
       }
-      onClose()
     } catch (e) {
       const err = e as Error & { status?: number }
       console.error('[PremiumOverlay] invoice error:', err.message)

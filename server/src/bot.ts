@@ -14,8 +14,9 @@ if (bot) {
   bot.on('pre_checkout_query', async (ctx) => {
     try {
       await ctx.answerPreCheckoutQuery(true)
+      console.log('[BOT] pre_checkout ok')
     } catch (e) {
-      console.error('[TCG] pre_checkout_query error:', e)
+      console.error('[BOT] pre_checkout_query error:', e)
     }
   })
 
@@ -38,9 +39,6 @@ if (bot) {
     if (!telegramId) return
 
     const plan = payload.plan === 'year' ? 'year' : 'month'
-    const totalAmount = msg.successful_payment?.total_amount ?? 0
-    console.log(`[TCG] successful_payment: telegramId=${telegramId}, plan=${plan}, total_amount=${totalAmount}`)
-
     const now = Date.now()
     const premiumUntil =
       plan === 'year'
@@ -48,7 +46,7 @@ if (bot) {
         : now + 30 * 24 * 60 * 60 * 1000
 
     setPremium(telegramId, premiumUntil)
-    console.log(`[TCG] set premium for ${telegramId} until ${new Date(premiumUntil).toISOString()}`)
+    console.log(`[BOT] payment saved telegramId=${telegramId} plan=${plan} premiumUntil=${new Date(premiumUntil).toISOString()}`)
     await ctx.reply('✅ Premium активирован')
   })
 

@@ -1,12 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { PREMIUM_PLAN } from '../config/premium'
 import { haptic } from '../utils/telegram'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
-import { apiPost } from '../lib/api'
+import { apiPost, apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import './PremiumOverlay.css'
 
 const isDev = import.meta.env.DEV
+const POLL_INTERVAL_MS = 3000
+const POLL_ATTEMPTS = 5
+
+function pollPremiumStatus(
+  refresh: () => void,
+  onBecamePremium?: () => void
+): () => void {
+  let cancelled = false
+  const cancel = () => {
+    cancelled = true
+  }
+  const run = async () => {
+    for (let i = 0; i < POLL_ATTEMPTS && !cancelled; i++) {
+      await new Promise((r) => setTimeout(r, i === 0 ? 0 : POLL_INTERVAL_MS))
+      if (cancelled) return
+      try {
+        const me = await apiGet<{ premium?: boolean }>('/api/me')
+        if (me.premium) {
+          refresh()
+          onBecamePremium?.()
+          return
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+  run()
+  return cancel
+}
 
 type Props = {
   isOpen: boolean
@@ -19,6 +49,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const pollAbortRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -33,6 +64,13 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
       }
     }
   }, [isOpen, onClose])
+
+  useEffect(() => {
+    if (!isOpen) {
+      pollAbortRef.current?.()
+      pollAbortRef.current = null
+    }
+  }, [isOpen])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -64,7 +102,9 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
       if (tg?.openInvoice) {
         tg.openInvoice(invoiceLink, (status: string) => {
           if (isDev) console.log('[PremiumOverlay] invoice status:', status)
-          if (status === 'paid') {
+          const paid = status === 'paid' || status === 'successful'
+          const failed = status === 'cancelled' || status === 'failed'
+          if (paid) {
             refresh()
             setSuccess(true)
             setError(null)
@@ -72,9 +112,13 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
               onClose()
               setSuccess(false)
             }, 1500)
-          } else if (status === 'cancelled' || status === 'failed') {
+          } else if (failed) {
             setError('Оплата отменена или не прошла')
             setLoading(false)
+          }
+          if (!failed) {
+            pollAbortRef.current?.()
+            pollAbortRef.current = pollPremiumStatus(refresh)
           }
         })
       } else {

@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express'
 import { verifyAndParseInitData, type ParsedInitData } from './verifyInitData.js'
-import { getUser, isPremium } from './memoryStore.js'
+import { getUserPremiumWithDb } from './premiumStore.js'
 import { bot } from './bot.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
@@ -32,6 +32,10 @@ function verifyInitData(
   }
   const raw = req.headers['x-telegram-init-data'] ?? (req.body?.initData as string) ?? ''
   const initData = toInitDataString(raw)
+  if (!initData?.trim()) {
+    res.status(401).json({ error: 'initData required' })
+    return
+  }
   const parsed = verifyAndParseInitData(initData, BOT_TOKEN)
   if (!parsed?.user?.id) {
     res.status(401).json({ error: 'Invalid or missing initData' })
@@ -43,6 +47,11 @@ function verifyInitData(
 
 const api = express.Router()
 api.use(express.json())
+
+// Debug ping — no initData needed
+api.get('/debug/ping', (_req: Request, res: Response) => {
+  res.status(200).json({ ok: true, time: new Date().toISOString() })
+})
 
 api.post('/invoice', verifyInitData, async (req: Request, res: Response) => {
   const plan = req.body?.plan === 'year' ? 'year' : 'month'
@@ -79,16 +88,20 @@ api.post('/invoice', verifyInitData, async (req: Request, res: Response) => {
   }
 })
 
-api.get('/me', verifyInitData, (req: Request, res: Response) => {
+api.get('/me', verifyInitData, async (req: Request, res: Response) => {
   const telegramId = req.initData!.user!.id
-  const user = getUser(telegramId)
-  const premium = isPremium(telegramId)
-  const premiumUntil = user?.premiumUntil ? new Date(user.premiumUntil).toISOString() : null
-  res.json({
-    telegramId,
-    premium,
-    premiumUntil: premiumUntil ?? undefined,
-  })
+  try {
+    const { premium, premiumUntil } = await getUserPremiumWithDb(telegramId)
+    console.log(`[API] /api/me returns premium=${premium} premiumUntil=${premiumUntil ?? 'null'}`)
+    res.json({
+      telegramId,
+      premium,
+      premiumUntil: premiumUntil ?? undefined,
+    })
+  } catch (e) {
+    console.warn('[API] /api/me error:', e instanceof Error ? e.message : e)
+    res.status(503).json({ error: 'Service temporarily unavailable' })
+  }
 })
 
 export default api

@@ -1,5 +1,5 @@
 import { Telegraf, type Context } from 'telegraf'
-import { setPremium } from './memoryStore.js'
+import { setPremiumWithPersistence } from './premiumStore.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
 const WEBAPP_URL = process.env.WEBAPP_URL || ''
@@ -45,7 +45,7 @@ if (bot) {
         ? now + 365 * 24 * 60 * 60 * 1000
         : now + 30 * 24 * 60 * 60 * 1000
 
-    setPremium(telegramId, premiumUntil)
+    setPremiumWithPersistence(telegramId, premiumUntil)
     console.log(`[BOT] payment saved telegramId=${telegramId} plan=${plan} premiumUntil=${new Date(premiumUntil).toISOString()}`)
     await ctx.reply('✅ Premium активирован')
   })

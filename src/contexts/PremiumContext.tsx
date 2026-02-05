@@ -9,6 +9,7 @@ type PremiumContextValue = {
   authError401: boolean
   refetch: () => void
   refresh: () => void
+  refreshPremium: () => void
 }
 
 const PremiumContext = createContext<PremiumContextValue>({
@@ -19,10 +20,15 @@ const PremiumContext = createContext<PremiumContextValue>({
   authError401: false,
   refetch: () => {},
   refresh: () => {},
+  refreshPremium: () => {},
 })
 
 export function PremiumProvider({ children }: { children: ReactNode }) {
-  const value = usePremiumStatus()
+  const hook = usePremiumStatus()
+  const value = {
+    ...hook,
+    refreshPremium: hook.refresh,
+  }
   return (
     <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>
   )

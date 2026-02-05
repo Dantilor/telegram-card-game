@@ -1,0 +1,14 @@
+# Render Blueprint — Web Service for backend
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: telegram-card-game
+    rootDir: server
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PORT
+        generateValue: true

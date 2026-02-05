@@ -28,7 +28,7 @@ function Home() {
     <div className="home-page">
       <div className="home-page__top-row">
         <HomeButton />
-        <ThemeToggle />
+        <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>
 
       <section className="home-hero">

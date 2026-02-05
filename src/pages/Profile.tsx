@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTgUser, getInitData } from '../utils/telegram'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
+import PremiumOverlay from '../components/PremiumOverlay'
 import './Profile.css'
 
 function Profile() {
@@ -10,6 +12,7 @@ function Profile() {
   const user = getTgUser()
   const { isPremium, activeUntil, authError, authError401 } = usePremium()
   const userId = getInitData().userId
+  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   return (
     <div className="profile-page">
@@ -19,7 +22,7 @@ function Profile() {
           ← Назад
         </button>
         <h1 className="profile-page__title">Профиль</h1>
-        <ThemeToggle />
+        <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>
 
       <section className="profile-card">
@@ -104,6 +107,7 @@ function Profile() {
           id {userId}
         </p>
       )}
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

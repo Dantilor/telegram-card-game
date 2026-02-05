@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
+import { getDeckQuestions, canOpenDeck } from '../lib/access'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { usePremium } from '../contexts/PremiumContext'
@@ -23,10 +24,15 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-function getDeckById(deckId: string): { id: string; title: string; questions: string[] } | null {
+function getDeckForPlay(
+  deckId: string,
+  premium: boolean
+): { id: string; title: string; questions: string[] } | null {
   const full = getDeckFull(deckId)
-  if (!full || !full.questions?.length) return null
-  return { id: full.id, title: full.title, questions: full.questions }
+  if (!full) return null
+  const questions = getDeckQuestions(deckId, { premium })
+  if (!questions.length) return null
+  return { id: full.id, title: full.title, questions }
 }
 
 type GameState =
@@ -34,6 +40,7 @@ type GameState =
   | { status: 'ready'; deckId: string; title: string; cards: Card[]; index: number; finished: boolean }
   | { status: 'error'; message: string }
   | { status: 'stub' }
+  | { status: 'paywall' }
 
 const ANIMATION_NAME_LEAVE = 'cardLeave'
 const ANIMATION_NAME_ENTER = 'cardEnter'
@@ -66,7 +73,12 @@ export default function Play() {
           if (!cancelled) setState({ status: 'error', message: 'Колода не выбрана' })
           return
         }
-        const deck = getDeckById(deckId)
+        const deckEntry = getDeckFromIndex(deckId)
+        if (deckEntry && !canOpenDeck(deckEntry, isPremium)) {
+          if (!cancelled) setState({ status: 'paywall' })
+          return
+        }
+        const deck = getDeckForPlay(deckId, isPremium)
         const rawCards: Card[] = deck?.questions
           ? deck.questions
               .map((q, idx) => ({ id: String(idx), text: String(q ?? '').trim() }))
@@ -75,7 +87,9 @@ export default function Play() {
 
         if (!deck || rawCards.length === 0) {
           if (!cancelled) {
-            if (getDeckFromIndex(deckId)) {
+            if (deckEntry && !canOpenDeck(deckEntry, isPremium)) {
+              setState({ status: 'paywall' })
+            } else if (getDeckFromIndex(deckId)) {
               setState({ status: 'stub' })
             } else {
               setState({ status: 'error', message: 'Колода не найдена или пуста' })
@@ -149,17 +163,14 @@ export default function Play() {
       cancelled = true
       clearTimeout(id)
     }
-  }, [deckId])
+  }, [deckId, isPremium])
 
   const handleNextClick = () => {
     if (state.status !== 'ready' || transitionPhase !== 'idle') return
     const nextIndex = state.index + 1
     const indexEntry = getDeckFromIndex(state.deckId)
     const modeId = (indexEntry?.modeId ?? 'party') as ModeId
-    if (
-      nextIndex >= 15 &&
-      isQuestionBeyondFreeLimit(modeId, state.deckId, nextIndex, isPremium)
-    ) {
+    if (isQuestionBeyondFreeLimit(modeId, state.deckId, nextIndex, isPremium)) {
       haptic('light')
       setPremiumOverlayOpen(true)
       return
@@ -295,7 +306,7 @@ export default function Play() {
     return (
       <div className="play-page">
         <div className="play-error">
-          <div className="play-error__title">Колода в разработке / Премиум</div>
+          <div className="play-error__title">Колода в разработке</div>
           <div className="play-error__msg">Вопросы для этой колоды пока не добавлены.</div>
           <button
             type="button"
@@ -304,6 +315,27 @@ export default function Play() {
           >
             Назад
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (state.status === 'paywall') {
+    return (
+      <div className="play-page">
+        <div className="play-error">
+          <button
+            type="button"
+            className="btn btn--ghost play-error__btn"
+            style={{ position: 'absolute', top: '1rem', left: '1rem' }}
+            onClick={() => { haptic('light'); nav(-1) }}
+          >
+            ← Назад
+          </button>
+          <PremiumOverlay
+            isOpen
+            onClose={() => nav(-1)}
+          />
         </div>
       </div>
     )

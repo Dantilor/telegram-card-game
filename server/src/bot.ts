@@ -27,7 +27,10 @@ if (bot && WEBAPP_URL) {
   })
 
   bot.on('successful_payment', async (ctx: Context) => {
-    const msg = ctx.message as { successful_payment?: { invoice_payload?: string }; from?: { id?: number } } | undefined
+    const msg = ctx.message as {
+      successful_payment?: { invoice_payload?: string; total_amount?: number }
+      from?: { id?: number }
+    } | undefined
     if (!msg?.successful_payment?.invoice_payload) return
     let payload: { plan?: string; telegramId?: number }
     try {
@@ -42,6 +45,9 @@ if (bot && WEBAPP_URL) {
     if (!telegramId) return
 
     const plan = payload.plan === 'year' ? 'year' : 'month'
+    const totalAmount = msg.successful_payment?.total_amount ?? 0
+    console.log(`[TCG] successful_payment: telegramId=${telegramId}, plan=${plan}, total_amount=${totalAmount}`)
+
     const now = Date.now()
     const premiumUntil =
       plan === 'year'
@@ -50,11 +56,7 @@ if (bot && WEBAPP_URL) {
 
     setPremium(telegramId, premiumUntil)
     console.log(`[TCG] set premium for ${telegramId} until ${new Date(premiumUntil).toISOString()}`)
-    await ctx.reply(
-      plan === 'year'
-        ? 'Спасибо! Premium активирован на 1 год.'
-        : 'Спасибо! Premium активирован на 30 дней.'
-    )
+    await ctx.reply('✅ Premium активирован')
   })
 }
 

@@ -16,7 +16,7 @@ function getInitDataFromRequest(req: Request): string | null {
 
 const router = Router()
 
-router.get('/api/me', async (req: Request, res: Response) => {
+router.get('/me', async (req: Request, res: Response) => {
   const initData = getInitDataFromRequest(req)
   if (!initData) {
     res.status(401).json({ error: 'initData required' })

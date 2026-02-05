@@ -74,7 +74,7 @@ curl http://localhost:3001/health
 С валидным `initData` из Telegram WebApp:
 
 ```bash
-curl -H "X-Telegram-Init-Data: YOUR_INIT_DATA" http://localhost:3001/premium-status
+curl -H "X-Telegram-Init-Data: YOUR_INIT_DATA" http://localhost:3001/api/premium-status
 ```
 
 Ожидается: `{"isPremium":false,"activeUntil":null}` (или `true` при активной подписке).
@@ -95,12 +95,15 @@ ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = NOW() + INTERVAL
 
 ## API Endpoints
 
+Все API под префиксом `/api`. Health — без префикса.
+
 | Метод | Путь | Описание |
 |-------|------|----------|
 | GET | /health | Всегда 200, без БД |
-| GET | /premium-status | Статус подписки (всегда возвращает JSON, при ошибках — isPremium: false) |
-| POST | /auth | Регистрация по initData |
-| GET | /api/me | User + premium (совместимость с фронтом) |
+| GET | /api/premium-status | Статус подписки (всегда возвращает JSON, при ошибках — isPremium: false) |
+| POST | /api/auth | Регистрация по initData |
+| GET | /api/me | User + premium |
+| POST | /api/invoice | Создание счёта на оплату (требует x-telegram-init-data) |
 
 ## Деплой на Render
 
@@ -151,4 +154,4 @@ curl https://your-service.onrender.com/health
 
 ### 6. Фронтенд
 
-При сборке фронтенда задайте `VITE_API_BASE=https://your-service.onrender.com`.
+При сборке фронтенда задайте `VITE_API_URL=https://your-service.onrender.com`. API base = `/api` (запросы: `/api/me`, `/api/invoice`).

@@ -4,6 +4,7 @@ import cors from 'cors'
 import authRouter from './routes/auth.js'
 import premiumRouter from './routes/premium.js'
 import meRouter from './routes/me.js'
+import apiRouter from './api.js'
 
 const isDev = process.env.NODE_ENV !== 'production'
 const port = Number(process.env.PORT) || 3001
@@ -18,9 +19,11 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ ok: true })
 })
 
-app.use('/', authRouter)
-app.use('/', premiumRouter)
-app.use('/', meRouter)
+// API base = /api
+app.use('/api', authRouter)
+app.use('/api', premiumRouter)
+app.use('/api', meRouter)
+app.use('/api', apiRouter)
 
 app.listen(port, () => {
   console.log(`[TCG] Server listening on port ${port}`)

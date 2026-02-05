@@ -7,6 +7,7 @@ type PremiumContextValue = {
   loading: boolean
   authError: boolean
   authError401: boolean
+  serverError503: boolean
   refetch: () => void
   refresh: () => void
   refreshPremium: () => void
@@ -18,6 +19,7 @@ const PremiumContext = createContext<PremiumContextValue>({
   loading: false,
   authError: false,
   authError401: false,
+  serverError503: false,
   refetch: () => {},
   refresh: () => {},
   refreshPremium: () => {},

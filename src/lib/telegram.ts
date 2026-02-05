@@ -3,7 +3,13 @@
  * Requires script: https://telegram.org/js/telegram-web-app.js
  */
 
-export function getTelegramWebApp(): { initData?: string; ready?: () => void; expand?: () => void; openInvoice?: (url: string, cb?: (status: string) => void) => void } | null {
+export function getTelegramWebApp(): {
+  initData?: string
+  ready?: () => void
+  expand?: () => void
+  openInvoice?: (url: string, cb?: (status: string) => void) => void
+  openTelegramLink?: (url: string) => void
+} | null {
   try {
     const w = typeof window !== 'undefined' ? window : null
     return (w as Window & { Telegram?: { WebApp?: unknown } })?.Telegram?.WebApp ?? null

@@ -75,6 +75,7 @@ export function usePremiumStatus(): {
     loading: boolean
     authError: boolean
     authError401: boolean
+    serverError503: boolean
   }>(() => {
     const cached = readCache()
     if (cached) {
@@ -84,6 +85,7 @@ export function usePremiumStatus(): {
         loading: false,
         authError: false,
         authError401: false,
+        serverError503: false,
       }
     }
     return {
@@ -92,12 +94,19 @@ export function usePremiumStatus(): {
       loading: true,
       authError: false,
       authError401: false,
+      serverError503: false,
     }
   })
 
-  const doneLoading = useCallback((data: { isPremium: boolean; activeUntil: string | null; authError?: boolean; authError401?: boolean }) => {
+  const doneLoading = useCallback((data: { isPremium: boolean; activeUntil: string | null; authError?: boolean; authError401?: boolean; serverError503?: boolean }) => {
     if (mountedRef.current) {
-      setState({ ...data, loading: false, authError: data.authError ?? false, authError401: data.authError401 ?? false })
+      setState({
+        ...data,
+        loading: false,
+        authError: data.authError ?? false,
+        authError401: data.authError401 ?? false,
+        serverError503: data.serverError503 ?? false,
+      })
     }
   }, [])
 
@@ -106,7 +115,7 @@ export function usePremiumStatus(): {
 
     if (!initData) {
       if (isDev) console.log('[TCG] Premium: no initData (open in Telegram)')
-      doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false })
+      doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false, serverError503: false })
       return
     }
 
@@ -114,7 +123,7 @@ export function usePremiumStatus(): {
       const cached = readCache()
       if (cached) {
         updateTcgState(cached.isPremium)
-        doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false })
+        doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false, serverError503: false })
         return
       }
     }
@@ -129,14 +138,16 @@ export function usePremiumStatus(): {
       writeCache(data)
       updateTcgState(data.isPremium)
       if (isDev) console.log('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
-      doneLoading({ ...data, authError: false, authError401: false })
+      doneLoading({ ...data, authError: false, authError401: false, serverError503: false })
     } catch (e) {
       if (isDev) console.warn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
+      const err = e as Error & { status?: number }
       doneLoading({
         isPremium: false,
         activeUntil: null,
         authError: true,
         authError401: e instanceof ApiAuthError,
+        serverError503: err.status === 503,
       })
     }
   }, [doneLoading])
@@ -180,6 +191,7 @@ export function usePremiumStatus(): {
     loading: state.loading,
     authError: state.authError,
     authError401: state.authError401,
+    serverError503: state.serverError503,
     refetch: fetchStatus,
     refresh,
   }

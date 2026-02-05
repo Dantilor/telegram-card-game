@@ -4,6 +4,7 @@ import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { ROLE_LABELS } from '../games/mafia/types'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
+import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import './MafiaRoles.css'
 
@@ -22,6 +23,10 @@ function MafiaRoles() {
 
   const player = state.players[state.roleViewIndex]
   const isLast = state.roleViewIndex >= state.players.length - 1
+
+  useEffect(() => {
+    trackEvent('start_game', { gameId: 'mafia' })
+  }, [])
 
   useEffect(() => {
     if (state.phase === 'night_intro') {

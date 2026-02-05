@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuizGame } from '../games/quiz/QuizGameContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
+import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import './QuizQuestion.css'
 
@@ -19,6 +20,10 @@ function QuizQuestion() {
   const hidden = state.uiFlags.fiftyFiftyHiddenIndices
 
   const startRef = useRef(state.questionStartTime || Date.now())
+
+  useEffect(() => {
+    trackEvent('start_game', { gameId: 'quiz' })
+  }, [])
 
   useEffect(() => {
     startRef.current = state.questionStartTime || Date.now()

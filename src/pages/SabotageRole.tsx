@@ -4,6 +4,7 @@ import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
 import { ROLE_LABELS } from '../games/sabotage/types'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
+import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import './SabotageRole.css'
 
@@ -31,6 +32,10 @@ function SabotageRole() {
     hapticImpact('medium')
     setPhase('role')
   }
+
+  useEffect(() => {
+    trackEvent('start_game', { gameId: 'sabotage' })
+  }, [])
 
   useEffect(() => {
     if (state.phase === 'task') {

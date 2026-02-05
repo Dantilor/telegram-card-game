@@ -4,6 +4,7 @@ import { useAliasState } from '../games/alias/useAliasState'
 import { getCategoryById, shuffleFisherYates } from '../games/alias/data/words'
 import { haptic } from '../utils/telegram'
 import { hapticSelection, hapticSuccess } from '../utils/haptics'
+import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import './AliasPlay.css'
 
@@ -57,6 +58,10 @@ function AliasPlay() {
     }))
     navigate('/alias/result', { state: { guessed: g, skipped: sk } })
   }, [clearTimer, state.mode, setState, navigate])
+
+  useEffect(() => {
+    trackEvent('start_game', { gameId: 'alias' })
+  }, [])
 
   useEffect(() => {
     if (!state.bag.length || !currentWord) {

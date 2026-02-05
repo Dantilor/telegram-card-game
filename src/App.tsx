@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { trackEvent } from './lib/analytics'
 import { useAppHeight } from './hooks/useAppHeight'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { readyAndExpand } from './utils/telegram'
@@ -56,6 +57,7 @@ function App() {
     } catch {
       // no-op: don't block UI
     }
+    trackEvent('app_open')
   }, [])
 
   return (

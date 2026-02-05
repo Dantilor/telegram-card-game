@@ -36,3 +36,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS payments_telegram_charge_unique
   ON payments (telegram_payment_charge_id) WHERE telegram_payment_charge_id IS NOT NULL;
 
 -- When both charge_ids are null, dedup is done in application (savePaymentDb).
+
+-- Events analytics
+CREATE TABLE IF NOT EXISTS events (
+  id BIGSERIAL PRIMARY KEY,
+  telegram_id BIGINT NULL,
+  event_name TEXT NOT NULL,
+  event_props JSONB NULL,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS events_event_name_created_at ON events (event_name, created_at);
+CREATE INDEX IF NOT EXISTS events_telegram_id_created_at ON events (telegram_id, created_at) WHERE telegram_id IS NOT NULL;

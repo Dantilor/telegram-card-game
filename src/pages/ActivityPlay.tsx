@@ -5,6 +5,7 @@ import { TASK_LABELS } from '../games/activity/types'
 import type { ActivityCategory } from '../games/activity/data/activityWords'
 import { haptic } from '../utils/telegram'
 import { hapticSelection, hapticSuccess } from '../utils/haptics'
+import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import './ActivityPlay.css'
 
@@ -23,6 +24,10 @@ function ActivityPlay() {
   const endAtRef = useRef(0)
 
   const isTimeUp = secondsLeft <= 0
+
+  useEffect(() => {
+    trackEvent('start_game', { gameId: 'activity' })
+  }, [])
 
   useEffect(() => {
     if (!category) {

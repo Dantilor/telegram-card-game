@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTruthDare } from '../games/truth-dare/TruthDareContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
+import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import './TruthDareTurn.css'
 
@@ -12,6 +13,10 @@ function TruthDareTurn() {
 
   const player = state.players[state.currentPlayerIndex]
   const shameActive = player && player.shame >= 3
+
+  useEffect(() => {
+    trackEvent('start_game', { gameId: 'truth-dare' })
+  }, [])
 
   useEffect(() => {
     if (state.phase === 'result') navigate('/truth-dare/result')

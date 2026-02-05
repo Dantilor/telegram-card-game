@@ -9,6 +9,7 @@ import { usePremium } from '../contexts/PremiumContext'
 import { isQuestionBeyondFreeLimit, isFavoritesLocked } from '../utils/access'
 import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
+import { trackEvent } from '../lib/analytics'
 import PremiumOverlay from '../components/PremiumOverlay'
 import './Play.css'
 
@@ -119,6 +120,8 @@ export default function Play() {
         }
 
         if (!cancelled) {
+          trackEvent('open_deck', { deckId })
+          trackEvent('start_game', { gameId: 'card' })
           setState({
             status: 'ready',
             deckId,

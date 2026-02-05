@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { PREMIUM_PLAN } from '../config/premium'
 import { haptic } from '../utils/telegram'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
+import { trackEvent } from '../lib/analytics'
 import { apiPost, apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import './PremiumOverlay.css'
@@ -53,6 +54,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
 
   useEffect(() => {
     if (isOpen) {
+      trackEvent('click_premium')
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape') onClose()
       }
@@ -97,6 +99,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
     try {
       const res = await apiPost<{ invoiceLink: string }>('/api/invoice', { plan: 'month' })
       const invoiceLink = res.invoiceLink
+      trackEvent('invoice_opened')
 
       const tg = getTelegramWebApp()
       if (tg?.openInvoice) {
@@ -105,6 +108,8 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           const paid = status === 'paid' || status === 'successful'
           const failed = status === 'cancelled' || status === 'failed'
           if (paid) {
+            trackEvent('invoice_paid')
+            trackEvent('premium_active')
             refresh()
             setSuccess(true)
             setError(null)

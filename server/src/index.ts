@@ -5,6 +5,7 @@ import authRouter from './routes/auth.js'
 import premiumRouter from './routes/premium.js'
 import meRouter from './routes/me.js'
 import apiRouter from './api.js'
+import adminRouter from './routes/admin.js'
 import { launchBot } from './bot.js'
 
 const port = Number(process.env.PORT || 3001)
@@ -29,6 +30,7 @@ app.use('/api', authRouter)
 app.use('/api', premiumRouter)
 app.use('/api', meRouter)
 app.use('/api', apiRouter)
+app.use('/api/admin', adminRouter)
 
 // HTTP server must listen BEFORE bot (Render port scan)
 app.listen(port, '0.0.0.0', () => {

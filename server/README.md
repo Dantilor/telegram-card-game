@@ -37,6 +37,7 @@ npm run dev
 | `DATABASE_URL` | PostgreSQL connection string |
 | `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather |
 | `CORS_ORIGIN` | Разрешённый origin, напр. `http://localhost:5173` или `https://dantilor.github.io` |
+| `ADMIN_TOKEN` | Секретный токен для Admin API (grant/revoke/user) |
 
 ## Database schema
 
@@ -111,6 +112,9 @@ ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = NOW() + INTERVAL
 | POST | /api/auth | Регистрация по initData |
 | GET | /api/me | User + premium |
 | POST | /api/invoice | Создание счёта на оплату (требует x-telegram-init-data) |
+| POST | /api/admin/grant | Выдать Premium (требует Bearer ADMIN_TOKEN) |
+| POST | /api/admin/revoke | Отозвать Premium (требует Bearer ADMIN_TOKEN) |
+| GET | /api/admin/user/:telegramId | Инфо о пользователе + lastPayments (требует Bearer ADMIN_TOKEN) |
 
 ## Деплой на Render
 
@@ -162,3 +166,43 @@ curl https://your-service.onrender.com/health
 ### 6. Фронтенд
 
 При сборке фронтенда задайте `VITE_API_URL=https://your-service.onrender.com`. API base = `/api` (запросы: `/api/me`, `/api/invoice`).
+
+### 7. Admin API и ADMIN_TOKEN
+
+Добавьте переменную `ADMIN_TOKEN` в Environment (Render Dashboard → ваш сервис → Environment). Рекомендуется сгенерировать длинный случайный токен, например:
+
+```bash
+openssl rand -hex 32
+```
+
+**Примеры curl:**
+
+Выдать Premium на 6 месяцев (по умолчанию):
+```bash
+curl -X POST https://your-service.onrender.com/api/admin/grant \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"telegramId": 123456789}'
+```
+
+Выдать Premium на 12 месяцев:
+```bash
+curl -X POST https://your-service.onrender.com/api/admin/grant \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"telegramId": 123456789, "months": 12}'
+```
+
+Отозвать Premium:
+```bash
+curl -X POST https://your-service.onrender.com/api/admin/revoke \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"telegramId": 123456789}'
+```
+
+Получить инфо о пользователе:
+```bash
+curl https://your-service.onrender.com/api/admin/user/123456789 \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```

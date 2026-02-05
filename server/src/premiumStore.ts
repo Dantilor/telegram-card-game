@@ -207,3 +207,101 @@ export async function getUserPremiumWithDb(telegramId: number): Promise<{
 }
 
 export { isPremium }
+
+/** Admin: grant premium without touching payments. Extend from max(now, active_until). */
+export async function adminGrantPremium(
+  telegramId: number,
+  opts: { months?: number; days?: number } = {}
+): Promise<{ premiumUntil: number }> {
+  const months = opts.months ?? 6
+  const days = opts.days ?? 0
+
+  const now = new Date()
+  let base: Date
+  const dbUntil = await getActiveUntilDb(telegramId)
+  const mem = getUser(telegramId)
+  const memUntil = mem?.premiumUntil ? new Date(mem.premiumUntil) : null
+  const currentUntil = dbUntil ?? memUntil
+  base = currentUntil && currentUntil > now ? currentUntil : now
+
+  const newUntil = new Date(base)
+  newUntil.setMonth(newUntil.getMonth() + months)
+  newUntil.setDate(newUntil.getDate() + days)
+  const newUntilTs = newUntil.getTime()
+
+  setPremium(telegramId, newUntilTs)
+
+  if (process.env.DATABASE_URL) {
+    try {
+      const query = await getQuery()
+      await query(
+        `INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING`,
+        [telegramId]
+      )
+      await query(
+        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = $3`,
+        [telegramId, DEFAULT_PLAN_ID, newUntil]
+      )
+    } catch (e) {
+      console.warn('[premiumStore] adminGrant failed:', e instanceof Error ? e.message : e)
+      throw e
+    }
+  }
+
+  return { premiumUntil: newUntilTs }
+}
+
+/** Admin: revoke premium — set active_until = now. */
+export async function adminRevokePremium(telegramId: number): Promise<void> {
+  const now = new Date()
+  const nowTs = now.getTime()
+
+  setPremium(telegramId, nowTs - 1)
+
+  if (process.env.DATABASE_URL) {
+    try {
+      const query = await getQuery()
+      await query(
+        `INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING`,
+        [telegramId]
+      )
+      await query(
+        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = $3`,
+        [telegramId, DEFAULT_PLAN_ID, now]
+      )
+    } catch (e) {
+      console.warn('[premiumStore] adminRevoke failed:', e instanceof Error ? e.message : e)
+      throw e
+    }
+  }
+}
+
+export type PaymentRow = {
+  id: number
+  telegram_id: number
+  plan_id: string
+  currency: string
+  total_amount: number
+  status: string
+  created_at: Date
+}
+
+/** Admin: get last N payments for a user. */
+export async function getLastPaymentsDb(telegramId: number, limit: number): Promise<PaymentRow[]> {
+  if (!process.env.DATABASE_URL) return []
+  try {
+    const query = await getQuery()
+    const res = await query<PaymentRow>(
+      `SELECT id, telegram_id, plan_id, currency, total_amount, status, created_at
+       FROM payments WHERE telegram_id = $1 ORDER BY created_at DESC LIMIT $2`,
+      [telegramId, limit]
+    )
+    return res.rows
+  } catch {
+    return []
+  }
+}

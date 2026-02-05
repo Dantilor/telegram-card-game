@@ -91,11 +91,13 @@ api.post('/invoice', verifyInitData, async (req: Request, res: Response) => {
 api.get('/me', verifyInitData, async (req: Request, res: Response) => {
   const telegramId = req.initData!.user!.id
   try {
-    const { premium, premiumUntil } = await getUserPremiumWithDb(telegramId)
-    console.log(`[API] /api/me returns premium=${premium} premiumUntil=${premiumUntil ?? 'null'}`)
+    const { premium, premiumUntil, planId } = await getUserPremiumWithDb(telegramId)
+    console.log(`[API] /api/me returns premium=${premium} planId=${planId ?? 'null'} premiumUntil=${premiumUntil ?? 'null'}`)
     res.json({
       telegramId,
       premium,
+      planId: planId ?? undefined,
+      activeUntil: premiumUntil ?? undefined,
       premiumUntil: premiumUntil ?? undefined,
     })
   } catch (e) {

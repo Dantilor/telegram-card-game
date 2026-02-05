@@ -34,9 +34,15 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 
   try {
-    const { premium, premiumUntil } = await getUserPremiumWithDb(telegramId)
-    console.log(`[API] /api/me returns premium=${premium} premiumUntil=${premiumUntil ?? 'null'}`)
-    res.status(200).json({ telegramId, premium, premiumUntil: premiumUntil ?? undefined })
+    const { premium, premiumUntil, planId } = await getUserPremiumWithDb(telegramId)
+    console.log(`[API] /api/me returns premium=${premium} planId=${planId ?? 'null'} premiumUntil=${premiumUntil ?? 'null'}`)
+    res.status(200).json({
+      telegramId,
+      premium,
+      planId: planId ?? undefined,
+      activeUntil: premiumUntil ?? undefined,
+      premiumUntil: premiumUntil ?? undefined,
+    })
   } catch (e) {
     console.warn('[API] /api/me error:', e instanceof Error ? e.message : e)
     res.status(503).json({ error: 'Service temporarily unavailable' })

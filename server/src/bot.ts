@@ -22,31 +22,59 @@ if (bot) {
 
   bot.on('successful_payment', async (ctx: Context) => {
     const msg = ctx.message as {
-      successful_payment?: { invoice_payload?: string; total_amount?: number }
+      successful_payment?: {
+        invoice_payload?: string
+        total_amount?: number
+        currency?: string
+        provider_payment_charge_id?: string
+        telegram_payment_charge_id?: string
+      }
       from?: { id?: number }
     } | undefined
-    if (!msg?.successful_payment?.invoice_payload) return
+    const sp = msg?.successful_payment
+    if (!sp?.invoice_payload) return
+
     let payload: { plan?: string; telegramId?: number }
     try {
-      payload = JSON.parse(msg.successful_payment.invoice_payload) as {
-        plan?: string
-        telegramId?: number
-      }
+      payload = JSON.parse(sp.invoice_payload) as { plan?: string; telegramId?: number }
     } catch {
       return
     }
-    const telegramId = payload.telegramId ?? (msg.from as { id?: number })?.id
+    const telegramId = payload.telegramId ?? (msg?.from as { id?: number })?.id
     if (!telegramId) return
 
-    const plan = payload.plan === 'year' ? 'year' : 'month'
-    const now = Date.now()
-    const premiumUntil =
-      plan === 'year'
-        ? now + 365 * 24 * 60 * 60 * 1000
-        : now + 30 * 24 * 60 * 60 * 1000
+    const plan =
+      payload.plan === 'year'
+        ? 'premium_year'
+        : payload.plan === 'month'
+          ? 'premium_6m_259'
+          : payload.plan || 'premium_6m_259'
 
-    setPremiumWithPersistence(telegramId, premiumUntil)
-    console.log(`[BOT] payment saved telegramId=${telegramId} plan=${plan} premiumUntil=${new Date(premiumUntil).toISOString()}`)
+    const currency = sp.currency ?? 'XTR'
+    const totalAmount = sp.total_amount ?? 0
+    const providerPaymentChargeId = sp.provider_payment_charge_id ?? null
+    const telegramPaymentChargeId = sp.telegram_payment_charge_id ?? null
+
+    const saved = await setPremiumWithPersistence(telegramId, plan, {
+      telegramId,
+      planId: plan,
+      currency,
+      totalAmount,
+      providerPaymentChargeId,
+      telegramPaymentChargeId,
+      invoicePayload: sp.invoice_payload,
+      status: 'paid',
+    })
+
+    if (!saved) {
+      console.log('[BOT] payment duplicate, skipped telegramId=', telegramId)
+      await ctx.reply('✅ Premium уже активирован (повторная обработка пропущена)')
+      return
+    }
+
+    console.log(
+      `[BOT] payment saved telegramId=${telegramId} plan=${plan} premiumUntil extended`
+    )
     await ctx.reply('✅ Premium активирован')
   })
 

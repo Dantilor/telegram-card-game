@@ -5,50 +5,153 @@
 
 import { getUser, setPremium, isPremium } from './memoryStore.js'
 
-const PLAN_ID = 'premium'
+const DEFAULT_PLAN_ID = 'premium'
 
-async function upsertPremiumDb(telegramId: number, activeUntil: Date): Promise<void> {
-  if (!process.env.DATABASE_URL) return
-  try {
-    const { query } = await import('./db/client.js')
-    await query(
-      `INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING`,
-      [telegramId]
-    )
-    await query(
-      `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = $3`,
-      [telegramId, PLAN_ID, activeUntil]
-    )
-  } catch {
-    // DB unavailable — memoryStore still has it
-  }
+export type PaymentRecord = {
+  telegramId: number
+  planId: string
+  currency: string
+  totalAmount: number
+  providerPaymentChargeId?: string | null
+  telegramPaymentChargeId?: string | null
+  invoicePayload?: string | null
+  status?: string
 }
 
-async function getPremiumFromDb(telegramId: number): Promise<{ premiumUntil: number } | null> {
+function addCalendarMonths(date: Date, months: number): Date {
+  const d = new Date(date)
+  d.setMonth(d.getMonth() + months)
+  return d
+}
+
+async function getQuery() {
+  const { query } = await import('./db/client.js')
+  return query
+}
+
+export async function getActiveUntilDb(telegramId: number): Promise<Date | null> {
   if (!process.env.DATABASE_URL) return null
   try {
-    const { query } = await import('./db/client.js')
+    const query = await getQuery()
     const res = await query<{ active_until: Date }>(
       `SELECT active_until FROM subscriptions WHERE telegram_id = $1 AND plan_id = $2`,
-      [telegramId, PLAN_ID]
+      [telegramId, DEFAULT_PLAN_ID]
     )
     const row = res.rows[0]
-    if (!row) return null
-    const ts = new Date(row.active_until).getTime()
-    return { premiumUntil: ts }
+    return row ? new Date(row.active_until) : null
   } catch {
     return null
   }
 }
 
-export function setPremiumWithPersistence(telegramId: number, premiumUntil: number): void {
-  setPremium(telegramId, premiumUntil)
-  const activeUntil = new Date(premiumUntil)
-  upsertPremiumDb(telegramId, activeUntil).catch((e) =>
-    console.warn('[premiumStore] DB save failed:', e instanceof Error ? e.message : e)
-  )
+export async function savePaymentDb(payment: PaymentRecord): Promise<boolean> {
+  if (!process.env.DATABASE_URL) return true
+  try {
+    const query = await getQuery()
+    if (payment.providerPaymentChargeId || payment.telegramPaymentChargeId) {
+      const parts: string[] = []
+      const params: unknown[] = []
+      let i = 1
+      if (payment.providerPaymentChargeId) {
+        parts.push(`provider_payment_charge_id = $${i++}`)
+        params.push(payment.providerPaymentChargeId)
+      }
+      if (payment.telegramPaymentChargeId) {
+        parts.push(`telegram_payment_charge_id = $${i++}`)
+        params.push(payment.telegramPaymentChargeId)
+      }
+      const check = await query<{ n: number }>(
+        `SELECT 1 FROM payments WHERE ${parts.join(' OR ')} LIMIT 1`,
+        params
+      )
+      if (check.rows.length > 0) return false
+    } else {
+      const check = await query<{ count: string }>(
+        `SELECT 1 FROM payments WHERE telegram_id = $1 AND invoice_payload = $2
+         AND total_amount = $3 AND created_at > NOW() - INTERVAL '5 minutes'
+         LIMIT 1`,
+        [payment.telegramId, payment.invoicePayload ?? '', payment.totalAmount]
+      )
+      if (check.rows.length > 0) return false
+    }
+
+    await query(
+      `INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING`,
+      [payment.telegramId]
+    )
+    await query(
+      `INSERT INTO payments (telegram_id, plan_id, currency, total_amount,
+       provider_payment_charge_id, telegram_payment_charge_id, invoice_payload, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        payment.telegramId,
+        payment.planId,
+        payment.currency,
+        payment.totalAmount,
+        payment.providerPaymentChargeId ?? null,
+        payment.telegramPaymentChargeId ?? null,
+        payment.invoicePayload ?? null,
+        payment.status ?? 'paid',
+      ]
+    )
+    return true
+  } catch (e) {
+    if (e && typeof e === 'object' && 'code' in e && e.code === '23505') {
+      return false
+    }
+    console.warn('[premiumStore] savePaymentDb failed:', e instanceof Error ? e.message : e)
+    return true
+  }
+}
+
+function getDurationMonths(planId: string): number {
+  if (planId === 'year' || planId === 'premium_year' || planId === 'premium_12m') return 12
+  if (planId === 'premium_6m_259' || planId === 'month' || planId === 'premium_month') return 6
+  return 6
+}
+
+export async function setPremiumWithPersistence(
+  telegramId: number,
+  planId: string,
+  payment: PaymentRecord
+): Promise<boolean> {
+  const saved = await savePaymentDb(payment)
+  if (!saved) return false
+
+  const durationMonths = getDurationMonths(planId)
+  const now = new Date()
+
+  let base: Date
+  const dbUntil = await getActiveUntilDb(telegramId)
+  const mem = getUser(telegramId)
+  const memUntil = mem?.premiumUntil ? new Date(mem.premiumUntil) : null
+  const currentUntil = dbUntil ?? memUntil
+  base = currentUntil && currentUntil > now ? currentUntil : now
+
+  const newUntil = addCalendarMonths(base, durationMonths)
+  const newUntilTs = newUntil.getTime()
+
+  setPremium(telegramId, newUntilTs)
+
+  if (process.env.DATABASE_URL) {
+    try {
+      const query = await getQuery()
+      await query(
+        `INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING`,
+        [telegramId]
+      )
+      await query(
+        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = $3`,
+        [telegramId, DEFAULT_PLAN_ID, newUntil]
+      )
+    } catch (e) {
+      console.warn('[premiumStore] subscription upsert failed:', e instanceof Error ? e.message : e)
+    }
+  }
+
+  return true
 }
 
 export function getUserPremium(telegramId: number): { premiumUntil: number } | null {
@@ -57,9 +160,29 @@ export function getUserPremium(telegramId: number): { premiumUntil: number } | n
   return null
 }
 
+async function getPremiumFromDb(telegramId: number): Promise<{ premiumUntil: number; planId: string } | null> {
+  if (!process.env.DATABASE_URL) return null
+  try {
+    const query = await getQuery()
+    const res = await query<{ active_until: Date; plan_id: string }>(
+      `SELECT active_until, plan_id FROM subscriptions WHERE telegram_id = $1 AND plan_id = $2`,
+      [telegramId, DEFAULT_PLAN_ID]
+    )
+    const row = res.rows[0]
+    if (!row) return null
+    return {
+      premiumUntil: new Date(row.active_until).getTime(),
+      planId: row.plan_id,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function getUserPremiumWithDb(telegramId: number): Promise<{
   premium: boolean
   premiumUntil: string | null
+  planId: string | null
 }> {
   const mem = getUser(telegramId)
   if (mem?.premiumUntil) {
@@ -67,6 +190,7 @@ export async function getUserPremiumWithDb(telegramId: number): Promise<{
     return {
       premium,
       premiumUntil: new Date(mem.premiumUntil).toISOString(),
+      planId: DEFAULT_PLAN_ID,
     }
   }
   const db = await getPremiumFromDb(telegramId)
@@ -76,9 +200,10 @@ export async function getUserPremiumWithDb(telegramId: number): Promise<{
     return {
       premium,
       premiumUntil: new Date(db.premiumUntil).toISOString(),
+      planId: db.planId,
     }
   }
-  return { premium: false, premiumUntil: null }
+  return { premium: false, premiumUntil: null, planId: null }
 }
 
 export { isPremium }

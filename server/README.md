@@ -13,9 +13,11 @@ cp .env.example .env
 Заполните `.env` (PostgreSQL, TELEGRAM_BOT_TOKEN, CORS_ORIGIN), примените схему БД и запустите:
 
 ```bash
-psql $DATABASE_URL -f db/schema.sql
+psql "$DATABASE_URL" -f db/schema.sql
 npm run dev
 ```
+
+После изменения `schema.sql` выполните миграцию: `psql "$DATABASE_URL" -f db/schema.sql` (из папки server).
 
 ---
 
@@ -39,10 +41,15 @@ npm run dev
 ## Database schema
 
 ```bash
-psql $DATABASE_URL -f db/schema.sql
+psql "$DATABASE_URL" -f db/schema.sql
 ```
 
 Или вручную выполните SQL из `db/schema.sql`.
+
+После изменения схемы всегда выполняйте:
+```bash
+psql "$DATABASE_URL" -f server/db/schema.sql
+```
 
 ## Запуск
 

@@ -1,5 +1,5 @@
 import { Telegraf, type Context } from 'telegraf'
-import { setUserPremium, getUser } from './storage.js'
+import { setPremium } from './memoryStore.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
 const WEBAPP_URL = process.env.WEBAPP_URL || ''
@@ -38,17 +38,18 @@ if (bot && WEBAPP_URL) {
     } catch {
       return
     }
-    const telegramId = payload.telegramId ?? msg.from?.id
+    const telegramId = payload.telegramId ?? (msg.from as { id?: number })?.id
     if (!telegramId) return
 
     const plan = payload.plan === 'year' ? 'year' : 'month'
-    const now = new Date()
-    const until =
+    const now = Date.now()
+    const premiumUntil =
       plan === 'year'
-        ? new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000)
-        : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+        ? now + 365 * 24 * 60 * 60 * 1000
+        : now + 30 * 24 * 60 * 60 * 1000
 
-    setUserPremium(telegramId, until.toISOString())
+    setPremium(telegramId, premiumUntil)
+    console.log(`[TCG] set premium for ${telegramId} until ${new Date(premiumUntil).toISOString()}`)
     await ctx.reply(
       plan === 'year'
         ? 'Спасибо! Premium активирован на 1 год.'

@@ -1,8 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { query } from '../db/client.js'
-
-const PREMIUM_PLAN_ID = 'premium_6m_259'
+import { getUser, isPremium } from '../memoryStore.js'
 
 function getInitDataFromRequest(req: Request): string | null {
   const auth = req.headers.authorization
@@ -28,37 +26,16 @@ router.get('/me', async (req: Request, res: Response) => {
   try {
     const parsed = verifyInitData(initData, botToken)
     telegram_id = parsed.telegram_id
-  } catch (e: unknown) {
+  } catch {
     res.status(401).json({ error: 'Unauthorized' })
     return
   }
 
-  try {
-    await query(
-      `INSERT INTO users (telegram_id) VALUES ($1)
-       ON CONFLICT (telegram_id) DO NOTHING`,
-      [telegram_id]
-    )
+  const user = getUser(telegram_id)
+  const premium = isPremium(telegram_id)
+  const premiumUntil = user?.premiumUntil ? new Date(user.premiumUntil).toISOString() : null
 
-    const rows = await query<{ active_until: Date }>(
-      `SELECT active_until FROM subscriptions
-       WHERE telegram_id = $1 AND plan_id = $2`,
-      [telegram_id, PREMIUM_PLAN_ID]
-    )
-    const sub = rows.rows[0]
-    const now = new Date()
-    const premium = !!sub && new Date(sub.active_until) > now
-    const premiumUntil = sub ? sub.active_until.toISOString() : null
-
-    res.status(200).json({ telegramId: telegram_id, premium, premiumUntil })
-  } catch (e: unknown) {
-    console.error('[TCG] /api/me error:', e)
-    res.status(200).json({
-      telegramId: telegram_id,
-      premium: false,
-      premiumUntil: null,
-    })
-  }
+  res.status(200).json({ telegramId: telegram_id, premium, premiumUntil })
 })
 
 export default router

@@ -5,6 +5,7 @@ import authRouter from './routes/auth.js'
 import premiumRouter from './routes/premium.js'
 import meRouter from './routes/me.js'
 import apiRouter from './api.js'
+import { launchBot } from './bot.js'
 
 const isDev = process.env.NODE_ENV !== 'production'
 const port = Number(process.env.PORT) || 3001
@@ -25,15 +26,23 @@ app.use('/api', premiumRouter)
 app.use('/api', meRouter)
 app.use('/api', apiRouter)
 
-app.listen(port, () => {
-  console.log(`[TCG] Server listening on port ${port}`)
-  if (isDev) {
-    console.log(`[TCG] Health: http://localhost:${port}/health`)
-    if (!process.env.DATABASE_URL) {
-      console.warn('[TCG] DATABASE_URL not set — DB routes will fail')
-    }
-    if (!process.env.TELEGRAM_BOT_TOKEN) {
-      console.warn('[TCG] TELEGRAM_BOT_TOKEN not set — auth/premium will fail')
-    }
+async function start() {
+  try {
+    await launchBot()
+    console.log('[BOT] launched')
+  } catch (e) {
+    console.error('[BOT] launch failed:', e)
   }
-})
+
+  app.listen(port, () => {
+    console.log(`[TCG] Server listening on port ${port}`)
+    if (isDev) {
+      console.log(`[TCG] Health: http://localhost:${port}/health`)
+      if (!process.env.TELEGRAM_BOT_TOKEN) {
+        console.warn('[TCG] TELEGRAM_BOT_TOKEN not set — bot will not start')
+      }
+    }
+  })
+}
+
+start()

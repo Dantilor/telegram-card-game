@@ -10,20 +10,13 @@ if (!BOT_TOKEN) {
 
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null
 
-if (bot && WEBAPP_URL) {
-  bot.start((ctx: Context) => {
-    return ctx.reply('Откройте Mini App', {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: 'Открыть Mini App',
-              web_app: { url: WEBAPP_URL },
-            },
-          ],
-        ],
-      },
-    })
+if (bot) {
+  bot.on('pre_checkout_query', async (ctx) => {
+    try {
+      await ctx.answerPreCheckoutQuery(true)
+    } catch (e) {
+      console.error('[TCG] pre_checkout_query error:', e)
+    }
   })
 
   bot.on('successful_payment', async (ctx: Context) => {
@@ -58,6 +51,18 @@ if (bot && WEBAPP_URL) {
     console.log(`[TCG] set premium for ${telegramId} until ${new Date(premiumUntil).toISOString()}`)
     await ctx.reply('✅ Premium активирован')
   })
+
+  if (WEBAPP_URL) {
+    bot.start((ctx: Context) => {
+      return ctx.reply('Откройте Mini App', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Открыть Mini App', web_app: { url: WEBAPP_URL } }],
+          ],
+        },
+      })
+    })
+  }
 }
 
 export async function launchBot(): Promise<void> {

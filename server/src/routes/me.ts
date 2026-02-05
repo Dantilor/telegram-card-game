@@ -31,11 +31,15 @@ router.get('/me', async (req: Request, res: Response) => {
     return
   }
 
-  const user = getUser(telegram_id)
-  const premium = isPremium(telegram_id)
-  const premiumUntil = user?.premiumUntil ? new Date(user.premiumUntil).toISOString() : null
-
-  res.status(200).json({ telegramId: telegram_id, premium, premiumUntil })
+  try {
+    const user = getUser(telegram_id)
+    const premium = isPremium(telegram_id)
+    const premiumUntil = user?.premiumUntil ? new Date(user.premiumUntil).toISOString() : null
+    res.status(200).json({ telegramId: telegram_id, premium, premiumUntil })
+  } catch (e) {
+    console.warn('[DB] unavailable, fallback:', e instanceof Error ? e.message : e)
+    res.status(200).json({ telegramId: telegram_id, premium: false, premiumUntil: null })
+  }
 })
 
 export default router

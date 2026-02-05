@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express'
 import { verifyAndParseInitData, type ParsedInitData } from './verifyInitData.js'
-import { getUser, isPremium } from './storage.js'
+import { getUser, isPremium } from './memoryStore.js'
 import { bot } from './bot.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
@@ -83,10 +83,11 @@ api.get('/me', verifyInitData, (req: Request, res: Response) => {
   const telegramId = req.initData!.user!.id
   const user = getUser(telegramId)
   const premium = isPremium(telegramId)
+  const premiumUntil = user?.premiumUntil ? new Date(user.premiumUntil).toISOString() : null
   res.json({
     telegramId,
     premium,
-    premiumUntil: user?.premiumUntil ?? undefined,
+    premiumUntil: premiumUntil ?? undefined,
   })
 })
 

@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from 'react'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
-import { getTgUser, getInitData, getTelegramWebApp } from '../lib/telegram'
-import { haptic } from '../utils/telegram'
+import { getTelegramWebApp } from '../lib/telegram'
+import { haptic, getTgUser, getInitData } from '../utils/telegram'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
@@ -14,7 +14,8 @@ function Profile() {
   const handleBack = useBack('/')
   const user = getTgUser()
   const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
-  const userId = getInitData().userId
+  const initData = getInitData()
+  const userId = initData.userId ?? initData.user?.id
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)

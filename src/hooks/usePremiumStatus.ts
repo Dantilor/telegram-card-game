@@ -64,6 +64,7 @@ export function usePremiumStatus(): {
   loading: boolean
   authError: boolean
   authError401: boolean
+  serverError503: boolean
   refetch: () => void
   refresh: () => void
 } {

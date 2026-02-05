@@ -8,7 +8,7 @@ import apiRouter from './api.js'
 import { launchBot } from './bot.js'
 
 const isDev = process.env.NODE_ENV !== 'production'
-const port = Number(process.env.PORT) || 3001
+const PORT = Number(process.env.PORT) || 3000
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
 
 const app = express()
@@ -34,10 +34,10 @@ async function start() {
     console.error('[BOT] launch failed:', e)
   }
 
-  app.listen(port, () => {
-    console.log(`[TCG] Server listening on port ${port}`)
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Listening on ${PORT}`)
     if (isDev) {
-      console.log(`[TCG] Health: http://localhost:${port}/health`)
+      console.log(`[TCG] Health: http://localhost:${PORT}/health`)
       if (!process.env.TELEGRAM_BOT_TOKEN) {
         console.warn('[TCG] TELEGRAM_BOT_TOKEN not set — bot will not start')
       }

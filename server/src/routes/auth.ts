@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { query } from '../db/client.js'
+import { query } from '../db.js'
 
 const router = Router()
 

@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express'
 import { verifyAndParseInitData, type ParsedInitData } from './verifyInitData.js'
 import { getUserPremiumWithDb } from './premiumStore.js'
-import { query } from './db/client.js'
+import { query } from './db.js'
 import { bot } from './bot.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN

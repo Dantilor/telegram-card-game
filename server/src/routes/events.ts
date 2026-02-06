@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { query } from '../db/client.js'
+import { query } from '../db.js'
 
 const PROPS_MAX_BYTES = 8 * 1024 // 8kb
 const SENSITIVE_KEYS = [

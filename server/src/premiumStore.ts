@@ -38,7 +38,7 @@ function addCalendarMonths(date: Date, months: number): Date {
 }
 
 async function getQuery() {
-  const { query } = await import('./db/client.js')
+  const { query } = await import('./db.js')
   return query
 }
 

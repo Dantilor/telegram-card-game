@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { query } from '../db/client.js'
+import { query } from '../db.js'
 
 const PREMIUM_PLAN_ID = 'premium_6m_259'
 const QUERY_TIMEOUT_MS = 8000

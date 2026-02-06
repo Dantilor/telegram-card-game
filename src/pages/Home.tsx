@@ -11,7 +11,7 @@ import './Home.css'
 
 const APP_FEATURES = [
   'Колоды вопросов',
-  'Alias / Крокодил',
+  'Ассоциации',
   'Мафия',
   'Activity',
   'Саботаж',
@@ -36,7 +36,7 @@ function Home() {
         <div className="home-hero__content">
           <h1 className="home-hero__title">GameNight Host</h1>
           <p className="home-hero__subtitle">
-            Колоды вопросов, Alias, Мафия и другие игры
+            Колоды вопросов, Ассоциации, Мафия и другие игры
           </p>
           <div className="home-hero__actions">
             <Link

@@ -25,7 +25,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'alias',
-    title: 'Alias / Крокодил',
+    title: 'Ассоциации',
     emoji: '💬',
     description: 'Объясняй слова без однокоренных',
     status: 'ready',

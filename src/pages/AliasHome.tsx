@@ -69,7 +69,7 @@ function AliasHome() {
         </button>
       </div>
       <header className="alias-home__header">
-        <h1 className="alias-home__title">Alias / Крокодил</h1>
+        <h1 className="alias-home__title">Ассоциации</h1>
         <p className="alias-home__tagline">Объясняй слова без однокоренных</p>
       </header>
 

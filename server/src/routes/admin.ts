@@ -1,10 +1,5 @@
 import { Router, Request, Response } from 'express'
-import {
-  adminGrantPremium,
-  adminRevokePremium,
-  getUserPremiumWithDb,
-  getLastPaymentsDb,
-} from '../premiumStore.js'
+import { query } from '../db.js'
 
 const expectedToken = (process.env.ADMIN_TOKEN ?? '') as string
 
@@ -35,6 +30,15 @@ function requireAdmin(req: Request, res: Response, next: () => void): void {
   next()
 }
 
+function parseTelegramId(v: unknown): number | null {
+  if (typeof v === 'number' && Number.isInteger(v) && v > 0) return v
+  if (typeof v === 'string') {
+    const n = parseInt(v, 10)
+    if (Number.isInteger(n) && n > 0) return n
+  }
+  return null
+}
+
 const router = Router()
 router.use(requireAdmin)
 
@@ -44,74 +48,93 @@ router.get('/ping', (_req: Request, res: Response) => {
 
 router.post('/grant', async (req: Request, res: Response) => {
   try {
-    const telegramId = Number(req.body?.telegramId)
-    if (!Number.isInteger(telegramId) || telegramId <= 0) {
-      res.status(400).json({ error: 'telegramId required (positive integer)' })
+    const telegramId = parseTelegramId(req.body?.telegramId)
+    if (telegramId == null) {
+      res.status(400).json({ ok: false, error: 'telegramId required (positive integer)' })
       return
     }
-    const months = Number.isFinite(Number(req.body?.months)) ? Number(req.body.months) : 6
-    const days = Number.isFinite(Number(req.body?.days)) ? Number(req.body.days) : 0
+    const days = Number.isFinite(Number(req.body?.days)) ? Number(req.body.days) : 180
+    const activeUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
 
-    const { premiumUntil } = await adminGrantPremium(telegramId, { months, days })
-    const premiumUntilIso = new Date(premiumUntil).toISOString()
+    await query(
+      'INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING',
+      [telegramId]
+    )
+    await query(
+      `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
+       VALUES ($1, 'premium', $2)
+       ON CONFLICT (telegram_id, plan_id)
+       DO UPDATE SET active_until = EXCLUDED.active_until`,
+      [telegramId, activeUntil]
+    )
+
     res.status(200).json({
+      ok: true,
       telegramId,
-      premium: true,
-      premiumUntil: premiumUntilIso,
+      planId: 'premium',
+      activeUntil: activeUntil.toISOString(),
     })
   } catch (e) {
-    console.warn('[admin] grant error:', e)
-    res.status(503).json({ error: 'Service temporarily unavailable' })
+    console.error('[admin] grant error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
 })
 
 router.post('/revoke', async (req: Request, res: Response) => {
   try {
-    const telegramId = Number(req.body?.telegramId)
-    if (!Number.isInteger(telegramId) || telegramId <= 0) {
-      res.status(400).json({ error: 'telegramId required (positive integer)' })
+    const telegramId = parseTelegramId(req.body?.telegramId)
+    if (telegramId == null) {
+      res.status(400).json({ ok: false, error: 'telegramId required (positive integer)' })
       return
     }
 
-    await adminRevokePremium(telegramId)
-    res.status(200).json({
-      telegramId,
-      premium: false,
-    })
+    await query(
+      "DELETE FROM subscriptions WHERE telegram_id = $1 AND plan_id = 'premium'",
+      [telegramId]
+    )
+
+    res.status(200).json({ ok: true })
   } catch (e) {
-    console.warn('[admin] revoke error:', e)
-    res.status(503).json({ error: 'Service temporarily unavailable' })
+    console.error('[admin] revoke error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
 })
 
 router.get('/user/:telegramId', async (req: Request, res: Response) => {
   try {
-    const telegramId = Number(req.params.telegramId)
-    if (!Number.isInteger(telegramId) || telegramId <= 0) {
-      res.status(400).json({ error: 'telegramId required (positive integer)' })
+    const telegramId = parseTelegramId(req.params.telegramId)
+    if (telegramId == null) {
+      res.status(400).json({ ok: false, error: 'telegramId required (positive integer)' })
       return
     }
 
-    const { premium, premiumUntil } = await getUserPremiumWithDb(telegramId)
-    const payments = await getLastPaymentsDb(telegramId, 10)
-    const lastPayments = payments.map((p) => ({
-      id: p.id,
-      planId: p.plan_id,
-      currency: p.currency,
-      totalAmount: p.total_amount,
-      status: p.status,
-      createdAt: new Date(p.created_at).toISOString(),
-    }))
+    const res_ = await query<{ telegram_id: number; created_at: Date; active_until: Date | null }>(
+      `SELECT u.telegram_id, u.created_at, s.active_until
+       FROM users u
+       LEFT JOIN subscriptions s
+         ON s.telegram_id = u.telegram_id AND s.plan_id = 'premium'
+       WHERE u.telegram_id = $1`,
+      [telegramId]
+    )
+
+    const row = res_.rows[0]
+    if (!row) {
+      res.status(404).json({ ok: false, error: 'User not found' })
+      return
+    }
+
+    const activeUntil = row.active_until ? new Date(row.active_until).toISOString() : null
+    const isPremium = row.active_until ? new Date(row.active_until).getTime() > Date.now() : false
 
     res.status(200).json({
-      telegramId,
-      premium,
-      premiumUntil: premiumUntil ?? null,
-      lastPayments,
+      telegramId: row.telegram_id,
+      createdAt: new Date(row.created_at).toISOString(),
+      activeUntil,
+      isPremium,
     })
   } catch (e) {
-    console.warn('[admin] user error:', e)
-    res.status(503).json({ error: 'Service temporarily unavailable' })
+    console.error('[admin] user error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
 })
 

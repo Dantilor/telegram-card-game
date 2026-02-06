@@ -6,16 +6,29 @@ import {
   getLastPaymentsDb,
 } from '../premiumStore.js'
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? ''
+const expectedToken = (process.env.ADMIN_TOKEN ?? '') as string
+
+function getTokenFromRequest(req: Request): string | null {
+  const auth = req.headers.authorization
+  if (auth && typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    return auth.slice(7).trim()
+  }
+  const xToken = req.headers['x-admin-token']
+  if (typeof xToken === 'string') return xToken.trim()
+  return null
+}
 
 function requireAdmin(req: Request, res: Response, next: () => void): void {
-  if (!ADMIN_TOKEN) {
+  if (!expectedToken) {
     res.status(503).json({ error: 'ADMIN_TOKEN not configured' })
     return
   }
   const auth = req.headers.authorization
-  const expected = `Bearer ${ADMIN_TOKEN}`
-  if (!auth || auth.trim() !== expected) {
+  const token = getTokenFromRequest(req)
+  const expected = expectedToken
+  console.log('[admin] auth header length=', typeof auth === 'string' ? auth.length : 0, 'expected length=', expected.length)
+  if (!token || token !== expectedToken) {
+    console.warn('[admin] Unauthorized: received length', token?.length ?? 0, 'expected length', expectedToken.length)
     res.status(401).json({ error: 'Unauthorized' })
     return
   }
@@ -24,6 +37,10 @@ function requireAdmin(req: Request, res: Response, next: () => void): void {
 
 const router = Router()
 router.use(requireAdmin)
+
+router.get('/ping', (_req: Request, res: Response) => {
+  res.status(200).json({ ok: true })
+})
 
 router.post('/grant', async (req: Request, res: Response) => {
   try {

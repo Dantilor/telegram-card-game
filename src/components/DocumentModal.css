@@ -14,6 +14,7 @@
 
 [data-theme="neon-light"] .document-modal,
 [data-theme="portal"] .document-modal,
+[data-theme="soft-light"] .document-modal,
 [data-theme="sunset"] .document-modal,
 [data-theme="minimal-calm"] .document-modal {
   background: rgba(0, 0, 0, 0.45);
@@ -81,6 +82,152 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text);
+}
+
+/* neon-light — тёмный текст на светлой карточке */
+[data-theme="neon-light"] .document-modal__title {
+  color: #1a1a2e;
+}
+
+[data-theme="neon-light"] .document-modal__content,
+[data-theme="neon-light"] .document-modal__content .document-modal__p,
+[data-theme="neon-light"] .document-modal__content .document-modal__li {
+  color: #2d2d44;
+}
+
+[data-theme="neon-light"] .document-modal__content .document-modal__h2 {
+  color: #6b6b8a;
+}
+
+[data-theme="neon-light"] .document-modal__link {
+  color: var(--secondary, #06b6d4);
+}
+
+[data-theme="neon-light"] .document-modal__close {
+  color: #6b6b8a;
+}
+
+[data-theme="neon-light"] .document-modal__close:hover {
+  color: #1a1a2e;
+}
+
+/* portal — тёмный текст на светлой карточке */
+[data-theme="portal"] .document-modal__title {
+  color: #0a1f1a;
+}
+
+[data-theme="portal"] .document-modal__content,
+[data-theme="portal"] .document-modal__content .document-modal__p,
+[data-theme="portal"] .document-modal__content .document-modal__li {
+  color: #0d3329;
+}
+
+[data-theme="portal"] .document-modal__content .document-modal__h2 {
+  color: #0f4a3a;
+}
+
+[data-theme="portal"] .document-modal__link {
+  color: var(--primary, #00ffcc);
+}
+
+[data-theme="portal"] .document-modal__close {
+  color: #0f4a3a;
+}
+
+[data-theme="portal"] .document-modal__close:hover {
+  color: #0a1f1a;
+}
+
+/* soft-light — тёмный текст на светлой карточке */
+[data-theme="soft-light"] .document-modal__card {
+  background: #ffffff;
+  border: 1px solid rgba(30, 27, 75, 0.12);
+  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.12);
+}
+
+[data-theme="soft-light"] .document-modal__title {
+  color: #1e1b4b;
+}
+
+[data-theme="soft-light"] .document-modal__content,
+[data-theme="soft-light"] .document-modal__content .document-modal__p,
+[data-theme="soft-light"] .document-modal__content .document-modal__li {
+  color: #312e81;
+}
+
+[data-theme="soft-light"] .document-modal__content .document-modal__h2 {
+  color: #4c1d95;
+}
+
+[data-theme="soft-light"] .document-modal__link {
+  color: var(--secondary, #22d3ee);
+}
+
+[data-theme="soft-light"] .document-modal__close {
+  color: #4c1d95;
+}
+
+[data-theme="soft-light"] .document-modal__close:hover {
+  color: #1e1b4b;
+}
+
+[data-theme="soft-light"] .document-modal__header,
+[data-theme="soft-light"] .document-modal__footer {
+  border-color: rgba(30, 27, 75, 0.1);
+}
+
+/* sunset — тёмный текст на светлой карточке */
+[data-theme="sunset"] .document-modal__title {
+  color: #292524;
+}
+
+[data-theme="sunset"] .document-modal__content,
+[data-theme="sunset"] .document-modal__content .document-modal__p,
+[data-theme="sunset"] .document-modal__content .document-modal__li {
+  color: #44403c;
+}
+
+[data-theme="sunset"] .document-modal__content .document-modal__h2 {
+  color: #78716c;
+}
+
+[data-theme="sunset"] .document-modal__link {
+  color: var(--primary, #fb923c);
+}
+
+[data-theme="sunset"] .document-modal__close {
+  color: #78716c;
+}
+
+[data-theme="sunset"] .document-modal__close:hover {
+  color: #292524;
+}
+
+/* minimal-calm — тёмный текст на светлой карточке */
+[data-theme="minimal-calm"] .document-modal__title {
+  color: #0f172a;
+}
+
+[data-theme="minimal-calm"] .document-modal__content,
+[data-theme="minimal-calm"] .document-modal__content .document-modal__p,
+[data-theme="minimal-calm"] .document-modal__content .document-modal__li {
+  color: #334155;
+}
+
+[data-theme="minimal-calm"] .document-modal__content .document-modal__h2 {
+  color: #64748b;
+}
+
+[data-theme="minimal-calm"] .document-modal__link {
+  color: var(--primary, #38bdf8);
+}
+
+[data-theme="minimal-calm"] .document-modal__close {
+  color: #64748b;
+}
+
+[data-theme="minimal-calm"] .document-modal__close:hover {
+  color: #0f172a;
 }
 
 .document-modal__close {

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { getUserPremiumWithDb } from '../premiumStore.js'
+import { query } from '../db.js'
+import { getUser } from '../memoryStore.js'
 
 function toInitDataString(v: unknown): string {
   if (typeof v === 'string') return v
@@ -34,18 +35,45 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 
   try {
-    const { premium, premiumUntil, planId } = await getUserPremiumWithDb(telegramId)
-    console.log(`[API] /api/me returns premium=${premium} planId=${planId ?? 'null'} premiumUntil=${premiumUntil ?? 'null'}`)
+    await query(
+      'INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING',
+      [telegramId]
+    )
+
+    const subRes = await query<{ active_until: Date }>(
+      `SELECT active_until FROM subscriptions
+       WHERE telegram_id = $1 AND plan_id = 'premium'
+       LIMIT 1`,
+      [telegramId]
+    )
+
+    const row = subRes.rows[0]
+    const activeUntil = row ? new Date(row.active_until) : null
+    const isPremium = activeUntil ? activeUntil.getTime() > Date.now() : false
+    const premiumUntil = activeUntil ? activeUntil.toISOString() : null
+
     res.status(200).json({
       telegramId,
-      premium,
-      planId: planId ?? undefined,
-      activeUntil: premiumUntil ?? undefined,
-      premiumUntil: premiumUntil ?? undefined,
+      isPremium,
+      premium: isPremium,
+      premiumUntil,
+      source: 'db',
     })
   } catch (e) {
-    console.warn('[API] /api/me error:', e instanceof Error ? e.message : e)
-    res.status(503).json({ error: 'Service temporarily unavailable' })
+    console.error('[API] /api/me DB error:', e)
+    const mem = getUser(telegramId)
+    const premiumUntilTs = mem?.premiumUntil
+    const isPremium = premiumUntilTs != null && premiumUntilTs > Date.now()
+    const premiumUntil = premiumUntilTs != null ? new Date(premiumUntilTs).toISOString() : null
+
+    res.status(200).json({
+      telegramId,
+      isPremium,
+      premium: isPremium,
+      premiumUntil,
+      source: 'memory',
+      dbError: e instanceof Error ? e.message : String(e),
+    })
   }
 })
 

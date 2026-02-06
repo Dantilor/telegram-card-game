@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express'
 import { verifyAndParseInitData, type ParsedInitData } from './verifyInitData.js'
-import { getUserPremiumWithDb } from './premiumStore.js'
 import { query } from './db.js'
 import { bot } from './bot.js'
 
@@ -57,15 +56,15 @@ api.get('/debug/ping', (_req: Request, res: Response) => {
 // Debug DB — no initData needed, checks pool connection
 api.get('/debug/db', async (_req: Request, res: Response) => {
   try {
-    const r = await query<{ ok: number }>('select 1 as ok')
+    const r = await query<{ ok: number }>('SELECT 1 as ok')
     if (r.rows[0]?.ok === 1) {
       res.status(200).json({ ok: true })
     } else {
-      res.status(503).json({ ok: false, error: 'Unexpected result' })
+      res.status(500).json({ ok: false, error: 'Unexpected result' })
     }
   } catch (e) {
-    console.warn('[API] /api/debug/db error:', e)
-    res.status(503).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
+    console.error('[API] /api/debug/db error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
 })
 
@@ -101,24 +100,6 @@ api.post('/invoice', verifyInitData, async (req: Request, res: Response) => {
   } catch (e) {
     console.error('createInvoiceLink error', e)
     res.status(500).json({ error: 'Failed to create invoice' })
-  }
-})
-
-api.get('/me', verifyInitData, async (req: Request, res: Response) => {
-  const telegramId = req.initData!.user!.id
-  try {
-    const { premium, premiumUntil, planId } = await getUserPremiumWithDb(telegramId)
-    console.log(`[API] /api/me returns premium=${premium} planId=${planId ?? 'null'} premiumUntil=${premiumUntil ?? 'null'}`)
-    res.json({
-      telegramId,
-      premium,
-      planId: planId ?? undefined,
-      activeUntil: premiumUntil ?? undefined,
-      premiumUntil: premiumUntil ?? undefined,
-    })
-  } catch (e) {
-    console.warn('[API] /api/me error:', e instanceof Error ? e.message : e)
-    res.status(503).json({ error: 'Service temporarily unavailable' })
   }
 })
 

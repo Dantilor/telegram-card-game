@@ -52,6 +52,12 @@ psql "$DATABASE_URL" -f db/schema.sql
 psql "$DATABASE_URL" -f server/db/schema.sql
 ```
 
+**Миграция payments** (если таблица payments уже существует со старой схемой):
+```bash
+psql "$DATABASE_URL" -f server/db/migrations/001_payments_new_schema.sql
+```
+(Пересоздаёт таблицу payments с колонками provider, amount и UNIQUE по charge_id.)
+
 ## Запуск
 
 **Development** (hot reload):

@@ -9,8 +9,8 @@ type PremiumContextValue = {
   authError401: boolean
   serverError503: boolean
   refetch: () => void
-  refresh: () => void
-  refreshPremium: () => void
+  refresh: () => Promise<{ isPremium: boolean; activeUntil: string | null } | null>
+  refreshPremium: () => Promise<{ isPremium: boolean; activeUntil: string | null } | null>
 }
 
 const PremiumContext = createContext<PremiumContextValue>({
@@ -21,8 +21,8 @@ const PremiumContext = createContext<PremiumContextValue>({
   authError401: false,
   serverError503: false,
   refetch: () => {},
-  refresh: () => {},
-  refreshPremium: () => {},
+  refresh: async () => null,
+  refreshPremium: async () => null,
 })
 
 export function PremiumProvider({ children }: { children: ReactNode }) {

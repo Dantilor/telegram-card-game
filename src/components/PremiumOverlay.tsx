@@ -49,9 +49,34 @@ type Props = {
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props) {
   const { refresh } = usePremium()
   const [loading, setLoading] = useState(false)
+  const [restoreLoading, setRestoreLoading] = useState(false)
+  const [restoreToast, setRestoreToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const pollAbortRef = useRef<(() => void) | null>(null)
+
+  const handleRestorePurchase = async () => {
+    haptic('medium')
+    setRestoreToast(null)
+    setRestoreLoading(true)
+    try {
+      const result = await refresh()
+      setRestoreToast(result?.isPremium ? '✅ Покупки восстановлены' : 'Покупок не найдено')
+      if (result?.isPremium) {
+        setSuccess(true)
+        setError(null)
+        setTimeout(() => {
+          onClose()
+          setSuccess(false)
+        }, 1500)
+      }
+    } catch {
+      setRestoreToast('Ошибка синхронизации')
+    } finally {
+      setRestoreLoading(false)
+      setTimeout(() => setRestoreToast(null), 2500)
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -181,6 +206,11 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
             {error}
           </p>
         )}
+        {restoreToast && (
+          <p className="premium-overlay__toast" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            {restoreToast}
+          </p>
+        )}
         <div className="premium-overlay__description">
           <p>
             С подпиской открывается полный доступ ко всем играм и режимам.
@@ -219,6 +249,14 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           disabled={loading}
         >
           {loading ? 'Загрузка…' : `Открыть Premium · ${PREMIUM_PLAN.priceRub} ₽ / ${PREMIUM_PLAN.durationMonths} месяцев`}
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost premium-overlay__btn"
+          onClick={handleRestorePurchase}
+          disabled={restoreLoading}
+        >
+          {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
         </button>
         <button
           type="button"

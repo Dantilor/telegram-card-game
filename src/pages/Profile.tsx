@@ -19,18 +19,27 @@ function Profile() {
   const userId = initData.userId ?? initData.user?.id
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
+  const [restoreLoading, setRestoreLoading] = useState(false)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleRestorePurchase = useCallback(() => {
+  const handleRestorePurchase = useCallback(async () => {
     haptic('medium')
     if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current)
     setRestoreStatus(null)
-    refreshPremium()
-    setRestoreStatus('Обновлено')
-    restoreTimerRef.current = setTimeout(() => {
-      setRestoreStatus(null)
-      restoreTimerRef.current = null
-    }, 2500)
+    setRestoreLoading(true)
+    try {
+      const result = await refreshPremium()
+      const toast = result?.isPremium ? '✅ Покупки восстановлены' : 'Покупок не найдено'
+      setRestoreStatus(toast)
+    } catch {
+      setRestoreStatus('Ошибка синхронизации')
+    } finally {
+      setRestoreLoading(false)
+      restoreTimerRef.current = setTimeout(() => {
+        setRestoreStatus(null)
+        restoreTimerRef.current = null
+      }, 2500)
+    }
   }, [refreshPremium])
 
   const handleSupport = useCallback(() => {
@@ -106,8 +115,9 @@ function Profile() {
                 type="button"
                 className="btn btn--ghost profile-premium__btn"
                 onClick={handleRestorePurchase}
+                disabled={restoreLoading}
               >
-                Восстановить покупку
+                {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
               </button>
               {restoreStatus && (
                 <span className="profile-premium__toast">{restoreStatus}</span>
@@ -138,8 +148,9 @@ function Profile() {
               type="button"
               className="btn btn--ghost profile-premium__btn"
               onClick={handleRestorePurchase}
+              disabled={restoreLoading}
             >
-              Восстановить покупку
+              {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
             </button>
           </div>
         )}

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { query } from '../db.js'
+import { ensureUser, getActiveSubscription } from '../services/subscriptions.js'
 import { getUser } from '../memoryStore.js'
 
 function toInitDataString(v: unknown): string {
@@ -35,28 +35,16 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 
   try {
-    await query(
-      'INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING',
-      [telegramId]
-    )
-
-    const subRes = await query<{ active_until: Date }>(
-      `SELECT active_until FROM subscriptions
-       WHERE telegram_id = $1 AND plan_id = 'premium'
-       LIMIT 1`,
-      [telegramId]
-    )
-
-    const row = subRes.rows[0]
-    const activeUntil = row ? new Date(row.active_until) : null
-    const isPremium = activeUntil ? activeUntil.getTime() > Date.now() : false
-    const premiumUntil = activeUntil ? activeUntil.toISOString() : null
+    await ensureUser(telegramId)
+    const activeUntil = await getActiveSubscription(telegramId, 'premium')
+    const now = new Date()
+    const isPremium = activeUntil != null && activeUntil > now
 
     res.status(200).json({
       telegramId,
       isPremium,
       premium: isPremium,
-      premiumUntil,
+      premiumUntil: activeUntil ? activeUntil.toISOString() : null,
       source: 'db',
     })
   } catch (e) {

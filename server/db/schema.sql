@@ -17,25 +17,17 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 
 CREATE TABLE IF NOT EXISTS payments (
   id BIGSERIAL PRIMARY KEY,
-  telegram_id BIGINT NOT NULL REFERENCES users(telegram_id),
-  plan_id TEXT NOT NULL,
-  currency TEXT NOT NULL,
-  total_amount INT NOT NULL,
-  provider_payment_charge_id TEXT,
+  telegram_id BIGINT REFERENCES users(telegram_id),
+  provider TEXT NOT NULL, -- 'stars' | 'rub'
+  plan_id TEXT NOT NULL,  -- 'premium'
+  amount INTEGER,
+  currency TEXT,
   telegram_payment_charge_id TEXT,
-  invoice_payload TEXT,
-  status TEXT NOT NULL DEFAULT 'paid',
-  created_at TIMESTAMP DEFAULT now()
+  provider_payment_charge_id TEXT,
+  created_at TIMESTAMP DEFAULT now(),
+  UNIQUE (provider, telegram_payment_charge_id),
+  UNIQUE (provider, provider_payment_charge_id)
 );
-
--- Partial unique indexes: prevent duplicate payments by charge_id (when present)
-CREATE UNIQUE INDEX IF NOT EXISTS payments_provider_charge_unique
-  ON payments (provider_payment_charge_id) WHERE provider_payment_charge_id IS NOT NULL;
-
-CREATE UNIQUE INDEX IF NOT EXISTS payments_telegram_charge_unique
-  ON payments (telegram_payment_charge_id) WHERE telegram_payment_charge_id IS NOT NULL;
-
--- When both charge_ids are null, dedup is done in application (savePaymentDb).
 
 -- Events analytics
 CREATE TABLE IF NOT EXISTS events (

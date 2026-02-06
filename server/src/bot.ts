@@ -1,5 +1,12 @@
 import { Telegraf, type Context } from 'telegraf'
-import { setPremiumWithPersistence } from './premiumStore.js'
+import {
+  ensureUser,
+  upsertSubscription,
+  getActiveSubscription,
+  savePaymentIfNew,
+  addDays,
+  PREMIUM_DAYS,
+} from './services/subscriptions.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
 const WEBAPP_URL = process.env.WEBAPP_URL || ''
@@ -43,39 +50,42 @@ if (bot) {
     const telegramId = payload.telegramId ?? (msg?.from as { id?: number })?.id
     if (!telegramId) return
 
-    const plan =
-      payload.plan === 'year'
-        ? 'premium_year'
-        : payload.plan === 'month'
-          ? 'premium_6m_259'
-          : payload.plan || 'premium_6m_259'
-
-    const currency = sp.currency ?? 'XTR'
-    const totalAmount = sp.total_amount ?? 0
+    const planId = 'premium'
     const providerPaymentChargeId = sp.provider_payment_charge_id ?? null
     const telegramPaymentChargeId = sp.telegram_payment_charge_id ?? null
 
-    const saved = await setPremiumWithPersistence(telegramId, plan, {
-      telegramId,
-      planId: plan,
-      currency,
-      totalAmount,
-      providerPaymentChargeId,
-      telegramPaymentChargeId,
-      invoicePayload: sp.invoice_payload,
-      status: 'paid',
-    })
+    try {
+      await ensureUser(telegramId)
 
-    if (!saved) {
-      console.log('[BOT] payment duplicate, skipped telegramId=', telegramId)
-      await ctx.reply('✅ Premium уже активирован (повторная обработка пропущена)')
-      return
+      const isNewPayment = await savePaymentIfNew({
+        telegramId,
+        planId,
+        provider: 'stars',
+        amount: sp.total_amount ?? 0,
+        currency: sp.currency ?? 'XTR',
+        telegramPaymentChargeId,
+        providerPaymentChargeId,
+      })
+
+      if (!isNewPayment) {
+        console.log('[BOT] payment duplicate, skipped telegramId=', telegramId)
+        await ctx.reply('✅ Premium уже активирован (повторная обработка пропущена)')
+        return
+      }
+
+      const now = new Date()
+      const currentUntil = await getActiveSubscription(telegramId, planId)
+      const base = currentUntil && currentUntil > now ? currentUntil : now
+      const activeUntil = addDays(base, PREMIUM_DAYS)
+
+      await upsertSubscription(telegramId, planId, activeUntil)
+
+      console.log(`[BOT] payment saved telegramId=${telegramId} premiumUntil=${activeUntil.toISOString()}`)
+      await ctx.reply('✅ Premium активирован')
+    } catch (err) {
+      console.error('[Stars] DB write failed', err)
+      await ctx.reply('✅ Premium активирован')
     }
-
-    console.log(
-      `[BOT] payment saved telegramId=${telegramId} plan=${plan} premiumUntil extended`
-    )
-    await ctx.reply('✅ Premium активирован')
   })
 
   if (WEBAPP_URL) {

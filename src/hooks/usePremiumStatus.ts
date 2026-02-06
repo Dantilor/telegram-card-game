@@ -66,7 +66,7 @@ export function usePremiumStatus(): {
   authError401: boolean
   serverError503: boolean
   refetch: () => void
-  refresh: () => void
+  refresh: () => Promise<{ isPremium: boolean; activeUntil: string | null } | null>
 } {
   const mountedRef = useRef(true)
 
@@ -111,13 +111,13 @@ export function usePremiumStatus(): {
     }
   }, [])
 
-  const fetchStatus = useCallback(async (bypassCache = false) => {
+  const fetchStatus = useCallback(async (bypassCache = false): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
     const initData = getInitData()
 
     if (!initData) {
       if (isDev) console.log('[TCG] Premium: no initData (open in Telegram)')
       doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false, serverError503: false })
-      return
+      return null
     }
 
     if (!bypassCache) {
@@ -125,7 +125,7 @@ export function usePremiumStatus(): {
       if (cached) {
         updateTcgState(cached.isPremium)
         doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false, serverError503: false })
-        return
+        return cached
       }
     }
 
@@ -140,6 +140,7 @@ export function usePremiumStatus(): {
       updateTcgState(data.isPremium)
       if (isDev) console.log('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
       doneLoading({ ...data, authError: false, authError401: false, serverError503: false })
+      return data
     } catch (e) {
       if (isDev) console.warn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
       const err = e as Error & { status?: number }
@@ -150,6 +151,7 @@ export function usePremiumStatus(): {
         authError401: e instanceof ApiAuthError,
         serverError503: err.status === 503,
       })
+      return null
     }
   }, [doneLoading])
 
@@ -181,9 +183,9 @@ export function usePremiumStatus(): {
     return () => window.removeEventListener('tcg_premium_sync', onSync)
   }, [fetchStatus])
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async (): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
     clearCache()
-    fetchStatus(true)
+    return fetchStatus(true)
   }, [fetchStatus])
 
   return {

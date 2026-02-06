@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express'
 import { verifyAndParseInitData, type ParsedInitData } from './verifyInitData.js'
 import { getUserPremiumWithDb } from './premiumStore.js'
+import { query } from './db/client.js'
 import { bot } from './bot.js'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
@@ -51,6 +52,21 @@ api.use(express.json())
 // Debug ping — no initData needed
 api.get('/debug/ping', (_req: Request, res: Response) => {
   res.status(200).json({ ok: true, time: new Date().toISOString() })
+})
+
+// Debug DB — no initData needed, checks pool connection
+api.get('/debug/db', async (_req: Request, res: Response) => {
+  try {
+    const r = await query<{ ok: number }>('select 1 as ok')
+    if (r.rows[0]?.ok === 1) {
+      res.status(200).json({ ok: true })
+    } else {
+      res.status(503).json({ ok: false, error: 'Unexpected result' })
+    }
+  } catch (e) {
+    console.warn('[API] /api/debug/db error:', e)
+    res.status(503).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
+  }
 })
 
 api.post('/invoice', verifyInitData, async (req: Request, res: Response) => {

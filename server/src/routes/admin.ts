@@ -68,6 +68,17 @@ router.post('/grant', async (req: Request, res: Response) => {
       [telegramId, activeUntil]
     )
 
+    const providerPaymentChargeId = `admin-grant-${telegramId}-${Date.now()}`
+    await query(
+      `INSERT INTO payments (
+         telegram_id, provider, plan_id, amount, currency,
+         telegram_payment_charge_id, provider_payment_charge_id
+       )
+       VALUES ($1, 'admin', 'premium', NULL, NULL, NULL, $2)
+       ON CONFLICT (provider, provider_payment_charge_id) DO NOTHING`,
+      [telegramId, providerPaymentChargeId]
+    )
+
     res.status(200).json({
       ok: true,
       telegramId,

@@ -104,3 +104,39 @@ export function addDays(date: Date, days: number): Date {
 }
 
 export const PREMIUM_DAYS = DAYS_6_MONTHS
+
+/**
+ * Insert Stars payment; returns inserted id if new, null if duplicate (ON CONFLICT).
+ * Use for deduplication: only extend subscription when id is returned.
+ */
+export async function insertStarsPaymentIfNew(payment: {
+  telegramId: number
+  amount: number
+  currency: string | null
+  telegramPaymentChargeId: string
+  providerPaymentChargeId: string | null
+}): Promise<number | null> {
+  const res = await query<{ id: number }>(
+    `INSERT INTO payments (
+       telegram_id,
+       provider,
+       plan_id,
+       amount,
+       currency,
+       telegram_payment_charge_id,
+       provider_payment_charge_id
+     )
+     VALUES ($1, 'stars', 'premium', $2, $3, $4, $5)
+     ON CONFLICT (provider, telegram_payment_charge_id) DO NOTHING
+     RETURNING id`,
+    [
+      payment.telegramId,
+      payment.amount,
+      payment.currency,
+      payment.telegramPaymentChargeId,
+      payment.providerPaymentChargeId,
+    ]
+  )
+  const row = res.rows[0]
+  return row ? row.id : null
+}

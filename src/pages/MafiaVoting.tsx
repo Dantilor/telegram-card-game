@@ -9,8 +9,15 @@ import './MafiaVoting.css'
 function MafiaVoting() {
   const navigate = useNavigate()
   const { state, dispatch } = useMafiaGame()
-
   const handleBack = useBack('/mafia/day')
+
+  useEffect(() => {
+    if (state.winner) {
+      navigate('/mafia/result')
+    } else if (state.phase === 'night_intro') {
+      navigate('/mafia/night')
+    }
+  }, [state.phase, state.winner, navigate])
 
   if (!state.players.length) {
     navigate('/mafia')
@@ -20,14 +27,6 @@ function MafiaVoting() {
   const alive = state.players.filter((p) => p.alive)
   const currentVoter = alive[state.voteCollectIndex]
   const targets = alive.filter((p) => p.id !== currentVoter?.id)
-
-  useEffect(() => {
-    if (state.winner) {
-      navigate('/mafia/result')
-    } else if (state.phase === 'night_intro') {
-      navigate('/mafia/night')
-    }
-  }, [state.phase, state.winner, navigate])
 
   if (state.phase === 'voting_summary') {
     const targetPlayer = state.votingSummaryTargetId

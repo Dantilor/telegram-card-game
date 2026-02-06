@@ -32,6 +32,17 @@ function MafiaNight() {
   const navigate = useNavigate()
   const { state, dispatch } = useMafiaGame()
   const [showConfirm, setShowConfirm] = useState(false)
+  const handleBack = useBack('/mafia/roles')
+
+  useEffect(() => {
+    if (state.winner) {
+      navigate('/mafia/result')
+      return
+    }
+    if (state.phase === 'day') {
+      navigate('/mafia/day')
+    }
+  }, [state.phase, state.winner, navigate])
 
   if (!state.players.length) {
     navigate('/mafia')
@@ -44,18 +55,6 @@ function MafiaNight() {
   const sheriff = alive.find((p) => p.role === 'sheriff' && p.alive)
 
   const nightSteps = [mafia.length > 0 && 'mafia', doctor && 'doctor', sheriff && 'sheriff'].filter(Boolean) as string[]
-
-  useEffect(() => {
-    if (state.winner) {
-      navigate('/mafia/result')
-      return
-    }
-    if (state.phase === 'day') {
-      navigate('/mafia/day')
-    }
-  }, [state.phase, state.winner, navigate])
-
-  const handleBack = useBack('/mafia/roles')
 
   const goToNextNightStep = () => {
     setShowConfirm(false)

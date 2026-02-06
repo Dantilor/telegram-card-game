@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { getTg } from '../utils/telegram'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { ROLE_LABELS } from '../games/mafia/types'
 import { haptic } from '../utils/telegram'
@@ -20,8 +21,12 @@ function MafiaResult() {
   const handleBackToGames = () => {
     haptic('light')
     dispatch({ type: 'RESET' })
-    if (window.history.length > 1) navigate(-1)
-    else navigate('/games')
+    // В Telegram WebView navigate(-1) ломает приложение — всегда явный путь
+    if (getTg() || window.history.length <= 1) {
+      navigate('/games')
+    } else {
+      navigate(-1)
+    }
   }
 
   const roleEmoji: Record<string, string> = {

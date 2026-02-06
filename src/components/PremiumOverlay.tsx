@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { PREMIUM_PLAN } from '../config/premium'
 import { haptic } from '../utils/telegram'
-import { openLegalLink } from '../lib/legal'
+import type { DocumentType } from '../data/documents'
+import DocumentModal from './DocumentModal'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
 import { trackEvent } from '../lib/analytics'
 import { apiPost, apiGet } from '../lib/api'
@@ -48,6 +49,7 @@ type Props = {
 
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props) {
   const { refresh } = usePremium()
+  const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
   const [loading, setLoading] = useState(false)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [restoreToast, setRestoreToast] = useState<string | null>(null)
@@ -234,15 +236,15 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
         </p>
         <p className="premium-overlay__legal">
           Оплачивая Premium, вы соглашаетесь с{' '}
-          <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('terms')}>
+          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('terms') }}>
             Условиями использования
           </button>
           ,{' '}
-          <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('privacy')}>
+          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('privacy') }}>
             Политикой конфиденциальности
           </button>
           {' '}и{' '}
-          <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('premium')}>
+          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('premium') }}>
             Условиями Premium
           </button>
           .
@@ -274,6 +276,11 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           Понятно
         </button>
       </div>
+      <DocumentModal
+        isOpen={documentModalType !== null}
+        onClose={() => setDocumentModalType(null)}
+        documentType={documentModalType ?? 'privacy'}
+      />
     </div>
   )
 }

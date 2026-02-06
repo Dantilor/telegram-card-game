@@ -2,11 +2,12 @@ import { useState, useCallback, useRef } from 'react'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
-import { openLegalLink } from '../lib/legal'
+import type { DocumentType } from '../data/documents'
 import { haptic, getTgUser, getInitData } from '../utils/telegram'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import DocumentModal from '../components/DocumentModal'
 import './Profile.css'
 
 const SUPPORT_BOT_URL = 'https://t.me/GameNightHostBot'
@@ -18,6 +19,7 @@ function Profile() {
   const initData = getInitData()
   const userId = initData.userId ?? initData.user?.id
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -162,21 +164,21 @@ function Profile() {
           <button
             type="button"
             className="btn btn--ghost profile-card__link"
-            onClick={() => { haptic('light'); openLegalLink('privacy') }}
+            onClick={() => { haptic('light'); setDocumentModalType('privacy') }}
           >
             Политика конфиденциальности
           </button>
           <button
             type="button"
             className="btn btn--ghost profile-card__link"
-            onClick={() => { haptic('light'); openLegalLink('terms') }}
+            onClick={() => { haptic('light'); setDocumentModalType('terms') }}
           >
             Условия использования
           </button>
           <button
             type="button"
             className="btn btn--ghost profile-card__link"
-            onClick={() => { haptic('light'); openLegalLink('premium') }}
+            onClick={() => { haptic('light'); setDocumentModalType('premium') }}
           >
             Условия Premium
           </button>
@@ -203,6 +205,11 @@ function Profile() {
         </p>
       )}
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+      <DocumentModal
+        isOpen={documentModalType !== null}
+        onClose={() => setDocumentModalType(null)}
+        documentType={documentModalType ?? 'privacy'}
+      />
     </div>
   )
 }

@@ -5,6 +5,19 @@
 
 import { getUser, setPremium, isPremium } from './memoryStore.js'
 
+function logDbError(prefix: string, e: unknown): void {
+  console.warn(prefix, e)
+  if (e && typeof e === 'object' && 'code' in e) {
+    const err = e as { code?: string; detail?: string; hint?: string; where?: string }
+    const parts: string[] = []
+    if (err.code != null) parts.push(`code=${err.code}`)
+    if (err.detail != null) parts.push(`detail=${err.detail}`)
+    if (err.hint != null) parts.push(`hint=${err.hint}`)
+    if (err.where != null) parts.push(`where=${err.where}`)
+    if (parts.length > 0) console.warn(prefix, 'pg:', parts.join(', '))
+  }
+}
+
 const DEFAULT_PLAN_ID = 'premium'
 
 export type PaymentRecord = {
@@ -39,7 +52,8 @@ export async function getActiveUntilDb(telegramId: number): Promise<Date | null>
     )
     const row = res.rows[0]
     return row ? new Date(row.active_until) : null
-  } catch {
+  } catch (e) {
+    logDbError('[premiumStore] getActiveUntilDb failed:', e)
     return null
   }
 }
@@ -99,7 +113,7 @@ export async function savePaymentDb(payment: PaymentRecord): Promise<boolean> {
     if (e && typeof e === 'object' && 'code' in e && e.code === '23505') {
       return false
     }
-    console.warn('[premiumStore] savePaymentDb failed:', e instanceof Error ? e.message : e)
+    logDbError('[premiumStore] savePaymentDb failed:', e)
     return true
   }
 }
@@ -147,7 +161,7 @@ export async function setPremiumWithPersistence(
         [telegramId, DEFAULT_PLAN_ID, newUntil]
       )
     } catch (e) {
-      console.warn('[premiumStore] subscription upsert failed:', e instanceof Error ? e.message : e)
+      logDbError('[premiumStore] subscription upsert failed:', e)
     }
   }
 
@@ -174,7 +188,8 @@ async function getPremiumFromDb(telegramId: number): Promise<{ premiumUntil: num
       premiumUntil: new Date(row.active_until).getTime(),
       planId: row.plan_id,
     }
-  } catch {
+  } catch (e) {
+    logDbError('[premiumStore] getPremiumFromDb failed:', e)
     return null
   }
 }
@@ -245,7 +260,7 @@ export async function adminGrantPremium(
         [telegramId, DEFAULT_PLAN_ID, newUntil]
       )
     } catch (e) {
-      console.warn('[premiumStore] adminGrant failed:', e instanceof Error ? e.message : e)
+      logDbError('[premiumStore] adminGrant failed:', e)
       throw e
     }
   }
@@ -274,7 +289,7 @@ export async function adminRevokePremium(telegramId: number): Promise<void> {
         [telegramId, DEFAULT_PLAN_ID, now]
       )
     } catch (e) {
-      console.warn('[premiumStore] adminRevoke failed:', e instanceof Error ? e.message : e)
+      logDbError('[premiumStore] adminRevoke failed:', e)
       throw e
     }
   }
@@ -301,7 +316,8 @@ export async function getLastPaymentsDb(telegramId: number, limit: number): Prom
       [telegramId, limit]
     )
     return res.rows
-  } catch {
+  } catch (e) {
+    logDbError('[premiumStore] getLastPaymentsDb failed:', e)
     return []
   }
 }

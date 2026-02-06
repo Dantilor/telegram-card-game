@@ -60,7 +60,7 @@ router.post('/grant', async (req: Request, res: Response) => {
       premiumUntil: premiumUntilIso,
     })
   } catch (e) {
-    console.warn('[admin] grant error:', e instanceof Error ? e.message : e)
+    console.warn('[admin] grant error:', e)
     res.status(503).json({ error: 'Service temporarily unavailable' })
   }
 })
@@ -79,7 +79,7 @@ router.post('/revoke', async (req: Request, res: Response) => {
       premium: false,
     })
   } catch (e) {
-    console.warn('[admin] revoke error:', e instanceof Error ? e.message : e)
+    console.warn('[admin] revoke error:', e)
     res.status(503).json({ error: 'Service temporarily unavailable' })
   }
 })
@@ -110,7 +110,7 @@ router.get('/user/:telegramId', async (req: Request, res: Response) => {
       lastPayments,
     })
   } catch (e) {
-    console.warn('[admin] user error:', e instanceof Error ? e.message : e)
+    console.warn('[admin] user error:', e)
     res.status(503).json({ error: 'Service temporarily unavailable' })
   }
 })

@@ -16,16 +16,16 @@ export default function LegalPremium() {
         <h1 className="legal-page__title">Условия Premium</h1>
       </div>
       <div className="legal-page__content">
-        <p><strong>Правообладатель:</strong> &lt;Имя/ИП/ООО&gt;</p>
+        <p>Premium — подписка, которая открывает полный доступ ко всем играм, колодам и функциям приложения.</p>
 
-        <h2>Подписка</h2>
+        <h2>Условия подписки</h2>
         <ul>
-          <li>Срок: {PREMIUM_PLAN.durationMonths} месяцев</li>
-          <li>Оплата через Telegram Stars (внутри приложения)</li>
+          <li>Срок действия: {PREMIUM_PLAN.durationMonths} месяцев</li>
+          <li>Оплата производится через Telegram Stars в приложении</li>
         </ul>
 
         <h2>Восстановление покупки</h2>
-        <p>Если Premium не отображается после оплаты: откройте Профиль → нажмите «Восстановить покупку». При необходимости напишите в поддержку: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
+        <p>Если Premium не отображается после оплаты, откройте раздел «Профиль» и нажмите «Восстановить покупки». Если проблема остаётся — напишите в поддержку: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
 
         <h2>Поддержка</h2>
         <p>Вопросы по подписке и оплате: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>

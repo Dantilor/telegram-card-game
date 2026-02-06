@@ -93,7 +93,7 @@ function Profile() {
           </div>
         ) : (
           <p className="profile-card__hint">
-            Откройте Mini App в Telegram, чтобы подтянуть профиль
+            Откройте приложение внутри Telegram, чтобы отобразить ваш профиль и актуальный статус Premium.
           </p>
         )}
       </section>
@@ -132,7 +132,7 @@ function Profile() {
             </h2>
             <p className="profile-premium__status">Статус: не активен</p>
             <p className="profile-premium__short">
-              Откройте полный доступ ко всем играм, колодам и избранному.
+              Откройте полный доступ ко всем играм, колодам и избранному контенту. Premium расширяет возможности приложения и делает игру ещё интереснее.
             </p>
             <button
               type="button"

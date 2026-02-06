@@ -213,7 +213,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
         )}
         <div className="premium-overlay__description">
           <p>
-            С подпиской открывается полный доступ ко всем играм и режимам.
+            Откройте полный доступ ко всем играм, колодам и избранному контенту. Premium расширяет возможности приложения и делает игру ещё интереснее.
           </p>
           <p>Что даёт подписка:</p>
           <ul className="premium-overlay__includes">
@@ -230,17 +230,22 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           </p>
         </div>
         <p className="premium-overlay__footer">
-          Вы можете продолжить играть бесплатно или открыть полный доступ
+          Вы можете продолжить играть бесплатно или оформить Premium-подписку
         </p>
         <p className="premium-overlay__legal">
           Оплачивая Premium, вы соглашаетесь с{' '}
           <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('terms')}>
-            Условиями
-          </button>{' '}
-          и{' '}
+            Условиями использования
+          </button>
+          ,{' '}
           <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('privacy')}>
             Политикой конфиденциальности
           </button>
+          {' '}и{' '}
+          <button type="button" className="premium-overlay__legal-link" onClick={() => openLegalLink('premium')}>
+            Условиями Premium
+          </button>
+          .
         </p>
         <button
           type="button"

@@ -15,12 +15,12 @@ export default function LegalTerms() {
         <h1 className="legal-page__title">Условия использования</h1>
       </div>
       <div className="legal-page__content">
-        <p><strong>Правообладатель:</strong> &lt;Имя/ИП/ООО&gt;</p>
+        <p>Используя приложение, вы принимаете эти условия.</p>
 
-        <p>Используя приложение, вы соглашаетесь с условиями. Контент предоставляется «как есть». Запрещается нарушать авторские права и правила Telegram.</p>
+        <p>Мы предоставляем игры и контент в рамках возможностей сервиса. Просим соблюдать авторские права и правила Telegram.</p>
 
         <h2>Контакты</h2>
-        <p>Поддержка: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
+        <p>По вопросам работы приложения: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
       </div>
     </div>
   )

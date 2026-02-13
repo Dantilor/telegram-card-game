@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
 import { query } from '../db.js'
 
-const PREMIUM_PLAN_ID = 'premium_6m_259'
+const PREMIUM_PLAN_ID = 'premium'
 const QUERY_TIMEOUT_MS = 8000
 const isDev = process.env.NODE_ENV !== 'production'
 

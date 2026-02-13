@@ -1,5 +1,4 @@
-import { getTg } from '../utils/telegram'
-import { apiGet, apiPost } from '../lib/api'
+import { apiGet } from '../lib/api'
 
 export type MeResponse = {
   telegramId: number
@@ -36,23 +35,5 @@ export async function getPremiumStatus(): Promise<PremiumStatusResponse> {
   return {
     isPremium: me.premium,
     activeUntil: me.premiumUntil ?? null,
-  }
-}
-
-export async function createInvoice(
-  plan: 'month' | 'year'
-): Promise<{ invoiceLink: string }> {
-  return apiPost<{ invoiceLink: string }>('/api/invoice', { plan })
-}
-
-export function openInvoice(invoiceLink: string): void {
-  const tg = getTg()
-  tg?.openInvoice?.(invoiceLink, (status: string) => {
-    if (status === 'paid') {
-      window.dispatchEvent(new CustomEvent('tcg_premium_sync'))
-    }
-  })
-  if (!tg?.openInvoice) {
-    window.location.href = invoiceLink
   }
 }

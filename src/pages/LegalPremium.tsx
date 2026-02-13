@@ -21,7 +21,7 @@ export default function LegalPremium() {
         <h2>Условия подписки</h2>
         <ul>
           <li>Срок действия: {PREMIUM_PLAN.durationMonths} месяцев</li>
-          <li>Оплата производится через Telegram Stars в приложении</li>
+          <li>Оплата производится через ЮKassa (картой или другими способами)</li>
         </ul>
 
         <h2>Восстановление покупки</h2>

@@ -4,6 +4,8 @@ import cors from 'cors'
 import authRouter from './routes/auth.js'
 import premiumRouter from './routes/premium.js'
 import meRouter from './routes/me.js'
+import plansRouter from './routes/plans.js'
+import yookassaRouter from './routes/yookassa.js'
 import apiRouter from './api.js'
 import eventsRouter from './routes/events.js'
 import adminRouter from './routes/admin.js'
@@ -30,6 +32,8 @@ app.get('/health', (_req, res) => {
 app.use('/api', authRouter)
 app.use('/api', premiumRouter)
 app.use('/api', meRouter)
+app.use('/api', plansRouter)
+app.use('/api', yookassaRouter)
 app.use('/api', apiRouter)
 app.use('/api', eventsRouter)
 app.use('/api/admin', adminRouter)

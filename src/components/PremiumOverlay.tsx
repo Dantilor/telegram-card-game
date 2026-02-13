@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from 'react'
-import { PREMIUM_PLAN } from '../config/premium'
 import { haptic } from '../utils/telegram'
 import type { DocumentType } from '../data/documents'
 import DocumentModal from './DocumentModal'
@@ -9,7 +8,6 @@ import { apiPost, apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import './PremiumOverlay.css'
 
-const isDev = import.meta.env.DEV
 const POLL_INTERVAL_MS = 3000
 const POLL_ATTEMPTS = 5
 
@@ -41,6 +39,8 @@ function pollPremiumStatus(
   return cancel
 }
 
+type Plan = { id: string; title: string; priceRub: number; durationDays: number }
+
 type Props = {
   isOpen: boolean
   onClose: () => void
@@ -50,12 +50,30 @@ type Props = {
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props) {
   const { refresh } = usePremium()
   const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [plansLoading, setPlansLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [restoreToast, setRestoreToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const pollAbortRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      setPlansLoading(true)
+      apiGet<{ ok?: boolean; plans?: Plan[] }>('/api/plans')
+        .then((res) => {
+          if (res.ok && Array.isArray(res.plans)) {
+            setPlans(res.plans)
+          } else {
+            setPlans([])
+          }
+        })
+        .catch(() => setPlans([]))
+        .finally(() => setPlansLoading(false))
+    }
+  }, [isOpen])
 
   const handleRestorePurchase = async () => {
     haptic('medium')
@@ -109,7 +127,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
     }
   }
 
-  const handleBuyPremium = async () => {
+  const handleBuyPremium = async (planId?: string) => {
     haptic('medium')
     if (onBuyPremium) {
       onBuyPremium()
@@ -122,49 +140,45 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
       return
     }
 
+    const pid = planId ?? plans[0]?.id ?? 'premium_3m'
+    if (!pid) {
+      setError('Нет доступных тарифов')
+      return
+    }
+
     setError(null)
     setLoading(true)
     try {
-      const res = await apiPost<{ invoiceLink: string }>('/api/invoice', { plan: 'month' })
-      const invoiceLink = res.invoiceLink
-      trackEvent('invoice_opened')
+      const res = await apiPost<{ ok?: boolean; confirmationUrl?: string }>('/api/payments/yookassa/create', { planId: pid })
+      const url = res.confirmationUrl
+      if (!url) {
+        setError('Не удалось создать платёж')
+        return
+      }
+      trackEvent('yookassa_redirect')
 
       const tg = getTelegramWebApp()
-      if (tg?.openInvoice) {
-        tg.openInvoice(invoiceLink, (status: string) => {
-          if (isDev) console.log('[PremiumOverlay] invoice status:', status)
-          const paid = status === 'paid' || status === 'successful'
-          const failed = status === 'cancelled' || status === 'failed'
-          if (paid) {
-            trackEvent('invoice_paid')
-            trackEvent('premium_active')
-            refresh()
-            setSuccess(true)
-            setError(null)
-            setTimeout(() => {
-              onClose()
-              setSuccess(false)
-            }, 1500)
-          } else if (failed) {
-            setError('Оплата отменена или не прошла')
-            setLoading(false)
-          }
-          if (!failed) {
-            pollAbortRef.current?.()
-            pollAbortRef.current = pollPremiumStatus(refresh)
-          }
-        })
+      if (tg?.openLink) {
+        tg.openLink(url)
       } else {
-        window.location.href = invoiceLink
-        onClose()
+        window.open(url, '_blank', 'noopener,noreferrer')
       }
+      pollAbortRef.current?.()
+      pollAbortRef.current = pollPremiumStatus(refresh, () => {
+        setSuccess(true)
+        setError(null)
+        setTimeout(() => {
+          onClose()
+          setSuccess(false)
+        }, 1500)
+      })
     } catch (e) {
       const err = e as Error & { status?: number }
-      console.error('[PremiumOverlay] invoice error:', err.message)
+      console.error('[PremiumOverlay] YooKassa error:', err.message)
       if (err.status === 401) {
         setError('Откройте приложение внутри Telegram для оплаты')
       } else {
-        setError(err.message || 'Не удалось создать счёт')
+        setError(err.message || 'Не удалось создать платёж')
       }
     } finally {
       setLoading(false)
@@ -172,6 +186,11 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
   }
 
   if (!isOpen) return null
+
+  const plan = plans[0]
+  const priceText = plan
+    ? `${plan.priceRub} ₽ / ${Math.round(plan.durationDays / 30)} мес.`
+    : '259 ₽ / 3 мес.'
 
   return (
     <div
@@ -226,10 +245,12 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
             <li>Темы оформления (Neon, Portal, Sunset и др.)</li>
             <li>Новые игры и колоды, которые будут появляться со временем</li>
           </ul>
-          <p className="premium-overlay__price">
-            Стоимость подписки:<br />
-            {PREMIUM_PLAN.priceRub} ₽ на {PREMIUM_PLAN.durationMonths} месяцев
-          </p>
+          {!plansLoading && (
+            <p className="premium-overlay__price">
+              Стоимость подписки:<br />
+              {priceText}
+            </p>
+          )}
         </div>
         <p className="premium-overlay__footer">
           Вы можете продолжить играть бесплатно или оформить Premium-подписку
@@ -252,10 +273,10 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
         <button
           type="button"
           className="btn btn--primary premium-overlay__btn premium-overlay__btn--buy"
-          onClick={handleBuyPremium}
-          disabled={loading}
+          onClick={() => handleBuyPremium()}
+          disabled={loading || plansLoading}
         >
-          {loading ? 'Загрузка…' : `Открыть Premium · ${PREMIUM_PLAN.priceRub} ₽ / ${PREMIUM_PLAN.durationMonths} месяцев`}
+          {loading ? 'Загрузка…' : plansLoading ? 'Загрузка…' : `Открыть Premium · ${priceText}`}
         </button>
         <button
           type="button"

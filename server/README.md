@@ -38,6 +38,10 @@ npm run dev
 | `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather |
 | `CORS_ORIGIN` | Разрешённый origin, напр. `http://localhost:5173` или `https://dantilor.github.io` |
 | `ADMIN_TOKEN` | Секретный токен для Admin API (grant/revoke/user) |
+| `YOOKASSA_SHOP_ID` | Идентификатор магазина ЮKassa |
+| `YOOKASSA_SECRET_KEY` | Секретный ключ ЮKassa |
+| `YOOKASSA_RETURN_URL` | URL возврата после оплаты (напр. Mini App) |
+| `YOOKASSA_WEBHOOK_SECRET` | Секрет для проверки webhook (опционально) |
 
 ## Database schema
 
@@ -57,6 +61,12 @@ psql "$DATABASE_URL" -f server/db/schema.sql
 psql "$DATABASE_URL" -f server/db/migrations/001_payments_new_schema.sql
 ```
 (Пересоздаёт таблицу payments с колонками provider, amount и UNIQUE по charge_id.)
+
+**Миграция plans + YooKassa**:
+```bash
+psql "$DATABASE_URL" -f server/db/migrations/002_plans_yookassa.sql
+```
+(Создаёт таблицу plans, добавляет колонки invoice_payload, status в payments.)
 
 ## Запуск
 

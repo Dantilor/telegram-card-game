@@ -4,9 +4,9 @@
  */
 
 export const PREMIUM_PLAN = {
-  id: 'premium_6m_259',
+  id: 'premium_3m',
   priceRub: 259,
-  durationMonths: 6,
+  durationMonths: 3,
 } as const
 
 /** Лимит бесплатных вопросов в бесплатных колодах. */

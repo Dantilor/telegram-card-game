@@ -163,10 +163,10 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     await query(
       `INSERT INTO payments (
-         telegram_id, provider, plan_id, currency, total_amount, amount,
+         telegram_id, plan_id, currency, total_amount,
          provider_payment_charge_id, telegram_payment_charge_id,
          invoice_payload, status
-       ) VALUES ($1, 'yookassa', $2, 'RUB', $3, $3, $4, NULL, $5, 'pending')`,
+       ) VALUES ($1, $2, 'RUB', $3, $4, NULL, $5, 'pending')`,
       [
         telegramId,
         plan.plan_id,
@@ -226,7 +226,7 @@ async function handleWebhook(req: Request, res: Response) {
     try {
       const existing = await query<{ id: number; status: string }>(
         `SELECT id, status FROM payments
-         WHERE provider = 'yookassa' AND provider_payment_charge_id = $1`,
+         WHERE provider_payment_charge_id = $1`,
         [paymentId]
       )
       let row = existing.rows[0]
@@ -239,18 +239,21 @@ async function handleWebhook(req: Request, res: Response) {
         const plan = planRow.rows[0]
         if (plan) {
           await ensureUser(telegramId)
-          await query(
-            `INSERT INTO payments (
-               telegram_id, provider, plan_id, currency, total_amount, amount,
-               provider_payment_charge_id, invoice_payload, status
-             ) VALUES ($1, 'yookassa', $2, 'RUB', $3, $3, $4, $5, 'pending')
-             ON CONFLICT (provider, provider_payment_charge_id) DO UPDATE SET id = payments.id
-             RETURNING id, status`,
-            [telegramId, planId, plan.price_rub, paymentId, JSON.stringify(obj)]
-          )
+          try {
+            await query(
+              `INSERT INTO payments (
+                 telegram_id, plan_id, currency, total_amount,
+                 provider_payment_charge_id, telegram_payment_charge_id,
+                 invoice_payload, status
+               ) VALUES ($1, $2, 'RUB', $3, $4, NULL, $5, 'pending')`,
+              [telegramId, planId, plan.price_rub, paymentId, JSON.stringify(obj)]
+            )
+          } catch (insertErr) {
+            // Дубликат provider_payment_charge_id — платёж уже создан через create
+          }
           const r2 = await query<{ id: number; status: string }>(
             `SELECT id, status FROM payments
-             WHERE provider = 'yookassa' AND provider_payment_charge_id = $1`,
+             WHERE provider_payment_charge_id = $1`,
             [paymentId]
           )
           row = r2.rows[0]
@@ -261,7 +264,7 @@ async function handleWebhook(req: Request, res: Response) {
         if (newStatus) {
           await query(
             `UPDATE payments SET status = $1
-             WHERE provider = 'yookassa' AND provider_payment_charge_id = $2`,
+             WHERE provider_payment_charge_id = $2`,
             [newStatus, paymentId]
           ).catch(() => {})
         }

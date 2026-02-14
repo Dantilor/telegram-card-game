@@ -38,6 +38,39 @@ router.use((req, _res, next) => {
   next()
 })
 
+/**
+ * Формирует чек по 54-ФЗ для ЮKassa.
+ * Сумма в receipt.items должна совпадать с amount платежа.
+ */
+function buildReceipt(params: {
+  customerEmail: string
+  planTitle: string
+  planId: string
+  durationDays: number
+  priceRub: number
+}): { customer: { email: string }; items: Array<Record<string, unknown>> } {
+  const amountValue = `${params.priceRub}.00`
+  const months = Math.round(params.durationDays / 30)
+  const description = `Подписка GameNight Host Premium (${months} мес.)`
+
+  return {
+    customer: { email: params.customerEmail },
+    items: [
+      {
+        description,
+        quantity: '1',
+        amount: {
+          value: amountValue,
+          currency: 'RUB',
+        },
+        vat_code: 1, // без НДС
+        payment_mode: 'full_payment',
+        payment_subject: 'service',
+      },
+    ],
+  }
+}
+
 async function handleCreatePayment(req: Request, res: Response) {
   const telegramId = verifyAuth(req, res)
   if (telegramId == null) return
@@ -72,6 +105,23 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     const idempotenceKey = randomUUID()
     const amount = `${plan.price_rub}.00`
+
+    // Email для чека 54-ФЗ. TODO: требовать email на фронте (Telegram не передаёт email в initData).
+    let customerEmail = typeof req.body?.email === 'string' && req.body.email.trim()
+      ? req.body.email.trim()
+      : `${telegramId}@example.com`
+    if (!req.body?.email) {
+      console.warn(`[YooKassa] email не передан, используем fallback для telegramId=${telegramId}`)
+    }
+
+    const receipt = buildReceipt({
+      customerEmail,
+      planTitle: plan.title,
+      planId: plan.plan_id,
+      durationDays: plan.duration_days,
+      priceRub: plan.price_rub,
+    })
+
     const description = `GameNight Host: ${plan.title} (${plan.plan_id})`
     const body = {
       amount: { value: amount, currency: 'RUB' },
@@ -79,6 +129,7 @@ async function handleCreatePayment(req: Request, res: Response) {
       capture: true,
       description,
       metadata: { telegram_id: String(telegramId), plan_id: plan.plan_id },
+      receipt,
     }
 
     const yookassaRes = await fetch('https://api.yookassa.ru/v3/payments', {

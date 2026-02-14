@@ -130,7 +130,7 @@ async function handleCreatePayment(req: Request, res: Response) {
     console.error('[YooKassa] create error:', e)
     res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
-})
+}
 
 async function handleWebhook(req: Request, res: Response) {
   const expected = process.env.YOOKASSA_WEBHOOK_SECRET

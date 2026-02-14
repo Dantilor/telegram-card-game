@@ -6,7 +6,7 @@ import datesModeImg from '../assets/dates_mode.png'
 export type ModeId = 'couples' | 'party' | 'adult' | 'psychology' | 'lifeChoice' | 'dates'
 
 export const MODES = [
-  { id: 'couples' as const, title: 'Разговор для двоих', emoji: '💞', image: fireplaceImg, description: 'Тёплые беседы вдвоём' },
+  { id: 'couples' as const, title: 'Для пар', emoji: '💞', image: fireplaceImg, description: 'Тёплые беседы вдвоём' },
   { id: 'dates' as const, title: 'Для свиданий', emoji: '💕', image: datesModeImg, description: 'Романтика начинается' },
   { id: 'party' as const, title: 'Для компании', emoji: '🎉', image: partyModeImg, description: 'Смех гарантирован' },
   { id: 'adult' as const, title: '18+', emoji: '🔥', image: adultModeImg, description: 'Горячий диалог' },

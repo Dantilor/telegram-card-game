@@ -28,12 +28,12 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ ok: true })
 })
 
-// API base = /api
+// API base = /api — все роуты доступны как /api/...
 app.use('/api', authRouter)
 app.use('/api', premiumRouter)
 app.use('/api', meRouter)
 app.use('/api', plansRouter)
-app.use('/api', yookassaRouter)
+app.use('/api', yookassaRouter) // YooKassa webhook: POST /api/yookassa/webhook
 app.use('/api', apiRouter)
 app.use('/api', eventsRouter)
 app.use('/api/admin', adminRouter)

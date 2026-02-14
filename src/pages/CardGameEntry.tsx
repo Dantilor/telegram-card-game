@@ -30,19 +30,40 @@ function CardGameEntry() {
       <div className="card-entry-page__modes">
         {MODES.map((mode) => {
           const locked = isModeLocked(mode.id as ModeId, isPremium)
+          const modeContent = (
+            <>
+              {mode.image ? (
+                <>
+                  <div className="card-entry-page__mode-image-wrap">
+                    <img src={mode.image} alt="" className="card-entry-page__mode-img" aria-hidden />
+                  </div>
+                  <div className="card-entry-page__mode-text">
+                    <span className="card-entry-page__mode-title">{mode.title}</span>
+                    {'description' in mode && mode.description && (
+                      <span className="card-entry-page__mode-desc">{mode.description}</span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="card-entry-page__emoji" aria-hidden>{mode.emoji}</span>
+                  <span className="card-entry-page__mode-title">{mode.title}</span>
+                </>
+              )}
+            </>
+          )
           if (locked) {
             return (
               <button
                 key={mode.id}
                 type="button"
-                className="card-entry-page__mode-card card tile--active card-entry-page__mode-card--locked"
+                className={`card-entry-page__mode-card card tile--active card-entry-page__mode-card--locked ${mode.image ? 'card-entry-page__mode-card--image' : ''}`}
                 onClick={() => {
                   hapticSelection()
                   setPremiumOverlayOpen(true)
                 }}
               >
-                <span className="card-entry-page__emoji" aria-hidden>{mode.emoji}</span>
-                <span className="card-entry-page__mode-title">{mode.title}</span>
+                {modeContent}
                 <span className="badge badge--premium">Premium</span>
               </button>
             )
@@ -51,11 +72,10 @@ function CardGameEntry() {
             <Link
               key={mode.id}
               to={`/mode/${mode.id}`}
-              className="card-entry-page__mode-card card tile--active"
+              className={`card-entry-page__mode-card card tile--active ${mode.image ? 'card-entry-page__mode-card--image' : ''}`}
               onClick={() => hapticSelection()}
             >
-              <span className="card-entry-page__emoji" aria-hidden>{mode.emoji}</span>
-              <span className="card-entry-page__mode-title">{mode.title}</span>
+              {modeContent}
             </Link>
           )
         })}

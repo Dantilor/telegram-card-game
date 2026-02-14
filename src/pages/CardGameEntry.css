@@ -76,6 +76,14 @@
   transition: transform var(--transition-fast), box-shadow var(--transition-med), border-color var(--transition-med);
 }
 
+.card-entry-page__mode-card--image {
+  padding: 0;
+  min-height: 10rem;
+  overflow: hidden;
+  justify-content: stretch;
+  align-items: stretch;
+}
+
 .card-entry-page__mode-card:active {
   transform: scale(0.98);
 }
@@ -90,6 +98,34 @@
   margin-bottom: 0.25rem;
 }
 
+.card-entry-page__mode-image-wrap {
+  aspect-ratio: 4 / 3;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.card-entry-page__mode-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  vertical-align: middle;
+  background: var(--bg1, #120B2E);
+}
+
+.card-entry-page__mode-text {
+  padding: 0.5rem 0.75rem;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
 .card-entry-page__mode-title {
   font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   font-weight: 600;
@@ -97,6 +133,17 @@
   text-align: center;
 }
 
+.card-entry-page__mode-desc {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
 .card-entry-page__mode-card--locked .badge--premium {
   margin-top: 0.35rem;
+}
+
+.card-entry-page__mode-card--image.card-entry-page__mode-card--locked .card-entry-page__mode-text {
+  padding-bottom: 0.35rem;
 }

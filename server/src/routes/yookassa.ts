@@ -58,8 +58,8 @@ async function handleCreatePayment(req: Request, res: Response) {
   }
 
   try {
-    const planRow = await query<{ id: string; title: string; price_rub: number; duration_days: number }>(
-      `SELECT id, title, price_rub, duration_days FROM plans WHERE id = $1 AND is_active = true`,
+    const planRow = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
+      `SELECT plan_id, title, price_rub, duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
       [planId.trim()]
     )
     const plan = planRow.rows[0]
@@ -72,13 +72,13 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     const idempotenceKey = randomUUID()
     const amount = `${plan.price_rub}.00`
-    const description = `GameNight Host: ${plan.title} (${plan.id})`
+    const description = `GameNight Host: ${plan.title} (${plan.plan_id})`
     const body = {
       amount: { value: amount, currency: 'RUB' },
       confirmation: { type: 'redirect' as const, return_url: returnUrl },
       capture: true,
       description,
-      metadata: { telegram_id: String(telegramId), plan_id: plan.id },
+      metadata: { telegram_id: String(telegramId), plan_id: plan.plan_id },
     }
 
     const yookassaRes = await fetch('https://api.yookassa.ru/v3/payments', {
@@ -118,7 +118,7 @@ async function handleCreatePayment(req: Request, res: Response) {
        ) VALUES ($1, 'yookassa', $2, 'RUB', $3, $3, $4, NULL, $5, 'pending')`,
       [
         telegramId,
-        plan.id,
+        plan.plan_id,
         plan.price_rub,
         payment.id,
         JSON.stringify(payment),
@@ -182,7 +182,7 @@ async function handleWebhook(req: Request, res: Response) {
 
       if (!row && telegramId && planId) {
         const planRow = await query<{ duration_days: number; price_rub: number }>(
-          `SELECT duration_days, price_rub FROM plans WHERE id = $1 AND is_active = true`,
+          `SELECT duration_days, price_rub FROM plans WHERE plan_id = $1 AND is_active = true`,
           [planId]
         )
         const plan = planRow.rows[0]
@@ -226,7 +226,7 @@ async function handleWebhook(req: Request, res: Response) {
 
       if (eventType === 'payment.succeeded' && row.status !== 'succeeded') {
         const planRow = await query<{ duration_days: number }>(
-          `SELECT duration_days FROM plans WHERE id = $1 AND is_active = true`,
+          `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
           [planId]
         )
         const plan = planRow.rows[0]

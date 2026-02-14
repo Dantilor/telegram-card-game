@@ -8,7 +8,7 @@ export type ModeId = 'couples' | 'party' | 'adult' | 'psychology' | 'lifeChoice'
 export const MODES = [
   { id: 'couples' as const, title: 'Для пар', emoji: '💞', image: fireplaceImg, description: 'Тёплые беседы вдвоём' },
   { id: 'dates' as const, title: 'Для свиданий', emoji: '💕', image: datesModeImg, description: 'Романтика начинается' },
-  { id: 'party' as const, title: 'Для компании', emoji: '🎉', image: partyModeImg, description: 'Смех гарантирован' },
+  { id: 'party' as const, title: 'Общий вайб', emoji: '🎉', image: partyModeImg, description: 'Смех гарантирован' },
   { id: 'adult' as const, title: '18+', emoji: '🔥', image: adultModeImg, description: 'Горячий диалог' },
   { id: 'psychology' as const, title: 'Психология и самопознание', emoji: '🧠' },
   { id: 'lifeChoice' as const, title: 'Жизнь и выбор', emoji: '🎯' },

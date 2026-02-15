@@ -35,7 +35,9 @@ npm run dev
 |------------|----------|
 | `PORT` | Порт сервера (по умолчанию 3001) |
 | `DATABASE_URL` | PostgreSQL connection string |
-| `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather |
+| `BOT_TOKEN` или `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather |
+| `BOT_WEBHOOK_PATH` | Путь webhook (по умолчанию `/telegram/webhook-9f3k2lQp`) |
+| `WEBAPP_URL` | URL Mini App для кнопки в /start (опционально) |
 | `CORS_ORIGIN` | Разрешённый origin, напр. `http://localhost:5173` или `https://dantilor.github.io` |
 | `ADMIN_TOKEN` | Секретный токен для Admin API (grant/revoke/user) |
 | `YOOKASSA_SHOP_ID` | Идентификатор магазина ЮKassa |
@@ -91,9 +93,19 @@ npm start
 curl http://localhost:3001/health
 ```
 
-Ожидается: `{"ok":true}` и статус 200. Работает без БД.
+Ожидается: `ok` и статус 200. Работает без БД.
 
-### 2. Premium status
+### 2. Telegram webhook
+
+```bash
+curl -i -X POST https://telegram-card-game.onrender.com/telegram/webhook-9f3k2lQp \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Ожидается: статус 200 (не 404).
+
+### 3. Premium status
 
 С валидным `initData` из Telegram WebApp:
 
@@ -105,7 +117,7 @@ curl -H "X-Telegram-Init-Data: YOUR_INIT_DATA" http://localhost:3001/api/premium
 
 Без initData: тот же ответ `{"isPremium":false,"activeUntil":null}` — API не падает.
 
-### 3. Включить Premium вручную (для теста)
+### 4. Включить Premium вручную (для теста)
 
 ```sql
 INSERT INTO users (telegram_id) VALUES (123456789) ON CONFLICT DO NOTHING;
@@ -123,7 +135,8 @@ ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = NOW() + INTERVAL
 
 | Метод | Путь | Описание |
 |-------|------|----------|
-| GET | /health | Всегда 200, без БД |
+| GET | /health | Всегда 200, без БД (ответ: `ok`) |
+| POST | /telegram/webhook-9f3k2lQp | Telegram webhook (или путь из `BOT_WEBHOOK_PATH`) |
 | GET | /api/premium-status | Статус подписки (всегда возвращает JSON, при ошибках — isPremium: false) |
 | POST | /api/auth | Регистрация по initData |
 | GET | /api/me | User + premium |
@@ -156,7 +169,9 @@ ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = NOW() + INTERVAL
 |------------|-------------|----------|
 | `PORT` | нет (Render задаёт сам) | Порт — Render подставляет автоматически |
 | `DATABASE_URL` | да | PostgreSQL connection string (см. ниже) |
-| `TELEGRAM_BOT_TOKEN` | да | Токен бота от @BotFather |
+| `BOT_TOKEN` или `TELEGRAM_BOT_TOKEN` | да | Токен бота от @BotFather |
+| `BOT_WEBHOOK_PATH` | нет | Путь webhook (по умолчанию `/telegram/webhook-9f3k2lQp`) |
+| `WEBAPP_URL` | нет | URL Mini App для кнопки в /start |
 | `CORS_ORIGIN` | да | URL фронтенда, напр. `https://dantilor.github.io` или `https://your-app.vercel.app` |
 
 ### 4. PostgreSQL

@@ -5,7 +5,6 @@ import { hapticImpact } from '../utils/haptics'
 import { usePremium } from '../contexts/PremiumContext'
 import { isFavoritesLocked } from '../utils/access'
 import ThemeToggle from '../components/ThemeToggle'
-import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import './Home.css'
 
@@ -27,7 +26,6 @@ function Home() {
   return (
     <div className="home-page">
       <div className="home-page__top-row">
-        <HomeButton />
         <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>
 

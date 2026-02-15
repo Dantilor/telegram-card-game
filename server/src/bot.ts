@@ -10,17 +10,21 @@ if (!BOT_TOKEN) {
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null
 
 if (bot) {
-  if (WEBAPP_URL) {
-    bot.start((ctx: Context) => {
-      return ctx.reply('Откройте Mini App', {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Открыть Mini App', web_app: { url: WEBAPP_URL } }],
-          ],
-        },
-      })
-    })
-  }
+  bot.catch((err, ctx) => {
+    console.error('[bot] telegraf error', err, 'update', ctx.update)
+  })
+
+  bot.command('start', (ctx: Context) => {
+    console.log('[bot] /start received', ctx.from?.id)
+    // Временно только текст — проверка, что ответы уходят
+    // if (WEBAPP_URL) { ctx.reply('Откройте Mini App', { reply_markup: ... }) }
+    return ctx.reply('start ok')
+  })
+
+  bot.command('ping', (ctx: Context) => {
+    console.log('[bot] /ping received', ctx.from?.id)
+    return ctx.reply('pong')
+  })
 }
 
 export async function launchBot(): Promise<void> {

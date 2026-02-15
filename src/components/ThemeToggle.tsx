@@ -2,6 +2,7 @@ import { useTheme, type ThemeId } from '../hooks/useTheme'
 import { usePremium } from '../contexts/PremiumContext'
 import { isThemeLocked } from '../lib/access'
 import { haptic } from '../utils/telegram'
+import { applyTelegramColorsRetry } from '../lib/telegramTheme'
 import './ThemeToggle.css'
 
 const OPTIONS: { id: ThemeId; label: string }[] = [
@@ -28,6 +29,8 @@ function ThemeToggle({ onPremiumRequired }: ThemeToggleProps) {
       return
     }
     setTheme(id)
+    // Сразу применяем цвета Telegram — без этого header не обновляется при смене темы внутри приложения
+    applyTelegramColorsRetry(id)
   }
 
   return (

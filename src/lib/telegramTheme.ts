@@ -23,26 +23,35 @@ export const TELEGRAM_THEME_COLORS: Record<
   'minimal-calm': { header: '#0f172a', background: '#0f172a' },
 }
 
-function getTg() {
-  return (typeof window !== 'undefined' && (window as Window & { Telegram?: { WebApp?: {
-    ready?: () => void
-    expand?: () => void
-    setHeaderColor?: (color: string) => void
-    setBackgroundColor?: (color: string) => void
-    setBottomBarColor?: (color: string) => void
-  } } })?.Telegram?.WebApp) ?? null
+interface TgWebApp {
+  ready?: () => void
+  expand?: () => void
+  requestFullscreen?: () => void
+  setHeaderColor?: (color: string) => void
+  setBackgroundColor?: (color: string) => void
+  setBottomBarColor?: (color: string) => void
+}
+
+function getTg(): TgWebApp | null {
+  if (typeof window === 'undefined') return null
+  return (window as Window & { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp ?? null
 }
 
 /** ready() + expand(). Вызывать при старте приложения. */
 export function initTelegramUI(): void {
   const tg = getTg()
   if (!tg) return
-  try {
-    tg.ready?.()
-    tg.expand?.()
-  } catch {
-    // вне Telegram / браузер — игнорируем
+  const doExpand = () => {
+    try {
+      tg.ready?.()
+      tg.expand?.()
+      tg.requestFullscreen?.()
+    } catch {
+      // вне Telegram / браузер — игнорируем
+    }
   }
+  doExpand()
+  ;[100, 300, 800].forEach((d) => setTimeout(doExpand, d))
 }
 
 /** Применить цвета Telegram UI по themeId. Вызывать при смене темы и при первом рендере. */

@@ -30,22 +30,17 @@
         document.documentElement.style.backgroundColor = bg;
         document.body.style.backgroundColor = bg;
 
-        function applyColors() {
+        function run() {
           var tg = window.Telegram && window.Telegram.WebApp;
           if (tg) {
-            try { tg.ready(); tg.expand(); } catch (e) {}
-            try {
-              tg.setHeaderColor(bg);
-              tg.setBackgroundColor(bg);
-            } catch (e) {}
+            try { tg.ready(); tg.expand(); if (tg.requestFullscreen) tg.requestFullscreen(); } catch (e) {}
+            try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
           }
         }
 
-        applyColors();
-        document.addEventListener('DOMContentLoaded', applyColors);
-        setTimeout(applyColors, 100);
-        setTimeout(applyColors, 300);
-        setTimeout(applyColors, 800);
+        run();
+        document.addEventListener('DOMContentLoaded', run);
+        [100, 300, 800, 1500].forEach(function(d) { setTimeout(run, d); });
       })();
     </script>
     <div id="root"></div>

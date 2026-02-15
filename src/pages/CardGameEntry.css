@@ -144,6 +144,13 @@
   margin-top: 0.35rem;
 }
 
+.card-entry-page__mode-card--image.card-entry-page__mode-card--locked .badge--premium {
+  margin-top: auto;
+  flex-shrink: 0;
+  padding-bottom: 0.5rem;
+}
+
 .card-entry-page__mode-card--image.card-entry-page__mode-card--locked .card-entry-page__mode-text {
   padding-bottom: 0.35rem;
+  flex-shrink: 0;
 }

@@ -35,9 +35,6 @@ function Home() {
         <div className="home-hero__orb" aria-hidden />
         <div className="home-hero__content">
           <h1 className="home-hero__title">GameNight Host</h1>
-          <p className="home-hero__subtitle">
-            Колоды вопросов, Ассоциации, Мафия и другие игры
-          </p>
           <div className="home-hero__actions">
             <Link
               to="/games"

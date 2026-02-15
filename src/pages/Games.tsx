@@ -18,10 +18,17 @@ function Games() {
   const renderGameCard = (game: (typeof GAMES)[0], i: number) => {
     const isReady = game.status === 'ready'
     const isLocked = isReady && isGameLocked(game.id, isPremium)
-    const cardClass = `games-grid__card card ${isReady ? 'games-grid__card--ready tile--active' : 'games-grid__card--stub'}`
+    const hasImage = 'image' in game && game.image
+    const cardClass = `games-grid__card card ${isReady ? 'games-grid__card--ready tile--active' : 'games-grid__card--stub'}${hasImage ? ' games-grid__card--image' : ''}`
     const cardContent = (
       <>
-        <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+        {hasImage ? (
+          <div className="games-grid__card-image-wrap">
+            <img src={game.image} alt="" className="games-grid__card-img" aria-hidden />
+          </div>
+        ) : (
+          <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
+        )}
         <h2 className="games-grid__title">{game.title}</h2>
         <p className="games-grid__desc">{game.description}</p>
       </>

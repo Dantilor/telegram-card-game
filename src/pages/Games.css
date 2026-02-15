@@ -148,6 +148,39 @@
   margin-top: 0.5rem;
 }
 
+.games-grid__card--image {
+  padding: 0;
+  justify-content: stretch;
+  min-height: 10rem;
+}
+
+.games-grid__card-image-wrap {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.games-grid__card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  vertical-align: middle;
+}
+
+.games-grid__card--image .games-grid__title,
+.games-grid__card--image .games-grid__desc {
+  padding: 0 0.75rem;
+}
+
+.games-grid__card--image .games-grid__desc {
+  padding-bottom: 0.5rem;
+}
+
 .games-grid__emoji {
   font-size: 2rem;
   margin-bottom: 0.35rem;

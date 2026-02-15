@@ -19,6 +19,9 @@ const START_CAPTION = `Ваш вечер начинается здесь!
 
 GameNight Host - Вы диктуете правила, мы создаем.`
 
+/** Последнее сообщение бота в /start для каждого чата — удаляется при повторном /start */
+const lastStartMessageId = new Map<number | string, number>()
+
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null
 
 if (bot) {
@@ -30,7 +33,17 @@ if (bot) {
   bot.start(async (ctx: Context) => {
     console.log('[bot] /start from', ctx.from?.id, ctx.from?.username)
 
-    let imageSent = false
+    const chatId = ctx.chat?.id
+    if (chatId && lastStartMessageId.has(chatId)) {
+      try {
+        await ctx.telegram.deleteMessage(chatId, lastStartMessageId.get(chatId)!)
+      } catch {
+        // сообщение слишком старое или уже удалено — игнорируем
+      }
+      lastStartMessageId.delete(chatId)
+    }
+
+    let sent: { message_id: number } | undefined
     if (IMAGE_URL) {
       try {
         const resp = await fetch(IMAGE_URL)
@@ -42,16 +55,19 @@ if (bot) {
           const buffer = Buffer.from(arrayBuffer)
           console.log('[bot] image size', buffer.length)
 
-          await ctx.replyWithPhoto({ source: buffer }, { caption: START_CAPTION })
-          imageSent = true
+          sent = await ctx.replyWithPhoto({ source: buffer }, { caption: START_CAPTION })
         }
       } catch (e) {
         console.error('[bot] image fetch error', e)
       }
     }
 
-    if (!imageSent) {
-      await ctx.reply(START_CAPTION)
+    if (!sent) {
+      sent = await ctx.reply(START_CAPTION)
+    }
+
+    if (chatId && sent?.message_id) {
+      lastStartMessageId.set(chatId, sent.message_id)
     }
   })
 

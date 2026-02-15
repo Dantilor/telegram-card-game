@@ -1,9 +1,8 @@
-import { Telegraf, type Context, Markup } from 'telegraf'
+import { Telegraf, type Context } from 'telegraf'
 
 console.log('[bot] module loaded')
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
-const WEBAPP_URL = (process.env.WEBAPP_URL || '').replace(/\/+$/, '')
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '')
 const IMAGE_URL = PUBLIC_URL ? `${PUBLIC_URL}/public/hero-new.png` : ''
 
@@ -31,11 +30,6 @@ if (bot) {
   bot.start(async (ctx: Context) => {
     console.log('[bot] /start from', ctx.from?.id, ctx.from?.username)
 
-    if (!WEBAPP_URL) {
-      await ctx.reply('WEBAPP_URL не задан')
-      return
-    }
-
     let imageSent = false
     if (IMAGE_URL) {
       try {
@@ -59,8 +53,6 @@ if (bot) {
     if (!imageSent) {
       await ctx.reply(START_CAPTION)
     }
-
-    await ctx.reply('Открыть мини-апп:', Markup.inlineKeyboard([Markup.button.webApp('🎮 Открыть GameNight Host', WEBAPP_URL)]))
   })
 
   bot.command('ping', async (ctx: Context) => {

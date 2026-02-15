@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import path from 'node:path'
 import express from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth.js'
@@ -24,6 +25,8 @@ app.use(cors({
   origin: corsOrigins.length > 1 ? corsOrigins : (corsOrigins[0] || true),
 }))
 app.use(express.json({ limit: '2mb' }))
+
+app.use('/public', express.static(path.join(process.cwd(), 'public')))
 
 // Health check — always 200, no DB
 app.get('/health', (_req, res) => {

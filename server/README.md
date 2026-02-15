@@ -37,7 +37,8 @@ npm run dev
 | `DATABASE_URL` | PostgreSQL connection string |
 | `BOT_TOKEN` или `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather |
 | `BOT_WEBHOOK_PATH` | Путь webhook (по умолчанию `/telegram/webhook-9f3k2lQp`) |
-| `WEBAPP_URL` | URL Mini App для кнопки в /start (опционально) |
+| `WEBAPP_URL` | URL Mini App для кнопки в /start (обязателен для /start) |
+| `PUBLIC_URL` или `RENDER_EXTERNAL_URL` | Базовый URL сервера для картинки в /start (на Render — `RENDER_EXTERNAL_URL` задаётся автоматически) |
 | `CORS_ORIGIN` | Разрешённый origin, напр. `http://localhost:5173` или `https://dantilor.github.io` |
 | `ADMIN_TOKEN` | Секретный токен для Admin API (grant/revoke/user) |
 | `YOOKASSA_SHOP_ID` | Идентификатор магазина ЮKassa |
@@ -105,7 +106,15 @@ curl -i -X POST https://telegram-card-game.onrender.com/telegram/webhook-9f3k2lQ
 
 Ожидается: статус 200 (не 404).
 
-### 3. Premium status
+### 3. Hero image (картинка для /start)
+
+```bash
+curl -I https://telegram-card-game.onrender.com/public/hero-new.png
+```
+
+Ожидается: статус 200.
+
+### 4. Premium status
 
 С валидным `initData` из Telegram WebApp:
 
@@ -117,7 +126,7 @@ curl -H "X-Telegram-Init-Data: YOUR_INIT_DATA" http://localhost:3001/api/premium
 
 Без initData: тот же ответ `{"isPremium":false,"activeUntil":null}` — API не падает.
 
-### 4. Включить Premium вручную (для теста)
+### 5. Включить Premium вручную (для теста)
 
 ```sql
 INSERT INTO users (telegram_id) VALUES (123456789) ON CONFLICT DO NOTHING;
@@ -171,7 +180,8 @@ ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = NOW() + INTERVAL
 | `DATABASE_URL` | да | PostgreSQL connection string (см. ниже) |
 | `BOT_TOKEN` или `TELEGRAM_BOT_TOKEN` | да | Токен бота от @BotFather |
 | `BOT_WEBHOOK_PATH` | нет | Путь webhook (по умолчанию `/telegram/webhook-9f3k2lQp`) |
-| `WEBAPP_URL` | нет | URL Mini App для кнопки в /start |
+| `WEBAPP_URL` | да (для /start) | URL Mini App для кнопки в /start |
+| `PUBLIC_URL` | нет | Базовый URL для картинки (если пусто — на Render используется `RENDER_EXTERNAL_URL` автоматически) |
 | `CORS_ORIGIN` | да | URL фронтенда, напр. `https://dantilor.github.io` или `https://your-app.vercel.app` |
 
 ### 4. PostgreSQL

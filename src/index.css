@@ -17,6 +17,8 @@
   --safe-bottom: env(safe-area-inset-bottom);
   --safe-left: env(safe-area-inset-left);
   --safe-right: env(safe-area-inset-right);
+  /* Доп. отступ под панель Telegram (Close, темы, меню) — content не залезает на header */
+  --tg-header-offset: 3.5rem;
   /* Design tokens */
   --radius: 12px;
   --radius-sm: 8px;

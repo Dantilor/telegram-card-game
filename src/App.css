@@ -1,8 +1,21 @@
+/* Роуты занимают оставшееся место по вертикали */
+.app > * {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .app {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   --pad: clamp(0.75rem, 3vw, 1rem);
-  padding: max(var(--pad), var(--safe-top)) max(var(--pad), var(--safe-right)) max(var(--pad), var(--safe-bottom)) max(var(--pad), var(--safe-left));
+  padding-top: calc(max(var(--pad), var(--safe-top)) + var(--tg-header-offset));
+  padding-right: max(var(--pad), var(--safe-right));
+  padding-bottom: max(var(--pad), var(--safe-bottom));
+  padding-left: max(var(--pad), var(--safe-left));
   min-height: 100vh;
   min-height: var(--app-height);
   box-sizing: border-box;

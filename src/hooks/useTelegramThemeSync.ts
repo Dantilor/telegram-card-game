@@ -4,13 +4,13 @@
  */
 import { useEffect } from 'react'
 import { useTheme } from './useTheme'
-import { applyTelegramColors } from '../lib/telegramTheme'
+import { applyTelegramColorsRetry } from '../lib/telegramTheme'
 
-/** При смене темы обновляет Telegram header/background. Применяет цвета и при первом рендере. */
+/** При смене темы обновляет Telegram header/background. Retry — на некоторых клиентах срабатывает с задержкой. */
 export function useTelegramThemeSync(): void {
   const [theme] = useTheme()
 
   useEffect(() => {
-    applyTelegramColors(theme)
+    applyTelegramColorsRetry(theme)
   }, [theme])
 }

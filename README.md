@@ -37,6 +37,8 @@ npm run preview
 2. В настройках бота задайте **Menu Button** или **Web App** URL на ваш хостинг (после деплоя) или на туннель (например ngrok) для разработки.
 3. Открывайте приложение через кнопку меню или команду в боте.
 
+**Белая полоса сверху?** Настройте Loading Screen в BotFather: [docs/TELEGRAM_HEADER.md](docs/TELEGRAM_HEADER.md)
+
 ## Структура
 
 ```

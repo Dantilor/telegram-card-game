@@ -58,3 +58,9 @@ export function applyTelegramColors(themeId: ThemeId): void {
     // вне Telegram — игнорируем
   }
 }
+
+/** Повторное применение цветов (на некоторых клиентах срабатывает с задержкой) */
+export function applyTelegramColorsRetry(themeId: ThemeId, delaysMs = [100, 300, 800]): void {
+  applyTelegramColors(themeId)
+  delaysMs.forEach((d) => setTimeout(() => applyTelegramColors(themeId), d))
+}

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import { parseAndCacheFromHash } from './utils/telegramInitCache'
 import { initTheme, type ThemeId } from './hooks/useTheme'
-import { initTelegramUI, applyTelegramColors } from './lib/telegramTheme'
+import { initTelegramUI, applyTelegramColorsRetry } from './lib/telegramTheme'
 import './index.css'
 import './styles/tg.css'
 import App from './App.tsx'
@@ -19,7 +19,7 @@ parseAndCacheFromHash()
 
 try {
   initTelegramUI()
-  applyTelegramColors(theme)
+  applyTelegramColorsRetry(theme)
 } catch {
   // no-op: вне Telegram / браузер
 }

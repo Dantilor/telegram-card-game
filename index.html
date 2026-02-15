@@ -15,7 +15,7 @@
     <title>GameNight Host</title>
   </head>
   <body>
-    <!-- Раннее применение фона и цветов Telegram — до загрузки React, чтобы не было белой полосы -->
+    <!-- Раннее применение фона и цветов Telegram. Retry — некоторые клиенты инициализируются позже. -->
     <script>
       (function() {
         var theme = localStorage.getItem('tcg_theme');
@@ -29,11 +29,23 @@
         var bg = (theme && colors[theme]) ? colors[theme] : '#070814';
         document.documentElement.style.backgroundColor = bg;
         document.body.style.backgroundColor = bg;
-        var tg = window.Telegram && window.Telegram.WebApp;
-        if (tg) {
-          try { tg.ready(); tg.expand(); } catch (e) {}
-          try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
+
+        function applyColors() {
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (tg) {
+            try { tg.ready(); tg.expand(); } catch (e) {}
+            try {
+              tg.setHeaderColor(bg);
+              tg.setBackgroundColor(bg);
+            } catch (e) {}
+          }
         }
+
+        applyColors();
+        document.addEventListener('DOMContentLoaded', applyColors);
+        setTimeout(applyColors, 100);
+        setTimeout(applyColors, 300);
+        setTimeout(applyColors, 800);
       })();
     </script>
     <div id="root"></div>

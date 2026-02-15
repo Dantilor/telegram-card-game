@@ -37,7 +37,21 @@ if (bot) {
 
     const imageUrl = PUBLIC_URL ? `${PUBLIC_URL}/public/hero-new.png` : ''
 
+    let imageReachable = false
     if (imageUrl) {
+      try {
+        const r = await fetch(imageUrl, { method: 'HEAD' })
+        if (r.ok) {
+          imageReachable = true
+        } else {
+          console.error('[bot] image not reachable', imageUrl, r.status)
+        }
+      } catch (e) {
+        console.error('[bot] image not reachable', imageUrl, e)
+      }
+    }
+
+    if (imageReachable) {
       await ctx.replyWithPhoto(imageUrl, { caption: START_CAPTION })
     } else {
       await ctx.reply(START_CAPTION)

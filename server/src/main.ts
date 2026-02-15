@@ -26,7 +26,11 @@ app.use(cors({
 }))
 app.use(express.json({ limit: '2mb' }))
 
-app.use('/public', express.static(path.join(process.cwd(), 'public')))
+app.use('/public', express.static(path.join(process.cwd(), 'public'), {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.png')) res.setHeader('Content-Type', 'image/png')
+  },
+}))
 
 // Health check — always 200, no DB
 app.get('/health', (_req, res) => {

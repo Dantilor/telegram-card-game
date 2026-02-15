@@ -38,7 +38,9 @@ app.post(BOT_WEBHOOK_PATH, async (req, res) => {
   }
   try {
     if (bot) {
-      await bot.handleUpdate(req.body, res)
+      bot.handleUpdate(req.body, res)
+      if (!res.headersSent) res.sendStatus(200)
+      console.log('[telegram] handled update', req.body?.update_id)
     } else {
       res.status(200).send('ok')
     }

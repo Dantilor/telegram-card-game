@@ -17,7 +17,9 @@ if (bot) {
 
   bot.start(async (ctx: Context) => {
     console.log('[bot] /start from', ctx.from?.id, ctx.from?.username)
+    console.log('[bot] start before reply')
     await ctx.reply('start ok')
+    console.log('[bot] start after reply')
   })
 
   bot.command('ping', async (ctx: Context) => {

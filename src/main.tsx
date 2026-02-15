@@ -2,24 +2,26 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import { parseAndCacheFromHash } from './utils/telegramInitCache'
-import { initTheme } from './hooks/useTheme'
-import { initTelegram } from './lib/telegram'
+import { initTheme, type ThemeId } from './hooks/useTheme'
+import { initTelegramUI, applyTelegramColors } from './lib/telegramTheme'
 import './index.css'
 import './styles/tg.css'
 import App from './App.tsx'
 
+let theme: ThemeId
 try {
-  initTheme()
+  theme = initTheme()
 } catch {
-  // no-op: don't block render
+  theme = 'neon-dark'
 }
 
 parseAndCacheFromHash()
 
 try {
-  initTelegram()
+  initTelegramUI()
+  applyTelegramColors(theme)
 } catch {
-  // no-op: Telegram SDK may not be loaded
+  // no-op: вне Telegram / браузер
 }
 
 const rootEl = document.getElementById('root')!

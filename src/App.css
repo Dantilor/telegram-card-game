@@ -2,7 +2,7 @@
   position: relative;
   z-index: 1;
   --pad: clamp(0.75rem, 3vw, 1rem);
-  padding: max(var(--pad), env(safe-area-inset-top)) max(var(--pad), env(safe-area-inset-right)) max(var(--pad), env(safe-area-inset-bottom)) max(var(--pad), env(safe-area-inset-left));
+  padding: max(var(--pad), var(--safe-top)) max(var(--pad), var(--safe-right)) max(var(--pad), var(--safe-bottom)) max(var(--pad), var(--safe-left));
   min-height: 100vh;
   min-height: var(--app-height);
   box-sizing: border-box;

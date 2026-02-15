@@ -4,6 +4,7 @@ import { trackEvent } from './lib/analytics'
 import { preloadImages } from './utils/preloadImages'
 import { PRELOAD_CRITICAL_URLS } from './assets/images'
 import { useAppHeight } from './hooks/useAppHeight'
+import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { readyAndExpand } from './utils/telegram'
 import Home from './pages/Home'
@@ -56,6 +57,7 @@ import './App.css'
 
 function App() {
   useAppHeight()
+  useTelegramThemeSync()
   useEffect(() => {
     try {
       readyAndExpand()

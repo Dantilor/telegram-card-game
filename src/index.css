@@ -12,6 +12,11 @@
   text-size-adjust: 100%;
   --app-height: 100vh;
   --app-height: 100dvh;
+  /* Safe area для iOS (вырезы, домашняя зона) */
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-left: env(safe-area-inset-left);
+  --safe-right: env(safe-area-inset-right);
   /* Design tokens */
   --radius: 12px;
   --radius-sm: 8px;
@@ -25,8 +30,14 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
+  background-color: var(--bg0);
+}
+
+html {
+  background-color: var(--bg0);
 }
 
 body {
@@ -50,6 +61,7 @@ h1, h2, .font-heading {
 #root {
   min-height: 100vh;
   min-height: var(--app-height);
+  background-color: var(--bg0);
 }
 
 .font-mono {

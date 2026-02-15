@@ -5,6 +5,7 @@ console.log('[bot] module loaded')
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
 const WEBAPP_URL = (process.env.WEBAPP_URL || '').replace(/\/+$/, '')
 const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '')
+const IMAGE_URL = PUBLIC_URL ? `${PUBLIC_URL}/public/hero-new.png` : ''
 
 if (!BOT_TOKEN) {
   console.warn('[bot] BOT_TOKEN not set; bot will be null')
@@ -35,25 +36,27 @@ if (bot) {
       return
     }
 
-    const imageUrl = PUBLIC_URL ? `${PUBLIC_URL}/public/hero-new.png` : ''
-
-    let imageReachable = false
-    if (imageUrl) {
+    let imageSent = false
+    if (IMAGE_URL) {
       try {
-        const r = await fetch(imageUrl, { method: 'HEAD' })
-        if (r.ok) {
-          imageReachable = true
-        } else {
-          console.error('[bot] image not reachable', imageUrl, r.status)
+        const resp = await fetch(IMAGE_URL)
+        const contentType = resp.headers.get('content-type') || ''
+        console.log('[bot] image fetch', resp.status, contentType)
+
+        if (resp.ok && contentType.startsWith('image/')) {
+          const arrayBuffer = await resp.arrayBuffer()
+          const buffer = Buffer.from(arrayBuffer)
+          console.log('[bot] image size', buffer.length)
+
+          await ctx.replyWithPhoto({ source: buffer }, { caption: START_CAPTION })
+          imageSent = true
         }
       } catch (e) {
-        console.error('[bot] image not reachable', imageUrl, e)
+        console.error('[bot] image fetch error', e)
       }
     }
 
-    if (imageReachable) {
-      await ctx.replyWithPhoto(imageUrl, { caption: START_CAPTION })
-    } else {
+    if (!imageSent) {
       await ctx.reply(START_CAPTION)
     }
 

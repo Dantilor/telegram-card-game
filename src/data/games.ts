@@ -1,10 +1,4 @@
-import cardGameImg from '../assets/card_game_hero.png'
-import mafiaGameImg from '../assets/mafia_game.png'
-import activityGameImg from '../assets/activity_game.png'
-import sabotageGameImg from '../assets/sabotage_game.png'
-import aliasGameImg from '../assets/alias_game.png'
-import quizGameImg from '../assets/quiz_game.png'
-import truthDareGameImg from '../assets/truth_dare_game.png'
+import { IMAGES } from '../assets/images'
 
 export type GameStatus = 'ready' | 'coming_soon'
 
@@ -24,7 +18,7 @@ export const GAMES: Game[] = [
     emoji: '🃏',
     description: 'Вопросы для пар, друзей и вечеринок',
     status: 'ready',
-    image: cardGameImg,
+    image: IMAGES.cardGameHero.png,
   },
   {
     id: 'mafia',
@@ -32,7 +26,7 @@ export const GAMES: Game[] = [
     emoji: '🌙',
     description: 'Классическая игра для компании',
     status: 'ready',
-    image: mafiaGameImg,
+    image: IMAGES.mafia.png,
   },
   {
     id: 'alias',
@@ -40,7 +34,7 @@ export const GAMES: Game[] = [
     emoji: '💬',
     description: 'Объясняй слова без однокоренных',
     status: 'ready',
-    image: aliasGameImg,
+    image: IMAGES.alias.png,
   },
   {
     id: 'activity',
@@ -48,7 +42,7 @@ export const GAMES: Game[] = [
     emoji: '🎯',
     description: 'Задание + слово',
     status: 'ready',
-    image: activityGameImg,
+    image: IMAGES.activity.png,
   },
   {
     id: 'sabotage',
@@ -56,7 +50,7 @@ export const GAMES: Game[] = [
     emoji: '😈',
     description: 'Найди саботёра в команде',
     status: 'ready',
-    image: sabotageGameImg,
+    image: IMAGES.sabotage.png,
   },
   {
     id: 'quiz',
@@ -64,7 +58,7 @@ export const GAMES: Game[] = [
     emoji: '❓',
     description: 'Ставки + Стрики + Дуэли',
     status: 'ready',
-    image: quizGameImg,
+    image: IMAGES.quiz.png,
   },
   {
     id: 'truth-dare',
@@ -72,7 +66,7 @@ export const GAMES: Game[] = [
     emoji: '🎲',
     description: 'Давление выбора + Карта стыда',
     status: 'ready',
-    image: truthDareGameImg,
+    image: IMAGES.truthDare.png,
   },
 ]
 

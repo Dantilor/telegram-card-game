@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { trackEvent } from './lib/analytics'
+import { preloadImages } from './utils/preloadImages'
+import { PRELOAD_CRITICAL_URLS } from './assets/images'
 import { useAppHeight } from './hooks/useAppHeight'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { readyAndExpand } from './utils/telegram'
@@ -61,6 +63,7 @@ function App() {
       // no-op: don't block UI
     }
     trackEvent('app_open')
+    preloadImages(PRELOAD_CRITICAL_URLS)
   }, [])
 
   return (

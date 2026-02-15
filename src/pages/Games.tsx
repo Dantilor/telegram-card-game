@@ -7,6 +7,7 @@ import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import SmartImage from '../components/SmartImage'
 import './Games.css'
 
 function Games() {
@@ -24,7 +25,7 @@ function Games() {
       <>
         {hasImage ? (
           <div className="games-grid__card-image-wrap">
-            <img src={game.image} alt="" className="games-grid__card-img" aria-hidden />
+            <SmartImage src={game.image!} alt="" className="games-grid__card-img" priority={i < 4} />
           </div>
         ) : (
           <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>

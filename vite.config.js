@@ -11,6 +11,7 @@ export default defineConfig({
     ],
     build: {
         target: 'es2018',
+        assetsInlineLimit: 4096,
     },
     define: {
         __BUILD_TIME__: JSON.stringify(new Date().toISOString()),

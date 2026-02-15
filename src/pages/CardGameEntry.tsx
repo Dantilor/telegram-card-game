@@ -8,6 +8,7 @@ import type { ModeId } from '../data/modes'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import SmartImage from '../components/SmartImage'
 import './CardGameEntry.css'
 
 function CardGameEntry() {
@@ -35,7 +36,7 @@ function CardGameEntry() {
               {mode.image ? (
                 <>
                   <div className="card-entry-page__mode-image-wrap">
-                    <img src={mode.image} alt="" className="card-entry-page__mode-img" aria-hidden />
+                    <SmartImage src={mode.image} alt="" className="card-entry-page__mode-img" objectFit="contain" />
                   </div>
                   <div className="card-entry-page__mode-text">
                     <span className="card-entry-page__mode-title">{mode.title}</span>

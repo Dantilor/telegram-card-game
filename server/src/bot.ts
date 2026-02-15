@@ -1,10 +1,10 @@
 import { Telegraf, type Context } from 'telegraf'
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
-const WEBAPP_URL = process.env.WEBAPP_URL || ''
+console.log('[bot] module loaded')
 
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN
 if (!BOT_TOKEN) {
-  console.warn('BOT_TOKEN not set; bot will not start')
+  console.warn('[bot] BOT_TOKEN not set; bot will be null')
 }
 
 export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null
@@ -24,6 +24,10 @@ if (bot) {
     console.log('[bot] /ping from', ctx.from?.id)
     await ctx.reply('pong')
   })
+
+  console.log('[bot] handlers registered (start, ping)')
+} else {
+  console.log('[bot] bot is null (no BOT_TOKEN), handlers skipped')
 }
 
 export async function launchBot(): Promise<void> {

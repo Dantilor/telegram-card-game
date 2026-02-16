@@ -162,6 +162,7 @@
   width: 100%;
   max-width: min(20rem, calc(100vw - 2rem));
   padding: 0 clamp(0.5rem, 3vw, 1rem);
+  margin-top: clamp(2rem, 8vh, 4rem);
 }
 
 .home-hero__title {

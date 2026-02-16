@@ -21,8 +21,6 @@
   --glowCyan: rgba(43, 210, 255, 0.35);
   --glowPurple: rgba(138, 43, 226, 0.35);
   --cardHoverBorder: rgba(43, 210, 255, 0.35);
-  --card-glow: #2BD2FF;
-  --panel-glass: rgba(20, 22, 45, 0.6);
   --blob1: rgba(255, 200, 230, 0.2);
   --blob2: rgba(200, 230, 255, 0.22);
   --blob3: rgba(220, 200, 255, 0.18);
@@ -58,8 +56,6 @@
   --glowCyan: rgba(6, 182, 212, 0.18);
   --glowPurple: rgba(124, 58, 237, 0.2);
   --cardHoverBorder: rgba(6, 182, 212, 0.4);
-  --card-glow: #06b6d4;
-  --panel-glass: rgba(255, 255, 255, 0.75);
   --blob1: rgba(168, 85, 247, 0.06);
   --blob2: rgba(6, 182, 212, 0.06);
   --blob3: rgba(124, 58, 237, 0.05);
@@ -95,8 +91,6 @@
   --glowCyan: rgba(0, 255, 204, 0.4);
   --glowPurple: rgba(0, 201, 160, 0.3);
   --cardHoverBorder: rgba(0, 255, 204, 0.4);
-  --card-glow: #00ffcc;
-  --panel-glass: rgba(6, 30, 24, 0.7);
   --blob1: rgba(0, 255, 200, 0.12);
   --blob2: rgba(0, 230, 180, 0.15);
   --blob3: rgba(100, 255, 220, 0.1);
@@ -132,8 +126,6 @@
   --glowCyan: rgba(34, 211, 238, 0.2);
   --glowPurple: rgba(124, 58, 237, 0.2);
   --cardHoverBorder: rgba(34, 211, 238, 0.4);
-  --card-glow: #22d3ee;
-  --panel-glass: rgba(255, 255, 255, 0.85);
   --blob1: rgba(167, 139, 250, 0.08);
   --blob2: rgba(34, 211, 238, 0.08);
   --blob3: rgba(124, 58, 237, 0.06);
@@ -169,8 +161,6 @@
   --glowCyan: rgba(251, 191, 36, 0.35);
   --glowPurple: rgba(249, 115, 22, 0.35);
   --cardHoverBorder: rgba(251, 191, 36, 0.45);
-  --card-glow: #fbbf24;
-  --panel-glass: rgba(41, 37, 36, 0.7);
   --blob1: rgba(251, 146, 60, 0.15);
   --blob2: rgba(251, 191, 36, 0.12);
   --blob3: rgba(249, 115, 22, 0.1);
@@ -206,8 +196,6 @@
   --glowCyan: rgba(56, 189, 248, 0.3);
   --glowPurple: rgba(129, 140, 248, 0.25);
   --cardHoverBorder: rgba(56, 189, 248, 0.4);
-  --card-glow: #38bdf8;
-  --panel-glass: rgba(30, 41, 59, 0.7);
   --blob1: rgba(56, 189, 248, 0.08);
   --blob2: rgba(129, 140, 248, 0.08);
   --blob3: rgba(148, 163, 184, 0.06);

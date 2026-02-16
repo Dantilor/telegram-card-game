@@ -6,7 +6,6 @@ import { usePremium } from '../contexts/PremiumContext'
 import { isFavoritesLocked } from '../utils/access'
 import ThemeToggle from '../components/ThemeToggle'
 import PremiumOverlay from '../components/PremiumOverlay'
-import PopularGames from '../components/PopularGames'
 import './Home.css'
 
 const APP_FEATURES = [
@@ -71,7 +70,6 @@ function Home() {
             </Link>
           </div>
         </div>
-        <PopularGames />
       </section>
 
       <section className="home-about">

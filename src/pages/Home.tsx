@@ -6,6 +6,7 @@ import { usePremium } from '../contexts/PremiumContext'
 import { isFavoritesLocked } from '../utils/access'
 import ThemeToggle from '../components/ThemeToggle'
 import PremiumOverlay from '../components/PremiumOverlay'
+import PopularGames from '../components/PopularGames'
 import './Home.css'
 
 const APP_FEATURES = [
@@ -29,23 +30,7 @@ function Home() {
         <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>
 
-      {/* Сетка выбора режимов — сверху, крупная */}
-      <section className="home-modes">
-        <h2 className="home-modes__title">Игры для компании, пары и вечеринок</h2>
-        <div className="home-modes__grid">
-          {APP_FEATURES.map((label) => (
-            <span key={label} className="home-modes__chip">
-              {label}
-            </span>
-          ))}
-        </div>
-        <p className="home-modes__hint">
-          Выбирай игру → настрой режим → играй
-        </p>
-      </section>
-
-      {/* Заголовок и кнопки — внизу экрана */}
-      <section className="home-hero home-hero--bottom">
+      <section className="home-hero">
         <div className="home-hero__orb" aria-hidden />
         <div className="home-hero__content">
           <h1 className="home-hero__title">GameNight Host</h1>
@@ -86,6 +71,21 @@ function Home() {
             </Link>
           </div>
         </div>
+        <PopularGames />
+      </section>
+
+      <section className="home-about">
+        <h2 className="home-about__subtitle">Игры для компании, пары и вечеринок</h2>
+        <div className="home-about__chips">
+          {APP_FEATURES.map((label) => (
+            <span key={label} className="home-about__chip">
+              {label}
+            </span>
+          ))}
+        </div>
+        <p className="home-about__text">
+          Выбирай игру → настрой режим → играй. Избранные вопросы сохраняются.
+        </p>
       </section>
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>

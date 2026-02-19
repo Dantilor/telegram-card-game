@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAliasState } from '../games/alias/useAliasState'
+import { saveAliasState, getInitialAliasState } from '../games/alias/state'
 import { getCurrentTeam, getCurrentTeamSlotIndex } from '../games/alias/types'
 import { haptic } from '../utils/telegram'
 import { hapticSelection, hapticSuccess } from '../utils/haptics'
@@ -121,6 +122,8 @@ function AliasPlay() {
     setShowExitConfirm(null)
     if (!confirmed) return
     haptic('light')
+    const initialState = getInitialAliasState()
+    saveAliasState(initialState)
     dispatch({ type: 'RESET_ALL' })
     if (target === 'home') {
       navigate('/')
@@ -222,7 +225,7 @@ function TeamTurnReadyScreen({
             dispatch({ type: 'NEXT_HOST' })
           }}
         >
-          Следующий ведущий
+          Другой ведущий
         </button>
         <button
           type="button"

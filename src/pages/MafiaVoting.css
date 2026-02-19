@@ -1,16 +1,20 @@
 .mafia-voting {
-  padding: clamp(0.75rem, 3vw, 1rem);
+  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem);
   padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
   min-height: var(--app-height, 100vh);
   max-width: 100%;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .mafia-voting__top {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .mafia-voting__back {
@@ -19,46 +23,64 @@
 }
 
 .mafia-voting__title {
-  margin: 0 0 0.35rem;
-  font-size: 1.25rem;
+  margin: 0 auto 0.5rem;
+  max-width: min(28rem, 92vw);
+  font-size: clamp(1.2rem, 3.5vw, 1.4rem);
   font-weight: 700;
   color: var(--text);
+  text-align: center;
+  line-height: 1.3;
 }
 
 .mafia-voting__subtitle {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
+  margin: 0 auto 1rem;
+  max-width: min(28rem, 92vw);
+  font-size: clamp(0.95rem, 2.5vw, 1.05rem);
   color: var(--muted);
+  text-align: center;
+  line-height: 1.45;
 }
 
 .mafia-voting__voter {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
+  margin: 0 auto 1rem;
+  max-width: min(28rem, 92vw);
+  font-size: clamp(1.05rem, 2.8vw, 1.15rem);
   font-weight: 600;
   color: var(--text);
+  text-align: center;
+  line-height: 1.35;
 }
 
 .mafia-voting__targets {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   margin-bottom: 1rem;
+  width: 100%;
+  max-width: min(28rem, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+  overflow-y: auto;
 }
 
 .mafia-voting__target {
   width: 100%;
-  min-height: 3.5rem;
-  padding: 0.9rem 1.25rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 1rem;
   text-align: center;
-  font-size: 1.25rem;
+  font-size: clamp(1rem, 2.8vw, 1.2rem);
   font-weight: 600;
   color: var(--text);
   background: var(--panel);
   word-break: break-word;
   overflow-wrap: break-word;
+  line-height: 1.35;
   border: 2px solid var(--border);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
 }
 
 .mafia-voting__target:hover {
@@ -70,49 +92,59 @@
 }
 
 .mafia-voting__hint {
-  font-size: 0.85rem;
+  flex-shrink: 0;
+  margin: 0 auto;
+  max-width: min(28rem, 92vw);
+  font-size: 0.9rem;
   color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
 }
 
+/* Итог голосования — почти на весь экран, по центру */
 .mafia-voting__summary {
-  padding: clamp(2.5rem, 8vw, 4rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
   text-align: center;
-  max-width: 26rem;
+  width: 100%;
+  max-width: min(28rem, 92vw);
   margin: 0 auto;
-  min-height: 70vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.75rem;
+  align-items: center;
+  gap: 1.25rem;
+  box-sizing: border-box;
 }
 
 .mafia-voting__summary-title {
   margin: 0;
-  font-size: clamp(1.5rem, 5vw, 1.85rem);
+  font-size: clamp(1.4rem, 4.5vw, 1.75rem);
   font-weight: 700;
   color: var(--text);
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .mafia-voting__summary-text {
   margin: 0;
-  font-size: clamp(1.25rem, 4vw, 1.5rem);
+  font-size: clamp(1.15rem, 3.5vw, 1.35rem);
   font-weight: 600;
   color: var(--text);
   word-break: break-word;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .mafia-voting__summary-hint {
   margin: 0;
-  font-size: clamp(1.05rem, 3.5vw, 1.2rem);
+  font-size: clamp(1rem, 3vw, 1.15rem);
   color: var(--muted);
   font-style: italic;
   line-height: 1.45;
 }
 
 .mafia-voting__summary-btn {
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  margin-top: 0.75rem;
+  padding: 0.9rem 1.75rem;
+  font-size: 1.05rem;
+  margin-top: 0.5rem;
 }

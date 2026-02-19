@@ -1,18 +1,22 @@
 .mafia-night {
-  padding: clamp(0.75rem, 3vw, 1rem);
+  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem);
   padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
   min-height: var(--app-height, 100vh);
   max-width: 100%;
   overflow-x: hidden;
   background: linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
   color: var(--text);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .mafia-night__top {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .mafia-night__back {
@@ -20,16 +24,19 @@
   font-size: 0.9rem;
 }
 
+/* Контент почти на весь экран, по центру, без наложения текста */
 .mafia-night__intro {
-  padding: clamp(1.5rem, 5vw, 2.5rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: clamp(1.25rem, 4vw, 2rem);
   text-align: center;
-  margin: 1rem auto;
+  margin: 0 auto;
   width: 100%;
-  max-width: 24rem;
-  min-height: 45vh;
+  max-width: min(28rem, 92vw);
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   border-radius: var(--radius, 12px);
   border: 1px solid var(--border);
   background: var(--panel);
@@ -37,48 +44,55 @@
 }
 
 .mafia-night__intro-title {
-  margin: 0 0 0.75rem;
+  margin: 0 0 1rem;
   font-size: clamp(1.5rem, 5vw, 2rem);
   font-weight: 700;
   color: var(--text);
+  line-height: 1.25;
 }
 
 .mafia-night__intro-text {
   margin: 0 0 1.25rem;
   font-size: clamp(0.95rem, 2.5vw, 1.1rem);
   color: var(--muted);
+  line-height: 1.45;
+  max-width: 100%;
 }
 
 .mafia-night__intro-timer {
-  margin: 0;
+  margin: 0 0 1.25rem;
   font-size: clamp(2rem, 6vw, 2.75rem);
   font-weight: 700;
   color: var(--secondary);
+  line-height: 1.2;
 }
 
 .mafia-night__intro-btn {
-  margin-top: 1.25rem;
+  margin-top: 0.5rem;
   padding: 0.85rem 1.75rem;
   font-size: 1rem;
 }
 
 .mafia-night__progress {
-  margin: 0 0 0.75rem;
+  flex-shrink: 0;
+  margin: 0 0 0.5rem;
   font-size: 0.9rem;
   color: var(--muted);
   text-align: center;
 }
 
 .mafia-night__intercept {
-  padding: clamp(1.5rem, 5vw, 2.5rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: clamp(1.25rem, 4vw, 2rem);
   text-align: center;
   width: 100%;
-  max-width: 24rem;
-  margin: 0 auto 1rem;
-  min-height: 45vh;
+  max-width: min(28rem, 92vw);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   border-radius: var(--radius, 12px);
   border: 1px solid var(--border);
   background: var(--panel);
@@ -90,6 +104,7 @@
   font-size: clamp(1.25rem, 4vw, 1.5rem);
   font-weight: 700;
   color: var(--text);
+  line-height: 1.3;
 }
 
 .mafia-night__intercept-phrase {
@@ -97,12 +112,14 @@
   font-size: clamp(0.95rem, 2.5vw, 1.1rem);
   color: var(--secondary);
   font-style: italic;
+  line-height: 1.4;
 }
 
 .mafia-night__intercept-instruction {
   margin: 0 0 1.5rem;
   font-size: clamp(0.9rem, 2.5vw, 1rem);
   color: var(--muted);
+  line-height: 1.45;
 }
 
 .mafia-night__intercept-btn {
@@ -111,12 +128,13 @@
 }
 
 .mafia-night__confirm {
-  padding: clamp(2rem, 6vw, 3rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
   text-align: center;
   width: 100%;
-  max-width: 24rem;
-  margin: 0 auto 1rem;
-  min-height: 45vh;
+  max-width: min(28rem, 92vw);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -128,13 +146,16 @@
 }
 
 .mafia-night__confirm-text {
-  margin: 0 0 1.5rem;
-  font-size: clamp(1.15rem, 3.5vw, 1.4rem);
+  margin: 0 0 1rem;
+  font-size: clamp(1.1rem, 3.5vw, 1.35rem);
   font-weight: 600;
   color: var(--secondary);
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .mafia-night__confirm-btn {
+  margin-top: 0.5rem;
   padding: 0.85rem 1.75rem;
   font-size: 1rem;
 }
@@ -145,16 +166,19 @@
   font-weight: 600;
   color: var(--text);
   text-align: center;
+  line-height: 1.3;
 }
 
 .mafia-night__choice {
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  max-width: 24rem;
-  margin: 0 auto 1rem;
+  max-width: min(28rem, 92vw);
+  margin: 0 auto;
   padding: clamp(1.25rem, 4vw, 1.75rem);
-  min-height: 45vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
   border-radius: var(--radius, 12px);
   border: 1px solid var(--border);
   background: var(--panel);
@@ -163,6 +187,7 @@
 
 .mafia-night__choice .mafia-night__phase-title {
   margin-top: 0;
+  margin-bottom: 1rem;
 }
 
 .mafia-night__targets {
@@ -172,22 +197,26 @@
   margin-bottom: 1rem;
   flex: 1 1 auto;
   min-height: 0;
+  width: 100%;
+  overflow-y: auto;
 }
 
 .mafia-night__target {
   width: 100%;
-  min-height: 3.5rem;
-  padding: 0.9rem 1.25rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 1rem;
   text-align: center;
-  font-size: clamp(1.1rem, 3vw, 1.25rem);
+  font-size: clamp(1rem, 2.8vw, 1.2rem);
   font-weight: 600;
   color: var(--text);
   background: var(--panel);
   word-break: break-word;
   overflow-wrap: break-word;
+  line-height: 1.35;
   border: 2px solid var(--border);
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
+  box-sizing: border-box;
 }
 
 .mafia-night__target:hover:not(:disabled) {
@@ -208,26 +237,32 @@
 
 .mafia-night__sheriff-result {
   margin-bottom: 1rem;
-  padding: 1rem 1.25rem;
+  padding: 1rem 1rem;
   text-align: center;
-  font-size: clamp(1.1rem, 3vw, 1.25rem);
+  font-size: clamp(1rem, 2.8vw, 1.2rem);
   font-weight: 600;
   color: var(--text);
+  line-height: 1.4;
+  word-break: break-word;
   border-radius: var(--radius, 12px);
   border: 1px solid var(--border);
   background: var(--panel);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .mafia-night__sheriff-result--in-confirm {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1rem;
   padding: 0.85rem 1rem;
-  font-size: 1.15rem;
+  font-size: clamp(1rem, 2.8vw, 1.15rem);
+  line-height: 1.4;
 }
 
 .mafia-night__next {
   width: 100%;
-  max-width: 24rem;
+  max-width: min(28rem, 92vw);
   margin: 0 auto;
   padding: 0.85rem 1rem;
   font-size: 1rem;
+  flex-shrink: 0;
 }

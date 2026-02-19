@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAliasState } from '../games/alias/useAliasState'
+import { saveAliasState, getInitialAliasState } from '../games/alias/state'
 import { ALIAS_CATEGORIES, type AliasCategoryId } from '../games/alias/data/words'
 import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
@@ -123,6 +124,8 @@ function AliasHome() {
     setShowExitConfirm(null)
     if (!confirmed) return
     haptic('light')
+    const initialState = getInitialAliasState()
+    saveAliasState(initialState)
     dispatch({ type: 'RESET_ALL' })
     if (target === 'home') {
       navigate('/')

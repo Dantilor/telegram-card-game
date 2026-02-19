@@ -94,7 +94,7 @@
   margin: 0 auto 0.75rem;
   width: 11rem;
   height: 11rem;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 0;
   transition: opacity 0.4s, filter 0.4s;
 }

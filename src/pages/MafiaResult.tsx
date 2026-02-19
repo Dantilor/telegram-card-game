@@ -78,8 +78,6 @@ function MafiaResult() {
                 <img src={IMAGES.mafiaRole.png} alt="" className="mafia-result__roles-icon mafia-result__roles-icon--img" />
               ) : p.role === 'sheriff' ? (
                 <img src={IMAGES.mafiaSheriff.png} alt="" className="mafia-result__roles-icon mafia-result__roles-icon--img" />
-              ) : p.role === 'civilian' && p.isHost ? (
-                <img src={IMAGES.mafiaHost.png} alt="" className="mafia-result__roles-icon mafia-result__roles-icon--img" />
               ) : p.role === 'civilian' && (p.civilianImageIndex === 0 || p.civilianImageIndex === 1) ? (
                 <img
                   src={p.civilianImageIndex === 1 ? IMAGES.mafiaCivilian2.png : IMAGES.mafiaCivilian1.png}

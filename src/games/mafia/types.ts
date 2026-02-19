@@ -8,8 +8,6 @@ export type Player = {
   alive: boolean
   /** Только у civilian: индекс картинки мирного (0 или 1). */
   civilianImageIndex?: 0 | 1
-  /** Первый участник в настройке — ведущий, при роли «мирный» показываем его фото. */
-  isHost?: boolean
 }
 
 export type NightAction = {

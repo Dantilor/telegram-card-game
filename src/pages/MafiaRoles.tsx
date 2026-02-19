@@ -70,9 +70,8 @@ function MafiaRoles() {
   const isMafia = player.role === 'mafia'
   const isSheriff = player.role === 'sheriff'
   const isCivilian = player.role === 'civilian'
-  const isHostAsCivilian = isCivilian && player.isHost
   const civilianImg = isCivilian
-    ? (isHostAsCivilian ? IMAGES.mafiaHost.png : (player.civilianImageIndex === 1 ? IMAGES.mafiaCivilian2.png : IMAGES.mafiaCivilian1.png))
+    ? (player.civilianImageIndex === 1 ? IMAGES.mafiaCivilian2.png : IMAGES.mafiaCivilian1.png)
     : null
 
   return (

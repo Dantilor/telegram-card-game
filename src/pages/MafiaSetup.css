@@ -47,6 +47,10 @@
   color: var(--muted);
 }
 
+.mafia-setup__section-title--secondary {
+  margin-top: 1rem;
+}
+
 .mafia-setup__count-row {
   display: flex;
   flex-wrap: wrap;

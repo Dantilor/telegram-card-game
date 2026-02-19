@@ -22,18 +22,16 @@ function MafiaSetup() {
   const navigate = useNavigate()
   const { dispatch } = useMafiaGame()
   const [count, setCount] = useState(5)
-  // names[0] = ведущий, names[1..count] = игроки
-  const [names, setNames] = useState<string[]>(() => Array(5 + 1).fill('')) // 1 ведущий + 5 игроков
+  // Всего участников = count, names[0] = ведущий (тоже игрок), names[1..count-1] = остальные
+  const [names, setNames] = useState<string[]>(() => Array(5).fill(''))
 
   const updateCount = (n: number) => {
     hapticSelection()
     setCount(n)
     setNames((prev) => {
-      const host = prev[0] ?? ''
-      const players = prev.slice(1, prev.length)
-      const next = [host]
-      while (next.length < n + 1) next.push(players[next.length - 1] ?? '')
-      return next.slice(0, n + 1)
+      const next = prev.slice(0, n)
+      while (next.length < n) next.push('')
+      return next
     })
   }
 
@@ -46,8 +44,7 @@ function MafiaSetup() {
   }
 
   const handleStart = () => {
-    const playerNames = names.slice(1, count + 1)
-    const filled = playerNames.map((n, i) => n.trim() || `Игрок ${i + 1}`)
+    const filled = names.map((n, i) => n.trim() || (i === 0 ? 'Ведущий' : `Игрок ${i + 1}`))
     if (filled.length < 5) return
     haptic('medium')
     const players = filled.map((name, i) => ({
@@ -114,12 +111,12 @@ function MafiaSetup() {
               />
             </div>
           </div>
-          {Array.from({ length: count }, (_, i) => i + 1).map((i) => (
+          {Array.from({ length: count - 1 }, (_, k) => k + 1).map((i) => (
             <input
               key={i}
               type="text"
               className="mafia-setup__input card"
-              placeholder={`Игрок ${i}`}
+              placeholder={`Игрок ${i + 1}`}
               value={names[i] ?? ''}
               onChange={(e) => updateName(i, e.target.value)}
             />

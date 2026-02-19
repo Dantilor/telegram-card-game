@@ -56,7 +56,7 @@ function MafiaSetup() {
         </button>
       </div>
       <header className="mafia-setup__header">
-        <h1 className="mafia-setup__title">Мафия (мини)</h1>
+        <h1 className="mafia-setup__title">Мафия Lite</h1>
         <p className="mafia-setup__tagline">Настройка игры</p>
       </header>
 

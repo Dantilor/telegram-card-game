@@ -25,7 +25,7 @@ function CardGameEntry() {
         </button>
       </div>
       <header className="card-entry-page__header">
-        <h1 className="card-entry-page__title">Карточная игра</h1>
+        <h1 className="card-entry-page__title">GameNight Cards</h1>
         <p className="card-entry-page__tagline">Выбери режим</p>
       </header>
       <div className="card-entry-page__modes">

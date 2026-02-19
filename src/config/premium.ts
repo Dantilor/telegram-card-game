@@ -16,7 +16,7 @@ export const FREE_LIMIT_PER_DECK = 15
 export const FREE_GAMES = ['card', 'truth-dare'] as const
 
 /** Бесплатные колоды карточной игры (по 15 вопросов).
- * game="card" — Карточная игра (src/pages/CardGameEntry.tsx, /card)
+ * game="card" — GameNight Cards (src/pages/CardGameEntry.tsx, /card)
  * deckId из src/data/decksIndex.ts
  */
 export const FREE_DECKS = [

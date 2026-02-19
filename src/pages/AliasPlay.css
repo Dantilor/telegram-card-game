@@ -262,6 +262,16 @@
   margin: 0 0 1rem;
 }
 
+.alias-play__modal-text {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.alias-play__modal-hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .alias-play__modal-btns {
   display: flex;
   gap: 0.5rem;

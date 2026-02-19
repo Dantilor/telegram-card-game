@@ -69,10 +69,13 @@ export function loadAliasState(): AliasState {
       bagIdx: typeof parsed.bagIdx === 'number' ? parsed.bagIdx : defaultState.bagIdx,
       lastPlayedTeam: parsed.lastPlayedTeam === 'A' || parsed.lastPlayedTeam === 'B' ? parsed.lastPlayedTeam : null,
       teams,
-      teamCount:
-        typeof parsed.teamCount === 'number' && parsed.teamCount >= 2 && parsed.teamCount <= 6
-          ? parsed.teamCount
-          : defaultState.teamCount,
+      teamCount: (() => {
+        const v = parsed.teamCount
+        if (typeof v === 'number' && v >= 2 && v <= 6) return v
+        const n = typeof v === 'string' ? parseInt(v, 10) : NaN
+        if (Number.isFinite(n) && n >= 2 && n <= 6) return n
+        return defaultState.teamCount
+      })(),
       phase: parsed.phase === 'setup' || parsed.phase === 'turn_ready' || parsed.phase === 'in_round' || parsed.phase === 'round_results'
         ? parsed.phase
         : defaultState.phase,

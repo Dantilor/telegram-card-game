@@ -1,13 +1,16 @@
 import type { AliasState } from './types'
+import type { AliasCategoryId } from './data/words'
 import { getWordsByCategoryIds, shuffleFisherYates } from './data/words'
 
 export type AliasAction =
   | { type: 'SET_TEAM_COUNT'; count: number }
+  | { type: 'SET_CATEGORY_IDS'; categoryIds: AliasCategoryId[] }
   | { type: 'SET_TEAM_NAME'; slotIndex: number; name: string }
   | { type: 'ADD_PLAYER'; slotIndex: number; playerName: string }
   | { type: 'REMOVE_PLAYER'; slotIndex: number; playerIndex: number }
   | { type: 'SET_TIMER'; seconds: 30 | 45 | 60 }
   | { type: 'START_GAME' }
+  | { type: 'RESET_TO_SETUP' }
   | { type: 'NEXT_HOST' }
   | { type: 'START_ROUND' }
   | { type: 'GUESSED' }
@@ -53,8 +56,28 @@ export function aliasReducer(state: AliasState, action: AliasAction): AliasState
       return { ...state, teams }
     }
 
+    case 'SET_CATEGORY_IDS': {
+      return { ...state, categoryIds: action.categoryIds }
+    }
+
     case 'SET_TIMER': {
       return { ...state, timerSeconds: action.seconds }
+    }
+
+    case 'RESET_TO_SETUP': {
+      return {
+        ...state,
+        phase: 'setup',
+        currentTeamIndex: 0,
+        activeTeamSlots: [],
+        teamScores: [0, 0, 0, 0, 0, 0],
+        bag: [],
+        bagIdx: 0,
+        roundEndsAt: null,
+        guessed: 0,
+        skipped: 0,
+        roundEndFired: false,
+      }
     }
 
     case 'START_GAME': {

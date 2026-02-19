@@ -75,52 +75,106 @@ function AliasRedirectToHome({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
+function AliasExitModal({
+  onClose,
+  onConfirm,
+}: {
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div className="alias-play__modal-overlay" onClick={onClose}>
+      <div className="alias-play__modal card" onClick={(e) => e.stopPropagation()}>
+        <p className="alias-play__modal-text">Выйти из игры?</p>
+        <p className="alias-play__modal-hint">
+          Если выйти — результаты и текущий прогресс будут сброшены.
+        </p>
+        <div className="alias-play__modal-btns">
+          <button type="button" className="btn btn--ghost" onClick={onClose}>
+            Остаться
+          </button>
+          <button type="button" className="btn btn--primary" onClick={onConfirm}>
+            Выйти
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AliasPlay() {
   const navigate = useNavigate()
   const [state, , dispatch] = useAliasState()
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
 
-  if (state.phase === 'setup') {
-    return <AliasRedirectToHome onNavigate={() => navigate('/alias', { replace: true })} />
-  }
-  if (state.phase === 'turn_ready') {
-    return (
-      <TeamTurnReadyScreen
-        state={state}
-        dispatch={dispatch}
-        onBack={() => navigate('/alias')}
-      />
-    )
-  }
-  if (state.phase === 'in_round') {
-    return (
-      <TeamInRoundScreen
-        state={state}
-        dispatch={dispatch}
-        onBack={() => navigate('/alias')}
-      />
-    )
-  }
-  if (state.phase === 'round_results') {
-    return (
-      <TeamRoundResultsScreen
-        state={state}
-        dispatch={dispatch}
-        onBack={() => navigate('/alias')}
-      />
-    )
+  const onBeforeHomeNavigate = () => {
+    setShowExitConfirm(true)
+    return true
   }
 
-  return <AliasRedirectToHome onNavigate={() => navigate('/alias', { replace: true })} />
+  const handleExitConfirm = (confirmed: boolean) => {
+    setShowExitConfirm(false)
+    if (!confirmed) return
+    haptic('light')
+    dispatch({ type: 'RESET_TO_SETUP' })
+    navigate('/')
+  }
+
+  return (
+    <>
+      {state.phase === 'setup' && (
+        <AliasRedirectToHome onNavigate={() => navigate('/alias', { replace: true })} />
+      )}
+      {state.phase === 'turn_ready' && (
+        <TeamTurnReadyScreen
+          state={state}
+          dispatch={dispatch}
+          onBack={() => navigate('/alias')}
+          onBeforeHomeNavigate={onBeforeHomeNavigate}
+        />
+      )}
+      {state.phase === 'in_round' && (
+        <TeamInRoundScreen
+          state={state}
+          dispatch={dispatch}
+          onBack={() => navigate('/alias')}
+          onBeforeHomeNavigate={onBeforeHomeNavigate}
+        />
+      )}
+      {state.phase === 'round_results' && (
+        <TeamRoundResultsScreen
+          state={state}
+          dispatch={dispatch}
+          onBack={() => navigate('/alias')}
+          onBeforeHomeNavigate={onBeforeHomeNavigate}
+        />
+      )}
+      {state.phase !== 'setup' &&
+        state.phase !== 'turn_ready' &&
+        state.phase !== 'in_round' &&
+        state.phase !== 'round_results' && (
+          <AliasRedirectToHome onNavigate={() => navigate('/alias', { replace: true })} />
+        )}
+      {showExitConfirm && (
+        <AliasExitModal
+          onClose={() => handleExitConfirm(false)}
+          onConfirm={() => handleExitConfirm(true)}
+        />
+      )}
+    </>
+  )
 }
 
 function TeamTurnReadyScreen({
   state,
   dispatch,
   onBack,
+  onBeforeHomeNavigate,
 }: {
   state: import('../games/alias/types').AliasState
   dispatch: (a: import('../games/alias/reducer').AliasAction) => void
   onBack: () => void
+  onBeforeHomeNavigate?: () => boolean
 }) {
   const team = getCurrentTeam(state)
   const hostName =
@@ -134,7 +188,7 @@ function TeamTurnReadyScreen({
         <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
           ← Назад
         </button>
-        <HomeButton />
+        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
       </div>
       <header className="alias-play__turn-ready">
         <h1 className="alias-play__turn-title">Ход: {team?.name.trim() || '—'}</h1>
@@ -170,10 +224,12 @@ function TeamInRoundScreen({
   state,
   dispatch,
   onBack,
+  onBeforeHomeNavigate,
 }: {
   state: import('../games/alias/types').AliasState
   dispatch: (a: import('../games/alias/reducer').AliasAction) => void
   onBack: () => void
+  onBeforeHomeNavigate?: () => boolean
 }) {
   const [secondsLeft, setSecondsLeft] = useState(() => {
     if (state.roundEndsAt == null) return state.timerSeconds
@@ -223,7 +279,7 @@ function TeamInRoundScreen({
         <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
           ← Назад
         </button>
-        <HomeButton />
+        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
       </div>
       <div className="alias-play__timer-wrap">
         <div
@@ -272,10 +328,12 @@ function TeamRoundResultsScreen({
   state,
   dispatch,
   onBack,
+  onBeforeHomeNavigate,
 }: {
   state: import('../games/alias/types').AliasState
   dispatch: (a: import('../games/alias/reducer').AliasAction) => void
   onBack: () => void
+  onBeforeHomeNavigate?: () => boolean
 }) {
   const team = getCurrentTeam(state)
   const score = team ? (state.teamScores[getCurrentTeamSlotIndex(state)] ?? 0) : 0
@@ -286,7 +344,7 @@ function TeamRoundResultsScreen({
         <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
           ← Назад
         </button>
-        <HomeButton />
+        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
       </div>
       <header className="alias-play__results-header">
         <h1 className="alias-play__results-title">Итоги раунда</h1>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAliasState } from '../games/alias/useAliasState'
 import { ALIAS_CATEGORIES, type AliasCategoryId } from '../games/alias/data/words'
@@ -14,13 +14,28 @@ const TIMER_OPTIONS = [30, 45, 60] as const
 
 function AliasHome() {
   const navigate = useNavigate()
-  const [state, setState, dispatch] = useAliasState()
+  const [state, , dispatch] = useAliasState()
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
+  const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
 
   const handleBack = useBack('/games')
 
   const teamCount = state.teamCount
   const teams = state.teams
+
+  const inProgress =
+    state.phase !== 'setup' ||
+    state.teams.some((t) => t.name.trim() !== '' || t.players.length > 0)
+
+  useEffect(() => {
+    if (typeof import.meta.env !== 'undefined' && import.meta.env?.DEV) {
+      console.log('[Alias] settings', {
+        teamsCount: state.teamCount,
+        timer: state.timerSeconds,
+        categories: state.categoryIds,
+      })
+    }
+  }, [state.teamCount, state.timerSeconds, state.categoryIds])
 
   const canStart =
     state.categoryIds.length >= 1 &&
@@ -45,31 +60,27 @@ function AliasHome() {
     hapticSelection()
     if (adult) {
       if (state.categoryIds.includes(categoryId)) {
-        setState((prev) => ({
-          ...prev,
-          categoryIds: prev.categoryIds.filter((id) => id !== categoryId),
-        }))
+        dispatch({
+          type: 'SET_CATEGORY_IDS',
+          categoryIds: state.categoryIds.filter((id) => id !== categoryId),
+        })
         return
       }
       setShowAdultConfirm(categoryId)
       return
     }
-    setState((prev) => ({
-      ...prev,
-      categoryIds: prev.categoryIds.includes(categoryId)
-        ? prev.categoryIds.filter((id) => id !== categoryId)
-        : [...prev.categoryIds, categoryId],
-    }))
+    const nextIds = state.categoryIds.includes(categoryId)
+      ? state.categoryIds.filter((id) => id !== categoryId)
+      : [...state.categoryIds, categoryId]
+    dispatch({ type: 'SET_CATEGORY_IDS', categoryIds: nextIds })
   }
 
   const handleAdultConfirm = (confirmed: boolean) => {
     if (confirmed && showAdultConfirm) {
-      setState((prev) => ({
-        ...prev,
-        categoryIds: prev.categoryIds.includes(showAdultConfirm)
-          ? prev.categoryIds
-          : [...prev.categoryIds, showAdultConfirm],
-      }))
+      const nextIds = state.categoryIds.includes(showAdultConfirm)
+        ? state.categoryIds
+        : [...state.categoryIds, showAdultConfirm]
+      dispatch({ type: 'SET_CATEGORY_IDS', categoryIds: nextIds })
     }
     setShowAdultConfirm(null)
   }
@@ -91,11 +102,40 @@ function AliasHome() {
     navigate('/alias/play')
   }
 
+  const handleBackClick = () => {
+    if (inProgress) {
+      setShowExitConfirm('back')
+    } else {
+      handleBack()
+    }
+  }
+
+  const handleExitConfirm = (confirmed: boolean) => {
+    const target = showExitConfirm
+    setShowExitConfirm(null)
+    if (!confirmed) return
+    haptic('light')
+    dispatch({ type: 'RESET_TO_SETUP' })
+    if (target === 'home') {
+      navigate('/')
+    } else {
+      navigate('/games')
+    }
+  }
+
   return (
     <div className="alias-home">
       <div className="alias-home__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost alias-home__back" onClick={handleBack}>
+        <HomeButton
+          onBeforeNavigate={() => {
+            if (inProgress) {
+              setShowExitConfirm('home')
+              return true
+            }
+            return false
+          }}
+        />
+        <button type="button" className="btn btn--ghost alias-home__back" onClick={handleBackClick}>
           ← Назад
         </button>
       </div>
@@ -189,6 +229,28 @@ function AliasHome() {
               </button>
               <button type="button" className="btn btn--primary" onClick={() => handleAdultConfirm(true)}>
                 Да, мне 18+
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showExitConfirm != null && (
+        <div
+          className="alias-home__modal-overlay"
+          onClick={() => handleExitConfirm(false)}
+        >
+          <div className="alias-home__modal card" onClick={(e) => e.stopPropagation()}>
+            <p className="alias-home__modal-text">Выйти из игры?</p>
+            <p className="alias-home__modal-hint">
+              Если выйти — результаты и текущий прогресс будут сброшены.
+            </p>
+            <div className="alias-home__modal-buttons">
+              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+                Остаться
+              </button>
+              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+                Выйти
               </button>
             </div>
           </div>

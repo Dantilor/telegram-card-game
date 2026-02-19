@@ -2,12 +2,20 @@ import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import './HomeButton.css'
 
-export default function HomeButton() {
+type HomeButtonProps = {
+  /** If returns true, navigation is prevented (e.g. to show exit confirm). */
+  onBeforeNavigate?: () => boolean
+}
+
+export default function HomeButton({ onBeforeNavigate }: HomeButtonProps) {
   return (
     <Link
       to="/"
       className="btn btn--ghost home-btn"
-      onClick={() => haptic('light')}
+      onClick={(e) => {
+        haptic('light')
+        if (onBeforeNavigate?.()) e.preventDefault()
+      }}
       aria-label="Домой"
     >
       🏠 Домой

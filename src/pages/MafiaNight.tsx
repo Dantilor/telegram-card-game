@@ -24,9 +24,24 @@ function MafiaNight() {
     }
   }, [state.phase, state.winner, location.pathname, navigate])
 
+  useEffect(() => {
+    if (!state.players.length) navigate('/mafia')
+  }, [state.players.length, navigate])
+
   if (!state.players.length) {
-    navigate('/mafia')
-    return null
+    return (
+      <div className="mafia-night">
+        <div className="mafia-night__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-night__back" onClick={() => navigate('/mafia')}>
+            ← В меню
+          </button>
+        </div>
+        <div className="mafia-night__intro card">
+          <p className="mafia-night__intro-text">Переход в меню…</p>
+        </div>
+      </div>
+    )
   }
 
   const alive = state.players.filter((p) => p.alive)

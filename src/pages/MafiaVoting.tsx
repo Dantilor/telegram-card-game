@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { useBack } from '../hooks/useBack'
@@ -132,8 +133,17 @@ function MafiaVoting() {
             className="btn btn--primary mafia-voting__summary-btn"
             onClick={() => {
               hapticSelection()
-              navigatedRef.current = false
-              dispatch({ type: 'CONFIRM_VOTING' })
+              // Сразу считаем, куда идти (как в редьюсере), и навигируем в том же клике — иначе в Mini App может остаться тёмный экран
+              const eliminated = state.votingSummaryTargetId
+              const playersAfter = state.players.map((p) =>
+                p.id === eliminated ? { ...p, alive: false } : p
+              )
+              const mafiaLeft = playersAfter.filter((p) => p.alive && p.role === 'mafia').length
+              const peacefulLeft = playersAfter.filter((p) => p.alive && p.role !== 'mafia').length
+              const winner =
+                mafiaLeft === 0 ? 'peaceful' : mafiaLeft >= peacefulLeft ? 'mafia' : null
+              flushSync(() => dispatch({ type: 'CONFIRM_VOTING' }))
+              navigate(winner ? '/mafia/result' : '/mafia/night')
             }}
           >
             Перейти к результату

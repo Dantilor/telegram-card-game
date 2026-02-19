@@ -22,15 +22,18 @@ function MafiaSetup() {
   const navigate = useNavigate()
   const { dispatch } = useMafiaGame()
   const [count, setCount] = useState(5)
-  const [names, setNames] = useState<string[]>(() => Array(5).fill(''))
+  // names[0] = ведущий, names[1..count] = игроки
+  const [names, setNames] = useState<string[]>(() => Array(5 + 1).fill('')) // 1 ведущий + 5 игроков
 
   const updateCount = (n: number) => {
     hapticSelection()
     setCount(n)
     setNames((prev) => {
-      const next = [...prev]
-      while (next.length < n) next.push('')
-      return next.slice(0, n)
+      const host = prev[0] ?? ''
+      const players = prev.slice(1, prev.length)
+      const next = [host]
+      while (next.length < n + 1) next.push(players[next.length - 1] ?? '')
+      return next.slice(0, n + 1)
     })
   }
 
@@ -43,7 +46,8 @@ function MafiaSetup() {
   }
 
   const handleStart = () => {
-    const filled = names.slice(0, count).map((n, i) => n.trim() || `Игрок ${i + 1}`)
+    const playerNames = names.slice(1, count + 1)
+    const filled = playerNames.map((n, i) => n.trim() || `Игрок ${i + 1}`)
     if (filled.length < 5) return
     haptic('medium')
     const players = filled.map((name, i) => ({
@@ -73,14 +77,6 @@ function MafiaSetup() {
         <p className="mafia-setup__tagline">Каждый скрывает роль. Кто врёт — решит утро.</p>
       </header>
 
-      <section className="mafia-setup__section mafia-setup__section--host">
-        <h2 className="mafia-setup__section-title">Ведущий</h2>
-        <div className="mafia-setup__host card">
-          <img src={IMAGES.mafiaHost.png} alt="" className="mafia-setup__host-img" />
-          <p className="mafia-setup__host-label">Ведёт игру</p>
-        </div>
-      </section>
-
       <section className="mafia-setup__section">
         <h2 className="mafia-setup__section-title">Количество игроков:</h2>
         <div className="mafia-setup__count-row">
@@ -105,13 +101,26 @@ function MafiaSetup() {
       <section className="mafia-setup__section">
         <h2 className="mafia-setup__section-title">Введите имена участников</h2>
         <div className="mafia-setup__names">
-          {names.slice(0, count).map((name, i) => (
+          <div className="mafia-setup__name-row mafia-setup__name-row--host card">
+            <img src={IMAGES.mafiaHost.png} alt="" className="mafia-setup__host-thumb" />
+            <div className="mafia-setup__name-row-inner">
+              <span className="mafia-setup__name-label">Ведущий</span>
+              <input
+                type="text"
+                className="mafia-setup__input"
+                placeholder="Имя ведущего"
+                value={names[0] ?? ''}
+                onChange={(e) => updateName(0, e.target.value)}
+              />
+            </div>
+          </div>
+          {Array.from({ length: count }, (_, i) => i + 1).map((i) => (
             <input
               key={i}
               type="text"
               className="mafia-setup__input card"
-              placeholder="Имя игрока"
-              value={name}
+              placeholder={`Игрок ${i}`}
+              value={names[i] ?? ''}
               onChange={(e) => updateName(i, e.target.value)}
             />
           ))}

@@ -95,7 +95,7 @@
   width: 11rem;
   height: 11rem;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 0;
   transition: opacity 0.4s, filter 0.4s;
 }
 

@@ -55,8 +55,9 @@ function MafiaDay() {
       </div>
 
       <div className="mafia-day__result card">
-        <h2 className="mafia-day__result-title">День</h2>
-        <p className="mafia-day__result-text">{state.nightResult}</p>
+        <h2 className="mafia-day__result-title">Город просыпается.</h2>
+        <p className="mafia-day__result-text">Кто-то больше не откроет глаза.</p>
+        {state.nightResult && <p className="mafia-day__result-night">{state.nightResult}</p>}
       </div>
 
       <div className="mafia-day__timer card">

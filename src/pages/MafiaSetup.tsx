@@ -6,7 +6,6 @@ import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
-import { IMAGES } from '../assets/images'
 import './MafiaSetup.css'
 
 function formatRolesLine(counts: { mafia: number; doctor: number; sheriff: number; civilian: number }): string {
@@ -21,8 +20,8 @@ function formatRolesLine(counts: { mafia: number; doctor: number; sheriff: numbe
 function MafiaSetup() {
   const navigate = useNavigate()
   const { dispatch } = useMafiaGame()
-  const [count, setCount] = useState(6)
-  const [names, setNames] = useState<string[]>(() => Array(6).fill(''))
+  const [count, setCount] = useState(5)
+  const [names, setNames] = useState<string[]>(() => Array(5).fill(''))
 
   const updateCount = (n: number) => {
     hapticSelection()
@@ -44,7 +43,7 @@ function MafiaSetup() {
 
   const handleStart = () => {
     const filled = names.slice(0, count).map((n, i) => n.trim() || `Игрок ${i + 1}`)
-    if (filled.length < 4) return
+    if (filled.length < 5) return
     haptic('medium')
     const players = filled.map((name, i) => ({
       id: `p-${i}-${Date.now()}`,
@@ -73,15 +72,10 @@ function MafiaSetup() {
         <p className="mafia-setup__tagline">Каждый скрывает роль. Кто врёт — решит утро.</p>
       </header>
 
-      <div className="mafia-setup__host card">
-        <img src={IMAGES.mafiaHost.png} alt="" className="mafia-setup__host-img" />
-        <p className="mafia-setup__host-label">Ведущий</p>
-      </div>
-
       <section className="mafia-setup__section">
         <h2 className="mafia-setup__section-title">Количество игроков:</h2>
         <div className="mafia-setup__count-row">
-          {[4, 5, 6, 7, 8, 9, 10].map((n) => (
+          {[5, 6, 7, 8, 9, 10].map((n) => (
             <button
               key={n}
               type="button"
@@ -120,7 +114,7 @@ function MafiaSetup() {
           type="button"
           className="btn btn--primary mafia-setup__start"
           onClick={handleStart}
-          disabled={count < 4}
+          disabled={count < 5}
         >
           Начать игру
         </button>

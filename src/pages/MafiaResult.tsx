@@ -52,8 +52,19 @@ function MafiaResult() {
 
       <div className={`mafia-result__card card ${isPeacefulWin ? 'mafia-result__card--win' : 'mafia-result__card--lose'}`}>
         <h1 className="mafia-result__title">
-          {isPeacefulWin ? 'Победа мирных!' : 'Победа мафии!'}
+          {isPeacefulWin ? 'Победа мирных' : 'Победа мафии'}
         </h1>
+        {isPeacefulWin ? (
+          <>
+            <p className="mafia-result__subtitle">Справедливость восторжествовала.</p>
+            <p className="mafia-result__subtitle">Город спасён.</p>
+          </>
+        ) : (
+          <>
+            <p className="mafia-result__subtitle">Город пал.</p>
+            <p className="mafia-result__subtitle">Тьма победила.</p>
+          </>
+        )}
       </div>
 
       <div className="mafia-result__roles card">

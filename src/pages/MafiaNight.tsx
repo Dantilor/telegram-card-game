@@ -6,28 +6,6 @@ import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './MafiaNight.css'
 
-const MAFIA_PHRASES = [
-  'Город спит. Кто исчезнет этой ночью?',
-  'Тьма сгущается. Выберите жертву.',
-  'Ночь принадлежит мафии. Кого убрать?',
-]
-
-const DOCTOR_PHRASES = [
-  'Ты слышишь шёпот в темноте. Кого спасёшь?',
-  'Раны можно залечить. Кого защитить?',
-  'Время действовать. Кого вылечить?',
-]
-
-const SHERIFF_PHRASES = [
-  'Сомнения гложут. Кого проверить?',
-  'Истина где-то рядом. Найди предателя.',
-  'Кому доверять? Проверь одного из них.',
-]
-
-function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!
-}
-
 function MafiaNight() {
   const navigate = useNavigate()
   const { state, dispatch } = useMafiaGame()
@@ -73,7 +51,7 @@ function MafiaNight() {
   // night_intro — "Ночь. Все закрывают глаза" + кнопка Начать
   if (state.phase === 'night_intro') {
     return (
-      <div className="mafia-night mafia-night--dark">
+      <div className="mafia-night">
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -82,7 +60,7 @@ function MafiaNight() {
         </div>
         <div className="mafia-night__intro card">
           <h2 className="mafia-night__intro-title">Ночь</h2>
-          <p className="mafia-night__intro-text">Все закрывают глаза</p>
+          <p className="mafia-night__intro-text">Город засыпает. Никто не видит, кто сделает ход.</p>
           <button
             type="button"
             className="btn btn--primary mafia-night__intro-btn"
@@ -109,7 +87,7 @@ function MafiaNight() {
   // night_mafia_intro — перехват перед выбором мафии
   if (state.phase === 'night_mafia_intro' && mafia.length > 0) {
     return (
-      <div className="mafia-night mafia-night--dark">
+      <div className="mafia-night">
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -119,8 +97,8 @@ function MafiaNight() {
         <p className="mafia-night__progress">Ночь — шаг 1 / {nightSteps.length}</p>
         <div className="mafia-night__intercept card">
           <h2 className="mafia-night__intercept-title">Ход: Мафия</h2>
-          <p className="mafia-night__intercept-phrase">{pick(MAFIA_PHRASES)}</p>
-          <p className="mafia-night__intercept-instruction">Выберите жертву среди мирных жителей</p>
+          <p className="mafia-night__intercept-phrase">Тьма сгущается.</p>
+          <p className="mafia-night__intercept-instruction">Выберите жертву среди мирных жителей, того, кто не доживёт до утра.</p>
           <button
             type="button"
             className="btn btn--primary mafia-night__intercept-btn"
@@ -143,7 +121,7 @@ function MafiaNight() {
 
     if (showConfirm && hasSelection) {
       return (
-        <div className="mafia-night mafia-night--dark">
+        <div className="mafia-night">
           <div className="mafia-night__top">
             <HomeButton />
             <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -169,7 +147,7 @@ function MafiaNight() {
     }
 
     return (
-      <div className="mafia-night mafia-night--dark">
+      <div className="mafia-night">
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -177,21 +155,23 @@ function MafiaNight() {
           </button>
         </div>
         <p className="mafia-night__progress">Ночь — шаг 1 / {nightSteps.length}</p>
-        <h2 className="mafia-night__phase-title">Мафия, выберите жертву</h2>
-        <div className="mafia-night__targets">
-          {targets.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`btn card mafia-night__target ${state.nightAction.mafiaTarget === p.id ? 'is-active' : ''}`}
-              onClick={() => {
-                hapticSelection()
-                dispatch({ type: 'SET_NIGHT_MAFIA', target: p.id })
-              }}
-            >
-              {p.name}
-            </button>
-          ))}
+        <div className="mafia-night__choice card">
+          <h2 className="mafia-night__phase-title">Мафия, выберите жертву</h2>
+          <div className="mafia-night__targets">
+            {targets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`btn card mafia-night__target ${state.nightAction.mafiaTarget === p.id ? 'is-active' : ''}`}
+                onClick={() => {
+                  hapticSelection()
+                  dispatch({ type: 'SET_NIGHT_MAFIA', target: p.id })
+                }}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           type="button"
@@ -211,7 +191,7 @@ function MafiaNight() {
   // night_doctor_intro
   if (state.phase === 'night_doctor_intro' && doctor) {
     return (
-      <div className="mafia-night mafia-night--dark">
+      <div className="mafia-night">
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -221,8 +201,8 @@ function MafiaNight() {
         <p className="mafia-night__progress">Ночь — шаг 2 / {nightSteps.length}</p>
         <div className="mafia-night__intercept card">
           <h2 className="mafia-night__intercept-title">Ход: Доктор</h2>
-          <p className="mafia-night__intercept-phrase">{pick(DOCTOR_PHRASES)}</p>
-          <p className="mafia-night__intercept-instruction">Выберите, кого спасти этой ночью</p>
+          <p className="mafia-night__intercept-phrase">Жизнь висит на волоске.</p>
+          <p className="mafia-night__intercept-instruction">Кого вы спасёте этой ночью?</p>
           <button
             type="button"
             className="btn btn--primary mafia-night__intercept-btn"
@@ -244,7 +224,7 @@ function MafiaNight() {
 
     if (showConfirm && hasSelection) {
       return (
-        <div className="mafia-night mafia-night--dark">
+        <div className="mafia-night">
           <div className="mafia-night__top">
             <HomeButton />
             <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -270,7 +250,7 @@ function MafiaNight() {
     }
 
     return (
-      <div className="mafia-night mafia-night--dark">
+      <div className="mafia-night">
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -278,21 +258,23 @@ function MafiaNight() {
           </button>
         </div>
         <p className="mafia-night__progress">Ночь — шаг 2 / {nightSteps.length}</p>
-        <h2 className="mafia-night__phase-title">Доктор, кого лечить?</h2>
-        <div className="mafia-night__targets">
-          {alive.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`btn card mafia-night__target ${state.nightAction.doctorTarget === p.id ? 'is-active' : ''}`}
-              onClick={() => {
-                hapticSelection()
-                dispatch({ type: 'SET_NIGHT_DOCTOR', target: p.id })
-              }}
-            >
-              {p.name}
-            </button>
-          ))}
+        <div className="mafia-night__choice card">
+          <h2 className="mafia-night__phase-title">Доктор, кого лечить?</h2>
+          <div className="mafia-night__targets">
+            {alive.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`btn card mafia-night__target ${state.nightAction.doctorTarget === p.id ? 'is-active' : ''}`}
+                onClick={() => {
+                  hapticSelection()
+                  dispatch({ type: 'SET_NIGHT_DOCTOR', target: p.id })
+                }}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           type="button"
@@ -312,7 +294,7 @@ function MafiaNight() {
   // night_sheriff_intro
   if (state.phase === 'night_sheriff_intro' && sheriff) {
     return (
-      <div className="mafia-night mafia-night--dark">
+      <div className="mafia-night">
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -322,8 +304,8 @@ function MafiaNight() {
         <p className="mafia-night__progress">Ночь — шаг 3 / {nightSteps.length}</p>
         <div className="mafia-night__intercept card">
           <h2 className="mafia-night__intercept-title">Ход: Шериф</h2>
-          <p className="mafia-night__intercept-phrase">{pick(SHERIFF_PHRASES)}</p>
-          <p className="mafia-night__intercept-instruction">Выберите, кого проверить этой ночью</p>
+          <p className="mafia-night__intercept-phrase">Закон не спит.</p>
+          <p className="mafia-night__intercept-instruction">Проверьте, кто скрывает правду.</p>
           <button
             type="button"
             className="btn btn--primary mafia-night__intercept-btn"
@@ -339,16 +321,17 @@ function MafiaNight() {
     )
   }
 
-  // night_sheriff — выбор кого проверить
+  // night_sheriff — выбор кого проверить (результат показывается только после подтверждения)
   if (state.phase === 'night_sheriff' && sheriff) {
     const sheriffTarget = state.nightAction.sheriffTarget
     const sheriffResult = state.nightAction.sheriffResult
     const targets = alive.filter((p) => p.role !== 'sheriff')
     const hasSelection = sheriffTarget != null
+    const checkedPlayer = sheriffTarget ? alive.find((p) => p.id === sheriffTarget) : null
 
     if (showConfirm && hasSelection) {
       return (
-        <div className="mafia-night mafia-night--dark">
+        <div className="mafia-night">
           <div className="mafia-night__top">
             <HomeButton />
             <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -358,6 +341,11 @@ function MafiaNight() {
           <p className="mafia-night__progress">Ночь — шаг 3 / {nightSteps.length}</p>
           <div className="mafia-night__confirm card">
             <p className="mafia-night__confirm-text">Выбор сохранён</p>
+            {checkedPlayer && sheriffResult !== null && (
+              <p className="mafia-night__sheriff-result mafia-night__sheriff-result--in-confirm">
+                {checkedPlayer.name}: {sheriffResult ? '🔴 Мафия' : '🟢 Мирный'}
+              </p>
+            )}
             <button
               type="button"
               className="btn btn--primary mafia-night__confirm-btn"
@@ -374,7 +362,7 @@ function MafiaNight() {
     }
 
     return (
-      <div className="mafia-night mafia-night--dark">
+      <div className="mafia-night">
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
@@ -382,31 +370,30 @@ function MafiaNight() {
           </button>
         </div>
         <p className="mafia-night__progress">Ночь — шаг 3 / {nightSteps.length}</p>
-        <h2 className="mafia-night__phase-title">Шериф, кого проверить?</h2>
-        <div className="mafia-night__targets">
-          {targets.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`btn card mafia-night__target ${sheriffTarget === p.id ? 'is-active' : ''}`}
-              onClick={() => {
-                hapticSelection()
-                dispatch({
-                  type: 'SET_NIGHT_SHERIFF',
-                  target: p.id,
-                  result: p.role === 'mafia',
-                })
-              }}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
-        {sheriffTarget && sheriffResult !== null && (
-          <div className="mafia-night__sheriff-result card">
-            {sheriffResult ? '🔴 Мафия' : '🟢 Мирный'}
+        <div className="mafia-night__choice card">
+          <h2 className="mafia-night__phase-title">Шериф, кого проверить?</h2>
+          <div className="mafia-night__targets">
+            {targets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`btn card mafia-night__target ${sheriffTarget === p.id ? 'is-active' : ''}`}
+                disabled={hasSelection}
+                onClick={() => {
+                  if (hasSelection) return
+                  hapticSelection()
+                  dispatch({
+                    type: 'SET_NIGHT_SHERIFF',
+                    target: p.id,
+                    result: p.role === 'mafia',
+                  })
+                }}
+              >
+                {p.name}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
         <button
           type="button"
           className="btn btn--primary mafia-night__next"
@@ -416,7 +403,7 @@ function MafiaNight() {
           }}
           disabled={!hasSelection}
         >
-          Продолжить
+          Подтвердить
         </button>
       </div>
     )

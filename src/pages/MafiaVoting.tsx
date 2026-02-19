@@ -41,10 +41,11 @@ function MafiaVoting() {
           </button>
         </div>
         <div className="mafia-voting__summary card">
-          <h2 className="mafia-voting__summary-title">Результат голосования</h2>
+          <h2 className="mafia-voting__summary-title">Решение принято.</h2>
           <p className="mafia-voting__summary-text">
             {targetPlayer ? `Большинство выбрало: ${targetPlayer.name}` : 'Ничья. Никого не исключили.'}
           </p>
+          <p className="mafia-voting__summary-hint">Толпа не ошибается… или ошибается?</p>
           <button
             type="button"
             className="btn btn--primary mafia-voting__summary-btn"
@@ -53,7 +54,7 @@ function MafiaVoting() {
               dispatch({ type: 'CONFIRM_VOTING' })
             }}
           >
-            Подтвердить
+            Перейти к результату
           </button>
         </div>
       </div>
@@ -89,7 +90,8 @@ function MafiaVoting() {
         </button>
       </div>
 
-      <h2 className="mafia-voting__title">Голосование</h2>
+      <h2 className="mafia-voting__title">Город требует крови.</h2>
+      <p className="mafia-voting__subtitle">Кто выглядит подозрительно?</p>
       <p className="mafia-voting__voter">
         {currentVoter.name}, кого исключить?
       </p>

@@ -83,11 +83,13 @@ function MafiaRoles() {
         <h2 className="mafia-roles__player-name">Игрок: {player.name}</h2>
         {roleRevealed ? (
           <div className={`mafia-roles__reveal ${roleDimmed ? 'mafia-roles__reveal--dimmed' : ''}`}>
-            {isDoctor ? (
-              <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--doctor" />
-            ) : (
-              <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
-            )}
+            <div className="mafia-roles__role-media">
+              {isDoctor ? (
+                <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--doctor" />
+              ) : (
+                <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
+              )}
+            </div>
             <p className="mafia-roles__role">{roleLabel}</p>
             <button
               type="button"

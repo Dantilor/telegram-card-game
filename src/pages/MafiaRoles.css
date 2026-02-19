@@ -1,20 +1,22 @@
 .mafia-roles {
-  padding: clamp(0.75rem, 3vw, 1rem);
-  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
+  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem);
+  padding-bottom: max(clamp(1.5rem, 5vw, 2rem), env(safe-area-inset-bottom));
   min-height: var(--app-height, 100vh);
   max-width: 100%;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .mafia-roles__top {
   width: 100%;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .mafia-roles__back {
@@ -22,17 +24,24 @@
   font-size: 0.9rem;
 }
 
+.mafia-roles__progress {
+  flex-shrink: 0;
+}
+
 .mafia-roles__card {
   width: 100%;
-  max-width: 24rem;
-  padding: 2rem 1.5rem;
+  max-width: 28rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0.5rem;
+  padding: 1.25rem 1.25rem 1.5rem;
   text-align: center;
-  min-height: 18rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   transition: opacity 0.4s ease;
+  box-sizing: border-box;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -42,21 +51,38 @@
 }
 
 .mafia-roles__player-name {
-  margin: 0 0 1rem;
-  font-size: 1.5rem;
+  margin: 0 0 0.75rem;
+  flex-shrink: 0;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--text);
   word-break: break-word;
 }
 
 .mafia-roles__progress {
-  margin: 0 0 1rem;
+  margin: 0 0 0.5rem;
   font-size: 0.85rem;
   color: var(--muted);
 }
 
 .mafia-roles__reveal {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   transition: opacity 0.4s ease;
+}
+
+.mafia-roles__role-media {
+  flex: 1 1 auto;
+  min-height: 8rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
 }
 
 .mafia-roles__reveal--dimmed .mafia-roles__emoji,
@@ -78,22 +104,23 @@
 }
 
 .mafia-roles__next-btn {
+  flex-shrink: 0;
   margin-top: 1rem;
   padding: 0.75rem 1.25rem;
 }
 
 .mafia-roles__emoji {
-  font-size: 3rem;
+  font-size: clamp(3rem, 15vw, 5rem);
   display: block;
-  margin-bottom: 0.5rem;
   transition: opacity 0.4s, filter 0.4s;
 }
 
 .mafia-roles__role-img {
   display: block;
-  margin: 0 auto 0.75rem;
-  width: 11rem;
-  height: 11rem;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   border-radius: 0;
   transition: opacity 0.4s, filter 0.4s;
@@ -106,7 +133,8 @@
 
 .mafia-roles__role {
   margin: 0;
-  font-size: 1.5rem;
+  flex-shrink: 0;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--text);
   transition: opacity 0.4s, filter 0.4s;

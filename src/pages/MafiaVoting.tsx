@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { useBack } from '../hooks/useBack'
@@ -11,16 +11,30 @@ function MafiaVoting() {
   const location = useLocation()
   const { state, dispatch } = useMafiaGame()
   const handleBack = useBack('/mafia/day')
+  const navigatedRef = useRef(false)
 
-  // Редирект до отрисовки, чтобы не показывать пустой экран после голосования
+  // Редирект до отрисовки после голосования (один раз на переход)
   useLayoutEffect(() => {
     if (state.winner && location.pathname !== '/mafia/result') {
+      navigatedRef.current = true
       navigate('/mafia/result')
       return
     }
     if (state.phase === 'night_intro' && location.pathname !== '/mafia/night') {
+      navigatedRef.current = true
       navigate('/mafia/night')
     }
+  }, [state.phase, state.winner, location.pathname, navigate])
+
+  // Резервный редирект через 50 ms, если useLayoutEffect не сработал (например в части окружений)
+  useEffect(() => {
+    if (state.phase !== 'night_intro' && state.phase !== 'result') return
+    if (location.pathname !== '/mafia/voting') return
+    const t = setTimeout(() => {
+      if (state.winner) navigate('/mafia/result')
+      else navigate('/mafia/night')
+    }, 50)
+    return () => clearTimeout(t)
   }, [state.phase, state.winner, location.pathname, navigate])
 
   useEffect(() => {
@@ -30,7 +44,19 @@ function MafiaVoting() {
   }, [state.players.length, location.pathname, navigate])
 
   if (!state.players.length) {
-    return null
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={() => navigate('/mafia')}>
+            ← В меню
+          </button>
+        </div>
+        <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
+          Нет игроков. Вернитесь в настройки.
+        </p>
+      </div>
+    )
   }
 
   const alive = state.players.filter((p) => p.alive)
@@ -50,6 +76,35 @@ function MafiaVoting() {
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
           Переход…
         </p>
+      </div>
+    )
+  }
+
+  // Фаза не для страницы голосования — показываем fallback вместо пустого экрана
+  const phase = state.phase
+  const allowedVotingPhases = ['voting_collect', 'voting_summary', 'night_intro', 'result']
+  if (!allowedVotingPhases.includes(phase)) {
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <div className="mafia-voting__summary card">
+          <h2 className="mafia-voting__summary-title">Неверная страница</h2>
+          <p className="mafia-voting__summary-text">
+            Текущая фаза: {phase}. Ожидалась страница голосования или переход.
+          </p>
+          <button
+            type="button"
+            className="btn btn--primary mafia-voting__summary-btn"
+            onClick={() => (phase === 'day' ? navigate('/mafia/day') : navigate('/mafia/night'))}
+          >
+            {phase === 'day' ? 'К дню' : 'К ночи'}
+          </button>
+        </div>
       </div>
     )
   }
@@ -77,6 +132,7 @@ function MafiaVoting() {
             className="btn btn--primary mafia-voting__summary-btn"
             onClick={() => {
               hapticSelection()
+              navigatedRef.current = false
               dispatch({ type: 'CONFIRM_VOTING' })
             }}
           >

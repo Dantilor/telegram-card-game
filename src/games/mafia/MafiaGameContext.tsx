@@ -152,6 +152,13 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         return state
       }
       const eliminated = state.votingSummaryTargetId
+      if (import.meta.env.DEV) {
+        console.log('[Mafia] CONFIRM_VOTING', {
+          phase: state.phase,
+          eliminatedId: eliminated ?? 'tie',
+          nextPhase: 'night_intro | result',
+        })
+      }
       const players = state.players.map((p) =>
         p.id === eliminated ? { ...p, alive: false } : p
       )

@@ -52,3 +52,8 @@ export const ROLE_LABELS: Record<Role, string> = {
   doctor: 'Доктор',
   sheriff: 'Шериф',
 }
+
+/** Exhaustive check for phase in switch — TypeScript error if a phase is missed. */
+export function assertNeverPhase(value: never): never {
+  throw new Error(`Unknown phase: ${value}`)
+}

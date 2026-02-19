@@ -411,7 +411,44 @@ function MafiaNight() {
     )
   }
 
-  return null
+  // Fallback: фаза не соответствует ночным шагам (например day, voting_summary) — не пустой экран
+  const phase = state.phase
+  const isDayOrVoting =
+    phase === 'day' ||
+    phase === 'voting_collect' ||
+    phase === 'voting_summary' ||
+    phase === 'result'
+  return (
+    <div className="mafia-night">
+      <div className="mafia-night__top">
+        <HomeButton />
+        <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
+          ← В меню
+        </button>
+      </div>
+      <div className="mafia-night__intro card">
+        <h2 className="mafia-night__intro-title">Переход</h2>
+        <p className="mafia-night__intro-text">
+          {isDayOrVoting
+            ? 'Сейчас должно открыться следующее окно. Если экран пустой — нажмите ниже.'
+            : `Неизвестная фаза: ${phase}`}
+        </p>
+        <button
+          type="button"
+          className="btn btn--primary mafia-night__intro-btn"
+          onClick={() => {
+            hapticSelection()
+            if (phase === 'result' || state.winner) navigate('/mafia/result')
+            else if (phase === 'day') navigate('/mafia/day')
+            else if (phase === 'voting_collect' || phase === 'voting_summary') navigate('/mafia/voting')
+            else navigate('/mafia/night')
+          }}
+        >
+          {phase === 'result' || state.winner ? 'К результату игры' : 'Продолжить'}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default MafiaNight

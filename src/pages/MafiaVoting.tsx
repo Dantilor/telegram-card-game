@@ -14,6 +14,8 @@ function MafiaVoting() {
   const handleBack = useBack('/mafia/day')
   const navigatedRef = useRef(false)
 
+  const aliveCount = state.players.filter((p) => p.alive).length
+
   // Редирект до отрисовки после голосования (один раз на переход)
   useLayoutEffect(() => {
     if (state.winner && location.pathname !== '/mafia/result') {
@@ -43,6 +45,13 @@ function MafiaVoting() {
       navigate('/mafia')
     }
   }, [state.players.length, location.pathname, navigate])
+
+  // Редирект при невалидном состоянии (никого не осталось) — хук ВСЕГДА вызывается (правило хуков)
+  useEffect(() => {
+    if (state.phase !== 'voting_collect') return
+    if (aliveCount > 1) return
+    if (location.pathname !== '/mafia/night') navigate('/mafia/night')
+  }, [state.phase, aliveCount, location.pathname, navigate])
 
   if (!state.players.length) {
     return (
@@ -159,14 +168,6 @@ function MafiaVoting() {
     dispatch({ type: 'SUBMIT_VOTE', voterId: currentVoter.id, targetId })
   }
 
-  // Редирект при невалидном состоянии (никого не осталось) в эффекте, не в рендере
-  const aliveCount = state.players.filter((p) => p.alive).length
-  useEffect(() => {
-    if (state.phase !== 'voting_collect') return
-    if (aliveCount > 1) return
-    if (location.pathname !== '/mafia/night') navigate('/mafia/night')
-  }, [state.phase, aliveCount, location.pathname, navigate])
-
   // После итогов голосования фаза уже night_intro или result — редирект делается в useLayoutEffect выше.
   // Если всё же остались на странице (редкий кейс), показываем заглушку вместо пустого экрана.
   if (!currentVoter || alive.length <= 1) {
@@ -188,7 +189,42 @@ function MafiaVoting() {
   if (targets.length === 0) {
     return (
       <div className="mafia-voting">
-        <p>Не за кого голосовать</p>
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
+          Не за кого голосовать.
+        </p>
+      </div>
+    )
+  }
+
+  // Защита от чёрного экрана: если фаза не voting_collect — показываем fallback вместо пустого экрана
+  if (state.phase !== 'voting_collect') {
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <div className="mafia-voting__summary card">
+          <h2 className="mafia-voting__summary-title">Неизвестная фаза</h2>
+          <p className="mafia-voting__summary-text">
+            Фаза: {state.phase}. Нажмите «Запустить заново», чтобы вернуться в меню.
+          </p>
+          <button
+            type="button"
+            className="btn btn--primary mafia-voting__summary-btn"
+            onClick={() => navigate('/mafia')}
+          >
+            Запустить заново
+          </button>
+        </div>
       </div>
     )
   }

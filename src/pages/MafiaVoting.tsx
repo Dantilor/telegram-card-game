@@ -60,6 +60,49 @@ function MafiaVoting() {
     )
   }
 
+  // Сразу показываем итог голосования (кто исключён / ничья) — чтобы экран не зависал
+  if (state.phase === 'voting_summary') {
+    const targetPlayer = state.votingSummaryTargetId
+      ? state.players.find((p) => p.id === state.votingSummaryTargetId)
+      : null
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <div className="mafia-voting__summary card">
+          <h2 className="mafia-voting__summary-title">Решение принято.</h2>
+          <p className="mafia-voting__summary-text">
+            {targetPlayer ? `Большинство выбрало: ${targetPlayer.name}` : 'Ничья. Никого не исключили.'}
+          </p>
+          <p className="mafia-voting__summary-hint">Толпа не ошибается… или ошибается?</p>
+          <button
+            type="button"
+            className="btn btn--primary mafia-voting__summary-btn"
+            onClick={() => {
+              hapticSelection()
+              const eliminated = state.votingSummaryTargetId
+              const playersAfter = state.players.map((p) =>
+                p.id === eliminated ? { ...p, alive: false } : p
+              )
+              const mafiaLeft = playersAfter.filter((p) => p.alive && p.role === 'mafia').length
+              const peacefulLeft = playersAfter.filter((p) => p.alive && p.role !== 'mafia').length
+              const winner =
+                mafiaLeft === 0 ? 'peaceful' : mafiaLeft >= peacefulLeft ? 'mafia' : null
+              flushSync(() => dispatch({ type: 'CONFIRM_VOTING' }))
+              navigate(winner ? '/mafia/result' : '/mafia/night')
+            }}
+          >
+            Перейти к результату
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const alive = state.players.filter((p) => p.alive)
   const currentVoter = alive[state.voteCollectIndex]
   const targets = alive.filter((p) => p.id !== currentVoter?.id)
@@ -110,54 +153,10 @@ function MafiaVoting() {
     )
   }
 
-  if (state.phase === 'voting_summary') {
-    const targetPlayer = state.votingSummaryTargetId
-      ? state.players.find((p) => p.id === state.votingSummaryTargetId)
-      : null
-    return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
-          </button>
-        </div>
-        <div className="mafia-voting__summary card">
-          <h2 className="mafia-voting__summary-title">Решение принято.</h2>
-          <p className="mafia-voting__summary-text">
-            {targetPlayer ? `Большинство выбрало: ${targetPlayer.name}` : 'Ничья. Никого не исключили.'}
-          </p>
-          <p className="mafia-voting__summary-hint">Толпа не ошибается… или ошибается?</p>
-          <button
-            type="button"
-            className="btn btn--primary mafia-voting__summary-btn"
-            onClick={() => {
-              hapticSelection()
-              // Сразу считаем, куда идти (как в редьюсере), и навигируем в том же клике — иначе в Mini App может остаться тёмный экран
-              const eliminated = state.votingSummaryTargetId
-              const playersAfter = state.players.map((p) =>
-                p.id === eliminated ? { ...p, alive: false } : p
-              )
-              const mafiaLeft = playersAfter.filter((p) => p.alive && p.role === 'mafia').length
-              const peacefulLeft = playersAfter.filter((p) => p.alive && p.role !== 'mafia').length
-              const winner =
-                mafiaLeft === 0 ? 'peaceful' : mafiaLeft >= peacefulLeft ? 'mafia' : null
-              flushSync(() => dispatch({ type: 'CONFIRM_VOTING' }))
-              navigate(winner ? '/mafia/result' : '/mafia/night')
-            }}
-          >
-            Перейти к результату
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   const handleVote = (targetId: string) => {
     if (!currentVoter) return
     hapticSelection()
-    dispatch({ type: 'SET_VOTE', voterId: currentVoter.id, targetId })
-    dispatch({ type: 'NEXT_VOTE_COLLECT' })
+    dispatch({ type: 'SUBMIT_VOTE', voterId: currentVoter.id, targetId })
   }
 
   // Редирект при невалидном состоянии (никого не осталось) в эффекте, не в рендере

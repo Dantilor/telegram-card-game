@@ -17,6 +17,7 @@ type MafiaAction =
   | { type: 'SET_PHASE'; phase: GameState['phase'] }
   | { type: 'SET_VOTE'; voterId: string; targetId: string }
   | { type: 'NEXT_VOTE_COLLECT' }
+  | { type: 'SUBMIT_VOTE'; voterId: string; targetId: string }
   | { type: 'CONFIRM_VOTING' }
   | { type: 'APPLY_VOTING' }
   | { type: 'RESET' }
@@ -121,11 +122,34 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         ...state,
         votes: { ...state.votes, [action.voterId]: action.targetId },
       }
-    case 'NEXT_VOTE_COLLECT': {
-      // Только из фазы сбора голосов, чтобы не дублировать переход в voting_summary
-      if (state.phase !== 'voting_collect') {
-        return state
+    case 'SUBMIT_VOTE': {
+      // Один dispatch: добавить голос и сразу перейти к следующему или к итогам — экран итогов не зависает
+      if (state.phase !== 'voting_collect') return state
+      const votes = { ...state.votes, [action.voterId]: action.targetId }
+      const alive = state.players.filter((p) => p.alive)
+      const nextIndex = state.voteCollectIndex + 1
+      if (nextIndex < alive.length) {
+        return { ...state, votes, voteCollectIndex: nextIndex }
       }
+      const voteCounts: Record<string, number> = {}
+      alive.forEach((p) => { voteCounts[p.id] = 0 })
+      Object.values(votes).forEach((id) => {
+        if (alive.some((p) => p.id === id)) voteCounts[id] = (voteCounts[id] ?? 0) + 1
+      })
+      const max = Math.max(0, ...Object.values(voteCounts))
+      const tied = Object.entries(voteCounts).filter(([, c]) => c === max)
+      let eliminated: string | null = null
+      if (tied.length === 1 && max > 0) eliminated = tied[0][0]
+      return {
+        ...state,
+        votes,
+        voteCollectIndex: 0,
+        phase: 'voting_summary',
+        votingSummaryTargetId: eliminated,
+      }
+    }
+    case 'NEXT_VOTE_COLLECT': {
+      if (state.phase !== 'voting_collect') return state
       const alive = state.players.filter((p) => p.alive)
       if (state.voteCollectIndex >= alive.length - 1) {
         const voteCounts: Record<string, number> = {}

@@ -3,7 +3,7 @@ import { IMAGES } from '../assets/images'
 export type ModeId = 'couples' | 'party' | 'adult' | 'psychology' | 'lifeChoice' | 'dates'
 
 export const MODES = [
-  { id: 'couples' as const, title: 'Для пар', emoji: '💞', image: IMAGES.fireplaceScene.png, description: 'Тёплые беседы вдвоём' },
+  { id: 'couples' as const, title: 'Вечер вдвоём', emoji: '💞', image: IMAGES.fireplaceScene.png, description: 'Тёплые беседы вдвоём' },
   { id: 'dates' as const, title: 'Для свиданий', emoji: '💕', image: IMAGES.datesMode.png, description: 'Романтика начинается' },
   { id: 'party' as const, title: 'Для компаний', emoji: '🎉', image: IMAGES.partyMode.png, description: 'Громкий вечер' },
   { id: 'adult' as const, title: '18+', emoji: '🔥', image: IMAGES.adultMode.png, description: 'Горячий диалог' },

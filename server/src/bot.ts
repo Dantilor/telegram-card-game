@@ -19,6 +19,14 @@ const START_CAPTION = `Ваш вечер начинается здесь!
 
 GameNight Host - Вы диктуете правила, мы создаем.`
 
+const WEBAPP_URL = process.env.WEBAPP_URL || 'https://telegram-card-game.onrender.com'
+
+const START_REPLY_MARKUP = {
+  inline_keyboard: [
+    [{ text: 'Стать частью игры', web_app: { url: WEBAPP_URL } }],
+  ],
+} as const
+
 /** Последнее сообщение бота в /start для каждого чата — удаляется при повторном /start */
 const lastStartMessageId = new Map<number | string, number>()
 
@@ -55,7 +63,10 @@ if (bot) {
           const buffer = Buffer.from(arrayBuffer)
           console.log('[bot] image size', buffer.length)
 
-          sent = await ctx.replyWithPhoto({ source: buffer }, { caption: START_CAPTION })
+          sent = await ctx.replyWithPhoto(
+            { source: buffer },
+            { caption: START_CAPTION, reply_markup: START_REPLY_MARKUP }
+          )
         }
       } catch (e) {
         console.error('[bot] image fetch error', e)
@@ -63,7 +74,7 @@ if (bot) {
     }
 
     if (!sent) {
-      sent = await ctx.reply(START_CAPTION)
+      sent = await ctx.reply(START_CAPTION, { reply_markup: START_REPLY_MARKUP })
     }
 
     if (chatId && sent?.message_id) {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { AliasTeamSlot } from '../../games/alias/types'
 import type { AliasAction } from '../../games/alias/reducer'
 import { haptic } from '../../utils/telegram'
@@ -13,6 +13,7 @@ type Props = {
 
 export function TeamsSetupBlock({ teamCount, teams, dispatch }: Props) {
   const [playerInputs, setPlayerInputs] = useState<string[]>(() => Array(6).fill(''))
+  const playerInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const handleTeamName = (slotIndex: number, name: string) => {
     dispatch({ type: 'SET_TEAM_NAME', slotIndex, name })
@@ -28,6 +29,7 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch }: Props) {
       next[slotIndex] = ''
       return next
     })
+    playerInputRefs.current[slotIndex]?.blur()
   }
 
   const handleRemovePlayer = (slotIndex: number, playerIndex: number) => {
@@ -50,6 +52,16 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch }: Props) {
               placeholder={`Команда ${slotIndex + 1}`}
               value={team.name}
               onChange={(e) => handleTeamName(slotIndex, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  ;(e.target as HTMLInputElement).blur()
+                }
+              }}
+              inputMode="text"
+              enterKeyHint="done"
+              autoCorrect="off"
+              autoCapitalize="words"
               maxLength={32}
             />
             <div className="teams-setup__players">
@@ -71,6 +83,9 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch }: Props) {
               </ul>
               <div className="teams-setup__add-row">
                 <input
+                  ref={(el) => {
+                    playerInputRefs.current[slotIndex] = el
+                  }}
                   type="text"
                   className="teams-setup__input teams-setup__input--small"
                   placeholder="Имя игрока"
@@ -88,6 +103,10 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch }: Props) {
                       handleAddPlayer(slotIndex)
                     }
                   }}
+                  inputMode="text"
+                  enterKeyHint="done"
+                  autoCorrect="off"
+                  autoCapitalize="words"
                 />
                 <button
                   type="button"

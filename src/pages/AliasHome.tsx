@@ -48,7 +48,7 @@ function AliasHome() {
   const canStart =
     state.categoryIds.length >= 1 &&
     Array.from({ length: teamCount }, (_, i) => teams[i]).every(
-      (t) => t && t.name.trim() !== '' && t.players.length >= 1
+      (t) => t && t.name.trim() !== '' && t.players.length >= 2
     )
 
   const validationHint: string | null = canStart
@@ -59,7 +59,7 @@ function AliasHome() {
           for (let i = 0; i < teamCount; i++) {
             const t = teams[i]
             if (!t || t.name.trim() === '') return `Укажите название команды ${i + 1}`
-            if (t.players.length === 0) return `Добавьте минимум одного игрока в команду «${t.name.trim() || i + 1}»`
+            if (t.players.length < 2) return `Добавьте минимум двух игроков в команду «${t.name.trim() || i + 1}»`
           }
           return null
         })()
@@ -131,8 +131,19 @@ function AliasHome() {
     }
   }
 
+  const handleTapOutside = (e: React.PointerEvent) => {
+    const target = e.target
+    if (!(target instanceof HTMLElement)) return
+    const tag = target.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON') return
+    const active = document.activeElement
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+      ;(active as HTMLElement).blur()
+    }
+  }
+
   return (
-    <div className="alias-home">
+    <div className="alias-home" onPointerDown={handleTapOutside}>
       <div className="alias-home__top">
         <HomeButton
           onBeforeNavigate={() => {
@@ -149,7 +160,9 @@ function AliasHome() {
       </div>
       <header className="alias-home__header">
         <h1 className="alias-home__title">Ассоциации</h1>
-        <p className="alias-home__tagline">Никаких однокоренных слов. Только логика.</p>
+        <p className="alias-home__tagline">
+          Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл. В команде — минимум 2 игрока.
+        </p>
       </header>
 
       <section className="alias-home__section">
@@ -209,7 +222,7 @@ function AliasHome() {
       <section className="alias-home__rules">
         <h3 className="alias-home__rules-title">Правила</h3>
         <p className="alias-home__rules-text">
-          Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл.
+          Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл. В команде — минимум 2 игрока.
         </p>
       </section>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { ROLE_LABELS } from '../games/mafia/types'
 import { IMAGES } from '../assets/images'
@@ -29,11 +29,12 @@ function MafiaRoles() {
     trackEvent('start_game', { gameId: 'mafia' })
   }, [])
 
+  const location = useLocation()
   useEffect(() => {
-    if (state.phase === 'night_intro') {
+    if (state.phase === 'night_intro' && location.pathname !== '/mafia/night') {
       navigate('/mafia/night')
     }
-  }, [state.phase, navigate])
+  }, [state.phase, location.pathname, navigate])
 
   useEffect(() => {
     if (roleRevealed) {

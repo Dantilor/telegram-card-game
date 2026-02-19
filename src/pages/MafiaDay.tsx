@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
@@ -31,11 +31,12 @@ function MafiaDay() {
     return () => clearInterval(iv)
   }, [])
 
+  const location = useLocation()
   useEffect(() => {
-    if (state.winner) {
+    if (state.winner && location.pathname !== '/mafia/result') {
       navigate('/mafia/result')
     }
-  }, [state.winner, navigate])
+  }, [state.winner, location.pathname, navigate])
 
   const handleVoting = () => {
     hapticSelection()

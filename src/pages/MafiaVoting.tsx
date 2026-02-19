@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
@@ -8,19 +8,25 @@ import './MafiaVoting.css'
 
 function MafiaVoting() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { state, dispatch } = useMafiaGame()
   const handleBack = useBack('/mafia/day')
 
   useEffect(() => {
-    if (state.winner) {
+    if (state.winner && location.pathname !== '/mafia/result') {
       navigate('/mafia/result')
-    } else if (state.phase === 'night_intro') {
+    } else if (state.phase === 'night_intro' && location.pathname !== '/mafia/night') {
       navigate('/mafia/night')
     }
-  }, [state.phase, state.winner, navigate])
+  }, [state.phase, state.winner, location.pathname, navigate])
+
+  useEffect(() => {
+    if (!state.players.length && location.pathname.startsWith('/mafia')) {
+      navigate('/mafia')
+    }
+  }, [state.players.length, location.pathname, navigate])
 
   if (!state.players.length) {
-    navigate('/mafia')
     return null
   }
 
@@ -68,8 +74,15 @@ function MafiaVoting() {
     dispatch({ type: 'NEXT_VOTE_COLLECT' })
   }
 
+  // Редирект при невалидном состоянии (никого не осталось) в эффекте, не в рендере
+  const aliveCount = state.players.filter((p) => p.alive).length
+  useEffect(() => {
+    if (state.phase !== 'voting_collect') return
+    if (aliveCount > 1) return
+    if (location.pathname !== '/mafia/night') navigate('/mafia/night')
+  }, [state.phase, aliveCount, location.pathname, navigate])
+
   if (!currentVoter || alive.length <= 1) {
-    navigate('/mafia/night')
     return null
   }
 

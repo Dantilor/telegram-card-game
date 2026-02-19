@@ -28,7 +28,7 @@ const initialNightAction: NightAction = {
   sheriffResult: null,
 }
 
-function mafiaReducer(state: GameState, action: MafiaAction): GameState {
+export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
   switch (action.type) {
     case 'START_GAME': {
       const roles = getRolesForPlayers(action.players.length)
@@ -84,6 +84,11 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         },
       }
     case 'APPLY_NIGHT': {
+      // Идемпотентность: применяем ночь только из фазы последнего шага ночи (один раз за раунд)
+      const allowedPhases = ['night_mafia', 'night_doctor', 'night_sheriff'] as const
+      if (!allowedPhases.includes(state.phase as typeof allowedPhases[number])) {
+        return state
+      }
       const { mafiaTarget, doctorTarget } = state.nightAction
       const alivePlayers = state.players.filter((p) => p.alive)
       let victim: string | null = mafiaTarget
@@ -96,12 +101,17 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
       const players = state.players.map((p) =>
         p.id === victim ? { ...p, alive: false } : p
       )
+      const mafiaLeft = players.filter((p) => p.alive && p.role === 'mafia').length
+      const peacefulLeft = players.filter((p) => p.alive && p.role !== 'mafia').length
+      const nightWinner: 'peaceful' | 'mafia' | null =
+        mafiaLeft === 0 ? 'peaceful' : mafiaLeft >= peacefulLeft ? 'mafia' : null
       return {
         ...state,
         players,
-        phase: 'day',
+        phase: nightWinner ? 'result' : 'day',
         nightResult,
         nightAction: initialNightAction,
+        winner: nightWinner ?? state.winner,
       }
     }
     case 'SET_PHASE':
@@ -112,6 +122,10 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         votes: { ...state.votes, [action.voterId]: action.targetId },
       }
     case 'NEXT_VOTE_COLLECT': {
+      // Только из фазы сбора голосов, чтобы не дублировать переход в voting_summary
+      if (state.phase !== 'voting_collect') {
+        return state
+      }
       const alive = state.players.filter((p) => p.alive)
       if (state.voteCollectIndex >= alive.length - 1) {
         const voteCounts: Record<string, number> = {}
@@ -133,6 +147,10 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
       return { ...state, voteCollectIndex: state.voteCollectIndex + 1 }
     }
     case 'CONFIRM_VOTING': {
+      // Идемпотентность: казнь только из фазы итогов голосования (один раз за раунд)
+      if (state.phase !== 'voting_summary') {
+        return state
+      }
       const eliminated = state.votingSummaryTargetId
       const players = state.players.map((p) =>
         p.id === eliminated ? { ...p, alive: false } : p
@@ -171,7 +189,7 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
   }
 }
 
-const initialState: GameState = {
+export const initialState: GameState = {
   players: [],
   phase: 'setup',
   roleViewIndex: 0,

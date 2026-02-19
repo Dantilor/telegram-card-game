@@ -77,7 +77,7 @@ function MafiaSetup() {
       <section className="mafia-setup__section">
         <h2 className="mafia-setup__section-title">Количество игроков (+ ведущий на выбор)</h2>
         <div className="mafia-setup__count-row">
-          {[4, 5, 6, 7, 8, 9, 10].map((n) => (
+          {[4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((n) => (
             <button
               key={n}
               type="button"

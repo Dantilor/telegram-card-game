@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
@@ -8,19 +8,21 @@ import './MafiaNight.css'
 
 function MafiaNight() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { state, dispatch } = useMafiaGame()
   const [showConfirm, setShowConfirm] = useState(false)
   const handleBack = useBack('/mafia/roles')
 
+  // Один переход на одно изменение фазы: навигация только если мы ещё не на целевом path (защита от StrictMode и двойного вызова)
   useEffect(() => {
-    if (state.winner) {
+    if (state.winner && location.pathname !== '/mafia/result') {
       navigate('/mafia/result')
       return
     }
-    if (state.phase === 'day') {
+    if (state.phase === 'day' && location.pathname !== '/mafia/day') {
       navigate('/mafia/day')
     }
-  }, [state.phase, state.winner, navigate])
+  }, [state.phase, state.winner, location.pathname, navigate])
 
   if (!state.players.length) {
     navigate('/mafia')

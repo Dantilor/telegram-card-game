@@ -36,6 +36,32 @@
   color: var(--muted);
 }
 
+.mafia-setup__host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.mafia-setup__host-img {
+  width: 100%;
+  max-width: 12rem;
+  height: auto;
+  max-height: 10rem;
+  object-fit: contain;
+  border-radius: var(--radius, 12px);
+  margin-bottom: 0.5rem;
+}
+
+.mafia-setup__host-label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .mafia-setup__section {
   margin-bottom: 1.25rem;
 }

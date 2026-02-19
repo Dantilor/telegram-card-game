@@ -32,11 +32,20 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
   switch (action.type) {
     case 'START_GAME': {
       const roles = getRolesForPlayers(action.players.length)
-      const players = action.players.map((p, i) => ({
-        ...p,
-        role: roles[i] ?? 'civilian',
-        alive: true,
-      }))
+      const civilianCount = roles.filter((r) => r === 'civilian').length
+      const civilianIndices: (0 | 1)[] = []
+      for (let i = 0; i < civilianCount; i++) civilianIndices.push((i % 2) as 0 | 1)
+      for (let i = civilianIndices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [civilianIndices[i], civilianIndices[j]] = [civilianIndices[j], civilianIndices[i]]
+      }
+      let civilianIdx = 0
+      const players = action.players.map((p, i) => {
+        const role = roles[i] ?? 'civilian'
+        const player: Player = { ...p, role, alive: true }
+        if (role === 'civilian') player.civilianImageIndex = civilianIndices[civilianIdx++]
+        return player
+      })
       return {
         players,
         phase: 'roles',

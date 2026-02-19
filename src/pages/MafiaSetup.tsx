@@ -6,6 +6,7 @@ import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import { IMAGES } from '../assets/images'
 import './MafiaSetup.css'
 
 function formatRolesLine(counts: { mafia: number; doctor: number; sheriff: number; civilian: number }): string {
@@ -71,6 +72,11 @@ function MafiaSetup() {
         <h1 className="mafia-setup__title">Мафия Lite</h1>
         <p className="mafia-setup__tagline">Каждый скрывает роль. Кто врёт — решит утро.</p>
       </header>
+
+      <div className="mafia-setup__host card">
+        <img src={IMAGES.mafiaHost.png} alt="" className="mafia-setup__host-img" />
+        <p className="mafia-setup__host-label">Ведущий</p>
+      </div>
 
       <section className="mafia-setup__section">
         <h2 className="mafia-setup__section-title">Количество игроков:</h2>

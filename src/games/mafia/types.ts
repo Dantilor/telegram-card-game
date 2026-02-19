@@ -1,10 +1,13 @@
 export type Role = 'civilian' | 'mafia' | 'doctor' | 'sheriff'
 
+/** Для мирных: 0 или 1 — какой портрет показывать (рандом при старте). */
 export type Player = {
   id: string
   name: string
   role: Role
   alive: boolean
+  /** Только у civilian: индекс картинки мирного (0 или 1). */
+  civilianImageIndex?: 0 | 1
 }
 
 export type NightAction = {

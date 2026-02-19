@@ -17,6 +17,11 @@ import datesMode from './dates_mode.png'
 import psychologyMode from './psychology_mode.png'
 import lifeChoiceMode from './life_choice_mode.png'
 import mafiaDoctor from './mafia_doctor.png'
+import mafiaRole from './mafia_role.png'
+import mafiaSheriff from './mafia_sheriff.png'
+import mafiaCivilian1 from './mafia_civilian1.png'
+import mafiaCivilian2 from './mafia_civilian2.png'
+import mafiaHost from './mafia_host.png'
 
 export type ImageAsset = {
   png: string
@@ -38,6 +43,11 @@ export const IMAGES: Record<string, ImageAsset> = {
   psychologyMode: { png: psychologyMode },
   lifeChoiceMode: { png: lifeChoiceMode },
   mafiaDoctor: { png: mafiaDoctor },
+  mafiaRole: { png: mafiaRole },
+  mafiaSheriff: { png: mafiaSheriff },
+  mafiaCivilian1: { png: mafiaCivilian1 },
+  mafiaCivilian2: { png: mafiaCivilian2 },
+  mafiaHost: { png: mafiaHost },
 }
 
 /** URL картинок первого экрана (сетка игр + режимы карточной игры) для preload */

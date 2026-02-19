@@ -63,6 +63,16 @@ function MafiaResult() {
             <li key={p.id} className="mafia-result__roles-item">
               {p.role === 'doctor' ? (
                 <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-result__roles-icon mafia-result__roles-icon--img" />
+              ) : p.role === 'mafia' ? (
+                <img src={IMAGES.mafiaRole.png} alt="" className="mafia-result__roles-icon mafia-result__roles-icon--img" />
+              ) : p.role === 'sheriff' ? (
+                <img src={IMAGES.mafiaSheriff.png} alt="" className="mafia-result__roles-icon mafia-result__roles-icon--img" />
+              ) : p.role === 'civilian' && (p.civilianImageIndex === 0 || p.civilianImageIndex === 1) ? (
+                <img
+                  src={p.civilianImageIndex === 1 ? IMAGES.mafiaCivilian2.png : IMAGES.mafiaCivilian1.png}
+                  alt=""
+                  className="mafia-result__roles-icon mafia-result__roles-icon--img"
+                />
               ) : (
                 <span className="mafia-result__roles-emoji">{roleEmoji[p.role]}</span>
               )}

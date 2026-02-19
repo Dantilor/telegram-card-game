@@ -160,9 +160,11 @@ function AliasHome() {
       </div>
       <header className="alias-home__header">
         <h1 className="alias-home__title">Ассоциации</h1>
-        <p className="alias-home__tagline">
-          Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл. В команде — минимум 2 игрока.
-        </p>
+        <div className="alias-home__tagline-box">
+          <p className="alias-home__tagline">
+            Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл. В команде — минимум 2 игрока.
+          </p>
+        </div>
       </header>
 
       <section className="alias-home__section">
@@ -217,13 +219,6 @@ function AliasHome() {
       <section className="alias-home__section alias-home__section--teams">
         {/* Не вешать key на TeamsSetupBlock от teamCount/timer/categories — иначе remount сбрасывает подсветки и локальный state. */}
         <TeamsSetupBlock teamCount={teamCount} teams={teams} dispatch={dispatch} />
-      </section>
-
-      <section className="alias-home__rules">
-        <h3 className="alias-home__rules-title">Правила</h3>
-        <p className="alias-home__rules-text">
-          Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл. В команде — минимум 2 игрока.
-        </p>
       </section>
 
       <div className="alias-home__actions">

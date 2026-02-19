@@ -83,6 +83,10 @@
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), var(--shadow);
 }
 
+[data-theme="minimal-calm"] .alias-home__tagline-box .alias-home__tagline {
+  color: rgba(30, 41, 59, 0.92);
+}
+
 .alias-home__section {
   margin-bottom: 1.25rem;
 }

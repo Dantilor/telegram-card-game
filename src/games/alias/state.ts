@@ -3,7 +3,7 @@ import type { AliasCategoryId } from './data/words'
 export type AliasMode = 'solo' | 'team'
 
 export type AliasState = {
-  categoryId: AliasCategoryId | null
+  categoryIds: AliasCategoryId[]
   timerSeconds: 30 | 45 | 60
   mode: AliasMode
   scores: { teamA: number; teamB: number }
@@ -12,10 +12,10 @@ export type AliasState = {
   lastPlayedTeam: 'A' | 'B' | null
 }
 
-const STORAGE_KEY = 'ALIAS_STATE_V1'
+const STORAGE_KEY = 'ALIAS_STATE_V2'
 
 const defaultState: AliasState = {
-  categoryId: null,
+  categoryIds: [],
   timerSeconds: 45,
   mode: 'solo',
   scores: { teamA: 0, teamB: 0 },
@@ -28,9 +28,14 @@ export function loadAliasState(): AliasState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { ...defaultState }
-    const parsed = JSON.parse(raw) as Partial<AliasState>
+    const parsed = JSON.parse(raw) as Partial<AliasState & { categoryId?: AliasCategoryId | null }>
+    const categoryIds = Array.isArray(parsed.categoryIds)
+      ? parsed.categoryIds
+      : parsed.categoryId != null
+        ? [parsed.categoryId]
+        : defaultState.categoryIds
     return {
-      categoryId: parsed.categoryId ?? defaultState.categoryId,
+      categoryIds,
       timerSeconds: parsed.timerSeconds ?? defaultState.timerSeconds,
       mode: parsed.mode ?? defaultState.mode,
       scores: { ...defaultState.scores, ...parsed.scores },

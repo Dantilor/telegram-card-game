@@ -32,7 +32,7 @@ export const GAMES: Game[] = [
     id: 'alias',
     title: 'Ассоциации',
     emoji: '💬',
-    description: 'Объясняй слова без однокоренных',
+    description: 'Никаких однокоренных слов. Только логика.',
     status: 'ready',
     image: IMAGES.alias.png,
   },

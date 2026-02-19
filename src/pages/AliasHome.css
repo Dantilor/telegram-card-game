@@ -132,9 +132,18 @@
   cursor: pointer;
 }
 
+/* Выбранная категория — заметно во всех темах оформления */
 .alias-home__category-card--active {
-  border-color: var(--neonCyan);
-  box-shadow: 0 0 16px var(--glowCyan);
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--primary);
+  background: var(--td-active-bg, rgba(43, 210, 255, 0.2));
+  box-shadow: 0 0 0 1px var(--primary), 0 0 14px var(--glowCyan);
+  color: var(--text);
+}
+.alias-home__category-card--active .alias-home__category-title {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .alias-home__category-card--locked {

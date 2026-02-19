@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAliasState } from '../games/alias/useAliasState'
-import { getCategoryById, shuffleFisherYates } from '../games/alias/data/words'
+import { getWordsByCategoryIds, shuffleFisherYates } from '../games/alias/data/words'
 import { haptic } from '../utils/telegram'
 import { hapticSelection, hapticSuccess } from '../utils/haptics'
 import { trackEvent } from '../lib/analytics'
@@ -35,7 +35,6 @@ function AliasPlay() {
   currentTeamRef.current = currentTeam
   secondsLeftRef.current = secondsLeft
 
-  const category = state.categoryId ? getCategoryById(state.categoryId) : null
   const currentWord = state.bag.length > 0 ? state.bag[state.bagIdx] ?? null : null
 
   const clearTimer = useCallback(() => {
@@ -127,16 +126,14 @@ function AliasPlay() {
   const nextWord = () => {
     const nextIdx = state.bagIdx + 1
     if (nextIdx >= state.bag.length) {
-      const cat = category
-      if (cat) {
-        const newBag = shuffleFisherYates(cat.words)
-        setState((prev) => ({
-          ...prev,
-          bag: newBag,
-          bagIdx: 0,
-        }))
-        setShowReshuffleToast(true)
-        setTimeout(() => setShowReshuffleToast(false), 2500)
+      if (state.categoryIds.length > 0) {
+        const words = getWordsByCategoryIds(state.categoryIds)
+        if (words.length > 0) {
+          const newBag = shuffleFisherYates(words)
+          setState((prev) => ({ ...prev, bag: newBag, bagIdx: 0 }))
+          setShowReshuffleToast(true)
+          setTimeout(() => setShowReshuffleToast(false), 2500)
+        }
       }
     } else {
       setState((prev) => ({ ...prev, bagIdx: nextIdx }))
@@ -183,7 +180,7 @@ function AliasPlay() {
     setCurrentTeam((t) => (t === 'A' ? 'B' : 'A'))
   }
 
-  if (!category || !currentWord) {
+  if (state.bag.length === 0 || !currentWord) {
     return (
       <div className="alias-play">
         <p className="alias-play__message">Загрузка…</p>

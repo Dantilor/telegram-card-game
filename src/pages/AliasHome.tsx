@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAliasState } from '../games/alias/useAliasState'
-import { ALIAS_CATEGORIES, shuffleFisherYates, type AliasCategoryId } from '../games/alias/data/words'
+import { ALIAS_CATEGORIES, getWordsByCategoryIds, shuffleFisherYates, type AliasCategoryId } from '../games/alias/data/words'
 import { saveAliasState, type AliasMode } from '../games/alias/state'
 import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
@@ -32,22 +32,32 @@ function AliasHome() {
       setShowAdultConfirm(categoryId)
       return
     }
-    setState((prev) => ({ ...prev, categoryId }))
+    setState((prev) => {
+      const ids = prev.categoryIds.includes(categoryId)
+        ? prev.categoryIds.filter((id) => id !== categoryId)
+        : [...prev.categoryIds, categoryId]
+      return { ...prev, categoryIds: ids }
+    })
   }
 
   const handleAdultConfirm = (confirmed: boolean) => {
     if (confirmed && showAdultConfirm) {
-      setState((prev) => ({ ...prev, categoryId: showAdultConfirm }))
+      setState((prev) => ({
+        ...prev,
+        categoryIds: prev.categoryIds.includes(showAdultConfirm)
+          ? prev.categoryIds
+          : [...prev.categoryIds, showAdultConfirm],
+      }))
     }
     setShowAdultConfirm(null)
   }
 
   const handleStartRound = () => {
-    if (!state.categoryId) return
+    if (state.categoryIds.length === 0) return
     haptic('medium')
-    const cat = ALIAS_CATEGORIES.find((c) => c.id === state.categoryId)
-    if (!cat || cat.words.length === 0) return
-    const bag = shuffleFisherYates(cat.words)
+    const words = getWordsByCategoryIds(state.categoryIds)
+    if (words.length === 0) return
+    const bag = shuffleFisherYates(words)
     const nextState = {
       ...state,
       bag,
@@ -70,7 +80,7 @@ function AliasHome() {
       </div>
       <header className="alias-home__header">
         <h1 className="alias-home__title">Ассоциации</h1>
-        <p className="alias-home__tagline">Объясняй слова без однокоренных</p>
+        <p className="alias-home__tagline">Никаких однокоренных слов. Только логика.</p>
       </header>
 
       <section className="alias-home__section">
@@ -112,13 +122,13 @@ function AliasHome() {
       </section>
 
       <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Категория</h2>
+        <h2 className="alias-home__section-title">Категории: выбери одну или несколько</h2>
         <div className="alias-home__categories">
           {ALIAS_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               type="button"
-              className={`alias-home__category-card card ${state.categoryId === cat.id ? 'alias-home__category-card--active' : ''}`}
+              className={`alias-home__category-card card ${state.categoryIds.includes(cat.id) ? 'alias-home__category-card--active' : ''}`}
               onClick={() => handleCategoryClick(cat.id, cat.paid, cat.adult)}
             >
               <span className="alias-home__category-emoji" aria-hidden>{cat.emoji}</span>
@@ -128,23 +138,23 @@ function AliasHome() {
         </div>
       </section>
 
+      <section className="alias-home__rules">
+        <h3 className="alias-home__rules-title">Правила игры</h3>
+        <p className="alias-home__rules-text">
+          Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл.
+        </p>
+      </section>
+
       <div className="alias-home__actions">
         <button
           type="button"
           className="btn btn--primary alias-home__start"
-          disabled={!state.categoryId}
+          disabled={state.categoryIds.length === 0}
           onClick={handleStartRound}
         >
           Начать раунд
         </button>
       </div>
-
-      <section className="alias-home__rules">
-        <h3 className="alias-home__rules-title">Правила</h3>
-        <p className="alias-home__rules-text">
-          Объясняй слово жестами или словами, но без однокоренных. За каждое угаданное — очко. Пропуск — без очка.
-        </p>
-      </section>
 
       {showAdultConfirm && (
         <div className="alias-home__modal-overlay" onClick={() => handleAdultConfirm(false)}>

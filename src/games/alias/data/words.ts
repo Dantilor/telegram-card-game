@@ -84,7 +84,7 @@ const ADULT_WORDS = [
 export const ALIAS_CATEGORIES: AliasCategory[] = [
   {
     id: 'basic',
-    title: 'Базовая',
+    title: 'База',
     emoji: '📦',
     paid: false,
     words: BASIC_WORDS,
@@ -112,7 +112,7 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
   },
   {
     id: 'lifeSituations',
-    title: 'Жизненные ситуации',
+    title: 'Ситуации',
     emoji: '🌍',
     paid: false,
     words: LIFE_SITUATIONS_WORDS,
@@ -129,6 +129,23 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
 
 export function getCategoryById(id: AliasCategoryId): AliasCategory | undefined {
   return ALIAS_CATEGORIES.find((c) => c.id === id)
+}
+
+/** Собрать все слова из выбранных категорий в один массив (без дубликатов по строке). */
+export function getWordsByCategoryIds(ids: AliasCategoryId[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const id of ids) {
+    const cat = getCategoryById(id)
+    if (!cat) continue
+    for (const w of cat.words) {
+      if (!seen.has(w)) {
+        seen.add(w)
+        out.push(w)
+      }
+    }
+  }
+  return out
 }
 
 export function shuffleFisherYates<T>(arr: T[]): T[] {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { useBack } from '../hooks/useBack'
@@ -12,10 +12,13 @@ function MafiaVoting() {
   const { state, dispatch } = useMafiaGame()
   const handleBack = useBack('/mafia/day')
 
-  useEffect(() => {
+  // Редирект до отрисовки, чтобы не показывать пустой экран после голосования
+  useLayoutEffect(() => {
     if (state.winner && location.pathname !== '/mafia/result') {
       navigate('/mafia/result')
-    } else if (state.phase === 'night_intro' && location.pathname !== '/mafia/night') {
+      return
+    }
+    if (state.phase === 'night_intro' && location.pathname !== '/mafia/night') {
       navigate('/mafia/night')
     }
   }, [state.phase, state.winner, location.pathname, navigate])
@@ -33,6 +36,23 @@ function MafiaVoting() {
   const alive = state.players.filter((p) => p.alive)
   const currentVoter = alive[state.voteCollectIndex]
   const targets = alive.filter((p) => p.id !== currentVoter?.id)
+
+  // Уже переход на ночь или результат — редирект в useLayoutEffect; пока не ушли — заглушка
+  if (state.phase === 'night_intro' || state.phase === 'result') {
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
+          Переход…
+        </p>
+      </div>
+    )
+  }
 
   if (state.phase === 'voting_summary') {
     const targetPlayer = state.votingSummaryTargetId
@@ -82,8 +102,22 @@ function MafiaVoting() {
     if (location.pathname !== '/mafia/night') navigate('/mafia/night')
   }, [state.phase, aliveCount, location.pathname, navigate])
 
+  // После итогов голосования фаза уже night_intro или result — редирект делается в useLayoutEffect выше.
+  // Если всё же остались на странице (редкий кейс), показываем заглушку вместо пустого экрана.
   if (!currentVoter || alive.length <= 1) {
-    return null
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
+          Переход…
+        </p>
+      </div>
+    )
   }
 
   if (targets.length === 0) {

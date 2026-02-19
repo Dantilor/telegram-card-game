@@ -358,6 +358,55 @@
   width: 100%;
   max-width: 20rem;
   margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.alias-play__results-actions .alias-play__btn {
+  flex: 0 0 auto;
+}
+
+/* Итоги целого раунда (все команды) */
+.alias-play__full-round-scores {
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alias-play__full-round-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+}
+
+.alias-play__full-round-team-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.alias-play__full-round-team-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+}
+
+.alias-play__full-round-actions {
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alias-play__full-round-actions .alias-play__btn {
+  width: 100%;
+  flex: 0 0 auto;
 }
 
 /* Anti-stuck: redirect failed (e.g. mobile WebView) */

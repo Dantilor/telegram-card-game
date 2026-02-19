@@ -150,14 +150,24 @@ function AliasPlay() {
           onBeforeHomeNavigate={onBeforeHomeNavigate}
         />
       )}
-      {state.phase === 'round_results' && (
-        <TeamRoundResultsScreen
-          state={state}
-          dispatch={dispatch}
-          onBack={onBack}
-          onBeforeHomeNavigate={onBeforeHomeNavigate}
-        />
-      )}
+      {state.phase === 'round_results' &&
+        state.currentTeamIndex === state.activeTeamSlots.length - 1 && (
+          <FullRoundSummaryScreen
+            state={state}
+            dispatch={dispatch}
+            onBack={onBack}
+            onBeforeHomeNavigate={onBeforeHomeNavigate}
+          />
+        )}
+      {state.phase === 'round_results' &&
+        state.currentTeamIndex !== state.activeTeamSlots.length - 1 && (
+          <TeamRoundResultsScreen
+            state={state}
+            dispatch={dispatch}
+            onBack={onBack}
+            onBeforeHomeNavigate={onBeforeHomeNavigate}
+          />
+        )}
       {state.phase !== 'setup' &&
         state.phase !== 'turn_ready' &&
         state.phase !== 'in_round' &&
@@ -327,6 +337,66 @@ function TeamInRoundScreen({
           }}
         >
           ⏭️ Пропуск
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Итоги целого раунда (все команды сделали по ходу): счёт всех команд, «Начать раунд заново» / «Выйти». */
+function FullRoundSummaryScreen({
+  state,
+  dispatch,
+  onBack,
+  onBeforeHomeNavigate,
+}: {
+  state: import('../games/alias/types').AliasState
+  dispatch: (a: import('../games/alias/reducer').AliasAction) => void
+  onBack: () => void
+  onBeforeHomeNavigate?: () => boolean
+}) {
+  const activeSlots = state.activeTeamSlots
+  const teamsWithScores = activeSlots.map((slotIdx) => ({
+    name: state.teams[slotIdx]?.name.trim() || `Команда ${slotIdx + 1}`,
+    score: state.teamScores[slotIdx] ?? 0,
+  }))
+
+  return (
+    <div className="alias-play alias-play--results alias-play--full-round">
+      <div className="alias-play__top">
+        <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
+          ← Назад
+        </button>
+        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
+      </div>
+      <header className="alias-play__results-header">
+        <h1 className="alias-play__results-title">Итоги раунда</h1>
+      </header>
+      <div className="alias-play__full-round-scores">
+        {teamsWithScores.map(({ name, score }, i) => (
+          <div key={i} className="alias-play__full-round-score-row card">
+            <span className="alias-play__full-round-team-name">{name}</span>
+            <span className="alias-play__full-round-team-value">{score}</span>
+          </div>
+        ))}
+      </div>
+      <div className="alias-play__full-round-actions">
+        <button
+          type="button"
+          className="btn btn--primary alias-play__btn"
+          onClick={() => {
+            hapticSelection()
+            dispatch({ type: 'PASS_TURN' })
+          }}
+        >
+          Начать раунд заново
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost alias-play__btn"
+          onClick={onBack}
+        >
+          Выйти
         </button>
       </div>
     </div>

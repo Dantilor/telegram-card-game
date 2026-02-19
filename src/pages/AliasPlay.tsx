@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAliasState } from '../games/alias/useAliasState'
+import { useAliasStateContext } from '../games/alias/AliasStateContext'
 import { saveAliasState, getInitialAliasState } from '../games/alias/state'
 import { getCurrentTeam, getCurrentTeamSlotIndex } from '../games/alias/types'
 import { haptic } from '../utils/telegram'
@@ -105,7 +105,7 @@ function AliasExitModal({
 
 function AliasPlay() {
   const navigate = useNavigate()
-  const [state, , dispatch] = useAliasState()
+  const { state, dispatch } = useAliasStateContext()
   const [showExitConfirm, setShowExitConfirm] = useState<'home' | 'back' | null>(null)
 
   const onBeforeHomeNavigate = () => {

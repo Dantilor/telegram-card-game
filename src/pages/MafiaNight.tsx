@@ -4,6 +4,7 @@ import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import { MafiaNightStepLayout } from '../components/mafia/MafiaNightStepLayout'
 import './MafiaNight.css'
 
 function MafiaNight() {
@@ -75,28 +76,24 @@ function MafiaNight() {
             ← В меню
           </button>
         </div>
-        <div className="mafia-night__intro card">
-          <h2 className="mafia-night__intro-title">Ночь</h2>
-          <p className="mafia-night__intro-text">Город засыпает. Никто не видит, кто сделает ход.</p>
-          <button
-            type="button"
-            className="btn btn--primary mafia-night__intro-btn"
-            onClick={() => {
-              hapticSelection()
-              if (mafia.length > 0) {
-                dispatch({ type: 'SET_PHASE', phase: 'night_mafia_intro' })
-              } else if (doctor) {
-                dispatch({ type: 'SET_PHASE', phase: 'night_doctor_intro' })
-              } else if (sheriff) {
-                dispatch({ type: 'SET_PHASE', phase: 'night_sheriff_intro' })
-              } else {
-                dispatch({ type: 'APPLY_NIGHT' })
-              }
-            }}
-          >
-            Начать
-          </button>
-        </div>
+        <MafiaNightStepLayout
+          stepTitle=""
+          roleTitle="Ночь"
+          description="Город засыпает. Никто не видит, кто сделает ход."
+          primaryButtonLabel="Начать"
+          primaryButtonOnClick={() => {
+            hapticSelection()
+            if (mafia.length > 0) {
+              dispatch({ type: 'SET_PHASE', phase: 'night_mafia_intro' })
+            } else if (doctor) {
+              dispatch({ type: 'SET_PHASE', phase: 'night_doctor_intro' })
+            } else if (sheriff) {
+              dispatch({ type: 'SET_PHASE', phase: 'night_sheriff_intro' })
+            } else {
+              dispatch({ type: 'APPLY_NIGHT' })
+            }
+          }}
+        />
       </div>
     )
   }
@@ -111,22 +108,16 @@ function MafiaNight() {
             ← В меню
           </button>
         </div>
-        <p className="mafia-night__progress">Ночь — шаг 1 / {nightSteps.length}</p>
-        <div className="mafia-night__intercept card">
-          <h2 className="mafia-night__intercept-title">Ход: Мафия</h2>
-          <p className="mafia-night__intercept-phrase">Тьма сгущается.</p>
-          <p className="mafia-night__intercept-instruction">Выберите жертву среди мирных жителей, того, кто не доживёт до утра.</p>
-          <button
-            type="button"
-            className="btn btn--primary mafia-night__intercept-btn"
-            onClick={() => {
-              hapticSelection()
-              dispatch({ type: 'SET_PHASE', phase: 'night_mafia' })
-            }}
-          >
-            Начать
-          </button>
-        </div>
+        <MafiaNightStepLayout
+          stepTitle={`Ночь — шаг 1 / ${nightSteps.length}`}
+          roleTitle="Ход: Мафия"
+          description="Тьма сгущается. Выберите жертву среди мирных жителей, того, кто не доживёт до утра."
+          primaryButtonLabel="Начать"
+          primaryButtonOnClick={() => {
+            hapticSelection()
+            dispatch({ type: 'SET_PHASE', phase: 'night_mafia' })
+          }}
+        />
       </div>
     )
   }
@@ -135,6 +126,7 @@ function MafiaNight() {
   if (state.phase === 'night_mafia' && mafia.length > 0) {
     const targets = alive.filter((p) => p.role !== 'mafia')
     const hasSelection = state.nightAction.mafiaTarget != null
+    const mafiaTargetPlayer = hasSelection ? alive.find((p) => p.id === state.nightAction.mafiaTarget) : null
 
     if (showConfirm && hasSelection) {
       return (
@@ -145,20 +137,22 @@ function MafiaNight() {
               ← В меню
             </button>
           </div>
-          <p className="mafia-night__progress">Ночь — шаг 1 / {nightSteps.length}</p>
-          <div className="mafia-night__confirm card">
-            <p className="mafia-night__confirm-text">Выбор сохранён</p>
-            <button
-              type="button"
-              className="btn btn--primary mafia-night__confirm-btn"
-              onClick={() => {
-                hapticSelection()
-                goToNextNightStep()
-              }}
-            >
-              Продолжить
-            </button>
-          </div>
+          <MafiaNightStepLayout
+            stepTitle={`Ночь — шаг 1 / ${nightSteps.length}`}
+            statusBlock={
+              <>
+                <span className="mafia-night-step__status-badge">Выбор сохранён</span>
+                {mafiaTargetPlayer && (
+                  <span className="mafia-night-step__status-pill">Игрок: {mafiaTargetPlayer.name}</span>
+                )}
+              </>
+            }
+            primaryButtonLabel="Продолжить"
+            primaryButtonOnClick={() => {
+              hapticSelection()
+              goToNextNightStep()
+            }}
+          />
         </div>
       )
     }
@@ -171,36 +165,30 @@ function MafiaNight() {
             ← В меню
           </button>
         </div>
-        <p className="mafia-night__progress">Ночь — шаг 1 / {nightSteps.length}</p>
-        <div className="mafia-night__choice card">
-          <h2 className="mafia-night__phase-title">Мафия, выберите жертву</h2>
-          <div className="mafia-night__targets">
-            {targets.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`btn card mafia-night__target ${state.nightAction.mafiaTarget === p.id ? 'is-active' : ''}`}
-                onClick={() => {
-                  hapticSelection()
-                  dispatch({ type: 'SET_NIGHT_MAFIA', target: p.id })
-                }}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        </div>
-        <button
-          type="button"
-          className="btn btn--primary mafia-night__next"
-          onClick={() => {
+        <MafiaNightStepLayout
+          stepTitle={`Ночь — шаг 1 / ${nightSteps.length}`}
+          roleTitle="Мафия, выберите жертву"
+          primaryButtonLabel="Продолжить"
+          primaryButtonOnClick={() => {
             hapticSelection()
             if (hasSelection) setShowConfirm(true)
           }}
-          disabled={!hasSelection}
+          primaryButtonDisabled={!hasSelection}
         >
-          Продолжить
-        </button>
+          {targets.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`btn card mafia-night__target ${state.nightAction.mafiaTarget === p.id ? 'is-active' : ''}`}
+              onClick={() => {
+                hapticSelection()
+                dispatch({ type: 'SET_NIGHT_MAFIA', target: p.id })
+              }}
+            >
+              {p.name}
+            </button>
+          ))}
+        </MafiaNightStepLayout>
       </div>
     )
   }
@@ -215,22 +203,16 @@ function MafiaNight() {
             ← В меню
           </button>
         </div>
-        <p className="mafia-night__progress">Ночь — шаг 2 / {nightSteps.length}</p>
-        <div className="mafia-night__intercept card">
-          <h2 className="mafia-night__intercept-title">Ход: Доктор</h2>
-          <p className="mafia-night__intercept-phrase">Жизнь висит на волоске.</p>
-          <p className="mafia-night__intercept-instruction">Кого вы спасёте этой ночью?</p>
-          <button
-            type="button"
-            className="btn btn--primary mafia-night__intercept-btn"
-            onClick={() => {
-              hapticSelection()
-              dispatch({ type: 'SET_PHASE', phase: 'night_doctor' })
-            }}
-          >
-            Начать
-          </button>
-        </div>
+        <MafiaNightStepLayout
+          stepTitle={`Ночь — шаг 2 / ${nightSteps.length}`}
+          roleTitle="Ход: Доктор"
+          description="Жизнь висит на волоске. Кого вы спасёте этой ночью?"
+          primaryButtonLabel="Начать"
+          primaryButtonOnClick={() => {
+            hapticSelection()
+            dispatch({ type: 'SET_PHASE', phase: 'night_doctor' })
+          }}
+        />
       </div>
     )
   }
@@ -238,6 +220,7 @@ function MafiaNight() {
   // night_doctor — выбор кого лечить
   if (state.phase === 'night_doctor' && doctor) {
     const hasSelection = state.nightAction.doctorTarget != null
+    const doctorTargetPlayer = hasSelection ? alive.find((p) => p.id === state.nightAction.doctorTarget) : null
 
     if (showConfirm && hasSelection) {
       return (
@@ -248,20 +231,22 @@ function MafiaNight() {
               ← В меню
             </button>
           </div>
-          <p className="mafia-night__progress">Ночь — шаг 2 / {nightSteps.length}</p>
-          <div className="mafia-night__confirm card">
-            <p className="mafia-night__confirm-text">Выбор сохранён</p>
-            <button
-              type="button"
-              className="btn btn--primary mafia-night__confirm-btn"
-              onClick={() => {
-                hapticSelection()
-                goToNextNightStep()
-              }}
-            >
-              Продолжить
-            </button>
-          </div>
+          <MafiaNightStepLayout
+            stepTitle={`Ночь — шаг 2 / ${nightSteps.length}`}
+            statusBlock={
+              <>
+                <span className="mafia-night-step__status-badge">Выбор сохранён</span>
+                {doctorTargetPlayer && (
+                  <span className="mafia-night-step__status-pill">Игрок: {doctorTargetPlayer.name}</span>
+                )}
+              </>
+            }
+            primaryButtonLabel="Продолжить"
+            primaryButtonOnClick={() => {
+              hapticSelection()
+              goToNextNightStep()
+            }}
+          />
         </div>
       )
     }
@@ -274,36 +259,30 @@ function MafiaNight() {
             ← В меню
           </button>
         </div>
-        <p className="mafia-night__progress">Ночь — шаг 2 / {nightSteps.length}</p>
-        <div className="mafia-night__choice card">
-          <h2 className="mafia-night__phase-title">Доктор, кого лечить?</h2>
-          <div className="mafia-night__targets">
-            {alive.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`btn card mafia-night__target ${state.nightAction.doctorTarget === p.id ? 'is-active' : ''}`}
-                onClick={() => {
-                  hapticSelection()
-                  dispatch({ type: 'SET_NIGHT_DOCTOR', target: p.id })
-                }}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        </div>
-        <button
-          type="button"
-          className="btn btn--primary mafia-night__next"
-          onClick={() => {
+        <MafiaNightStepLayout
+          stepTitle={`Ночь — шаг 2 / ${nightSteps.length}`}
+          roleTitle="Доктор, кого лечить?"
+          primaryButtonLabel="Продолжить"
+          primaryButtonOnClick={() => {
             hapticSelection()
             if (hasSelection) setShowConfirm(true)
           }}
-          disabled={!hasSelection}
+          primaryButtonDisabled={!hasSelection}
         >
-          Продолжить
-        </button>
+          {alive.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`btn card mafia-night__target ${state.nightAction.doctorTarget === p.id ? 'is-active' : ''}`}
+              onClick={() => {
+                hapticSelection()
+                dispatch({ type: 'SET_NIGHT_DOCTOR', target: p.id })
+              }}
+            >
+              {p.name}
+            </button>
+          ))}
+        </MafiaNightStepLayout>
       </div>
     )
   }
@@ -318,22 +297,16 @@ function MafiaNight() {
             ← В меню
           </button>
         </div>
-        <p className="mafia-night__progress">Ночь — шаг 3 / {nightSteps.length}</p>
-        <div className="mafia-night__intercept card">
-          <h2 className="mafia-night__intercept-title">Ход: Шериф</h2>
-          <p className="mafia-night__intercept-phrase">Закон не спит.</p>
-          <p className="mafia-night__intercept-instruction">Проверьте, кто скрывает правду.</p>
-          <button
-            type="button"
-            className="btn btn--primary mafia-night__intercept-btn"
-            onClick={() => {
-              hapticSelection()
-              dispatch({ type: 'SET_PHASE', phase: 'night_sheriff' })
-            }}
-          >
-            Начать
-          </button>
-        </div>
+        <MafiaNightStepLayout
+          stepTitle={`Ночь — шаг 3 / ${nightSteps.length}`}
+          roleTitle="Ход: Шериф"
+          description="Закон не спит. Проверьте, кто скрывает правду."
+          primaryButtonLabel="Начать"
+          primaryButtonOnClick={() => {
+            hapticSelection()
+            dispatch({ type: 'SET_PHASE', phase: 'night_sheriff' })
+          }}
+        />
       </div>
     )
   }
@@ -355,25 +328,24 @@ function MafiaNight() {
               ← В меню
             </button>
           </div>
-          <p className="mafia-night__progress">Ночь — шаг 3 / {nightSteps.length}</p>
-          <div className="mafia-night__confirm card">
-            <p className="mafia-night__confirm-text">Выбор сохранён</p>
-            {checkedPlayer && sheriffResult !== null && (
-              <p className="mafia-night__sheriff-result mafia-night__sheriff-result--in-confirm">
-                {checkedPlayer.name}: {sheriffResult ? '🔴 Мафия' : '🟢 Мирный'}
-              </p>
-            )}
-            <button
-              type="button"
-              className="btn btn--primary mafia-night__confirm-btn"
-              onClick={() => {
-                hapticSelection()
-                goToNextNightStep()
-              }}
-            >
-              Продолжить
-            </button>
-          </div>
+          <MafiaNightStepLayout
+            stepTitle={`Ночь — шаг 3 / ${nightSteps.length}`}
+            statusBlock={
+              <>
+                <span className="mafia-night-step__status-badge">Выбор сохранён</span>
+                {checkedPlayer && sheriffResult !== null && (
+                  <span className="mafia-night-step__status-pill">
+                    {checkedPlayer.name}: {sheriffResult ? '🔴 Мафия' : '🟢 Мирный'}
+                  </span>
+                )}
+              </>
+            }
+            primaryButtonLabel="Продолжить"
+            primaryButtonOnClick={() => {
+              hapticSelection()
+              goToNextNightStep()
+            }}
+          />
         </div>
       )
     }
@@ -386,42 +358,36 @@ function MafiaNight() {
             ← В меню
           </button>
         </div>
-        <p className="mafia-night__progress">Ночь — шаг 3 / {nightSteps.length}</p>
-        <div className="mafia-night__choice card">
-          <h2 className="mafia-night__phase-title">Шериф, кого проверить?</h2>
-          <div className="mafia-night__targets">
-            {targets.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`btn card mafia-night__target ${sheriffTarget === p.id ? 'is-active' : ''}`}
-                disabled={hasSelection}
-                onClick={() => {
-                  if (hasSelection) return
-                  hapticSelection()
-                  dispatch({
-                    type: 'SET_NIGHT_SHERIFF',
-                    target: p.id,
-                    result: p.role === 'mafia',
-                  })
-                }}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        </div>
-        <button
-          type="button"
-          className="btn btn--primary mafia-night__next"
-          onClick={() => {
+        <MafiaNightStepLayout
+          stepTitle={`Ночь — шаг 3 / ${nightSteps.length}`}
+          roleTitle="Шериф, кого проверить?"
+          primaryButtonLabel="Подтвердить"
+          primaryButtonOnClick={() => {
             hapticSelection()
             if (hasSelection) setShowConfirm(true)
           }}
-          disabled={!hasSelection}
+          primaryButtonDisabled={!hasSelection}
         >
-          Подтвердить
-        </button>
+          {targets.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`btn card mafia-night__target ${sheriffTarget === p.id ? 'is-active' : ''}`}
+              disabled={hasSelection}
+              onClick={() => {
+                if (hasSelection) return
+                hapticSelection()
+                dispatch({
+                  type: 'SET_NIGHT_SHERIFF',
+                  target: p.id,
+                  result: p.role === 'mafia',
+                })
+              }}
+            >
+              {p.name}
+            </button>
+          ))}
+        </MafiaNightStepLayout>
       </div>
     )
   }
@@ -441,27 +407,23 @@ function MafiaNight() {
           ← В меню
         </button>
       </div>
-      <div className="mafia-night__intro card">
-        <h2 className="mafia-night__intro-title">Переход</h2>
-        <p className="mafia-night__intro-text">
-          {isDayOrVoting
+      <MafiaNightStepLayout
+        stepTitle=""
+        roleTitle="Переход"
+        description={
+          isDayOrVoting
             ? 'Сейчас должно открыться следующее окно. Если экран пустой — нажмите ниже.'
-            : `Неизвестная фаза: ${phase}`}
-        </p>
-        <button
-          type="button"
-          className="btn btn--primary mafia-night__intro-btn"
-          onClick={() => {
-            hapticSelection()
-            if (phase === 'result' || state.winner) navigate('/mafia/result')
-            else if (phase === 'day') navigate('/mafia/day')
-            else if (phase === 'voting_collect' || phase === 'voting_summary') navigate('/mafia/voting')
-            else navigate('/mafia/night')
-          }}
-        >
-          {phase === 'result' || state.winner ? 'К результату игры' : 'Продолжить'}
-        </button>
-      </div>
+            : `Неизвестная фаза: ${phase}`
+        }
+        primaryButtonLabel={phase === 'result' || state.winner ? 'К результату игры' : 'Продолжить'}
+        primaryButtonOnClick={() => {
+          hapticSelection()
+          if (phase === 'result' || state.winner) navigate('/mafia/result')
+          else if (phase === 'day') navigate('/mafia/day')
+          else if (phase === 'voting_collect' || phase === 'voting_summary') navigate('/mafia/voting')
+          else navigate('/mafia/night')
+        }}
+      />
     </div>
   )
 }

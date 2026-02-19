@@ -15,6 +15,7 @@ import Decks from './pages/Decks'
 import ModePage from './pages/ModePage'
 import Favorites from './pages/Favorites'
 import Play from './pages/Play'
+import AliasLayout from './pages/AliasLayout'
 import AliasHome from './pages/AliasHome'
 import AliasPlay from './pages/AliasPlay'
 import AliasResult from './pages/AliasResult'
@@ -90,9 +91,11 @@ function App() {
         <Route path="/decks/custom" element={<Favorites />} />
         <Route path="/decks/custom/new" element={<CustomDeckEditor />} />
         <Route path="/decks/custom/:id/edit" element={<CustomDeckEditor />} />
-        <Route path="/alias" element={<AliasHome />} />
-        <Route path="/alias/play" element={<AliasPlay />} />
-        <Route path="/alias/result" element={<AliasResult />} />
+        <Route path="/alias" element={<AliasLayout />}>
+          <Route index element={<AliasHome />} />
+          <Route path="play" element={<AliasPlay />} />
+          <Route path="result" element={<AliasResult />} />
+        </Route>
         <Route path="/activity" element={<ActivityHome />} />
         <Route path="/activity/play" element={<ActivityPlay />} />
         <Route path="/activity/result" element={<ActivityResult />} />

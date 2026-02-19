@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAliasState } from '../games/alias/useAliasState'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAliasStateContext } from '../games/alias/AliasStateContext'
 import { saveAliasState, getInitialAliasState } from '../games/alias/state'
 import { ALIAS_CATEGORIES, type AliasCategoryId } from '../games/alias/data/words'
 import { useBack } from '../hooks/useBack'
@@ -15,11 +15,21 @@ const TIMER_OPTIONS = [30, 45, 60] as const
 
 function AliasHome() {
   const navigate = useNavigate()
-  const [state, , dispatch] = useAliasState()
+  const location = useLocation()
+  const { state, dispatch } = useAliasStateContext()
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
+  const startRequestedRef = useRef(false)
 
   const handleBack = useBack('/games')
+
+  // Навигация на /alias/play только после коммита state (устраняет гонку и нестабильный старт)
+  useEffect(() => {
+    if (state.phase === 'turn_ready' && location.pathname === '/alias' && startRequestedRef.current) {
+      startRequestedRef.current = false
+      navigate('/alias/play', { replace: true })
+    }
+  }, [state.phase, location.pathname, navigate])
 
   const teamCount = state.teamCount
   const teams = state.teams
@@ -107,8 +117,8 @@ function AliasHome() {
   const handleStartGame = () => {
     if (!canStart) return
     haptic('medium')
+    startRequestedRef.current = true
     dispatch({ type: 'START_GAME' })
-    navigate('/alias/play')
   }
 
   const handleBackClick = () => {

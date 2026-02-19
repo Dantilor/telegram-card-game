@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAliasState } from '../games/alias/useAliasState'
+import { useAliasStateContext } from '../games/alias/AliasStateContext'
+import { saveAliasState, getInitialAliasState } from '../games/alias/state'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -10,8 +12,18 @@ type ResultState = { guessed: number; skipped: number } | null
 function AliasResult() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [state] = useAliasState()
+  const { state, dispatch } = useAliasStateContext()
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
   const result = (location.state as ResultState) ?? { guessed: 0, skipped: 0 }
+
+  const handleExitConfirm = (confirmed: boolean) => {
+    setShowExitConfirm(false)
+    if (!confirmed) return
+    haptic('light')
+    saveAliasState(getInitialAliasState())
+    dispatch({ type: 'RESET_ALL' })
+    navigate('/')
+  }
 
   const handleNextRound = () => {
     hapticSelection()
@@ -26,7 +38,12 @@ function AliasResult() {
   return (
     <div className="alias-result">
       <div className="alias-result__top">
-        <HomeButton />
+        <HomeButton
+          onBeforeNavigate={() => {
+            setShowExitConfirm(true)
+            return true
+          }}
+        />
         <button
           type="button"
           className="btn btn--ghost alias-result__back"
@@ -72,6 +89,31 @@ function AliasResult() {
           Сменить категорию
         </button>
       </div>
+
+      {showExitConfirm && (
+        <div
+          className="alias-result__modal-overlay"
+          onClick={() => handleExitConfirm(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="alias-result-exit-title"
+        >
+          <div className="alias-result__modal card" onClick={(e) => e.stopPropagation()}>
+            <p id="alias-result-exit-title" className="alias-result__modal-text">Выйти из игры?</p>
+            <p className="alias-result__modal-hint">
+              Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
+            </p>
+            <div className="alias-result__modal-buttons">
+              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+                Остаться
+              </button>
+              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+                Выйти
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

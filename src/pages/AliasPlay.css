@@ -267,3 +267,85 @@
   gap: 0.5rem;
   justify-content: center;
 }
+
+/* Team: TurnReady */
+.alias-play__turn-ready {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.alias-play__turn-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.alias-play__turn-host {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.alias-play__turn-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 auto;
+}
+
+/* Team: RoundResults */
+.alias-play--results .alias-play__results-header {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.alias-play__results-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.alias-play__results-stats {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.alias-play__results-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.alias-play__results-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+}
+
+.alias-play__results-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.alias-play__results-score {
+  padding: 1rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.alias-play__results-actions {
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 auto;
+}

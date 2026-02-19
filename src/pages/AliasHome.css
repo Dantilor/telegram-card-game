@@ -132,7 +132,7 @@
   cursor: pointer;
 }
 
-/* Выбранная категория — заметно во всех темах оформления */
+/* Выбранная категория — базовые стили */
 .alias-home__category-card--active {
   border-width: 2px;
   border-style: solid;
@@ -144,6 +144,43 @@
 .alias-home__category-card--active .alias-home__category-title {
   color: var(--text);
   font-weight: 700;
+}
+
+/* Выбранная категория — чётко видно в каждой теме оформления */
+[data-theme="neon-dark"] .alias-home__category-card--active {
+  border-color: var(--neonCyan);
+  background: rgba(43, 210, 255, 0.22);
+  box-shadow: 0 0 0 2px var(--neonCyan), 0 0 18px var(--glowCyan);
+}
+
+[data-theme="neon-light"] .alias-home__category-card--active {
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.22);
+  box-shadow: 0 0 0 2px var(--primary), 0 0 0 4px rgba(124, 58, 237, 0.2), 0 2px 12px rgba(124, 58, 237, 0.25);
+}
+
+[data-theme="portal"] .alias-home__category-card--active {
+  border-color: var(--neonCyan);
+  background: rgba(0, 255, 204, 0.2);
+  box-shadow: 0 0 0 2px var(--neonCyan), 0 0 20px var(--glowCyan);
+}
+
+[data-theme="soft-light"] .alias-home__category-card--active {
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.2);
+  box-shadow: 0 0 0 2px var(--primary), 0 0 0 4px rgba(124, 58, 237, 0.15), 0 2px 12px rgba(124, 58, 237, 0.2);
+}
+
+[data-theme="sunset"] .alias-home__category-card--active {
+  border-color: var(--secondary);
+  background: rgba(251, 191, 36, 0.25);
+  box-shadow: 0 0 0 2px var(--secondary), 0 0 18px var(--glowCyan);
+}
+
+[data-theme="minimal-calm"] .alias-home__category-card--active {
+  border-color: var(--neonCyan);
+  background: rgba(56, 189, 248, 0.22);
+  box-shadow: 0 0 0 2px var(--neonCyan), 0 0 16px var(--glowCyan);
 }
 
 .alias-home__category-card--locked {

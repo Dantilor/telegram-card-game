@@ -54,6 +54,11 @@ function AliasHome() {
 
   const handleStartRound = () => {
     if (state.categoryIds.length === 0) return
+    if (state.mode === 'team') {
+      haptic('light')
+      navigate('/alias/setup')
+      return
+    }
     haptic('medium')
     const words = getWordsByCategoryIds(state.categoryIds)
     if (words.length === 0) return

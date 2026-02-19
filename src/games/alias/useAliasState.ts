@@ -1,10 +1,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { AliasState } from './state'
 import { loadAliasState, saveAliasState } from './state'
+import { aliasReducer, type AliasAction } from './reducer'
 
 const DEBOUNCE_MS = 500
 
-export function useAliasState(): [AliasState, (v: AliasState | ((prev: AliasState) => AliasState)) => void] {
+export function useAliasState(): [
+  AliasState,
+  (v: AliasState | ((prev: AliasState) => AliasState)) => void,
+  (action: AliasAction) => void
+] {
   const [state, setStateInternal] = useState<AliasState>(() => loadAliasState())
   const pendingRef = useRef<AliasState | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -50,5 +55,13 @@ export function useAliasState(): [AliasState, (v: AliasState | ((prev: AliasStat
     [flush]
   )
 
-  return [state, setState]
+  const dispatch = useCallback((action: AliasAction) => {
+    setStateInternal((prev) => {
+      const next = aliasReducer(prev, action)
+      saveAliasState(next)
+      return next
+    })
+  }, [])
+
+  return [state, setState, dispatch]
 }

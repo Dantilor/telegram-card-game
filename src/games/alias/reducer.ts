@@ -1,5 +1,6 @@
 import type { AliasState } from './types'
 import type { AliasCategoryId } from './data/words'
+import { resetAllAssociations } from './state'
 import { getWordsByCategoryIds, shuffleFisherYates } from './data/words'
 
 export type AliasAction =
@@ -11,6 +12,7 @@ export type AliasAction =
   | { type: 'SET_TIMER'; seconds: 30 | 45 | 60 }
   | { type: 'START_GAME' }
   | { type: 'RESET_TO_SETUP' }
+  | { type: 'RESET_ALL' }
   | { type: 'NEXT_HOST' }
   | { type: 'START_ROUND' }
   | { type: 'GUESSED' }
@@ -78,6 +80,10 @@ export function aliasReducer(state: AliasState, action: AliasAction): AliasState
         skipped: 0,
         roundEndFired: false,
       }
+    }
+
+    case 'RESET_ALL': {
+      return resetAllAssociations()
     }
 
     case 'START_GAME': {

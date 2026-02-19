@@ -59,6 +59,7 @@ export function useAliasState(): [
     setStateInternal((prev) => {
       const next = aliasReducer(prev, action)
       saveAliasState(next)
+      pendingRef.current = null
       return next
     })
   }, [])

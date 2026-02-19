@@ -87,7 +87,7 @@ function AliasExitModal({
       <div className="alias-play__modal card" onClick={(e) => e.stopPropagation()}>
         <p className="alias-play__modal-text">Выйти из игры?</p>
         <p className="alias-play__modal-hint">
-          Если выйти — результаты и текущий прогресс будут сброшены.
+          Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
         </p>
         <div className="alias-play__modal-btns">
           <button type="button" className="btn btn--ghost" onClick={onClose}>
@@ -105,19 +105,28 @@ function AliasExitModal({
 function AliasPlay() {
   const navigate = useNavigate()
   const [state, , dispatch] = useAliasState()
-  const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [showExitConfirm, setShowExitConfirm] = useState<'home' | 'back' | null>(null)
 
   const onBeforeHomeNavigate = () => {
-    setShowExitConfirm(true)
+    setShowExitConfirm('home')
     return true
   }
 
+  const onBack = () => {
+    setShowExitConfirm('back')
+  }
+
   const handleExitConfirm = (confirmed: boolean) => {
-    setShowExitConfirm(false)
+    const target = showExitConfirm
+    setShowExitConfirm(null)
     if (!confirmed) return
     haptic('light')
-    dispatch({ type: 'RESET_TO_SETUP' })
-    navigate('/')
+    dispatch({ type: 'RESET_ALL' })
+    if (target === 'home') {
+      navigate('/')
+    } else {
+      navigate('/alias')
+    }
   }
 
   return (
@@ -129,7 +138,7 @@ function AliasPlay() {
         <TeamTurnReadyScreen
           state={state}
           dispatch={dispatch}
-          onBack={() => navigate('/alias')}
+          onBack={onBack}
           onBeforeHomeNavigate={onBeforeHomeNavigate}
         />
       )}
@@ -137,7 +146,7 @@ function AliasPlay() {
         <TeamInRoundScreen
           state={state}
           dispatch={dispatch}
-          onBack={() => navigate('/alias')}
+          onBack={onBack}
           onBeforeHomeNavigate={onBeforeHomeNavigate}
         />
       )}
@@ -145,7 +154,7 @@ function AliasPlay() {
         <TeamRoundResultsScreen
           state={state}
           dispatch={dispatch}
-          onBack={() => navigate('/alias')}
+          onBack={onBack}
           onBeforeHomeNavigate={onBeforeHomeNavigate}
         />
       )}
@@ -155,7 +164,7 @@ function AliasPlay() {
         state.phase !== 'round_results' && (
           <AliasRedirectToHome onNavigate={() => navigate('/alias', { replace: true })} />
         )}
-      {showExitConfirm && (
+      {showExitConfirm != null && (
         <AliasExitModal
           onClose={() => handleExitConfirm(false)}
           onConfirm={() => handleExitConfirm(true)}

@@ -23,9 +23,17 @@ function AliasHome() {
   const teamCount = state.teamCount
   const teams = state.teams
 
-  const inProgress =
+  const hasNamesOrPlayers = state.teams.some(
+    (t) => t.name.trim() !== '' || t.players.length > 0
+  )
+  const hasScores = state.teamScores.some((s) => s > 0)
+  const dirty =
+    teamCount !== 2 ||
+    state.timerSeconds !== 30 ||
+    state.categoryIds.length > 0 ||
+    hasNamesOrPlayers ||
     state.phase !== 'setup' ||
-    state.teams.some((t) => t.name.trim() !== '' || t.players.length > 0)
+    hasScores
 
   useEffect(() => {
     if (typeof import.meta.env !== 'undefined' && import.meta.env?.DEV) {
@@ -103,7 +111,7 @@ function AliasHome() {
   }
 
   const handleBackClick = () => {
-    if (inProgress) {
+    if (dirty) {
       setShowExitConfirm('back')
     } else {
       handleBack()
@@ -115,7 +123,7 @@ function AliasHome() {
     setShowExitConfirm(null)
     if (!confirmed) return
     haptic('light')
-    dispatch({ type: 'RESET_TO_SETUP' })
+    dispatch({ type: 'RESET_ALL' })
     if (target === 'home') {
       navigate('/')
     } else {
@@ -128,7 +136,7 @@ function AliasHome() {
       <div className="alias-home__top">
         <HomeButton
           onBeforeNavigate={() => {
-            if (inProgress) {
+            if (dirty) {
               setShowExitConfirm('home')
               return true
             }
@@ -194,6 +202,7 @@ function AliasHome() {
       </section>
 
       <section className="alias-home__section alias-home__section--teams">
+        {/* Не вешать key на TeamsSetupBlock от teamCount/timer/categories — иначе remount сбрасывает подсветки и локальный state. */}
         <TeamsSetupBlock teamCount={teamCount} teams={teams} dispatch={dispatch} />
       </section>
 
@@ -243,7 +252,7 @@ function AliasHome() {
           <div className="alias-home__modal card" onClick={(e) => e.stopPropagation()}>
             <p className="alias-home__modal-text">Выйти из игры?</p>
             <p className="alias-home__modal-hint">
-              Если выйти — результаты и текущий прогресс будут сброшены.
+              Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
             </p>
             <div className="alias-home__modal-buttons">
               <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>

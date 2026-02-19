@@ -11,24 +11,32 @@ function defaultTeamSlots(): AliasTeamSlot[] {
   }))
 }
 
-const defaultState: AliasState = {
-  categoryIds: [],
-  timerSeconds: 45,
-  mode: 'team',
-  scores: { teamA: 0, teamB: 0 },
-  bag: [],
-  bagIdx: 0,
-  lastPlayedTeam: null,
-  teams: defaultTeamSlots(),
-  teamCount: 2,
-  phase: 'setup',
-  currentTeamIndex: 0,
-  activeTeamSlots: [],
-  teamScores: [0, 0, 0, 0, 0, 0],
-  roundEndsAt: null,
-  guessed: 0,
-  skipped: 0,
-  roundEndFired: false,
+/** Единый начальный стейт экрана Ассоциации. Не мутировать. */
+export function getInitialAliasState(): AliasState {
+  return {
+    categoryIds: [],
+    timerSeconds: 30,
+    mode: 'team',
+    scores: { teamA: 0, teamB: 0 },
+    bag: [],
+    bagIdx: 0,
+    lastPlayedTeam: null,
+    teams: defaultTeamSlots(),
+    teamCount: 2,
+    phase: 'setup',
+    currentTeamIndex: 0,
+    activeTeamSlots: [],
+    teamScores: [0, 0, 0, 0, 0, 0],
+    roundEndsAt: null,
+    guessed: 0,
+    skipped: 0,
+    roundEndFired: false,
+  }
+}
+
+/** Полный сброс: возвращает стейт как при первом открытии (настройки, команды, игра). */
+export function resetAllAssociations(): AliasState {
+  return getInitialAliasState()
 }
 
 function parseTeams(raw: unknown): AliasTeamSlot[] {
@@ -49,24 +57,25 @@ function parseTeams(raw: unknown): AliasTeamSlot[] {
 export function loadAliasState(): AliasState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { ...defaultState }
+    if (!raw) return getInitialAliasState()
     const parsed = JSON.parse(raw) as Record<string, unknown>
+    const initial = getInitialAliasState()
     const categoryIds = Array.isArray(parsed.categoryIds)
       ? (parsed.categoryIds as AliasCategoryId[])
       : parsed.categoryId != null
         ? [parsed.categoryId as AliasCategoryId]
-        : defaultState.categoryIds
-    const mode = parsed.mode === 'solo' || parsed.mode === 'team' ? parsed.mode : defaultState.mode
+        : initial.categoryIds
+    const mode = parsed.mode === 'solo' || parsed.mode === 'team' ? parsed.mode : initial.mode
     const teams = parseTeams(parsed.teams)
     return {
       categoryIds,
       timerSeconds: parsed.timerSeconds === 30 || parsed.timerSeconds === 45 || parsed.timerSeconds === 60
         ? parsed.timerSeconds
-        : defaultState.timerSeconds,
+        : initial.timerSeconds,
       mode,
-      scores: { ...defaultState.scores, ...(parsed.scores as object) },
-      bag: Array.isArray(parsed.bag) ? parsed.bag : defaultState.bag,
-      bagIdx: typeof parsed.bagIdx === 'number' ? parsed.bagIdx : defaultState.bagIdx,
+      scores: { ...initial.scores, ...(parsed.scores as object) },
+      bag: Array.isArray(parsed.bag) ? parsed.bag : initial.bag,
+      bagIdx: typeof parsed.bagIdx === 'number' ? parsed.bagIdx : initial.bagIdx,
       lastPlayedTeam: parsed.lastPlayedTeam === 'A' || parsed.lastPlayedTeam === 'B' ? parsed.lastPlayedTeam : null,
       teams,
       teamCount: (() => {
@@ -74,25 +83,25 @@ export function loadAliasState(): AliasState {
         if (typeof v === 'number' && v >= 2 && v <= 6) return v
         const n = typeof v === 'string' ? parseInt(v, 10) : NaN
         if (Number.isFinite(n) && n >= 2 && n <= 6) return n
-        return defaultState.teamCount
+        return initial.teamCount
       })(),
       phase: parsed.phase === 'setup' || parsed.phase === 'turn_ready' || parsed.phase === 'in_round' || parsed.phase === 'round_results'
         ? parsed.phase
-        : defaultState.phase,
+        : initial.phase,
       currentTeamIndex: typeof parsed.currentTeamIndex === 'number' ? Math.max(0, parsed.currentTeamIndex) : 0,
       activeTeamSlots: Array.isArray(parsed.activeTeamSlots)
         ? (parsed.activeTeamSlots as number[]).filter((i) => typeof i === 'number' && i >= 0 && i < 6)
         : [],
       teamScores: Array.isArray(parsed.teamScores) && parsed.teamScores.length === 6
         ? (parsed.teamScores as number[]).map((n) => (typeof n === 'number' && n >= 0 ? n : 0))
-        : defaultState.teamScores,
+        : initial.teamScores,
       roundEndsAt: typeof parsed.roundEndsAt === 'number' ? parsed.roundEndsAt : null,
       guessed: typeof parsed.guessed === 'number' ? parsed.guessed : 0,
       skipped: typeof parsed.skipped === 'number' ? parsed.skipped : 0,
       roundEndFired: parsed.roundEndFired === true,
     }
   } catch {
-    return { ...defaultState }
+    return getInitialAliasState()
   }
 }
 

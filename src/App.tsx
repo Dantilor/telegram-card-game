@@ -64,8 +64,16 @@ function App() {
     } catch {
       // no-op: don't block UI
     }
+    const fallbackT = setTimeout(() => {
+      try {
+        readyAndExpand()
+      } catch {
+        // no-op
+      }
+    }, 1800)
     trackEvent('app_open')
     preloadImages(PRELOAD_CRITICAL_URLS)
+    return () => clearTimeout(fallbackT)
   }, [])
 
   return (

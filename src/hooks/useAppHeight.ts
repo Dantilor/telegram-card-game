@@ -25,6 +25,7 @@ function useThrottledAppHeight() {
   useEffect(() => {
     update()
     window.addEventListener('resize', schedule)
+    window.addEventListener('orientationchange', schedule)
     const tg = getTg()
     const onEvent = tg && (tg as { onEvent?: (e: string, fn: () => void) => void }).onEvent
     if (typeof onEvent === 'function') {
@@ -32,6 +33,7 @@ function useThrottledAppHeight() {
     }
     return () => {
       window.removeEventListener('resize', schedule)
+      window.removeEventListener('orientationchange', schedule)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [])

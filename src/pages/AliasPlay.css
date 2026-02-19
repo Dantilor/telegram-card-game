@@ -349,3 +349,31 @@
   max-width: 20rem;
   margin: 0 auto;
 }
+
+/* Anti-stuck: redirect failed (e.g. mobile WebView) */
+.alias-play--stuck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.alias-play__stuck-hint {
+  margin: 0 0 1.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.alias-play__stuck-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 18rem;
+}
+
+.alias-play__stuck-btn {
+  width: 100%;
+}

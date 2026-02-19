@@ -44,15 +44,22 @@ function AliasHome() {
   const handleCategoryClick = (categoryId: AliasCategoryId, _paid: boolean, adult?: boolean) => {
     hapticSelection()
     if (adult) {
+      if (state.categoryIds.includes(categoryId)) {
+        setState((prev) => ({
+          ...prev,
+          categoryIds: prev.categoryIds.filter((id) => id !== categoryId),
+        }))
+        return
+      }
       setShowAdultConfirm(categoryId)
       return
     }
-    setState((prev) => {
-      const ids = prev.categoryIds.includes(categoryId)
+    setState((prev) => ({
+      ...prev,
+      categoryIds: prev.categoryIds.includes(categoryId)
         ? prev.categoryIds.filter((id) => id !== categoryId)
-        : [...prev.categoryIds, categoryId]
-      return { ...prev, categoryIds: ids }
-    })
+        : [...prev.categoryIds, categoryId],
+    }))
   }
 
   const handleAdultConfirm = (confirmed: boolean) => {

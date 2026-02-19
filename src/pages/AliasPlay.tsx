@@ -8,18 +8,79 @@ import HomeButton from '../components/HomeButton'
 import './AliasPlay.css'
 
 const TICK_MS = 250
+const REDIRECT_STUCK_MS = 4000
+
+/** Redirect to /alias when phase is setup; avoid navigate() during render (mobile WebView fix). */
+function AliasRedirectToHome({ onNavigate }: { onNavigate: () => void }) {
+  const [stuck, setStuck] = useState(false)
+  const didRedirect = useRef(false)
+
+  useEffect(() => {
+    if (didRedirect.current) return
+    didRedirect.current = true
+    onNavigate()
+  }, [onNavigate])
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (typeof window !== 'undefined' && import.meta.env?.DEV) {
+        const tg = (window as unknown as { Telegram?: { WebApp?: unknown } }).Telegram?.WebApp
+        console.info('[Alias] Redirect stuck diagnostic', {
+          isTelegramAvailable: Boolean(tg),
+          route: window.location.hash,
+          userAgent: navigator.userAgent?.slice(0, 60),
+          viewportHeight: window.innerHeight,
+        })
+      }
+      setStuck(true)
+    }, REDIRECT_STUCK_MS)
+    return () => clearTimeout(t)
+  }, [])
+
+  if (stuck) {
+    return (
+      <div className="alias-play alias-play--stuck">
+        <p className="alias-play__message">Переход не удался</p>
+        <p className="alias-play__stuck-hint">Нажмите кнопку ниже</p>
+        <div className="alias-play__stuck-actions">
+          <button
+            type="button"
+            className="btn btn--primary alias-play__stuck-btn"
+            onClick={() => {
+              haptic('light')
+              onNavigate()
+            }}
+          >
+            К настройкам игры
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost alias-play__stuck-btn"
+            onClick={() => {
+              haptic('light')
+              window.location.hash = '#/'
+            }}
+          >
+            На главную
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="alias-play">
+      <p className="alias-play__message">Переход…</p>
+    </div>
+  )
+}
 
 function AliasPlay() {
   const navigate = useNavigate()
   const [state, , dispatch] = useAliasState()
 
   if (state.phase === 'setup') {
-    navigate('/alias', { replace: true })
-    return (
-      <div className="alias-play">
-        <p className="alias-play__message">Переход…</p>
-      </div>
-    )
+    return <AliasRedirectToHome onNavigate={() => navigate('/alias', { replace: true })} />
   }
   if (state.phase === 'turn_ready') {
     return (
@@ -49,11 +110,7 @@ function AliasPlay() {
     )
   }
 
-  return (
-    <div className="alias-play">
-      <p className="alias-play__message">Переход…</p>
-    </div>
-  )
+  return <AliasRedirectToHome onNavigate={() => navigate('/alias', { replace: true })} />
 }
 
 function TeamTurnReadyScreen({

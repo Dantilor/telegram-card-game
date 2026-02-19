@@ -17,7 +17,7 @@ const START_CAPTION = `Ваш вечер начинается здесь!
 
 Мы приглашаем вас в игру, где эстетика встречается с азартом. Это пространство, где вы не наблюдаете — вы становитесь частью момента.
 
-GameNight Host - Вы диктуете правила, мы создаем.`
+<b>GameNight Host - Вы диктуете правила, мы создаем.</b>`
 
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://telegram-card-game.onrender.com'
 
@@ -65,7 +65,7 @@ if (bot) {
 
           sent = await ctx.replyWithPhoto(
             { source: buffer },
-            { caption: START_CAPTION, reply_markup: START_REPLY_MARKUP }
+            { caption: START_CAPTION, parse_mode: 'HTML', reply_markup: START_REPLY_MARKUP }
           )
         }
       } catch (e) {
@@ -74,7 +74,7 @@ if (bot) {
     }
 
     if (!sent) {
-      sent = await ctx.reply(START_CAPTION, { reply_markup: START_REPLY_MARKUP })
+      sent = await ctx.reply(START_CAPTION, { parse_mode: 'HTML', reply_markup: START_REPLY_MARKUP })
     }
 
     if (chatId && sent?.message_id) {

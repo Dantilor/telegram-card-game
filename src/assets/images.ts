@@ -16,6 +16,7 @@ import partyMode from './party_mode.png'
 import datesMode from './dates_mode.png'
 import psychologyMode from './psychology_mode.png'
 import lifeChoiceMode from './life_choice_mode.png'
+import mafiaDoctor from './mafia_doctor.png'
 
 export type ImageAsset = {
   png: string
@@ -36,6 +37,7 @@ export const IMAGES: Record<string, ImageAsset> = {
   datesMode: { png: datesMode },
   psychologyMode: { png: psychologyMode },
   lifeChoiceMode: { png: lifeChoiceMode },
+  mafiaDoctor: { png: mafiaDoctor },
 }
 
 /** URL картинок первого экрана (сетка игр + режимы карточной игры) для preload */

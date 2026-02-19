@@ -89,6 +89,21 @@
   transition: opacity 0.4s, filter 0.4s;
 }
 
+.mafia-roles__role-img {
+  display: block;
+  margin: 0 auto 0.5rem;
+  width: 6rem;
+  height: 6rem;
+  object-fit: cover;
+  border-radius: 50%;
+  transition: opacity 0.4s, filter 0.4s;
+}
+
+.mafia-roles__reveal--dimmed .mafia-roles__role-img {
+  opacity: 0.25;
+  filter: blur(4px);
+}
+
 .mafia-roles__role {
   margin: 0;
   font-size: 1.5rem;

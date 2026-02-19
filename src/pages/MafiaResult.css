@@ -98,6 +98,17 @@
   font-size: 1.25rem;
 }
 
+.mafia-result__roles-icon {
+  flex-shrink: 0;
+}
+
+.mafia-result__roles-icon--img {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .mafia-result__roles-name {
   flex: 1;
   font-weight: 500;

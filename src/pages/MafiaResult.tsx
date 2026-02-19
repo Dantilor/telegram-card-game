@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { getTg } from '../utils/telegram'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { ROLE_LABELS } from '../games/mafia/types'
+import { IMAGES } from '../assets/images'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -60,7 +61,11 @@ function MafiaResult() {
         <ul className="mafia-result__roles-list">
           {state.players.map((p) => (
             <li key={p.id} className="mafia-result__roles-item">
-              <span className="mafia-result__roles-emoji">{roleEmoji[p.role]}</span>
+              {p.role === 'doctor' ? (
+                <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-result__roles-icon mafia-result__roles-icon--img" />
+              ) : (
+                <span className="mafia-result__roles-emoji">{roleEmoji[p.role]}</span>
+              )}
               <span className="mafia-result__roles-name">{p.name}</span>
               <span className="mafia-result__roles-role">{ROLE_LABELS[p.role]}</span>
             </li>

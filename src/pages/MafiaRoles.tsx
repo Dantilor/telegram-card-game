@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
 import { ROLE_LABELS } from '../games/mafia/types'
+import { IMAGES } from '../assets/images'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
 import { trackEvent } from '../lib/analytics'
@@ -65,6 +66,7 @@ function MafiaRoles() {
 
   const roleLabel = ROLE_LABELS[player.role]
   const roleEmoji = { civilian: '👤', mafia: '🌙', doctor: '💊', sheriff: '⭐' }[player.role]
+  const isDoctor = player.role === 'doctor'
 
   return (
     <div className="mafia-roles">
@@ -81,7 +83,11 @@ function MafiaRoles() {
         <h2 className="mafia-roles__player-name">Игрок: {player.name}</h2>
         {roleRevealed ? (
           <div className={`mafia-roles__reveal ${roleDimmed ? 'mafia-roles__reveal--dimmed' : ''}`}>
-            <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
+            {isDoctor ? (
+              <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--doctor" />
+            ) : (
+              <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
+            )}
             <p className="mafia-roles__role">{roleLabel}</p>
             <button
               type="button"

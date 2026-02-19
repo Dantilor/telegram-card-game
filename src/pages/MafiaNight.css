@@ -35,7 +35,7 @@
   max-width: min(28rem, 92vw);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   border-radius: var(--radius, 12px);
   border: 1px solid var(--border);
@@ -68,9 +68,10 @@
 }
 
 .mafia-night__intro-btn {
-  margin-top: 0.5rem;
-  padding: 0.85rem 1.75rem;
+  margin-top: auto;
+  padding: clamp(0.85rem, 2.5vw, 1rem) 1.75rem;
   font-size: 1rem;
+  min-height: 2.75rem;
 }
 
 .mafia-night__progress {
@@ -91,7 +92,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   border-radius: var(--radius, 12px);
   border: 1px solid var(--border);
@@ -116,15 +117,17 @@
 }
 
 .mafia-night__intercept-instruction {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1rem;
   font-size: clamp(0.9rem, 2.5vw, 1rem);
   color: var(--muted);
   line-height: 1.45;
 }
 
 .mafia-night__intercept-btn {
-  padding: 0.85rem 1.75rem;
+  margin-top: auto;
+  padding: clamp(0.85rem, 2.5vw, 1rem) 1.75rem;
   font-size: 1rem;
+  min-height: 2.75rem;
 }
 
 .mafia-night__confirm {
@@ -137,7 +140,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   border-radius: var(--radius, 12px);
   border: 1px solid var(--border);
@@ -146,7 +149,7 @@
 }
 
 .mafia-night__confirm-text {
-  margin: 0 0 1rem;
+  margin: 0;
   font-size: clamp(1.1rem, 3.5vw, 1.35rem);
   font-weight: 600;
   color: var(--secondary);
@@ -154,10 +157,18 @@
   word-break: break-word;
 }
 
+.mafia-night__sheriff-result--in-confirm {
+  margin: 0.75rem 0 0;
+  padding: 0.85rem 1rem;
+  font-size: clamp(1rem, 2.8vw, 1.15rem);
+  line-height: 1.4;
+}
+
 .mafia-night__confirm-btn {
-  margin-top: 0.5rem;
-  padding: 0.85rem 1.75rem;
+  margin-top: auto;
+  padding: clamp(0.85rem, 2.5vw, 1rem) 1.75rem;
   font-size: 1rem;
+  min-height: 2.75rem;
 }
 
 .mafia-night__phase-title {
@@ -193,18 +204,19 @@
 .mafia-night__targets {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: clamp(0.6rem, 2vw, 0.85rem);
   margin-bottom: 1rem;
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mafia-night__target {
   width: 100%;
   min-height: 3.25rem;
-  padding: 0.85rem 1rem;
+  padding: clamp(0.85rem, 2.5vw, 1rem) 1rem;
   text-align: center;
   font-size: clamp(1rem, 2.8vw, 1.2rem);
   font-weight: 600;
@@ -217,6 +229,7 @@
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
   box-sizing: border-box;
+  touch-action: manipulation;
 }
 
 .mafia-night__target:hover:not(:disabled) {
@@ -251,18 +264,22 @@
   box-sizing: border-box;
 }
 
-.mafia-night__sheriff-result--in-confirm {
-  margin: 0 0 1rem;
-  padding: 0.85rem 1rem;
-  font-size: clamp(1rem, 2.8vw, 1.15rem);
-  line-height: 1.4;
-}
 
 .mafia-night__next {
   width: 100%;
   max-width: min(28rem, 92vw);
   margin: 0 auto;
-  padding: 0.85rem 1rem;
+  padding: clamp(0.85rem, 2.5vw, 1rem) 1rem;
   font-size: 1rem;
+  min-height: 2.75rem;
   flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+@media (max-width: 480px) {
+  .mafia-night__intro-btn,
+  .mafia-night__intercept-btn,
+  .mafia-night__confirm-btn {
+    min-height: 2.75rem;
+  }
 }

@@ -42,7 +42,7 @@
 }
 
 .mafia-voting__voter {
-  margin: 0 auto 1rem;
+  margin: 0 auto 1.25rem;
   max-width: min(28rem, 92vw);
   font-size: clamp(1.05rem, 2.8vw, 1.15rem);
   font-weight: 600;
@@ -56,19 +56,21 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: clamp(0.6rem, 2vw, 0.85rem);
+  margin-top: 0.5rem;
   margin-bottom: 1rem;
   width: 100%;
   max-width: min(28rem, 92vw);
   margin-left: auto;
   margin-right: auto;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mafia-voting__target {
   width: 100%;
   min-height: 3.25rem;
-  padding: 0.85rem 1rem;
+  padding: clamp(0.85rem, 2.5vw, 1rem) 1rem;
   text-align: center;
   font-size: clamp(1rem, 2.8vw, 1.2rem);
   font-weight: 600;
@@ -81,6 +83,7 @@
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   box-sizing: border-box;
+  touch-action: manipulation;
 }
 
 .mafia-voting__target:hover {

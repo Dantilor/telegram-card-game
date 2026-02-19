@@ -2,6 +2,7 @@ import type { AliasState } from './types'
 import { getWordsByCategoryIds, shuffleFisherYates } from './data/words'
 
 export type AliasAction =
+  | { type: 'SET_TEAM_COUNT'; count: number }
   | { type: 'SET_TEAM_NAME'; slotIndex: number; name: string }
   | { type: 'ADD_PLAYER'; slotIndex: number; playerName: string }
   | { type: 'REMOVE_PLAYER'; slotIndex: number; playerIndex: number }
@@ -14,17 +15,13 @@ export type AliasAction =
   | { type: 'END_ROUND' }
   | { type: 'PASS_TURN' }
 
-function getActiveTeamSlots(state: AliasState): number[] {
-  const slots: number[] = []
-  for (let i = 0; i < state.teams.length; i++) {
-    const t = state.teams[i]
-    if (t && t.name.trim() !== '' && t.players.length > 0) slots.push(i)
-  }
-  return slots
-}
-
 export function aliasReducer(state: AliasState, action: AliasAction): AliasState {
   switch (action.type) {
+    case 'SET_TEAM_COUNT': {
+      const count = action.count >= 2 && action.count <= 6 ? action.count : state.teamCount
+      return { ...state, teamCount: count }
+    }
+
     case 'SET_TEAM_NAME': {
       if (action.slotIndex < 0 || action.slotIndex >= 6) return state
       const teams = state.teams.map((t, i) =>
@@ -61,10 +58,14 @@ export function aliasReducer(state: AliasState, action: AliasAction): AliasState
     }
 
     case 'START_GAME': {
-      const activeSlots = getActiveTeamSlots(state)
-      if (activeSlots.length < 2) return state
+      const n = state.teamCount
+      for (let i = 0; i < n; i++) {
+        const t = state.teams[i]
+        if (!t || t.name.trim() === '' || t.players.length === 0) return state
+      }
       const words = getWordsByCategoryIds(state.categoryIds)
       if (words.length === 0) return state
+      const activeSlots = Array.from({ length: n }, (_, i) => i)
       const bag = shuffleFisherYates(words)
       const teamScores = [0, 0, 0, 0, 0, 0]
       return {

@@ -1,30 +1,45 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAliasState } from '../games/alias/useAliasState'
-import { ALIAS_CATEGORIES, getWordsByCategoryIds, shuffleFisherYates, type AliasCategoryId } from '../games/alias/data/words'
-import { saveAliasState, type AliasMode } from '../games/alias/state'
+import { ALIAS_CATEGORIES, type AliasCategoryId } from '../games/alias/data/words'
 import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import { TeamsSetupBlock } from '../components/alias/TeamsSetupBlock'
 import './AliasHome.css'
+
+const TEAM_COUNT_OPTIONS = [2, 3, 4, 5, 6] as const
+const TIMER_OPTIONS = [30, 45, 60] as const
 
 function AliasHome() {
   const navigate = useNavigate()
-  const [state, setState] = useAliasState()
+  const [state, setState, dispatch] = useAliasState()
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
 
   const handleBack = useBack('/games')
 
-  const handleModeChange = (mode: AliasMode) => {
-    hapticSelection()
-    setState((prev) => ({ ...prev, mode }))
-  }
+  const teamCount = state.teamCount
+  const teams = state.teams
 
-  const handleTimerChange = (timerSeconds: 30 | 45 | 60) => {
-    hapticSelection()
-    setState((prev) => ({ ...prev, timerSeconds }))
-  }
+  const canStart =
+    state.categoryIds.length >= 1 &&
+    Array.from({ length: teamCount }, (_, i) => teams[i]).every(
+      (t) => t && t.name.trim() !== '' && t.players.length >= 1
+    )
+
+  const validationHint: string | null = canStart
+    ? null
+    : state.categoryIds.length === 0
+      ? 'Выберите минимум одну категорию'
+      : (() => {
+          for (let i = 0; i < teamCount; i++) {
+            const t = teams[i]
+            if (!t || t.name.trim() === '') return `Укажите название команды ${i + 1}`
+            if (t.players.length === 0) return `Добавьте минимум одного игрока в команду «${t.name.trim() || i + 1}»`
+          }
+          return null
+        })()
 
   const handleCategoryClick = (categoryId: AliasCategoryId, _paid: boolean, adult?: boolean) => {
     hapticSelection()
@@ -52,26 +67,20 @@ function AliasHome() {
     setShowAdultConfirm(null)
   }
 
-  const handleStartRound = () => {
-    if (state.categoryIds.length === 0) return
-    if (state.mode === 'team') {
-      haptic('light')
-      navigate('/alias/setup')
-      return
-    }
+  const handleTeamCount = (count: number) => {
+    hapticSelection()
+    dispatch({ type: 'SET_TEAM_COUNT', count })
+  }
+
+  const handleTimer = (seconds: 30 | 45 | 60) => {
+    hapticSelection()
+    dispatch({ type: 'SET_TIMER', seconds })
+  }
+
+  const handleStartGame = () => {
+    if (!canStart) return
     haptic('medium')
-    const words = getWordsByCategoryIds(state.categoryIds)
-    if (words.length === 0) return
-    const bag = shuffleFisherYates(words)
-    const nextState = {
-      ...state,
-      bag,
-      bagIdx: 0,
-      scores: { teamA: 0, teamB: 0 },
-      lastPlayedTeam: null,
-    }
-    setState(nextState)
-    saveAliasState(nextState)
+    dispatch({ type: 'START_GAME' })
     navigate('/alias/play')
   }
 
@@ -89,45 +98,39 @@ function AliasHome() {
       </header>
 
       <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Настройки</h2>
-        <div className="alias-home__mode-row">
-          <span className="alias-home__label">Режим:</span>
-          <div className="alias-home__mode-toggle">
+        <h2 className="alias-home__section-title">Количество команд</h2>
+        <div className="alias-home__options">
+          {TEAM_COUNT_OPTIONS.map((count) => (
             <button
+              key={count}
               type="button"
-              className={`btn btn--ghost alias-home__mode-btn ${state.mode === 'solo' ? 'alias-home__mode-btn--active is-active' : ''}`}
-              onClick={() => handleModeChange('solo')}
+              className={`btn btn--ghost alias-home__option-btn ${teamCount === count ? 'alias-home__option-btn--active' : ''}`}
+              onClick={() => handleTeamCount(count)}
             >
-              Одиночный
+              {count}
             </button>
-            <button
-              type="button"
-              className={`btn btn--ghost alias-home__mode-btn ${state.mode === 'team' ? 'alias-home__mode-btn--active is-active' : ''}`}
-              onClick={() => handleModeChange('team')}
-            >
-              Командный
-            </button>
-          </div>
-        </div>
-        <div className="alias-home__timer-row">
-          <span className="alias-home__label">Таймер:</span>
-          <div className="alias-home__timer-options">
-            {([30, 45, 60] as const).map((sec) => (
-              <button
-                key={sec}
-                type="button"
-                className={`btn btn--ghost alias-home__timer-btn ${state.timerSeconds === sec ? 'alias-home__timer-btn--active is-active' : ''}`}
-                onClick={() => handleTimerChange(sec)}
-              >
-                {sec} сек
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       </section>
 
       <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Категории: выбери одну или несколько</h2>
+        <h2 className="alias-home__section-title">Таймер раунда</h2>
+        <div className="alias-home__options">
+          {TIMER_OPTIONS.map((sec) => (
+            <button
+              key={sec}
+              type="button"
+              className={`btn btn--ghost alias-home__option-btn ${state.timerSeconds === sec ? 'alias-home__option-btn--active' : ''}`}
+              onClick={() => handleTimer(sec)}
+            >
+              {sec} сек
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="alias-home__section">
+        <h2 className="alias-home__section-title">Категории</h2>
         <div className="alias-home__categories">
           {ALIAS_CATEGORIES.map((cat) => (
             <button
@@ -143,21 +146,28 @@ function AliasHome() {
         </div>
       </section>
 
+      <section className="alias-home__section alias-home__section--teams">
+        <TeamsSetupBlock teamCount={teamCount} teams={teams} dispatch={dispatch} />
+      </section>
+
       <section className="alias-home__rules">
-        <h3 className="alias-home__rules-title">Правила игры</h3>
+        <h3 className="alias-home__rules-title">Правила</h3>
         <p className="alias-home__rules-text">
           Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл.
         </p>
       </section>
 
       <div className="alias-home__actions">
+        {validationHint != null && (
+          <p className="alias-home__hint" role="status">{validationHint}</p>
+        )}
         <button
           type="button"
           className="btn btn--primary alias-home__start"
-          disabled={state.categoryIds.length === 0}
-          onClick={handleStartRound}
+          disabled={!canStart}
+          onClick={handleStartGame}
         >
-          Начать раунд
+          Начать игру
         </button>
       </div>
 

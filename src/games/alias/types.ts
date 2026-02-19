@@ -19,8 +19,9 @@ export type AliasState = {
   bag: string[]
   bagIdx: number
   lastPlayedTeam: 'A' | 'B' | null
-  /** Team mode: 6 slots */
+  /** Team mode: 6 slots; teamCount = how many to show (2..6) */
   teams: AliasTeamSlot[]
+  teamCount: number
   phase: AliasPhase
   currentTeamIndex: number
   /** Indices of active team slots, set at START_GAME */

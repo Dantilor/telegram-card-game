@@ -20,6 +20,7 @@ const defaultState: AliasState = {
   bagIdx: 0,
   lastPlayedTeam: null,
   teams: defaultTeamSlots(),
+  teamCount: 2,
   phase: 'setup',
   currentTeamIndex: 0,
   activeTeamSlots: [],
@@ -68,6 +69,10 @@ export function loadAliasState(): AliasState {
       bagIdx: typeof parsed.bagIdx === 'number' ? parsed.bagIdx : defaultState.bagIdx,
       lastPlayedTeam: parsed.lastPlayedTeam === 'A' || parsed.lastPlayedTeam === 'B' ? parsed.lastPlayedTeam : null,
       teams,
+      teamCount:
+        typeof parsed.teamCount === 'number' && parsed.teamCount >= 2 && parsed.teamCount <= 6
+          ? parsed.teamCount
+          : defaultState.teamCount,
       phase: parsed.phase === 'setup' || parsed.phase === 'turn_ready' || parsed.phase === 'in_round' || parsed.phase === 'round_results'
         ? parsed.phase
         : defaultState.phase,

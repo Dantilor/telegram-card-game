@@ -47,6 +47,36 @@
   color: var(--muted);
 }
 
+.alias-home__options {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.alias-home__option-btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.alias-home__option-btn--active {
+  border-color: var(--primary);
+  background: var(--td-active-bg, rgba(43, 210, 255, 0.2));
+  color: var(--primary);
+}
+
+.alias-home__section--teams {
+  margin-bottom: 1rem;
+}
+
+.alias-home__hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
 .alias-home__mode-row,
 .alias-home__timer-row {
   display: flex;

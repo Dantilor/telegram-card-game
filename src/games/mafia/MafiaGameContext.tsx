@@ -42,7 +42,7 @@ function mafiaReducer(state: GameState, action: MafiaAction): GameState {
       let civilianIdx = 0
       const players = action.players.map((p, i) => {
         const role = roles[i] ?? 'civilian'
-        const player: Player = { ...p, role, alive: true }
+        const player: Player = { ...p, role, alive: true, isHost: i === 0 }
         if (role === 'civilian') player.civilianImageIndex = civilianIndices[civilianIdx++]
         return player
       })

@@ -88,9 +88,9 @@ function MafiaSetup() {
             </button>
           ))}
         </div>
-        {rolesLine && (
+        {(rolesLine || count > 0) && (
           <p className="mafia-setup__roles-indicator">
-            Роли: {rolesLine}
+            Роли: 1 ведущий{rolesLine ? ` • ${rolesLine}` : ''}
           </p>
         )}
       </section>

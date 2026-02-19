@@ -75,44 +75,44 @@
 }
 
 .mafia-voting__summary {
-  padding: clamp(2rem, 6vw, 3rem);
+  padding: clamp(2.5rem, 8vw, 4rem);
   text-align: center;
-  max-width: 22rem;
+  max-width: 26rem;
   margin: 0 auto;
-  min-height: 55vh;
+  min-height: 70vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.25rem;
+  gap: 1.75rem;
 }
 
 .mafia-voting__summary-title {
   margin: 0;
-  font-size: clamp(1.35rem, 4vw, 1.6rem);
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
   font-weight: 700;
   color: var(--text);
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .mafia-voting__summary-text {
   margin: 0;
-  font-size: clamp(1.15rem, 3.5vw, 1.35rem);
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
   font-weight: 600;
   color: var(--text);
   word-break: break-word;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .mafia-voting__summary-hint {
   margin: 0;
-  font-size: clamp(1rem, 3vw, 1.1rem);
+  font-size: clamp(1.05rem, 3.5vw, 1.2rem);
   color: var(--muted);
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .mafia-voting__summary-btn {
-  padding: 0.9rem 1.75rem;
-  font-size: 1.05rem;
-  margin-top: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  margin-top: 0.75rem;
 }

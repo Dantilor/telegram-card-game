@@ -25,7 +25,7 @@ const START_REPLY_MARKUP = {
   inline_keyboard: [
     [{ text: 'Стать частью игры', web_app: { url: WEBAPP_URL } }],
   ],
-} as const
+}
 
 /** Последнее сообщение бота в /start для каждого чата — удаляется при повторном /start */
 const lastStartMessageId = new Map<number | string, number>()

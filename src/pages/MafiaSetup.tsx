@@ -1,11 +1,21 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
+import { getRoleCountsForPlayers } from '../games/mafia/roles'
 import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './MafiaSetup.css'
+
+function formatRolesLine(counts: { mafia: number; doctor: number; sheriff: number; civilian: number }): string {
+  const parts: string[] = []
+  if (counts.mafia) parts.push(`${counts.mafia} ${counts.mafia === 1 ? 'мафия' : 'мафии'}`)
+  if (counts.doctor) parts.push(`${counts.doctor} доктор`)
+  if (counts.sheriff) parts.push(`${counts.sheriff} комиссар`)
+  if (counts.civilian) parts.push(`${counts.civilian} ${counts.civilian === 1 ? 'мирный' : 'мирных'}`)
+  return parts.join(' • ')
+}
 
 function MafiaSetup() {
   const navigate = useNavigate()
@@ -46,6 +56,8 @@ function MafiaSetup() {
   }
 
   const handleBack = useBack('/games')
+  const roleCounts = useMemo(() => getRoleCountsForPlayers(count), [count])
+  const rolesLine = formatRolesLine(roleCounts)
 
   return (
     <div className="mafia-setup">
@@ -57,11 +69,11 @@ function MafiaSetup() {
       </div>
       <header className="mafia-setup__header">
         <h1 className="mafia-setup__title">Мафия Lite</h1>
-        <p className="mafia-setup__tagline">Настройка игры</p>
+        <p className="mafia-setup__tagline">Каждый скрывает роль. Кто врёт — решит утро.</p>
       </header>
 
       <section className="mafia-setup__section">
-        <h2 className="mafia-setup__section-title">Количество игроков</h2>
+        <h2 className="mafia-setup__section-title">Количество игроков:</h2>
         <div className="mafia-setup__count-row">
           {[4, 5, 6, 7, 8, 9, 10].map((n) => (
             <button
@@ -74,17 +86,22 @@ function MafiaSetup() {
             </button>
           ))}
         </div>
+        {rolesLine && (
+          <p className="mafia-setup__roles-indicator">
+            Роли: {rolesLine}
+          </p>
+        )}
       </section>
 
       <section className="mafia-setup__section">
-        <h2 className="mafia-setup__section-title">Имена игроков</h2>
+        <h2 className="mafia-setup__section-title">Введите имена участников</h2>
         <div className="mafia-setup__names">
           {names.slice(0, count).map((name, i) => (
             <input
               key={i}
               type="text"
               className="mafia-setup__input card"
-              placeholder={`Игрок ${i + 1}`}
+              placeholder="Имя игрока"
               value={name}
               onChange={(e) => updateName(i, e.target.value)}
             />

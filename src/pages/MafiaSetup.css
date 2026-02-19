@@ -53,6 +53,12 @@
   gap: 0.35rem;
 }
 
+.mafia-setup__roles-indicator {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
 .mafia-setup__count-btn {
   width: 2.5rem;
   height: 2.5rem;

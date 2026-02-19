@@ -21,7 +21,7 @@ export const DECK_INDEX: DeckIndexEntry[] = [
   { id: 'conflictsHonesty', modeId: 'couples', title: 'Разговоры, которые мы избегали', isPremium: true },
   { id: 'desiresDreams', modeId: 'couples', title: 'Топливо нашей жизни', isPremium: true },
   { id: 'iUnderstandYou', modeId: 'couples', title: 'Переводчик твоих чувств', isPremium: true },
-  /* Режим "Для свиданий" */
+  /* Режим "Свидания" */
   { id: 'sparkFirstImpression', modeId: 'dates', title: 'Искра и первое впечатление', isPremium: true },
   { id: 'lightFlirt', modeId: 'dates', title: 'Лёгкий флирт и притяжение', isPremium: true },
   { id: 'genuineInterest', modeId: 'dates', title: 'Настоящий интерес', isPremium: true },

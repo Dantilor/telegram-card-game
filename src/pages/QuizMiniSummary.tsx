@@ -13,12 +13,6 @@ function QuizMiniSummary() {
 
   const sorted = [...state.players].sort((a, b) => b.score - a.score)
 
-  const handleRevenge = () => {
-    hapticSelection()
-    dispatch({ type: 'REVENGE' })
-    navigate('/quiz/play')
-  }
-
   const handleContinue = () => {
     hapticSelection()
     dispatch({ type: 'CONTINUE_5' })

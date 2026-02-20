@@ -1,6 +1,6 @@
 import type { ActivityState, TaskType, ActivityCategoryId } from './types'
 import { getInitialActivityState } from './state'
-import { ACTIVITY_CATEGORIES, pickRandomWord, type ActivityCategory } from './data/activityWords'
+import { ACTIVITY_CATEGORIES } from './data/activityWords'
 
 const TASK_TYPES: TaskType[] = ['explain', 'show', 'draw']
 
@@ -15,15 +15,6 @@ function getAllWords(categoryIds: ActivityCategoryId[]): string[] {
     if (cat) words.push(...cat.words)
   }
   return words
-}
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const result = [...arr]
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[result[i], result[j]] = [result[j]!, result[i]!]
-  }
-  return result
 }
 
 function pickWord(categoryIds: ActivityCategoryId[], usedWords: string[]): { word: string; usedWords: string[] } {

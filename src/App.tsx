@@ -19,6 +19,7 @@ import AliasLayout from './pages/AliasLayout'
 import AliasHome from './pages/AliasHome'
 import AliasPlay from './pages/AliasPlay'
 import AliasResult from './pages/AliasResult'
+import ActivityLayout from './pages/ActivityLayout'
 import ActivityHome from './pages/ActivityHome'
 import ActivityPlay from './pages/ActivityPlay'
 import ActivityResult from './pages/ActivityResult'
@@ -96,9 +97,11 @@ function App() {
           <Route path="play" element={<AliasPlay />} />
           <Route path="result" element={<AliasResult />} />
         </Route>
-        <Route path="/activity" element={<ActivityHome />} />
-        <Route path="/activity/play" element={<ActivityPlay />} />
-        <Route path="/activity/result" element={<ActivityResult />} />
+        <Route path="/activity" element={<ActivityLayout />}>
+          <Route index element={<ActivityHome />} />
+          <Route path="play" element={<ActivityPlay />} />
+          <Route path="result" element={<ActivityResult />} />
+        </Route>
         <Route path="/mafia" element={<MafiaLayout />}>
           <Route index element={<MafiaSetup />} />
           <Route path="roles" element={<MafiaRoles />} />

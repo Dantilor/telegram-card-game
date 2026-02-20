@@ -1,0 +1,105 @@
+.activity-teams-setup {
+  margin-bottom: 1rem;
+}
+
+.activity-teams-setup__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.activity-teams-setup__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.activity-teams-setup__card {
+  padding: 0.65rem 0.85rem;
+}
+
+.activity-teams-setup__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.activity-teams-setup__input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+  background: var(--td-input-bg, rgba(0, 0, 0, 0.2));
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+
+.activity-teams-setup__input::placeholder {
+  color: var(--muted);
+}
+
+.activity-teams-setup__input--small {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-teams-setup__players-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.activity-teams-setup__hint {
+  color: var(--neonCyan);
+  font-size: 0.7rem;
+}
+
+.activity-teams-setup__player-list {
+  list-style: none;
+  margin: 0 0 0.35rem;
+  padding: 0;
+}
+
+.activity-teams-setup__player-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+  gap: 0.4rem;
+}
+
+.activity-teams-setup__player-name {
+  font-size: 0.85rem;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-teams-setup__player-remove {
+  padding: 0.15rem 0.35rem;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.activity-teams-setup__add-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.activity-teams-setup__add-btn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}

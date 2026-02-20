@@ -1,4 +1,6 @@
-export type ActivityCategoryId = 'emotions' | 'behaviors' | 'characters' | 'lifeSituations' | 'awkwardMoments' | 'communication' | 'scenes'
+import type { ActivityCategoryId } from '../types'
+
+export type { ActivityCategoryId }
 
 export type ActivityCategory = {
   id: ActivityCategoryId
@@ -57,13 +59,13 @@ const SCENES_WORDS = [
 ]
 
 export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
-  { id: 'emotions', title: 'Эмоции и состояния', emoji: '💭', paid: false, words: EMOTIONS_WORDS },
-  { id: 'behaviors', title: 'Действия и поведение', emoji: '🎪', paid: false, words: BEHAVIORS_WORDS },
+  { id: 'emotions', title: 'Эмоции', emoji: '😶', paid: false, words: EMOTIONS_WORDS },
+  { id: 'behaviors', title: 'Поведение', emoji: '🎭', paid: false, words: BEHAVIORS_WORDS },
   { id: 'characters', title: 'Персонажи', emoji: '👤', paid: false, words: CHARACTERS_WORDS },
-  { id: 'lifeSituations', title: 'Ситуации из жизни', emoji: '🌐', paid: false, words: LIFE_SITUATIONS_WORDS },
-  { id: 'awkwardMoments', title: 'Неловкие моменты', emoji: '😅', paid: false, words: AWKWARD_MOMENTS_WORDS },
-  { id: 'communication', title: 'Общение и реакции', emoji: '💬', paid: false, words: COMMUNICATION_WORDS },
-  { id: 'scenes', title: 'Сцены и сюжеты', emoji: '🎞️', paid: false, words: SCENES_WORDS },
+  { id: 'lifeSituations', title: 'Ситуации', emoji: '🌍', paid: false, words: LIFE_SITUATIONS_WORDS },
+  { id: 'awkwardMoments', title: 'Неловкость', emoji: '😅', paid: false, words: AWKWARD_MOMENTS_WORDS },
+  { id: 'communication', title: 'Общение', emoji: '💬', paid: false, words: COMMUNICATION_WORDS },
+  { id: 'scenes', title: 'Сцены', emoji: '🎬', paid: false, words: SCENES_WORDS },
 ]
 
 export function getCategoryById(id: ActivityCategoryId): ActivityCategory | undefined {

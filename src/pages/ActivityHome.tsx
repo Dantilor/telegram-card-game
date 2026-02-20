@@ -1,77 +1,178 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ACTIVITY_CATEGORIES, getCategoryById, type ActivityCategoryId } from '../games/activity/data/activityWords'
-import type { ActivityMode } from '../games/activity/types'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useActivityStateContext } from '../games/activity/ActivityStateContext'
+import { saveActivityState, getInitialActivityState } from '../games/activity/state'
+import { ACTIVITY_CATEGORIES, type ActivityCategoryId } from '../games/activity/data/activityWords'
 import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import { ActivityTeamsSetup } from '../components/activity/ActivityTeamsSetup'
 import './ActivityHome.css'
 
-type TimerOption = 30 | 45 | 60
+const TEAM_COUNT_OPTIONS = [2, 3, 4, 5, 6] as const
+const TIMER_OPTIONS = [30, 45, 60] as const
 
 function ActivityHome() {
   const navigate = useNavigate()
-  const [mode, setMode] = useState<ActivityMode>('solo')
-  const [timerSeconds, setTimerSeconds] = useState<TimerOption>(60)
-  const [categoryId, setCategoryId] = useState<ActivityCategoryId | null>('emotions')
+  const location = useLocation()
+  const { state, dispatch } = useActivityStateContext()
+  const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
+  const startRequestedRef = useRef(false)
 
   const handleBack = useBack('/games')
 
-  const handleCategoryClick = (id: ActivityCategoryId) => {
+  useEffect(() => {
+    if (state.phase === 'turn_ready' && location.pathname === '/activity' && startRequestedRef.current) {
+      startRequestedRef.current = false
+      navigate('/activity/play', { replace: true })
+    }
+  }, [state.phase, location.pathname, navigate])
+
+  const teamCount = state.teamCount
+  const teams = state.teams
+
+  const hasNamesOrPlayers = state.teams.some(
+    (t) => t.name.trim() !== '' || t.players.length > 0
+  )
+  const hasScores = state.teamScores.some((s) => s > 0)
+  const dirty =
+    teamCount !== 2 ||
+    state.timerSeconds !== 60 ||
+    state.categoryIds.length > 0 ||
+    hasNamesOrPlayers ||
+    state.phase !== 'setup' ||
+    hasScores
+
+  const canStart =
+    state.categoryIds.length >= 1 &&
+    Array.from({ length: teamCount }, (_, i) => teams[i]).every(
+      (t) => t && t.name.trim() !== '' && t.players.length >= 2
+    )
+
+  const validationHint: string | null = canStart
+    ? null
+    : state.categoryIds.length === 0
+      ? 'Выберите минимум одну категорию'
+      : (() => {
+          for (let i = 0; i < teamCount; i++) {
+            const t = teams[i]
+            if (!t || t.name.trim() === '') return `Укажите название команды ${i + 1}`
+            if (t.players.length < 2) return `Добавьте минимум двух игроков в команду «${t.name.trim() || i + 1}»`
+          }
+          return null
+        })()
+
+  const handleCategoryClick = (categoryId: ActivityCategoryId) => {
     hapticSelection()
-    setCategoryId(id)
+    const nextIds = state.categoryIds.includes(categoryId)
+      ? state.categoryIds.filter((id) => id !== categoryId)
+      : [...state.categoryIds, categoryId]
+    dispatch({ type: 'SET_CATEGORY_IDS', categoryIds: nextIds })
   }
 
-  const handleStart = () => {
-    const cat = categoryId ? getCategoryById(categoryId) : null
-    if (!cat) return
+  const handleTeamCount = (count: number) => {
+    hapticSelection()
+    dispatch({ type: 'SET_TEAM_COUNT', count })
+  }
+
+  const handleTimer = (seconds: 30 | 45 | 60) => {
+    hapticSelection()
+    dispatch({ type: 'SET_TIMER', seconds })
+  }
+
+  const handleStartGame = () => {
+    if (!canStart) return
     haptic('medium')
-    navigate('/activity/play', { state: { mode, timerSeconds, category: cat } })
+    startRequestedRef.current = true
+    dispatch({ type: 'START_GAME' })
+  }
+
+  const handleBackClick = () => {
+    if (dirty) {
+      setShowExitConfirm('back')
+    } else {
+      handleBack()
+    }
+  }
+
+  const handleExitConfirm = (confirmed: boolean) => {
+    const target = showExitConfirm
+    setShowExitConfirm(null)
+    if (!confirmed) return
+    haptic('light')
+    const initialState = getInitialActivityState()
+    saveActivityState(initialState)
+    dispatch({ type: 'RESET_ALL' })
+    if (target === 'home') {
+      navigate('/')
+    } else {
+      navigate('/games')
+    }
+  }
+
+  const handleTapOutside = (e: React.PointerEvent) => {
+    const target = e.target
+    if (!(target instanceof HTMLElement)) return
+    const tag = target.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON') return
+    const active = document.activeElement
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+      ;(active as HTMLElement).blur()
+    }
   }
 
   return (
-    <div className="activity-home">
+    <div className="activity-home" onPointerDown={handleTapOutside}>
       <div className="activity-home__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost activity-home__back" onClick={handleBack}>
+        <HomeButton
+          onBeforeNavigate={() => {
+            if (dirty) {
+              setShowExitConfirm('home')
+              return true
+            }
+            return false
+          }}
+        />
+        <button type="button" className="btn btn--ghost activity-home__back" onClick={handleBackClick}>
           ← Назад
         </button>
       </div>
       <header className="activity-home__header">
         <h1 className="activity-home__title">Activity</h1>
-        <p className="activity-home__tagline">Задание + слово</p>
+        <div className="activity-home__rules-box">
+          <p className="activity-home__rules">
+            Получаешь слово и формат действия. Покажи, объясни или изобрази — команда угадывает.
+            Верный ответ приносит балл.
+          </p>
+        </div>
       </header>
 
       <section className="activity-home__section">
-        <h2 className="activity-home__section-title">Режим</h2>
+        <h2 className="activity-home__section-title">Количество команд</h2>
         <div className="activity-home__options">
-          <button
-            type="button"
-            className={`btn btn--ghost activity-home__opt ${mode === 'solo' ? 'is-active' : ''}`}
-            onClick={() => { hapticSelection(); setMode('solo') }}
-          >
-            Одиночный
-          </button>
-          <button
-            type="button"
-            className={`btn btn--ghost activity-home__opt ${mode === 'team' ? 'is-active' : ''}`}
-            onClick={() => { hapticSelection(); setMode('team') }}
-          >
-            Командный
-          </button>
+          {TEAM_COUNT_OPTIONS.map((count) => (
+            <button
+              key={count}
+              type="button"
+              className={`btn btn--ghost activity-home__option-btn ${teamCount === count ? 'activity-home__option-btn--active' : ''}`}
+              onClick={() => handleTeamCount(count)}
+            >
+              {count}
+            </button>
+          ))}
         </div>
       </section>
 
       <section className="activity-home__section">
-        <h2 className="activity-home__section-title">Таймер</h2>
+        <h2 className="activity-home__section-title">Таймер раунда</h2>
         <div className="activity-home__options">
-          {([30, 45, 60] as const).map((sec) => (
+          {TIMER_OPTIONS.map((sec) => (
             <button
               key={sec}
               type="button"
-              className={`btn btn--ghost activity-home__opt ${timerSeconds === sec ? 'is-active' : ''}`}
-              onClick={() => { hapticSelection(); setTimerSeconds(sec) }}
+              className={`btn btn--ghost activity-home__option-btn ${state.timerSeconds === sec ? 'activity-home__option-btn--active' : ''}`}
+              onClick={() => handleTimer(sec)}
             >
               {sec} сек
             </button>
@@ -80,32 +181,61 @@ function ActivityHome() {
       </section>
 
       <section className="activity-home__section">
-        <h2 className="activity-home__section-title">Категория</h2>
+        <h2 className="activity-home__section-title">Категории <span className="activity-home__section-hint">(выберите одну или несколько)</span></h2>
         <div className="activity-home__categories">
           {ACTIVITY_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               type="button"
-              className={`activity-home__cat card ${categoryId === cat.id ? 'is-active' : ''}`}
+              className={`activity-home__category-card card ${state.categoryIds.includes(cat.id) ? 'activity-home__category-card--active' : ''}`}
               onClick={() => handleCategoryClick(cat.id)}
             >
-              <span className="activity-home__cat-emoji">{cat.emoji}</span>
-              <span className="activity-home__cat-title">{cat.title}</span>
+              <span className="activity-home__category-emoji" aria-hidden>{cat.emoji}</span>
+              <span className="activity-home__category-title">{cat.title}</span>
             </button>
           ))}
         </div>
       </section>
 
+      <section className="activity-home__section activity-home__section--teams">
+        <ActivityTeamsSetup teamCount={teamCount} teams={teams} dispatch={dispatch} />
+      </section>
+
       <div className="activity-home__actions">
+        {validationHint != null && (
+          <p className="activity-home__hint" role="status">{validationHint}</p>
+        )}
         <button
           type="button"
           className="btn btn--primary activity-home__start"
-          disabled={!categoryId}
-          onClick={handleStart}
+          disabled={!canStart}
+          onClick={handleStartGame}
         >
           Начать игру
         </button>
       </div>
+
+      {showExitConfirm != null && (
+        <div
+          className="activity-home__modal-overlay"
+          onClick={() => handleExitConfirm(false)}
+        >
+          <div className="activity-home__modal card" onClick={(e) => e.stopPropagation()}>
+            <p className="activity-home__modal-text">Выйти из игры?</p>
+            <p className="activity-home__modal-hint">
+              Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
+            </p>
+            <div className="activity-home__modal-buttons">
+              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+                Остаться
+              </button>
+              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+                Выйти
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

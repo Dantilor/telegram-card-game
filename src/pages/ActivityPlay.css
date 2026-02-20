@@ -4,6 +4,8 @@
   min-height: var(--app-height, 100vh);
   max-width: 100%;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .activity-play__top {
@@ -18,19 +20,38 @@
   font-size: 0.9rem;
 }
 
-.activity-play__teams {
+.activity-play__message {
+  text-align: center;
+  color: var(--muted);
+  padding: 2rem;
+}
+
+/* Score Bar */
+.activity-play__score-bar {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(43, 210, 255, 0.1);
+  border: 1px solid rgba(43, 210, 255, 0.25);
+  border-radius: var(--radius, 8px);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.activity-play__team--active {
+.activity-play__score-item {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.activity-play__score-item--highlight {
   color: var(--neonCyan);
-  font-weight: 700;
+  text-shadow: 0 0 12px var(--glowCyan);
 }
 
+/* Timer */
 .activity-play__timer-wrap {
-  height: 2rem;
+  height: 2.5rem;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
   overflow: hidden;
@@ -48,36 +69,47 @@
   transition: width 0.3s linear;
 }
 
+.activity-play__timer-bar--pulse {
+  animation: timer-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .activity-play__timer-text {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
 }
 
+/* Card */
 .activity-play__card {
   padding: 2rem 1.5rem;
   text-align: center;
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .activity-play__card {
-    animation: activity-card-in 0.4s ease-out;
+    animation: activity-card-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
 @keyframes activity-card-in {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: scale(0.9) translateY(20px) rotateX(-10deg);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1) translateY(0) rotateX(0);
   }
 }
 
@@ -97,6 +129,7 @@
   color: var(--text);
 }
 
+/* Actions */
 .activity-play__actions {
   display: flex;
   flex-direction: column;
@@ -110,53 +143,179 @@
   font-size: 1.1rem;
 }
 
+.activity-play__btn--guess {
+  font-weight: 700;
+}
+
+/* Footer */
 .activity-play__footer {
   margin-top: auto;
+  padding-top: 1rem;
 }
 
-.activity-play__finish {
+.activity-play__exit {
   width: 100%;
+  opacity: 0.7;
 }
 
-.activity-play__overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1100;
-  padding: 1rem;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .activity-play__overlay {
-    animation: activity-overlay-in 0.3s ease-out;
-  }
-}
-
-@keyframes activity-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.activity-play__overlay-card {
-  padding: 1.5rem;
+/* Turn Ready Screen */
+.activity-play__turn-ready {
   text-align: center;
-  max-width: 20rem;
-  width: 100%;
+  margin-bottom: 1.5rem;
 }
 
-.activity-play__overlay-title {
-  margin: 0 0 1rem;
+.activity-play__turn-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.activity-play__team-name {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+  text-shadow: 0 0 24px var(--glowCyan);
+}
+
+.activity-play__turn-info {
+  padding: 1rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.activity-play__turn-timer {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.activity-play__turn-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.activity-play__turn-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Results Screen */
+.activity-play--results {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-play__results-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.activity-play__results-title {
+  margin: 0 0 0.5rem;
   font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+  text-shadow: 0 0 20px var(--glowCyan);
+}
+
+.activity-play__results-team {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.activity-play__results-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 1.25rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.activity-play__results-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.activity-play__results-value {
+  font-size: 2rem;
   font-weight: 700;
   color: var(--neonCyan);
 }
 
-.activity-play__overlay-actions {
+.activity-play__results-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.activity-play__results-total {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.activity-play__results-total-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.activity-play__results-total-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neonCyan);
+  text-shadow: 0 0 16px var(--glowCyan);
+}
+
+.activity-play__results-actions {
+  margin-top: auto;
+}
+
+/* Modal */
+.activity-play__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.activity-play__modal {
+  max-width: 20rem;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.activity-play__modal-text {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.activity-play__modal-hint {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.activity-play__modal-btns {
+  display: flex;
   gap: 0.5rem;
+  justify-content: center;
+}
+
+.activity-play__modal-btns .btn {
+  flex: 1;
 }

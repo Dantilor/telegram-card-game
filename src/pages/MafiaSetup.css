@@ -72,9 +72,17 @@
 }
 
 .mafia-setup__count-btn.is-active {
-  background: rgba(43, 210, 255, 0.2) !important;
+  background: var(--td-active-bg) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary);
+  box-shadow: 0 0 12px var(--glowPink);
+}
+
+/* Light: единый стиль выделения — бирюзовый фон, белый текст */
+[data-theme="neon-light"] .mafia-setup__count-btn.is-active {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
   border-color: var(--neonCyan) !important;
-  color: var(--neonCyan);
+  color: #fff !important;
   box-shadow: 0 0 12px var(--glowCyan);
 }
 

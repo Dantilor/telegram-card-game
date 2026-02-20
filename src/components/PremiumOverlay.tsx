@@ -239,7 +239,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           <p>Что даёт подписка:</p>
           <ul className="premium-overlay__includes">
             <li>Все колоды в карточной игре (вопросы для пар, компании, свиданий)</li>
-            <li>Все игры: Ассоциации, Мафия, Activity, Саботаж, Викторина</li>
+            <li>Все игры: Ассоциации, Мафия, Активитус, Саботаж, Викторина</li>
             <li>Правда или действие (расширенные наборы)</li>
             <li>Избранное — сохраняй вопросы и возвращайся к ним</li>
             <li>Темы оформления (Neon, Portal, Sunset и др.)</li>

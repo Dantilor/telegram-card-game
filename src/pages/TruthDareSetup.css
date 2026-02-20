@@ -42,6 +42,12 @@
   border-radius: var(--radius, 12px);
 }
 
+/* В теме Neon — выделения как в Activity (cyan) */
+[data-theme="neon-dark"] .truth-dare-setup__rules-box {
+  background: var(--td-truth-bg);
+  border-color: rgba(43, 210, 255, 0.35);
+}
+
 .truth-dare-setup__rules {
   margin: 0;
   font-size: 0.9rem;
@@ -112,6 +118,74 @@
   background: var(--td-dare-bg);
   border-color: var(--neonPink);
   color: var(--neonPink);
+}
+
+[data-theme="neon-dark"] .truth-dare-setup__count-btn.is-active,
+[data-theme="neon-dark"] .truth-dare-setup__step-btn.is-active {
+  background: var(--td-truth-bg) !important;
+  border-color: var(--neonCyan);
+  color: var(--neonCyan);
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+
+[data-theme="neon-dark"] .truth-dare-setup__tag-btn.is-active {
+  background: var(--td-truth-bg);
+  border-color: var(--neonCyan);
+  color: var(--neonCyan);
+}
+
+/* Light: выделение как в Мафии — бирюзовый фон, белый текст */
+[data-theme="neon-light"] .truth-dare-setup__rules-box {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.15));
+  border-color: rgba(6, 182, 212, 0.4);
+}
+[data-theme="neon-light"] .truth-dare-setup__count-btn.is-active,
+[data-theme="neon-light"] .truth-dare-setup__step-btn.is-active {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
+  border-color: var(--neonCyan);
+  color: #fff !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="neon-light"] .truth-dare-setup__tag-btn.is-active {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.28));
+  border-color: var(--neonCyan);
+  color: #fff;
+}
+
+/* Portal: выделение как в Мафии — зелёный акцент */
+[data-theme="portal"] .truth-dare-setup__rules-box {
+  background: var(--td-truth-bg);
+  border-color: rgba(0, 255, 204, 0.4);
+}
+[data-theme="portal"] .truth-dare-setup__count-btn.is-active,
+[data-theme="portal"] .truth-dare-setup__step-btn.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan);
+  color: var(--neonCyan);
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="portal"] .truth-dare-setup__tag-btn.is-active {
+  background: var(--td-active-bg);
+  border-color: var(--neonCyan);
+  color: var(--neonCyan);
+}
+
+/* Calm (minimal-calm): выделение как в Мафии — голубой акцент */
+[data-theme="minimal-calm"] .truth-dare-setup__rules-box {
+  background: var(--td-truth-bg);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+[data-theme="minimal-calm"] .truth-dare-setup__count-btn.is-active,
+[data-theme="minimal-calm"] .truth-dare-setup__step-btn.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan);
+  color: var(--neonCyan);
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="minimal-calm"] .truth-dare-setup__tag-btn.is-active {
+  background: var(--td-active-bg);
+  border-color: var(--neonCyan);
+  color: var(--neonCyan);
 }
 
 .truth-dare-setup__actions {

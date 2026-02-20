@@ -38,7 +38,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'activity',
-    title: 'Activity',
+    title: 'Активитус',
     emoji: '🎯',
     description: 'Покажи • Объясни\nУгадай',
     status: 'ready',

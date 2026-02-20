@@ -139,7 +139,7 @@ function ActivityHome() {
         </button>
       </div>
       <header className="activity-home__header">
-        <h1 className="activity-home__title">Activity</h1>
+        <h1 className="activity-home__title">Активитус</h1>
         <div className="activity-home__rules-box">
           <p className="activity-home__rules">
             Получаешь слово и формат действия. Покажи, объясни или изобрази — команда угадывает.

@@ -92,10 +92,46 @@
 
 .sabotage-setup__count-btn.is-active,
 .sabotage-setup__timer-btn.is-active {
-  background: rgba(255, 60, 172, 0.2) !important;
-  border-color: var(--neonPink) !important;
-  color: var(--neonPink);
+  background: var(--td-dare-bg-strong) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary);
   box-shadow: 0 0 12px var(--glowPink);
+}
+
+/* В теме Neon — выделения как в Activity (cyan) */
+[data-theme="neon-dark"] .sabotage-setup__count-btn.is-active,
+[data-theme="neon-dark"] .sabotage-setup__timer-btn.is-active {
+  background: var(--td-truth-bg) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan);
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+
+/* Light: выделение как в Мафии — бирюзовый фон, белый текст */
+[data-theme="neon-light"] .sabotage-setup__count-btn.is-active,
+[data-theme="neon-light"] .sabotage-setup__timer-btn.is-active {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
+  border-color: var(--neonCyan) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+
+/* Portal: выделение как в Мафии — зелёный/бирюзовый акцент */
+[data-theme="portal"] .sabotage-setup__count-btn.is-active,
+[data-theme="portal"] .sabotage-setup__timer-btn.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan) !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+
+/* Calm (minimal-calm): выделение как в Мафии — голубой акцент */
+[data-theme="minimal-calm"] .sabotage-setup__count-btn.is-active,
+[data-theme="minimal-calm"] .sabotage-setup__timer-btn.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan) !important;
+  box-shadow: 0 0 12px var(--glowCyan);
 }
 
 .sabotage-setup__names {

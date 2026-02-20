@@ -113,7 +113,7 @@
 
 .alias-home__option-btn--active {
   border-color: var(--primary);
-  background: var(--td-active-bg, rgba(43, 210, 255, 0.2));
+  background: var(--td-active-bg);
   color: var(--primary);
 }
 
@@ -179,15 +179,99 @@
 
 .alias-home__mode-btn--active.is-active,
 .alias-home__timer-btn--active.is-active {
-  background: rgba(43, 210, 255, 0.2) !important;
-  border-color: var(--neonCyan) !important;
-  color: var(--neonCyan);
-  box-shadow: 0 0 12px var(--glowCyan);
+  background: var(--td-active-bg) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary);
+  box-shadow: 0 0 12px var(--glowPink);
 }
 
 .alias-home__mode-btn--active.is-active:hover,
 .alias-home__timer-btn--active.is-active:hover {
+  box-shadow: 0 0 16px var(--glowPink);
+}
+
+/* Light: выделение как в Мафии — бирюзовый фон, белый текст */
+[data-theme="neon-light"] .alias-home__mode-btn--active.is-active,
+[data-theme="neon-light"] .alias-home__timer-btn--active.is-active {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
+  border-color: var(--neonCyan) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="neon-light"] .alias-home__mode-btn--active.is-active:hover,
+[data-theme="neon-light"] .alias-home__timer-btn--active.is-active:hover {
   box-shadow: 0 0 16px var(--glowCyan);
+}
+[data-theme="neon-light"] .alias-home__option-btn--active {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
+  border-color: var(--neonCyan) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="neon-light"] .alias-home__category-card--active {
+  background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
+  border-color: var(--neonCyan) !important;
+  box-shadow: 0 0 0 1px var(--neonCyan), 0 0 14px var(--glowCyan);
+  color: #fff;
+}
+[data-theme="neon-light"] .alias-home__category-card--active .alias-home__category-title {
+  color: #fff;
+}
+
+/* Portal: выделение как в Мафии — зелёный/бирюзовый акцент */
+[data-theme="portal"] .alias-home__mode-btn--active.is-active,
+[data-theme="portal"] .alias-home__timer-btn--active.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan) !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="portal"] .alias-home__mode-btn--active.is-active:hover,
+[data-theme="portal"] .alias-home__timer-btn--active.is-active:hover {
+  box-shadow: 0 0 16px var(--glowCyan);
+}
+[data-theme="portal"] .alias-home__option-btn--active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan) !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="portal"] .alias-home__category-card--active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  box-shadow: 0 0 0 1px var(--neonCyan), 0 0 14px var(--glowCyan);
+  color: var(--text);
+}
+[data-theme="portal"] .alias-home__category-card--active .alias-home__category-title {
+  color: var(--neonCyan);
+}
+
+/* Calm (minimal-calm): выделение как в Мафии — голубой акцент */
+[data-theme="minimal-calm"] .alias-home__mode-btn--active.is-active,
+[data-theme="minimal-calm"] .alias-home__timer-btn--active.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan) !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="minimal-calm"] .alias-home__mode-btn--active.is-active:hover,
+[data-theme="minimal-calm"] .alias-home__timer-btn--active.is-active:hover {
+  box-shadow: 0 0 16px var(--glowCyan);
+}
+[data-theme="minimal-calm"] .alias-home__option-btn--active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  color: var(--neonCyan) !important;
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="minimal-calm"] .alias-home__category-card--active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--neonCyan) !important;
+  box-shadow: 0 0 0 1px var(--neonCyan), 0 0 14px var(--glowCyan);
+  color: var(--text);
+}
+[data-theme="minimal-calm"] .alias-home__category-card--active .alias-home__category-title {
+  color: var(--neonCyan);
 }
 
 .alias-home__categories {
@@ -213,55 +297,18 @@
   cursor: pointer;
 }
 
-/* Выбранная категория — базовые стили */
+/* Выбранная категория — как в Правда или действие, адаптивно под тему */
 .alias-home__category-card--active {
   border-width: 2px;
   border-style: solid;
   border-color: var(--primary);
-  background: var(--td-active-bg, rgba(43, 210, 255, 0.2));
-  box-shadow: 0 0 0 1px var(--primary), 0 0 14px var(--glowCyan);
+  background: var(--td-active-bg);
+  box-shadow: 0 0 0 1px var(--primary), 0 0 14px var(--glowPink);
   color: var(--text);
 }
 .alias-home__category-card--active .alias-home__category-title {
   color: var(--text);
   font-weight: 700;
-}
-
-/* Выбранная категория — чётко видно в каждой теме оформления */
-[data-theme="neon-dark"] .alias-home__category-card--active {
-  border-color: var(--neonCyan);
-  background: rgba(43, 210, 255, 0.22);
-  box-shadow: 0 0 0 2px var(--neonCyan), 0 0 18px var(--glowCyan);
-}
-
-[data-theme="neon-light"] .alias-home__category-card--active {
-  border-color: var(--primary);
-  background: rgba(124, 58, 237, 0.22);
-  box-shadow: 0 0 0 2px var(--primary), 0 0 0 4px rgba(124, 58, 237, 0.2), 0 2px 12px rgba(124, 58, 237, 0.25);
-}
-
-[data-theme="portal"] .alias-home__category-card--active {
-  border-color: var(--neonCyan);
-  background: rgba(0, 255, 204, 0.2);
-  box-shadow: 0 0 0 2px var(--neonCyan), 0 0 20px var(--glowCyan);
-}
-
-[data-theme="soft-light"] .alias-home__category-card--active {
-  border-color: var(--primary);
-  background: rgba(124, 58, 237, 0.2);
-  box-shadow: 0 0 0 2px var(--primary), 0 0 0 4px rgba(124, 58, 237, 0.15), 0 2px 12px rgba(124, 58, 237, 0.2);
-}
-
-[data-theme="sunset"] .alias-home__category-card--active {
-  border-color: var(--secondary);
-  background: rgba(251, 191, 36, 0.25);
-  box-shadow: 0 0 0 2px var(--secondary), 0 0 18px var(--glowCyan);
-}
-
-[data-theme="minimal-calm"] .alias-home__category-card--active {
-  border-color: var(--neonCyan);
-  background: rgba(56, 189, 248, 0.22);
-  box-shadow: 0 0 0 2px var(--neonCyan), 0 0 16px var(--glowCyan);
 }
 
 .alias-home__category-card--locked {

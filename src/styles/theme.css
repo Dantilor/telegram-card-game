@@ -32,6 +32,11 @@
   --td-btn-ghost-bg: rgba(255, 255, 255, 0.12);
   --td-border: rgba(255, 255, 255, 0.2);
   --td-active-bg: rgba(255, 60, 172, 0.25);
+  --td-dare-bg: rgba(255, 60, 172, 0.15);
+  --td-dare-bg-strong: rgba(255, 60, 172, 0.2);
+  --td-dare-border: rgba(255, 60, 172, 0.3);
+  --td-truth-bg: rgba(43, 210, 255, 0.15);
+  --td-truth-bg-hover: rgba(43, 210, 255, 0.25);
 }
 
 /* neon-light — почти дневная, светлый лавандово-голубой */
@@ -67,6 +72,11 @@
   --td-btn-ghost-bg: rgba(26, 16, 42, 0.08);
   --td-border: rgba(26, 16, 42, 0.2);
   --td-active-bg: rgba(124, 58, 237, 0.2);
+  --td-dare-bg: rgba(124, 58, 237, 0.15);
+  --td-dare-bg-strong: rgba(124, 58, 237, 0.2);
+  --td-dare-border: rgba(124, 58, 237, 0.3);
+  --td-truth-bg: rgba(6, 182, 212, 0.15);
+  --td-truth-bg-hover: rgba(6, 182, 212, 0.25);
 }
 
 /* portal — зелёно-циановые градиенты */
@@ -102,6 +112,11 @@
   --td-btn-ghost-bg: rgba(255, 255, 255, 0.1);
   --td-border: rgba(255, 255, 255, 0.18);
   --td-active-bg: rgba(0, 255, 204, 0.25);
+  --td-dare-bg: rgba(0, 229, 176, 0.15);
+  --td-dare-bg-strong: rgba(0, 229, 176, 0.2);
+  --td-dare-border: rgba(0, 255, 204, 0.35);
+  --td-truth-bg: rgba(0, 255, 204, 0.15);
+  --td-truth-bg-hover: rgba(0, 255, 204, 0.25);
 }
 
 /* soft-light — мягкий светлый */
@@ -137,6 +152,11 @@
   --td-btn-ghost-bg: rgba(30, 27, 75, 0.08);
   --td-border: rgba(30, 27, 75, 0.18);
   --td-active-bg: rgba(124, 58, 237, 0.18);
+  --td-dare-bg: rgba(124, 58, 237, 0.15);
+  --td-dare-bg-strong: rgba(124, 58, 237, 0.2);
+  --td-dare-border: rgba(124, 58, 237, 0.3);
+  --td-truth-bg: rgba(34, 211, 238, 0.15);
+  --td-truth-bg-hover: rgba(34, 211, 238, 0.25);
 }
 
 /* sunset — тёплый закат */
@@ -172,6 +192,11 @@
   --td-btn-ghost-bg: rgba(255, 255, 255, 0.1);
   --td-border: rgba(255, 255, 255, 0.18);
   --td-active-bg: rgba(251, 191, 36, 0.25);
+  --td-dare-bg: rgba(251, 146, 60, 0.15);
+  --td-dare-bg-strong: rgba(251, 146, 60, 0.2);
+  --td-dare-border: rgba(251, 191, 36, 0.4);
+  --td-truth-bg: rgba(251, 191, 36, 0.15);
+  --td-truth-bg-hover: rgba(251, 191, 36, 0.25);
 }
 
 /* minimal-calm — минималистичный спокойный */
@@ -207,6 +232,11 @@
   --td-btn-ghost-bg: rgba(255, 255, 255, 0.1);
   --td-border: rgba(255, 255, 255, 0.15);
   --td-active-bg: rgba(56, 189, 248, 0.25);
+  --td-dare-bg: rgba(56, 189, 248, 0.15);
+  --td-dare-bg-strong: rgba(56, 189, 248, 0.2);
+  --td-dare-border: rgba(56, 189, 248, 0.35);
+  --td-truth-bg: rgba(56, 189, 248, 0.15);
+  --td-truth-bg-hover: rgba(56, 189, 248, 0.25);
 }
 
 /* Gradient background + glow blobs (uses theme variables) + slow move */

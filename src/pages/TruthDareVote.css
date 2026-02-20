@@ -41,12 +41,12 @@
 }
 
 .truth-dare-vote__btn--ok {
-  background: rgba(43, 210, 255, 0.15);
+  background: var(--td-truth-bg);
   border-color: var(--neonCyan);
 }
 
 .truth-dare-vote__btn--harder {
-  background: rgba(255, 60, 172, 0.15);
+  background: var(--td-dare-bg);
   border-color: var(--neonPink);
 }
 

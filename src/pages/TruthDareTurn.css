@@ -65,19 +65,19 @@
 }
 
 .truth-dare-turn__choice--truth {
-  background: rgba(43, 210, 255, 0.15);
+  background: var(--td-truth-bg);
   border-color: var(--neonCyan);
 }
 
 .truth-dare-turn__choice--truth:hover {
-  background: rgba(43, 210, 255, 0.25);
+  background: var(--td-truth-bg-hover);
 }
 
 .truth-dare-turn__choice--dare {
-  background: rgba(255, 60, 172, 0.15);
+  background: var(--td-dare-bg);
   border-color: var(--neonPink);
 }
 
 .truth-dare-turn__choice--dare:hover {
-  background: rgba(255, 60, 172, 0.25);
+  background: var(--td-dare-bg-strong);
 }

@@ -37,8 +37,8 @@
 .truth-dare-setup__rules-box {
   margin-top: 0.75rem;
   padding: 0.75rem 1rem;
-  background: rgba(255, 60, 172, 0.1);
-  border: 1px solid rgba(255, 60, 172, 0.3);
+  background: var(--td-dare-bg);
+  border: 1px solid var(--td-dare-border);
   border-radius: var(--radius, 12px);
 }
 
@@ -77,7 +77,7 @@
 
 .truth-dare-setup__count-btn.is-active,
 .truth-dare-setup__step-btn.is-active {
-  background: rgba(255, 60, 172, 0.2) !important;
+  background: var(--td-dare-bg-strong) !important;
   border-color: var(--neonPink);
   color: var(--neonPink);
 }
@@ -109,7 +109,7 @@
 }
 
 .truth-dare-setup__tag-btn.is-active {
-  background: rgba(255, 60, 172, 0.15);
+  background: var(--td-dare-bg);
   border-color: var(--neonPink);
   color: var(--neonPink);
 }

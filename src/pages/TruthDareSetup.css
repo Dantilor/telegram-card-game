@@ -34,6 +34,21 @@
   color: var(--muted);
 }
 
+.truth-dare-setup__rules-box {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 60, 172, 0.1);
+  border: 1px solid rgba(255, 60, 172, 0.3);
+  border-radius: var(--radius, 12px);
+}
+
+.truth-dare-setup__rules {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
 .truth-dare-setup__section {
   margin-bottom: 1.25rem;
 }

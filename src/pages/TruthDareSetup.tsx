@@ -74,7 +74,12 @@ function TruthDareSetup() {
       </div>
       <header className="truth-dare-setup__header">
         <h1 className="truth-dare-setup__title">Правда или действие</h1>
-        <p className="truth-dare-setup__tagline">Давление выбора + Эскалация</p>
+        <div className="truth-dare-setup__rules-box">
+          <p className="truth-dare-setup__rules">
+            Сначала выбор. Потом последствия. Игрок выбирает: правда или действие.
+            Отказ — штраф. С каждым раундом задания становятся смелее.
+          </p>
+        </div>
       </header>
 
       <section className="truth-dare-setup__section">
@@ -94,14 +99,14 @@ function TruthDareSetup() {
       </section>
 
       <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Имена</h2>
+        <h2 className="truth-dare-setup__section-title">Введите имена участников</h2>
         <div className="truth-dare-setup__names">
           {names.slice(0, count).map((name, i) => (
             <input
               key={i}
               type="text"
               className="truth-dare-setup__input card"
-              placeholder={`Игрок ${i + 1}`}
+              placeholder="Имя игрока"
               value={name}
               onChange={(e) => {
                 const next = [...names]
@@ -114,7 +119,7 @@ function TruthDareSetup() {
       </section>
 
       <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Ходов</h2>
+        <h2 className="truth-dare-setup__section-title">Количество ходов</h2>
         <div className="truth-dare-setup__steps-row">
           {STEP_OPTIONS.map((n) => (
             <button
@@ -152,7 +157,7 @@ function TruthDareSetup() {
           onClick={handleStart}
           disabled={count < MIN_PLAYERS}
         >
-          Начать
+          Начать раунд
         </button>
       </div>
     </div>

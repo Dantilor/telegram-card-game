@@ -88,22 +88,32 @@ function TruthDareCard() {
 
       <div className="truth-dare-card__tokens">
         {player.tokens.skipNoShame > 0 && (
-          <button
-            type="button"
-            className="btn btn--ghost truth-dare-card__token"
-            onClick={handleSkipNoShame}
-          >
-            Скип без стыда ({player.tokens.skipNoShame})
-          </button>
+          <div className="truth-dare-card__token-wrapper">
+            <button
+              type="button"
+              className="btn btn--ghost truth-dare-card__token"
+              onClick={handleSkipNoShame}
+            >
+              Скип без стыда ({player.tokens.skipNoShame})
+            </button>
+            <p className="truth-dare-card__token-hint">
+              Пропустить задание без штрафа и потери очков стыда
+            </p>
+          </div>
         )}
         {player.tokens.rerollSameLevel > 0 && (
-          <button
-            type="button"
-            className="btn btn--ghost truth-dare-card__token"
-            onClick={handleReroll}
-          >
-            Сменить карту ({player.tokens.rerollSameLevel})
-          </button>
+          <div className="truth-dare-card__token-wrapper">
+            <button
+              type="button"
+              className="btn btn--ghost truth-dare-card__token"
+              onClick={handleReroll}
+            >
+              Сменить карту ({player.tokens.rerollSameLevel})
+            </button>
+            <p className="truth-dare-card__token-hint">
+              Получить новое задание того же уровня
+            </p>
+          </div>
         )}
       </div>
     </div>

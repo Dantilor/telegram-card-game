@@ -49,19 +49,25 @@ function TruthDareResult() {
 
       <div className="truth-dare-result__titles card">
         <h2 className="truth-dare-result__section-title">Титулы</h2>
-        {bravest && (
+        {bravest && bravest.courage > 0 && (
           <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-label">Самый смелый:</span> {bravest.name}
+            <span className="truth-dare-result__award-emoji">🔥</span>
+            <span className="truth-dare-result__award-label">Самый безбашенный</span>
+            <span className="truth-dare-result__award-name">— {bravest.name}</span>
           </p>
         )}
-        {honest && (
+        {honest && honest.respect > 0 && (
           <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-label">Самый честный:</span> {honest.name}
+            <span className="truth-dare-result__award-emoji">👑</span>
+            <span className="truth-dare-result__award-label">Любимец публики</span>
+            <span className="truth-dare-result__award-name">— {honest.name}</span>
           </p>
         )}
         {shameKing && shameKing.shame > 0 && (
           <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-label">Король стыда:</span> {shameKing.name}
+            <span className="truth-dare-result__award-emoji">😈</span>
+            <span className="truth-dare-result__award-label">Провокатор</span>
+            <span className="truth-dare-result__award-name">— {shameKing.name}</span>
           </p>
         )}
       </div>
@@ -71,9 +77,9 @@ function TruthDareResult() {
         {state.players.map((p) => (
           <div key={p.id} className="truth-dare-result__row">
             <span className="truth-dare-result__name">{p.name}</span>
-            <span>Courage: {p.courage}</span>
-            <span>Respect: {p.respect}</span>
-            <span>Shame: {p.shame}</span>
+            <span className="truth-dare-result__stat">Смелость: {p.courage}</span>
+            <span className="truth-dare-result__stat">Репутация: {p.respect}</span>
+            <span className="truth-dare-result__stat">Стыд: {p.shame}</span>
           </div>
         ))}
       </div>

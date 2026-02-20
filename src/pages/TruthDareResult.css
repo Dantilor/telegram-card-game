@@ -36,13 +36,29 @@
 }
 
 .truth-dare-result__award {
-  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
   font-size: 1rem;
 }
 
+.truth-dare-result__award-emoji {
+  font-size: 1.25rem;
+}
+
 .truth-dare-result__award-label {
+  font-weight: 600;
+  color: var(--neonPink);
+}
+
+.truth-dare-result__award-name {
+  color: var(--text);
+}
+
+.truth-dare-result__stat {
+  font-size: 0.85rem;
   color: var(--muted);
-  margin-right: 0.5rem;
 }
 
 .truth-dare-result__row {

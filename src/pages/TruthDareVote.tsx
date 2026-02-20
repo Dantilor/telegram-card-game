@@ -45,7 +45,10 @@ function TruthDareVote() {
 
       <h2 className="truth-dare-vote__title">Голосование</h2>
       <p className="truth-dare-vote__subtitle">
-        {currentPlayer?.name} выполнил(а). {currentVoter ? `${currentVoter.name}, ваше решение:` : 'Все проголосовали.'}
+        {currentPlayer?.name} выполнил задание.
+      </p>
+      <p className="truth-dare-vote__subtitle">
+        {currentVoter ? `${currentVoter.name}, засчитываем или усложняем?` : 'Все проголосовали.'}
       </p>
 
       {currentVoter ? (

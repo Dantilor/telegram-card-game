@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useQuizGame } from '../games/quiz/QuizGameContext'
 import { TAGS, TAG_LABELS, TAG_EMOJIS } from '../games/quiz/types'
 import { getQuestionsByTags } from '../games/quiz/data/questions'
-import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -40,6 +39,18 @@ function QuizHome() {
       navigate('/quiz/play', { replace: true })
     }
   }, [state.phase, location.pathname, navigate])
+
+  useEffect(() => {
+    if (state.phase === 'setup') {
+      setTags([])
+      setQuestionCount(5)
+      setTagError(null)
+      setTeamCount(2)
+      setTeams(Array.from({ length: 6 }, () => ({ name: '', players: [] })))
+      setPlayerInputs(Array(6).fill(''))
+      setShowExitConfirm(null)
+    }
+  }, [state.phase])
 
   const toggleTag = (tag: string) => {
     hapticSelection()
@@ -138,15 +149,14 @@ function QuizHome() {
     dispatch({ type: 'SET_ROOM_PLAYERS', names: playerNames })
   }
 
-  const handleBack = useBack('/games')
-
   const hasData = tags.length > 0 || teams.some((t) => t.name.trim() || t.players.length > 0)
 
   const handleBackClick = () => {
     if (hasData) {
       setShowExitConfirm('back')
     } else {
-      handleBack()
+      dispatch({ type: 'RESET' })
+      navigate('/games')
     }
   }
 

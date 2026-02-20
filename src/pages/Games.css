@@ -177,6 +177,10 @@
   padding: 0 0.75rem;
 }
 
+.games-grid__card--image .games-grid__title {
+  margin-top: 0.5rem;
+}
+
 .games-grid__card--image .games-grid__desc {
   padding-bottom: 0.5rem;
 }

@@ -249,3 +249,19 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+/* Планшеты и ПК: подпись по центру внизу */
+@media (min-width: 640px) {
+  .home-about {
+    align-items: center;
+    padding-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .home-about__text {
+    width: 100%;
+    max-width: 28rem;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

@@ -7,14 +7,21 @@ import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import HeroGameCard from '../components/HeroGameCard'
+import GamesGrid from '../components/GamesGrid'
 import SmartImage from '../components/SmartImage'
 import './Games.css'
+
+const HERO_GAME_ID = 'card'
 
 function Games() {
   const navigate = useNavigate()
   const handleBack = useBack('/')
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+
+  const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)
+  const otherGames = GAMES.filter((g) => g.id !== HERO_GAME_ID)
 
   const renderGameCard = (game: (typeof GAMES)[0], i: number) => {
     const isReady = game.status === 'ready'
@@ -137,9 +144,17 @@ function Games() {
         <h1 className="games-page__title">GameNight Host</h1>
         <p className="games-page__tagline">Выбери игру</p>
       </header>
-      <div className="games-grid">
-        {GAMES.map((game, i) => renderGameCard(game, i))}
-      </div>
+      {heroGame && (
+        <HeroGameCard
+          game={heroGame}
+          isLocked={isGameLocked(heroGame.id, isPremium)}
+          onPremiumOpen={() => setPremiumOverlayOpen(true)}
+        />
+      )}
+      <GamesGrid
+        games={otherGames}
+        renderCard={renderGameCard}
+      />
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )

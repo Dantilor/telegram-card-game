@@ -48,7 +48,7 @@ export const GAMES: Game[] = [
     id: 'sabotage',
     title: 'Саботаж',
     emoji: '😈',
-    description: 'Команда • Предатель\nПодозрение',
+    description: 'Диверсия • Тайна\nПодозрение',
     status: 'ready',
     image: IMAGES.sabotage.png,
   },

@@ -167,7 +167,7 @@ function TeamTurnReadyScreen({
       <div className="activity-play__turn-info card">
         <p className="activity-play__turn-timer">Время раунда: {state.timerSeconds} сек</p>
         <p className="activity-play__turn-hint">
-          За это время нужно угадать как можно больше слов
+          За это время нужно угадать как можно больше слов с указанным форматом
         </p>
       </div>
 

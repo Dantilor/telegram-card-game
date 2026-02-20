@@ -100,20 +100,32 @@
 }
 
 .activity-home__category-card--active {
-  border-color: var(--neonCyan);
-  box-shadow: 0 0 16px var(--glowCyan);
-  background: rgba(43, 210, 255, 0.1);
+  border-color: var(--neonCyan) !important;
+  box-shadow: 0 0 20px var(--glowCyan), 0 0 40px rgba(43, 210, 255, 0.3) !important;
+  background: rgba(43, 210, 255, 0.25) !important;
+}
+
+.activity-home__category-card--active .activity-home__category-emoji {
+  filter: drop-shadow(0 0 8px var(--neonCyan));
+  transform: scale(1.1);
+}
+
+.activity-home__category-card--active .activity-home__category-title {
+  color: var(--neonCyan);
+  text-shadow: 0 0 10px var(--glowCyan);
 }
 
 .activity-home__category-emoji {
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .activity-home__category-title {
   font-size: 0.85rem;
   font-weight: 600;
   text-align: center;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
 .activity-home__actions {

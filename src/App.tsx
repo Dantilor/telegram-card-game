@@ -38,7 +38,6 @@ import SabotageVote from './pages/SabotageVote'
 import SabotageResult from './pages/SabotageResult'
 import QuizLayout from './pages/QuizLayout'
 import QuizHome from './pages/QuizHome'
-import QuizRoomSetup from './pages/QuizRoomSetup'
 import QuizQuestion from './pages/QuizQuestion'
 import QuizResult from './pages/QuizResult'
 import QuizMiniSummary from './pages/QuizMiniSummary'
@@ -119,7 +118,6 @@ function App() {
         </Route>
         <Route path="/quiz" element={<QuizLayout />}>
           <Route index element={<QuizHome />} />
-          <Route path="room" element={<QuizRoomSetup />} />
           <Route path="play" element={<QuizQuestion />} />
           <Route path="result" element={<QuizResult />} />
           <Route path="mini-summary" element={<QuizMiniSummary />} />

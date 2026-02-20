@@ -99,3 +99,18 @@ export const TAG_LABELS: Record<(typeof TAGS)[number], string> = {
   science: 'Наука',
   sport: 'Спорт',
 }
+
+export const TAG_EMOJIS: Record<(typeof TAGS)[number], string> = {
+  movies: '🎬',
+  general: '🧠',
+  finance: '💰',
+  relationships: '💕',
+  history: '📜',
+  science: '🔬',
+  sport: '⚽',
+}
+
+export type QuizTeamSlot = {
+  name: string
+  players: string[]
+}

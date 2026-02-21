@@ -93,12 +93,13 @@ export function isGameLocked(gameId: string, hasPremium: boolean): boolean {
   return !(FREE_GAMES as readonly string[]).includes(gameId)
 }
 
-/** Избранное и темы — premium only. */
+/** Избранное — premium only. */
 export function isFavoritesLocked(hasPremium: boolean): boolean {
   if (!PREMIUM_ENABLED) return false
   return !hasPremium
 }
 
+/** Избранное и темы — premium only. */
 export function isThemeLocked(hasPremium: boolean): boolean {
   return isFavoritesLocked(hasPremium)
 }

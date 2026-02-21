@@ -398,6 +398,7 @@ function MafiaNight() {
     phase === 'day' ||
     phase === 'voting_collect' ||
     phase === 'voting_summary' ||
+    phase === 'round_summary' ||
     phase === 'result'
   return (
     <div className="mafia-night">
@@ -420,7 +421,7 @@ function MafiaNight() {
           hapticSelection()
           if (phase === 'result' || state.winner) navigate('/mafia/result')
           else if (phase === 'day') navigate('/mafia/day')
-          else if (phase === 'voting_collect' || phase === 'voting_summary') navigate('/mafia/voting')
+          else if (phase === 'voting_collect' || phase === 'voting_summary' || phase === 'round_summary') navigate('/mafia/voting')
           else navigate('/mafia/night')
         }}
       />

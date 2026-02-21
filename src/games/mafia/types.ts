@@ -31,6 +31,7 @@ export type Phase =
   | 'voting'
   | 'voting_collect'
   | 'voting_summary'
+  | 'round_summary'
   | 'result'
 
 export type GameState = {
@@ -50,7 +51,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   civilian: 'Мирный',
   mafia: 'Мафия',
   doctor: 'Доктор',
-  sheriff: 'Шериф',
+  sheriff: 'Комиссар',
 }
 
 /** Exhaustive check for phase in switch — TypeScript error if a phase is missed. */

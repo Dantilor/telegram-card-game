@@ -19,6 +19,7 @@ type MafiaAction =
   | { type: 'NEXT_VOTE_COLLECT' }
   | { type: 'SUBMIT_VOTE'; voterId: string; targetId: string }
   | { type: 'CONFIRM_VOTING' }
+  | { type: 'START_NEXT_NIGHT' }
   | { type: 'APPLY_VOTING' }
   | { type: 'RESET' }
 
@@ -180,7 +181,7 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         console.log('[Mafia] CONFIRM_VOTING', {
           phase: state.phase,
           eliminatedId: eliminated ?? 'tie',
-          nextPhase: 'night_intro | result',
+          nextPhase: 'result | round_summary',
         })
       }
       const players = state.players.map((p) =>
@@ -195,9 +196,17 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         ...state,
         players,
         votes: {},
-        votingSummaryTargetId: null,
-        phase: winner ? 'result' : 'night_intro',
+        votingSummaryTargetId: winner ? null : eliminated,
+        phase: winner ? 'result' : 'round_summary',
         winner: winner ?? state.winner,
+      }
+    }
+    case 'START_NEXT_NIGHT': {
+      if (state.phase !== 'round_summary') return state
+      return {
+        ...state,
+        phase: 'night_intro',
+        votingSummaryTargetId: null,
       }
     }
     case 'APPLY_VOTING':

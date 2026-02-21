@@ -69,6 +69,49 @@ function MafiaVoting() {
     )
   }
 
+  // Итоги раунда: исключён X, мафия не найдена / один из мафии исключён, игра продолжается
+  if (state.phase === 'round_summary') {
+    const eliminatedId = state.votingSummaryTargetId
+    const eliminatedPlayer = eliminatedId ? state.players.find((p) => p.id === eliminatedId) : null
+    const wasMafia = eliminatedPlayer?.role === 'mafia'
+    return (
+      <div className="mafia-voting">
+        <div className="mafia-voting__top">
+          <HomeButton />
+          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
+            ← В меню
+          </button>
+        </div>
+        <div className="mafia-voting__summary card mafia-voting__round-result">
+          <h2 className="mafia-voting__summary-title">Итоги раунда</h2>
+          {eliminatedPlayer ? (
+            <>
+              <p className="mafia-voting__summary-text mafia-voting__round-eliminated">
+                Исключён: {eliminatedPlayer.name}
+              </p>
+              <p className="mafia-voting__summary-text">
+                {wasMafia ? 'Один из мафии исключён!' : 'Мафия не найдена.'}
+              </p>
+            </>
+          ) : (
+            <p className="mafia-voting__summary-text">Никого не исключили.</p>
+          )}
+          <p className="mafia-voting__summary-text mafia-voting__round-continue">Игра продолжается.</p>
+          <button
+            type="button"
+            className="btn btn--primary mafia-voting__summary-btn"
+            onClick={() => {
+              hapticSelection()
+              flushSync(() => dispatch({ type: 'START_NEXT_NIGHT' }))
+            }}
+          >
+            Следующая ночь
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // Сразу показываем итог голосования (кто исключён / ничья) — чтобы экран не зависал
   if (state.phase === 'voting_summary') {
     const targetPlayer = state.votingSummaryTargetId
@@ -127,7 +170,7 @@ function MafiaVoting() {
 
   // Фаза не для страницы голосования — показываем fallback вместо пустого экрана
   const phase = state.phase
-  const allowedVotingPhases = ['voting_collect', 'voting_summary', 'night_intro', 'result']
+  const allowedVotingPhases = ['voting_collect', 'voting_summary', 'round_summary', 'night_intro', 'result']
   if (!allowedVotingPhases.includes(phase)) {
     return (
       <div className="mafia-voting">

@@ -3,18 +3,37 @@ import type { Role } from './types'
 export type RoleCounts = { mafia: number; doctor: number; sheriff: number; civilian: number }
 
 /**
- * Единственный источник правил по количеству ролей в зависимости от числа игроков.
- * 4–5: 1 мафия, 6–8: 2, 9–11: 3, 12–14: 4. Доктор и шериф по одному при наличии места.
+ * Состав ролей по количеству игроков (Комиссар = шериф в коде).
+ * 4: только мафия + мирные. 5–6: + комиссар. 7: 2 мафии. 8+: + доктор.
+ * Маньяк и Дон не реализованы — при 11–14 считаем без них.
  */
 export function getRoleCountsForPlayers(count: number): RoleCounts {
   if (count < 4 || count > 14) return { mafia: 0, doctor: 0, sheriff: 0, civilian: 0 }
-  let mafiaCount = 1
-  if (count >= 6) mafiaCount = 2
-  if (count >= 9) mafiaCount = 3
-  if (count >= 12) mafiaCount = 4
-  const doctor = 1
-  const sheriff = 1
-  const civilian = Math.max(0, count - mafiaCount - doctor - sheriff)
+  let mafiaCount: number
+  let sheriff: number
+  let doctor: number
+  if (count === 4) {
+    mafiaCount = 1
+    sheriff = 0
+    doctor = 0
+  } else if (count === 5 || count === 6) {
+    mafiaCount = 1
+    sheriff = 1
+    doctor = 0
+  } else if (count === 7) {
+    mafiaCount = 2
+    sheriff = 1
+    doctor = 0
+  } else if (count >= 8 && count <= 10) {
+    mafiaCount = count >= 10 ? 3 : 2
+    sheriff = 1
+    doctor = 1
+  } else {
+    mafiaCount = count >= 14 ? 4 : 3
+    sheriff = 1
+    doctor = 1
+  }
+  const civilian = Math.max(0, count - mafiaCount - sheriff - doctor)
   return { mafia: mafiaCount, doctor, sheriff, civilian }
 }
 

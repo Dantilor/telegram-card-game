@@ -151,3 +151,13 @@
   font-size: 1.05rem;
   margin-top: 0.5rem;
 }
+
+.mafia-voting__round-result .mafia-voting__round-eliminated {
+  font-weight: 700;
+}
+
+.mafia-voting__round-result .mafia-voting__round-continue {
+  margin-top: 0.5rem;
+  font-weight: 700;
+  color: var(--secondary);
+}

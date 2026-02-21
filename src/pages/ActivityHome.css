@@ -37,6 +37,7 @@
 }
 
 .activity-home__rules-box {
+  margin-top: 1rem;
   background: var(--td-dare-bg);
   border: 1px solid var(--td-dare-border);
   border-radius: var(--radius, 8px);

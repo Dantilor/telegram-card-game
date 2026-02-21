@@ -41,6 +41,39 @@
   padding: 0.85rem 1rem;
 }
 
+/* В режиме neon — как в Активитусе: нейтральная плашка (panel + border) */
+[data-theme="neon-dark"] .sabotage-setup__how {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+}
+[data-theme="neon-light"] .sabotage-setup__how {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+}
+
+/* В режиме Portal — как в Активитусе: плашка правил (td-dare) */
+[data-theme="portal"] .sabotage-setup__how {
+  background: var(--td-dare-bg);
+  border: 1px solid var(--td-dare-border);
+  border-radius: var(--radius, 8px);
+}
+
+/* В режиме Sunset — как в Активитусе: плашка правил (td-dare) */
+[data-theme="sunset"] .sabotage-setup__how {
+  background: var(--td-dare-bg);
+  border: 1px solid var(--td-dare-border);
+  border-radius: var(--radius, 8px);
+}
+
+/* В режиме CALM — как в Битве умов (Викторина): плашка правил (td-dare) */
+[data-theme="minimal-calm"] .sabotage-setup__how {
+  background: var(--td-dare-bg);
+  border: 1px solid var(--td-dare-border);
+  border-radius: var(--radius, 8px);
+}
+
 .sabotage-setup__how-title {
   margin: 0 0 0.5rem;
   font-size: 0.9rem;
@@ -85,29 +118,27 @@
 .sabotage-setup__count-btn,
 .sabotage-setup__timer-btn {
   min-width: 2.5rem;
-  padding: 0.35rem 0.6rem;
+  padding: 0.5rem 0.85rem;
   font-size: 1rem;
   font-weight: 600;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
+/* Выделение как в Активитусе */
 .sabotage-setup__count-btn.is-active,
 .sabotage-setup__timer-btn.is-active {
-  background: var(--td-dare-bg-strong) !important;
+  background: var(--td-active-bg) !important;
   border-color: var(--primary) !important;
   color: var(--primary);
   box-shadow: 0 0 12px var(--glowPink);
 }
-
-/* В теме Neon — выделения как в Activity (cyan) */
-[data-theme="neon-dark"] .sabotage-setup__count-btn.is-active,
-[data-theme="neon-dark"] .sabotage-setup__timer-btn.is-active {
-  background: var(--td-truth-bg) !important;
-  border-color: var(--neonCyan) !important;
-  color: var(--neonCyan);
-  box-shadow: 0 0 12px var(--glowCyan);
+.sabotage-setup__count-btn.is-active:hover,
+.sabotage-setup__timer-btn.is-active:hover {
+  box-shadow: 0 0 16px var(--glowPink);
 }
 
-/* Light: выделение как в Мафии — бирюзовый фон, белый текст */
+/* neon-light — как в Активитусе: бирюзовый фон, белый текст */
 [data-theme="neon-light"] .sabotage-setup__count-btn.is-active,
 [data-theme="neon-light"] .sabotage-setup__timer-btn.is-active {
   background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
@@ -115,23 +146,48 @@
   color: #fff !important;
   box-shadow: 0 0 12px var(--glowCyan);
 }
+[data-theme="neon-light"] .sabotage-setup__count-btn.is-active:hover,
+[data-theme="neon-light"] .sabotage-setup__timer-btn.is-active:hover {
+  box-shadow: 0 0 16px var(--glowCyan);
+}
 
-/* Portal: выделение как в Мафии — зелёный/бирюзовый акцент */
+/* neon-dark — как в Активитусе (те же переменные темы) */
+[data-theme="neon-dark"] .sabotage-setup__count-btn.is-active,
+[data-theme="neon-dark"] .sabotage-setup__timer-btn.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary);
+  box-shadow: 0 0 12px var(--glowPink);
+}
+[data-theme="neon-dark"] .sabotage-setup__count-btn.is-active:hover,
+[data-theme="neon-dark"] .sabotage-setup__timer-btn.is-active:hover {
+  box-shadow: 0 0 16px var(--glowPink);
+}
+
+/* portal — как в Активитусе */
 [data-theme="portal"] .sabotage-setup__count-btn.is-active,
 [data-theme="portal"] .sabotage-setup__timer-btn.is-active {
   background: var(--td-active-bg) !important;
-  border-color: var(--neonCyan) !important;
-  color: var(--neonCyan) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
   box-shadow: 0 0 12px var(--glowCyan);
 }
+[data-theme="portal"] .sabotage-setup__count-btn.is-active:hover,
+[data-theme="portal"] .sabotage-setup__timer-btn.is-active:hover {
+  box-shadow: 0 0 16px var(--glowCyan);
+}
 
-/* Calm (minimal-calm): выделение как в Мафии — голубой акцент */
+/* minimal-calm — как в Активитусе */
 [data-theme="minimal-calm"] .sabotage-setup__count-btn.is-active,
 [data-theme="minimal-calm"] .sabotage-setup__timer-btn.is-active {
   background: var(--td-active-bg) !important;
-  border-color: var(--neonCyan) !important;
-  color: var(--neonCyan) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
   box-shadow: 0 0 12px var(--glowCyan);
+}
+[data-theme="minimal-calm"] .sabotage-setup__count-btn.is-active:hover,
+[data-theme="minimal-calm"] .sabotage-setup__timer-btn.is-active:hover {
+  box-shadow: 0 0 16px var(--glowCyan);
 }
 
 .sabotage-setup__names {

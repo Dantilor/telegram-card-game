@@ -44,11 +44,16 @@
   padding: 0.85rem 1rem;
 }
 
-/* В режимах Light и Lite — такой же цвет правил, как в Ассоциациях (.card) */
-[data-theme="neon-light"] .activity-home__rules-box,
-[data-theme="minimal-calm"] .activity-home__rules-box {
+/* В режиме Light — нейтральная плашка (panel + border) */
+[data-theme="neon-light"] .activity-home__rules-box {
   background: var(--panel);
   border-color: var(--border);
+}
+
+/* В режиме CALM — как в Битве умов (Викторина): плашка правил (td-dare) */
+[data-theme="minimal-calm"] .activity-home__rules-box {
+  background: var(--td-dare-bg);
+  border-color: var(--td-dare-border);
 }
 
 .activity-home__how-title {

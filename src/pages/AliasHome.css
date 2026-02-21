@@ -42,6 +42,31 @@
   padding: 0.85rem 1rem;
 }
 
+/* В режиме neon — как в Активитусе: нейтральная плашка (panel + border) */
+[data-theme="neon-dark"] .alias-home__how.card,
+[data-theme="neon-light"] .alias-home__how.card {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+}
+
+/* В режиме Portal — как в Активитусе: плашка правил (td-dare) */
+[data-theme="portal"] .alias-home__how.card {
+  background: var(--td-dare-bg) !important;
+  border-color: var(--td-dare-border) !important;
+}
+
+/* В режиме Sunset — как в Активитусе: плашка правил (td-dare) */
+[data-theme="sunset"] .alias-home__how.card {
+  background: var(--td-dare-bg) !important;
+  border-color: var(--td-dare-border) !important;
+}
+
+/* В режиме CALM — как в Битве умов (Викторина): плашка правил (td-dare) */
+[data-theme="minimal-calm"] .alias-home__how.card {
+  background: var(--td-dare-bg) !important;
+  border-color: var(--td-dare-border) !important;
+}
+
 .alias-home__how-title {
   margin: 0 0 0.5rem;
   font-size: 0.9rem;

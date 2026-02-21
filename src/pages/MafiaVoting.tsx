@@ -93,19 +93,11 @@ function MafiaVoting() {
             className="btn btn--primary mafia-voting__summary-btn"
             onClick={() => {
               hapticSelection()
-              const eliminated = state.votingSummaryTargetId
-              const playersAfter = state.players.map((p) =>
-                p.id === eliminated ? { ...p, alive: false } : p
-              )
-              const mafiaLeft = playersAfter.filter((p) => p.alive && p.role === 'mafia').length
-              const peacefulLeft = playersAfter.filter((p) => p.alive && p.role !== 'mafia').length
-              const winner =
-                mafiaLeft === 0 ? 'peaceful' : mafiaLeft >= peacefulLeft ? 'mafia' : null
               flushSync(() => dispatch({ type: 'CONFIRM_VOTING' }))
-              navigate(winner ? '/mafia/result' : '/mafia/night')
+              // Навигация по state.phase / state.winner в useLayoutEffect — так всегда показываем результат при победе
             }}
           >
-            Перейти к результату
+            Продолжить
           </button>
         </div>
       </div>

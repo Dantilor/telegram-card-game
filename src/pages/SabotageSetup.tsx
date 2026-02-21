@@ -76,7 +76,7 @@ function SabotageSetup() {
       </div>
 
       <section className="sabotage-setup__section">
-        <h2 className="sabotage-setup__section-title">Игроки</h2>
+        <h2 className="sabotage-setup__section-title">Количество участников</h2>
         <div className="sabotage-setup__count-row">
           {Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => MIN_PLAYERS + i).map((n) => (
             <button
@@ -92,7 +92,7 @@ function SabotageSetup() {
       </section>
 
       <section className="sabotage-setup__section">
-        <h2 className="sabotage-setup__section-title">Имена</h2>
+        <h2 className="sabotage-setup__section-title">Введите имена участников</h2>
         <div className="sabotage-setup__names">
           {names.slice(0, count).map((name, i) => (
             <input

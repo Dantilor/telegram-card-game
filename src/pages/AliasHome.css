@@ -42,11 +42,11 @@
   padding: 0.85rem 1rem;
 }
 
-/* В режиме neon — как в Активитусе: нейтральная плашка (panel + border) */
+/* В режиме neon — подсветка правил как в Правда или действие (td-dare) */
 [data-theme="neon-dark"] .alias-home__how.card,
 [data-theme="neon-light"] .alias-home__how.card {
-  background: var(--panel) !important;
-  border-color: var(--border) !important;
+  background: var(--td-dare-bg) !important;
+  border-color: var(--td-dare-border) !important;
 }
 
 /* В режиме Portal — как в Активитусе: плашка правил (td-dare) */

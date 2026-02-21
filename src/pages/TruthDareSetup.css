@@ -42,10 +42,10 @@
   border-radius: var(--radius, 12px);
 }
 
-/* В режиме neon — как в Активитусе: нейтральная плашка (panel + border) */
+/* В режиме neon — подсвеченная рамка правил (td-dare) */
 [data-theme="neon-dark"] .truth-dare-setup__rules-box {
-  background: var(--panel);
-  border-color: var(--border);
+  background: var(--td-dare-bg);
+  border-color: var(--td-dare-border);
 }
 
 .truth-dare-setup__rules {
@@ -156,10 +156,10 @@
   box-shadow: 0 0 16px var(--glowPink);
 }
 
-/* neon-light — всё выделение как в Активитусе: бирюзовый фон, белый текст */
+/* neon-light — подсвеченная рамка правил (td-dare) */
 [data-theme="neon-light"] .truth-dare-setup__rules-box {
-  background: var(--panel);
-  border-color: var(--border);
+  background: var(--td-dare-bg);
+  border-color: var(--td-dare-border);
 }
 [data-theme="neon-light"] .truth-dare-setup__count-btn.is-active,
 [data-theme="neon-light"] .truth-dare-setup__step-btn.is-active {

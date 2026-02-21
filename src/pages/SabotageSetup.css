@@ -41,15 +41,15 @@
   padding: 0.85rem 1rem;
 }
 
-/* В режиме neon — как в Активитусе: нейтральная плашка (panel + border) */
+/* В режиме neon — подсветка правил как в Правда или действие (td-dare) */
 [data-theme="neon-dark"] .sabotage-setup__how {
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--td-dare-bg);
+  border: 1px solid var(--td-dare-border);
   border-radius: var(--radius, 8px);
 }
 [data-theme="neon-light"] .sabotage-setup__how {
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--td-dare-bg);
+  border: 1px solid var(--td-dare-border);
   border-radius: var(--radius, 8px);
 }
 

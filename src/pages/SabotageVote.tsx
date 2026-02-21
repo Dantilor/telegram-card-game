@@ -1,7 +1,6 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
-import { useBack } from '../hooks/useBack'
+import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './SabotageVote.css'
@@ -15,16 +14,19 @@ function SabotageVote() {
     return null
   }
 
+  if (state.phase === 'result') {
+    navigate('/sabotage/result', { replace: true })
+    return null
+  }
+
   const currentVoter = state.players[state.voteCollectIndex]
   const targets = state.players.filter((p) => p.id !== currentVoter?.id)
 
-  useEffect(() => {
-    if (state.phase === 'result') {
-      navigate('/sabotage/result')
-    }
-  }, [state.phase, navigate])
-
-  const handleBack = useBack('/sabotage/task')
+  const handleBack = () => {
+    haptic('light')
+    dispatch({ type: 'RESET' })
+    navigate('/sabotage')
+  }
 
   const handleVote = (targetId: string) => {
     if (!currentVoter) return
@@ -34,7 +36,7 @@ function SabotageVote() {
   }
 
   if (!currentVoter || targets.length === 0) {
-    navigate('/sabotage/result')
+    navigate('/sabotage/result', { replace: true })
     return null
   }
 

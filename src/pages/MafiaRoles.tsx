@@ -104,9 +104,6 @@ function MafiaRoles() {
                 <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
               )}
             </div>
-            <p className="mafia-roles__roles-legend">
-              {ROLE_LABELS.sheriff}, {ROLE_LABELS.civilian}, {ROLE_LABELS.doctor}, {ROLE_LABELS.mafia}
-            </p>
             <button
               type="button"
               className="btn btn--primary mafia-roles__next-btn"

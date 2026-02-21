@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useActivityStateContext } from '../games/activity/ActivityStateContext'
 import { saveActivityState, getInitialActivityState } from '../games/activity/state'
 import { ACTIVITY_CATEGORIES, type ActivityCategoryId } from '../games/activity/data/activityWords'
-import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
@@ -20,14 +19,18 @@ function ActivityHome() {
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
   const startRequestedRef = useRef(false)
 
-  const handleBack = useBack('/games')
+  const goToGames = () => {
+    haptic('light')
+    navigate('/games')
+  }
 
   useEffect(() => {
     if (state.phase === 'turn_ready' && location.pathname === '/activity' && startRequestedRef.current) {
       startRequestedRef.current = false
+      saveActivityState(state)
       navigate('/activity/play', { replace: true })
     }
-  }, [state.phase, location.pathname, navigate])
+  }, [state.phase, location.pathname, navigate, state])
 
   const teamCount = state.teamCount
   const teams = state.teams
@@ -92,7 +95,7 @@ function ActivityHome() {
     if (dirty) {
       setShowExitConfirm('back')
     } else {
-      handleBack()
+      goToGames()
     }
   }
 
@@ -182,6 +185,9 @@ function ActivityHome() {
 
       <section className="activity-home__section">
         <h2 className="activity-home__section-title">Категории <span className="activity-home__section-hint">(выберите одну или несколько)</span></h2>
+        {state.categoryIds.length === 0 && (
+          <p className="activity-home__category-hint" role="status">Выберите минимум одну категорию</p>
+        )}
         <div className="activity-home__categories">
           {ACTIVITY_CATEGORIES.map((cat) => (
             <button
@@ -198,13 +204,15 @@ function ActivityHome() {
       </section>
 
       <section className="activity-home__section activity-home__section--teams">
-        <ActivityTeamsSetup teamCount={teamCount} teams={teams} dispatch={dispatch} />
+        <ActivityTeamsSetup
+          teamCount={teamCount}
+          teams={teams}
+          dispatch={dispatch}
+          teamHint={validationHint !== 'Выберите минимум одну категорию' ? validationHint : null}
+        />
       </section>
 
       <div className="activity-home__actions">
-        {validationHint != null && (
-          <p className="activity-home__hint" role="status">{validationHint}</p>
-        )}
         <button
           type="button"
           className="btn btn--primary activity-home__start"

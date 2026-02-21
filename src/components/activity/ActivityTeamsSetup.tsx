@@ -9,9 +9,10 @@ type Props = {
   teamCount: number
   teams: ActivityTeamSlot[]
   dispatch: (action: ActivityAction) => void
+  teamHint?: string | null
 }
 
-export function ActivityTeamsSetup({ teamCount, teams, dispatch }: Props) {
+export function ActivityTeamsSetup({ teamCount, teams, dispatch, teamHint }: Props) {
   const [playerInputs, setPlayerInputs] = useState<string[]>(() => Array(6).fill(''))
   const playerInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -41,7 +42,10 @@ export function ActivityTeamsSetup({ teamCount, teams, dispatch }: Props) {
 
   return (
     <div className="activity-teams-setup">
-      <h2 className="activity-teams-setup__title">Команды</h2>
+      <h2 className="activity-teams-setup__title">Введите имена участников</h2>
+      {teamHint != null && (
+        <p className="activity-teams-setup__section-hint" role="status">{teamHint}</p>
+      )}
       <div className="activity-teams-setup__list">
         {visibleTeams.map((team, slotIndex) => (
           <div key={slotIndex} className="activity-teams-setup__card card">

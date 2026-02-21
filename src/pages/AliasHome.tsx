@@ -130,18 +130,13 @@ function AliasHome() {
   }
 
   const handleExitConfirm = (confirmed: boolean) => {
-    const target = showExitConfirm
     setShowExitConfirm(null)
     if (!confirmed) return
     haptic('light')
     const initialState = getInitialAliasState()
     saveAliasState(initialState)
     dispatch({ type: 'RESET_ALL' })
-    if (target === 'home') {
-      navigate('/')
-    } else {
-      navigate('/games')
-    }
+    navigate('/games')
   }
 
   const handleTapOutside = (e: React.PointerEvent) => {
@@ -173,12 +168,17 @@ function AliasHome() {
       </div>
       <header className="alias-home__header">
         <h1 className="alias-home__title">Ассоциации</h1>
-        <div className="alias-home__tagline-box">
-          <p className="alias-home__tagline">
-            Объясняй слово жестами или описанием, но без однокоренных слов. За каждый верный ответ — балл. В команде — минимум 2 игрока.
-          </p>
-        </div>
+        <p className="alias-home__tagline">Объясняй слово жестами или описанием, но без однокоренных слов</p>
       </header>
+
+      <div className="alias-home__how card">
+        <h3 className="alias-home__how-title">Как играть</h3>
+        <ul className="alias-home__how-list">
+          <li>Выберите категории и введите имена участников (команды по 2+ человека)</li>
+          <li>Игрок объясняет слово жестами или описанием, без однокоренных</li>
+          <li>За каждый верный ответ — балл. Побеждает команда с большим счётом</li>
+        </ul>
+      </div>
 
       <section className="alias-home__section">
         <h2 className="alias-home__section-title">Количество команд</h2>
@@ -213,7 +213,10 @@ function AliasHome() {
       </section>
 
       <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Категории</h2>
+        <h2 className="alias-home__section-title">Категории <span className="alias-home__section-hint">(выбери одно или несколько)</span></h2>
+        {state.categoryIds.length === 0 && (
+          <p className="alias-home__category-hint" role="status">Выберите минимум одну категорию</p>
+        )}
         <div className="alias-home__categories">
           {ALIAS_CATEGORIES.map((cat) => (
             <button
@@ -231,13 +234,15 @@ function AliasHome() {
 
       <section className="alias-home__section alias-home__section--teams">
         {/* Не вешать key на TeamsSetupBlock от teamCount/timer/categories — иначе remount сбрасывает подсветки и локальный state. */}
-        <TeamsSetupBlock teamCount={teamCount} teams={teams} dispatch={dispatch} />
+        <TeamsSetupBlock
+          teamCount={teamCount}
+          teams={teams}
+          dispatch={dispatch}
+          teamHint={validationHint !== 'Выберите минимум одну категорию' ? validationHint : null}
+        />
       </section>
 
       <div className="alias-home__actions">
-        {validationHint != null && (
-          <p className="alias-home__hint" role="status">{validationHint}</p>
-        )}
         <button
           type="button"
           className="btn btn--primary alias-home__start"

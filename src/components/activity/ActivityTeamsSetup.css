@@ -9,6 +9,13 @@
   color: var(--muted);
 }
 
+.activity-teams-setup__section-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--secondary, var(--neonCyan));
+  line-height: 1.3;
+}
+
 .activity-teams-setup__list {
   display: flex;
   flex-direction: column;

@@ -30,61 +30,39 @@
   text-shadow: 0 0 24px var(--glowCyan);
 }
 
-/* Правила вверху — выделенный блок, адаптирован под все темы */
-.alias-home__tagline-box {
-  margin-top: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius, 12px);
-  border: 1px solid var(--border);
-  background: var(--panel);
-  box-shadow: var(--shadow);
-}
-
 .alias-home__tagline {
   margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 0.95rem;
   color: var(--muted);
 }
 
-[data-theme="neon-dark"] .alias-home__tagline-box {
-  border-color: rgba(43, 210, 255, 0.25);
-  background: rgba(20, 22, 45, 0.95);
-  box-shadow: 0 0 0 1px rgba(43, 210, 255, 0.15), var(--shadow);
+/* Правила — блок «Как играть» как в Саботаже */
+.alias-home__how {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
 }
 
-[data-theme="neon-light"] .alias-home__tagline-box {
-  border-color: rgba(124, 58, 237, 0.2);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.1), var(--shadow);
+.alias-home__how-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
-[data-theme="portal"] .alias-home__tagline-box {
-  border-color: rgba(0, 255, 204, 0.3);
-  background: rgba(6, 30, 24, 0.95);
-  box-shadow: 0 0 0 1px rgba(0, 255, 204, 0.2), var(--shadow);
+.alias-home__how-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
-[data-theme="soft-light"] .alias-home__tagline-box {
-  border-color: rgba(124, 58, 237, 0.2);
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12), var(--shadow);
+.alias-home__how-list li {
+  margin-bottom: 0.25rem;
 }
 
-[data-theme="sunset"] .alias-home__tagline-box {
-  border-color: rgba(251, 191, 36, 0.35);
-  background: rgba(30, 20, 40, 0.92);
-  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.2), var(--shadow);
-}
-
-[data-theme="minimal-calm"] .alias-home__tagline-box {
-  border-color: rgba(56, 189, 248, 0.3);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), var(--shadow);
-}
-
-[data-theme="minimal-calm"] .alias-home__tagline-box .alias-home__tagline {
-  color: rgba(30, 41, 59, 0.92);
+.alias-home__how-list li:last-child {
+  margin-bottom: 0;
 }
 
 .alias-home__section {
@@ -96,6 +74,19 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--muted);
+}
+
+.alias-home__section-hint {
+  font-weight: 400;
+  color: var(--muted);
+  opacity: 0.9;
+}
+
+.alias-home__category-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--secondary);
+  line-height: 1.3;
 }
 
 .alias-home__options {

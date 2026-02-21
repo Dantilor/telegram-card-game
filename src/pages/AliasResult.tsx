@@ -22,7 +22,7 @@ function AliasResult() {
     haptic('light')
     saveAliasState(getInitialAliasState())
     dispatch({ type: 'RESET_ALL' })
-    navigate('/')
+    navigate('/games')
   }
 
   const handleNextRound = () => {

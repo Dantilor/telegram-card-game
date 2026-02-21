@@ -118,18 +118,13 @@ function AliasPlay() {
   }
 
   const handleExitConfirm = (confirmed: boolean) => {
-    const target = showExitConfirm
     setShowExitConfirm(null)
     if (!confirmed) return
     haptic('light')
     const initialState = getInitialAliasState()
     saveAliasState(initialState)
     dispatch({ type: 'RESET_ALL' })
-    if (target === 'home') {
-      navigate('/')
-    } else {
-      navigate('/alias')
-    }
+    navigate('/games')
   }
 
   return (

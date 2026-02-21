@@ -27,7 +27,7 @@
   min-height: 0;
   padding: clamp(1.5rem, 5vw, 2rem);
   text-align: center;
-  margin: 0 auto 1rem;
+  margin: 0.75rem auto 1rem;
   width: 100%;
   max-width: min(28rem, 92vw);
   display: flex;

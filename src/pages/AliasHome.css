@@ -78,8 +78,8 @@
 
 .alias-home__section-hint {
   font-weight: 400;
-  color: var(--muted);
-  opacity: 0.9;
+  font-size: 0.8rem;
+  color: var(--primary);
 }
 
 .alias-home__category-hint {

@@ -213,7 +213,7 @@ function AliasHome() {
       </section>
 
       <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Категории <span className="alias-home__section-hint">(выбери одно или несколько)</span></h2>
+        <h2 className="alias-home__section-title">Категории <span className="alias-home__section-hint">(выберите одну или несколько)</span></h2>
         {state.categoryIds.length === 0 && (
           <p className="alias-home__category-hint" role="status">Выберите минимум одну категорию</p>
         )}

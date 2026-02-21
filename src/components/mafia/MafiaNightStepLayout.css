@@ -27,6 +27,7 @@
   flex-direction: column;
   width: 100%;
   padding: 16px;
+  padding-top: 1.25rem;
   box-sizing: border-box;
   max-width: 360px;
 }
@@ -36,15 +37,16 @@
   justify-content: flex-end;
 }
 
-/* Карточка «Выбор сохранён»: надпись Игрок по центру, кнопка Продолжить внизу */
+/* Карточка «Выбор сохранён»: заголовок сверху с отступом, кнопка Продолжить внизу */
 .mafia-night-step__card--status-only .mafia-night-step__status-center {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   width: 100%;
+  padding-top: 0.5rem;
 }
 
 .mafia-night-step__card--status-only .mafia-night-step__status-pill {
@@ -59,22 +61,28 @@
   max-width: 320px;
 }
 
-/* Карточка «Ночь» без списка: текст по центру, кнопка внизу с отступом */
+/* Заголовок (Ночь, Ход мафии, и т.д.) всегда сверху с отступом */
+.mafia-night-step__main {
+  flex-shrink: 0;
+  padding-top: 0;
+}
+
+/* Карточка «Ночь» без списка: описание по центру, кнопка внизу; заголовок уже сверху */
 .mafia-night-step__card--centered .mafia-night-step__main {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 
-.mafia-night-step__main {
-  flex-shrink: 0;
-}
-
-.mafia-night-step__card--centered .mafia-night-step__main {
-  flex-shrink: 1;
+.mafia-night-step__card--centered .mafia-night-step__description {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
 }
 
 .mafia-night-step__footer {
@@ -90,6 +98,7 @@
 .mafia-night-step__role {
   flex-shrink: 0;
   margin: 0 0 16px;
+  padding-top: 0.25rem;
   font-size: clamp(1.25rem, 4vw, 1.5rem);
   font-weight: 700;
   color: var(--text);

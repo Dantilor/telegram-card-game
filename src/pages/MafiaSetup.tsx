@@ -13,7 +13,7 @@ function formatRolesLine(counts: { mafia: number; doctor: number; sheriff: numbe
   const parts: string[] = []
   if (counts.mafia) parts.push(`${counts.mafia} ${counts.mafia === 1 ? 'мафия' : 'мафии'}`)
   if (counts.doctor) parts.push(`${counts.doctor} доктор`)
-  if (counts.sheriff) parts.push(`${counts.sheriff} комиссар`)
+  if (counts.sheriff) parts.push(`${counts.sheriff} шериф`)
   if (counts.civilian) parts.push(`${counts.civilian} ${counts.civilian === 1 ? 'мирный' : 'мирных'}`)
   return parts.join(' • ')
 }

@@ -51,7 +51,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   civilian: 'Мирный',
   mafia: 'Мафия',
   doctor: 'Доктор',
-  sheriff: 'Комиссар',
+  sheriff: 'Шериф',
 }
 
 /** Exhaustive check for phase in switch — TypeScript error if a phase is missed. */

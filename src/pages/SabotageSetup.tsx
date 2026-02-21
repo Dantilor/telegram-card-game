@@ -62,7 +62,7 @@ function SabotageSetup() {
       </div>
       <header className="sabotage-setup__header">
         <h1 className="sabotage-setup__title">Саботаж</h1>
-        <p className="sabotage-setup__tagline">Один знает задание и мешает тайно</p>
+        <p className="sabotage-setup__tagline">Один знает больше. Остальные — подозревают.</p>
       </header>
 
       <div className="sabotage-setup__how card">
@@ -92,22 +92,6 @@ function SabotageSetup() {
       </section>
 
       <section className="sabotage-setup__section">
-        <h2 className="sabotage-setup__section-title">Введите имена участников</h2>
-        <div className="sabotage-setup__names">
-          {names.slice(0, count).map((name, i) => (
-            <input
-              key={i}
-              type="text"
-              className="sabotage-setup__input card"
-              placeholder={`Игрок ${i + 1}`}
-              value={name}
-              onChange={(e) => updateName(i, e.target.value)}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="sabotage-setup__section">
         <h2 className="sabotage-setup__section-title">Время на задание</h2>
         <div className="sabotage-setup__timer-row">
           {TIMER_OPTIONS.map((sec) => (
@@ -122,6 +106,22 @@ function SabotageSetup() {
             >
               {formatTimer(sec)}
             </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="sabotage-setup__section">
+        <h2 className="sabotage-setup__section-title">Введите имена участников</h2>
+        <div className="sabotage-setup__names">
+          {names.slice(0, count).map((name, i) => (
+            <input
+              key={i}
+              type="text"
+              className="sabotage-setup__input card"
+              placeholder={`Игрок ${i + 1}`}
+              value={name}
+              onChange={(e) => updateName(i, e.target.value)}
+            />
           ))}
         </div>
       </section>

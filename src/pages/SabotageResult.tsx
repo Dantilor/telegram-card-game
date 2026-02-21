@@ -26,8 +26,8 @@ function SabotageResult() {
 
   const handlePlayAgain = () => {
     hapticSelection()
-    dispatch({ type: 'RESET' })
-    navigate('/sabotage')
+    dispatch({ type: 'START_NEXT_ROUND' })
+    navigate('/sabotage/role')
   }
 
   const handleBackToGames = () => {

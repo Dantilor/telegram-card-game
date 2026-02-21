@@ -9,6 +9,7 @@ import { pickRandomTask } from './data/tasks'
 
 type SabotageAction =
   | { type: 'START_GAME'; players: Array<{ id: string; name: string }>; taskDurationSeconds: number }
+  | { type: 'START_NEXT_ROUND' }
   | { type: 'NEXT_ROLE_VIEW' }
   | { type: 'SET_VOTE'; voterId: string; targetId: string }
   | { type: 'NEXT_VOTE_COLLECT' }
@@ -30,6 +31,27 @@ function sabotageReducer(state: SabotageState, action: SabotageAction): Sabotage
         roleViewIndex: 0,
         task: pickRandomTask(),
         taskDurationSeconds: action.taskDurationSeconds,
+        votes: {},
+        voteCollectIndex: 0,
+        saboteurId,
+        winner: null,
+      }
+    }
+    case 'START_NEXT_ROUND': {
+      if (state.phase !== 'result' || state.players.length === 0) return state
+      const players = [...state.players]
+      const saboteurIdx = Math.floor(Math.random() * players.length)
+      const saboteurId = players[saboteurIdx]!.id
+      const updated = players.map((p, i) => ({
+        ...p,
+        role: i === saboteurIdx ? ('saboteur' as const) : ('player' as const),
+      }))
+      return {
+        players: updated,
+        phase: 'role',
+        roleViewIndex: 0,
+        task: pickRandomTask(),
+        taskDurationSeconds: state.taskDurationSeconds,
         votes: {},
         voteCollectIndex: 0,
         saboteurId,

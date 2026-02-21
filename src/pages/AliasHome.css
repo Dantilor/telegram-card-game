@@ -103,9 +103,13 @@
 }
 
 .alias-home__option-btn--active {
-  border-color: var(--primary);
-  background: var(--td-active-bg);
+  border-color: var(--primary) !important;
+  background: var(--td-active-bg) !important;
   color: var(--primary);
+  box-shadow: 0 0 12px var(--glowCyan);
+}
+.alias-home__option-btn--active:hover {
+  box-shadow: 0 0 16px var(--glowCyan);
 }
 
 .alias-home__section--teams {
@@ -288,18 +292,25 @@
   cursor: pointer;
 }
 
-/* Выбранная категория — как в Правда или действие, адаптивно под тему */
+/* Выбранная категория — яркое выделение как в других играх */
 .alias-home__category-card--active {
   border-width: 2px;
   border-style: solid;
-  border-color: var(--primary);
-  background: var(--td-active-bg);
-  box-shadow: 0 0 0 1px var(--primary), 0 0 14px var(--glowPink);
+  border-color: var(--primary) !important;
+  background: var(--td-active-bg) !important;
+  box-shadow: 0 0 0 1px var(--primary), 0 0 14px var(--glowCyan);
   color: var(--text);
 }
+.alias-home__category-card--active:hover {
+  box-shadow: 0 0 0 1px var(--primary), 0 0 18px var(--glowCyan);
+}
 .alias-home__category-card--active .alias-home__category-title {
-  color: var(--text);
+  color: var(--primary);
   font-weight: 700;
+  text-shadow: 0 0 10px var(--glowCyan);
+}
+.alias-home__category-card--active .alias-home__category-emoji {
+  filter: drop-shadow(0 0 8px var(--primary));
 }
 
 .alias-home__category-card--locked {

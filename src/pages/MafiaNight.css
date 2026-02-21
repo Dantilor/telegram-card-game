@@ -69,9 +69,10 @@
   border: 2px solid var(--border);
   border-radius: var(--radius, 12px);
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
+  transition: border-color 0.2s, background 0.2s, opacity 0.2s;
   box-sizing: border-box;
   touch-action: manipulation;
+  box-shadow: none;
 }
 
 .mafia-night__target:hover:not(:disabled) {
@@ -86,6 +87,5 @@
 .mafia-night__target.is-active {
   border-color: var(--secondary);
   background: var(--td-active-bg, rgba(43, 210, 255, 0.2));
-  box-shadow: 0 0 12px var(--glowCyan);
   color: var(--text);
 }

@@ -133,7 +133,7 @@ function SabotageSetup() {
           onClick={handleStart}
           disabled={count < MIN_PLAYERS}
         >
-          Начать игру
+          Начать раунд
         </button>
       </div>
     </div>

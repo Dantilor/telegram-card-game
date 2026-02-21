@@ -27,6 +27,15 @@ export function MafiaNightStepLayout({
   primaryButtonDisabled = false,
   children,
 }: MafiaNightStepLayoutProps) {
+  const hasMain = (roleTitle != null && roleTitle !== '') || (description != null && description !== '')
+  const statusOnly = children == null && !hasMain && statusBlock != null
+
+  const cardClass = statusOnly
+    ? ' mafia-night-step__card--status-only'
+    : children == null
+      ? ' mafia-night-step__card--centered'
+      : ' mafia-night-step__card--list'
+
   return (
     <div className="mafia-night-step">
       {stepTitle !== '' && (
@@ -34,33 +43,55 @@ export function MafiaNightStepLayout({
           {stepTitle}
         </p>
       )}
-      <div className="mafia-night-step__card card">
-        {(roleTitle != null && roleTitle !== '') && (
-          <h2 className="mafia-night-step__role">{roleTitle}</h2>
-        )}
-        {(description != null && description !== '') && (
-          <p className="mafia-night-step__description">{description}</p>
-        )}
+      <div className={`mafia-night-step__card card${cardClass}`}>
+        <div className="mafia-night-step__main">
+          {(roleTitle != null && roleTitle !== '') && (
+            <h2 className="mafia-night-step__role">{roleTitle}</h2>
+          )}
+          {(description != null && description !== '') && (
+            <p className="mafia-night-step__description">{description}</p>
+          )}
+        </div>
         {children != null && (
           <div className="mafia-night-step__content">
             {children}
           </div>
         )}
-        <footer className="mafia-night-step__footer">
-          {statusBlock != null && (
-            <div className="mafia-night-step__status">
-              {statusBlock}
+        {statusOnly ? (
+          <>
+            <div className="mafia-night-step__status-center">
+              <div className="mafia-night-step__status">
+                {statusBlock}
+              </div>
             </div>
-          )}
-          <button
-            type="button"
-            className="btn btn--primary mafia-night-step__btn"
-            onClick={primaryButtonOnClick}
-            disabled={primaryButtonDisabled}
-          >
-            {primaryButtonLabel}
-          </button>
-        </footer>
+            <footer className="mafia-night-step__footer">
+              <button
+                type="button"
+                className="btn btn--primary mafia-night-step__btn"
+                onClick={primaryButtonOnClick}
+                disabled={primaryButtonDisabled}
+              >
+                {primaryButtonLabel}
+              </button>
+            </footer>
+          </>
+        ) : (
+          <footer className="mafia-night-step__footer">
+            {statusBlock != null && (
+              <div className="mafia-night-step__status">
+                {statusBlock}
+              </div>
+            )}
+            <button
+              type="button"
+              className="btn btn--primary mafia-night-step__btn"
+              onClick={primaryButtonOnClick}
+              disabled={primaryButtonDisabled}
+            >
+              {primaryButtonLabel}
+            </button>
+          </footer>
+        )}
       </div>
     </div>
   )

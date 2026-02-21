@@ -360,7 +360,7 @@ function QuizHome() {
           disabled={!canStart}
           onClick={handleStart}
         >
-          Начать игру
+          Начать раунд
         </button>
       </div>
 

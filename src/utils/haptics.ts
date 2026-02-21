@@ -21,7 +21,7 @@ export function hapticSelection(): void {
   }
 }
 
-/** impactOccurred — use on primary actions (e.g. "Начать игру"). */
+/** impactOccurred — use on primary actions (e.g. "Начать раунд"). */
 export function hapticImpact(style: 'light' | 'medium' | 'heavy' = 'light'): void {
   try {
     const h = getHaptic()

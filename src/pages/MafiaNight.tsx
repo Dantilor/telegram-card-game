@@ -79,7 +79,7 @@ function MafiaNight() {
         <MafiaNightStepLayout
           stepTitle=""
           roleTitle="Ночь"
-          description="Город засыпает. Никто не видит, кто сделает ход."
+          description="В городе GameNight Cards гаснут фонари. Жители в спешке закрывают ставни, надеясь, что завтрашний рассвет они встретят в том же составе."
           primaryButtonLabel="Начать"
           primaryButtonOnClick={() => {
             hapticSelection()
@@ -111,7 +111,7 @@ function MafiaNight() {
         <MafiaNightStepLayout
           stepTitle={`Ночь — шаг 1 / ${nightSteps.length}`}
           roleTitle="Ход: Мафия"
-          description="Тьма сгущается. Выберите жертву среди мирных жителей, того, кто не доживёт до утра."
+          description="Но не всем сегодня до сна. Холодный блеск стали и запах пороха… Просыпается Мафия."
           primaryButtonLabel="Начать"
           primaryButtonOnClick={() => {
             hapticSelection()

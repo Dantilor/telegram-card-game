@@ -85,6 +85,21 @@
   margin-bottom: 0.5rem;
 }
 
+.mafia-roles__role.mafia-roles__role--above {
+  margin-bottom: 0.75rem;
+}
+
+.mafia-roles__roles-legend {
+  margin-top: auto;
+  margin-bottom: 0;
+  padding-top: 1rem;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+  text-align: center;
+}
+
 .mafia-roles__reveal--dimmed .mafia-roles__emoji,
 .mafia-roles__reveal--dimmed .mafia-roles__role {
   opacity: 0.25;

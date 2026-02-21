@@ -131,7 +131,7 @@ function MafiaSetup() {
           onClick={handleStart}
           disabled={count < 4}
         >
-          Начать игру
+          Начать раунд
         </button>
       </div>
     </div>

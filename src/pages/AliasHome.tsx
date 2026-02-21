@@ -244,7 +244,7 @@ function AliasHome() {
           disabled={!canStart}
           onClick={handleStartGame}
         >
-          Начать игру
+          Начать раунд
         </button>
       </div>
 

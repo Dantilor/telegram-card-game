@@ -39,7 +39,7 @@ function Home() {
               className="btn btn--primary home-hero__btn"
               onClick={() => hapticImpact('light')}
             >
-              Начать игру
+              Начать раунд
             </Link>
             {favoritesLocked ? (
               <button

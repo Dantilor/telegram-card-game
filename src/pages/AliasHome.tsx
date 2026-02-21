@@ -168,14 +168,14 @@ function AliasHome() {
       </div>
       <header className="alias-home__header">
         <h1 className="alias-home__title">Ассоциации</h1>
-        <p className="alias-home__tagline">Объясняй слово жестами или описанием, но без однокоренных слов</p>
+        <p className="alias-home__tagline">Никаких однокоренных слов. Только логика.</p>
       </header>
 
       <div className="alias-home__how card">
         <h3 className="alias-home__how-title">Как играть</h3>
         <ul className="alias-home__how-list">
           <li>Выберите категории и введите имена участников (команды по 2+ человека)</li>
-          <li>Игрок объясняет слово жестами или описанием, без однокоренных</li>
+          <li>Игрок объясняет слова жестами или описанием, без однокоренных слов</li>
           <li>За каждый верный ответ — балл. Побеждает команда с большим счётом</li>
         </ul>
       </div>

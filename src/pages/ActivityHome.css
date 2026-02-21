@@ -37,7 +37,8 @@
   padding: 0.75rem;
 }
 
-/* В режиме Lite (minimal-calm) — такой же цвет правил, как в Ассоциациях (.card) */
+/* В режимах Light и Lite — такой же цвет правил, как в Ассоциациях (.card) */
+[data-theme="neon-light"] .activity-home__rules-box,
 [data-theme="minimal-calm"] .activity-home__rules-box {
   background: var(--panel);
   border-color: var(--border);

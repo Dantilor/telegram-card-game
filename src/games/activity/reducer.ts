@@ -43,6 +43,7 @@ export type ActivityAction =
   | { type: 'SKIPPED' }
   | { type: 'END_ROUND' }
   | { type: 'PASS_TURN' }
+  | { type: 'START_NEXT_ROUND' }
   | { type: 'NEXT_WORD' }
   | { type: 'RESET_ALL' }
 
@@ -190,6 +191,19 @@ export function activityReducer(state: ActivityState, action: ActivityAction): A
         guessed: 0,
         skipped: 0,
         roundEndFired: false,
+      }
+    }
+
+    case 'START_NEXT_ROUND': {
+      if (state.phase !== 'game_over') return state
+      return {
+        ...state,
+        phase: 'turn_ready',
+        currentTeamIndex: 0,
+        roundNumber: state.roundNumber + 1,
+        roundEndFired: false,
+        guessed: 0,
+        skipped: 0,
       }
     }
 

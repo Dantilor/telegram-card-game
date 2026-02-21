@@ -23,18 +23,24 @@
 }
 
 .activity-home__title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.35rem;
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--text);
   text-shadow: 0 0 24px var(--glowPink);
 }
 
+.activity-home__tagline {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
 .activity-home__rules-box {
   background: var(--td-dare-bg);
   border: 1px solid var(--td-dare-border);
   border-radius: var(--radius, 8px);
-  padding: 0.75rem;
+  padding: 0.85rem 1rem;
 }
 
 /* В режимах Light и Lite — такой же цвет правил, как в Ассоциациях (.card) */
@@ -44,11 +50,31 @@
   border-color: var(--border);
 }
 
-.activity-home__rules {
-  margin: 0;
-  font-size: 0.85rem;
+.activity-home__how-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text);
-  line-height: 1.4;
+}
+
+.activity-home__how-title.activity-home__important-title {
+  margin-top: 0.85rem;
+}
+
+.activity-home__how-list {
+  margin: 0 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.activity-home__how-list li {
+  margin-bottom: 0.25rem;
+}
+
+.activity-home__how-list li:last-child {
+  margin-bottom: 0;
 }
 
 .activity-home__section {

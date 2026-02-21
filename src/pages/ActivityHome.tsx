@@ -143,11 +143,19 @@ function ActivityHome() {
       </div>
       <header className="activity-home__header">
         <h1 className="activity-home__title">Активитус</h1>
+        <p className="activity-home__tagline">Без пауз. Только импровизация.</p>
         <div className="activity-home__rules-box">
-          <p className="activity-home__rules">
-            Получаешь слово и формат действия. Покажи, объясни или изобрази — команда угадывает.
-            Верный ответ приносит балл.
-          </p>
+          <h3 className="activity-home__how-title">Как играть</h3>
+          <ul className="activity-home__how-list">
+            <li>Игрок получает слово и формат действия</li>
+            <li>Нужно показать, объяснить или нарисовать слово (в зависимости от формата)</li>
+            <li>Команда угадывает слово</li>
+            <li>За каждый верный ответ — 1 балл. Побеждает команда с наибольшим количеством баллов</li>
+          </ul>
+          <h3 className="activity-home__how-title activity-home__important-title">Важно</h3>
+          <ul className="activity-home__how-list">
+            <li>Подготовьте лист бумаги и ручку — в некоторых раундах нужно будет рисовать</li>
+          </ul>
         </div>
       </header>
 

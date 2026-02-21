@@ -168,7 +168,7 @@ function AliasHome() {
       </div>
       <header className="alias-home__header">
         <h1 className="alias-home__title">Ассоциации</h1>
-        <p className="alias-home__tagline">Без пауз. Только импровизация.</p>
+        <p className="alias-home__tagline">Никаких однокоренных слов. Только логика.</p>
       </header>
 
       <div className="alias-home__how card">

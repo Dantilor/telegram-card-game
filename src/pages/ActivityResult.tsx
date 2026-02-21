@@ -23,10 +23,8 @@ function ActivityResult() {
 
   const handlePlayAgain = () => {
     hapticSelection()
-    const initialState = getInitialActivityState()
-    saveActivityState(initialState)
-    dispatch({ type: 'RESET_ALL' })
-    navigate('/activity')
+    dispatch({ type: 'START_NEXT_ROUND' })
+    navigate('/activity/play')
   }
 
   const handleBackToMenu = () => {

@@ -127,12 +127,25 @@
 
 .quiz-final__name {
   flex: 1;
+  min-width: 0;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.quiz-final__correct {
+  font-size: 0.85rem;
+  color: var(--success, #22c55e);
+  flex-shrink: 0;
+}
+
+.quiz-final__wrong {
+  font-size: 0.85rem;
+  color: var(--muted);
+  flex-shrink: 0;
 }
 
 .quiz-final__score {

@@ -22,6 +22,8 @@ export type Player = {
   name: string
   score: number
   streak: number
+  correctCount: number
+  wrongCount: number
   boosters: Boosters
   usedBoostersThisGame: Boosters
   nextQuestionBonusMultiplier: number

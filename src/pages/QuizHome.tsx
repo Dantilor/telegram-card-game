@@ -9,12 +9,7 @@ import HomeButton from '../components/HomeButton'
 import './QuizHome.css'
 
 const QUESTION_COUNTS = [5, 10, 20] as const
-const TEAM_COUNT_OPTIONS = [2, 3, 4, 5, 6] as const
-
-type TeamSlot = {
-  name: string
-  players: string[]
-}
+const PARTICIPANT_COUNT_OPTIONS = [2, 3, 4, 5, 6, 7, 8] as const
 
 function QuizHome() {
   const navigate = useNavigate()
@@ -24,13 +19,9 @@ function QuizHome() {
   const [questionCount, setQuestionCount] = useState(5)
   const [tagError, setTagError] = useState<string | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
-  
-  const [teamCount, setTeamCount] = useState(2)
-  const [teams, setTeams] = useState<TeamSlot[]>(() => 
-    Array.from({ length: 6 }, () => ({ name: '', players: [] }))
-  )
-  const [playerInputs, setPlayerInputs] = useState<string[]>(() => Array(6).fill(''))
-  const playerInputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  const [participantCount, setParticipantCount] = useState(2)
+  const [names, setNames] = useState<string[]>(() => Array(8).fill(''))
   const startRequestedRef = useRef(false)
 
   useEffect(() => {
@@ -45,9 +36,8 @@ function QuizHome() {
       setTags([])
       setQuestionCount(5)
       setTagError(null)
-      setTeamCount(2)
-      setTeams(Array.from({ length: 6 }, () => ({ name: '', players: [] })))
-      setPlayerInputs(Array(6).fill(''))
+      setParticipantCount(2)
+      setNames(Array(8).fill(''))
       setShowExitConfirm(null)
     }
   }, [state.phase])
@@ -60,69 +50,29 @@ function QuizHome() {
     )
   }
 
-  const handleTeamCount = (count: number) => {
+  const handleParticipantCount = (count: number) => {
     hapticSelection()
-    setTeamCount(count)
+    setParticipantCount(count)
   }
 
-  const handleTeamName = (slotIndex: number, name: string) => {
-    setTeams((prev) => {
+  const handleName = (index: number, value: string) => {
+    setNames((prev) => {
       const next = [...prev]
-      next[slotIndex] = { ...next[slotIndex]!, name }
+      next[index] = value
       return next
     })
   }
 
-  const handleAddPlayer = (slotIndex: number) => {
-    const name = (playerInputs[slotIndex] ?? '').trim()
-    if (!name) return
-    hapticSelection()
-    setTeams((prev) => {
-      const next = [...prev]
-      next[slotIndex] = { 
-        ...next[slotIndex]!, 
-        players: [...next[slotIndex]!.players, name] 
-      }
-      return next
-    })
-    setPlayerInputs((prev) => {
-      const next = [...prev]
-      next[slotIndex] = ''
-      return next
-    })
-    playerInputRefs.current[slotIndex]?.blur()
-  }
-
-  const handleRemovePlayer = (slotIndex: number, playerIndex: number) => {
-    haptic('light')
-    setTeams((prev) => {
-      const next = [...prev]
-      next[slotIndex] = {
-        ...next[slotIndex]!,
-        players: next[slotIndex]!.players.filter((_, i) => i !== playerIndex),
-      }
-      return next
-    })
-  }
-
+  const visibleNames = names.slice(0, participantCount)
   const canStart =
     tags.length >= 1 &&
-    Array.from({ length: teamCount }, (_, i) => teams[i]).every(
-      (t) => t && t.name.trim() !== '' && t.players.length >= 2
-    )
+    participantCount >= 2
 
   const validationHint: string | null = canStart
     ? null
     : tags.length === 0
-      ? 'Выберите минимум одну категорию'
-      : (() => {
-          for (let i = 0; i < teamCount; i++) {
-            const t = teams[i]
-            if (!t || t.name.trim() === '') return `Укажите название команды ${i + 1}`
-            if (t.players.length < 2) return `Добавьте минимум 2 игроков в команду «${t.name.trim() || i + 1}»`
-          }
-          return null
-        })()
+      ? null
+      : 'Выберите минимум одну категорию и укажите участников'
 
   const handleStart = () => {
     const pool = getQuestionsByTags(tags, 100)
@@ -131,25 +81,16 @@ function QuizHome() {
       return
     }
     if (!canStart) return
-    
+
     haptic('medium')
     startRequestedRef.current = true
-    
-    const playerNames: string[] = []
-    for (let i = 0; i < teamCount; i++) {
-      const team = teams[i]
-      if (team) {
-        team.players.forEach((p) => {
-          playerNames.push(`${team.name}: ${p}`)
-        })
-      }
-    }
-    
+
+    const playerNames = visibleNames.map((n, i) => n.trim() || `Участник ${i + 1}`)
     dispatch({ type: 'START_ROOM', tags, totalQuestions: questionCount })
     dispatch({ type: 'SET_ROOM_PLAYERS', names: playerNames })
   }
 
-  const hasData = tags.length > 0 || teams.some((t) => t.name.trim() || t.players.length > 0)
+  const hasData = tags.length > 0 || names.some((n) => n.trim() !== '')
 
   const handleBackClick = () => {
     if (hasData) {
@@ -184,8 +125,6 @@ function QuizHome() {
     }
   }
 
-  const visibleTeams = teams.slice(0, teamCount)
-
   return (
     <div className="quiz-home" onPointerDown={handleTapOutside}>
       <div className="quiz-home__top">
@@ -204,24 +143,27 @@ function QuizHome() {
         </button>
       </div>
       <header className="quiz-home__header">
-        <h1 className="quiz-home__title">Викторина</h1>
-        <div className="quiz-home__rules-box">
-          <p className="quiz-home__rules">
-            Отвечай на вопросы выбранной темы. За верный ответ — баллы. 
-            Знания решают. Ошибки наказываются.
-          </p>
+        <h1 className="quiz-home__title">Битва умов</h1>
+        <p className="quiz-home__tagline">Ставка сделана. Ответишь правильно?</p>
+        <div className="quiz-home__how card">
+          <h3 className="quiz-home__how-title">Как играть?</h3>
+          <ul className="quiz-home__how-list">
+            <li>Отвечай на вопросы выбранной темы.</li>
+            <li>За верный ответ — баллы.</li>
+            <li>Побеждает тот, кто набрал больше.</li>
+          </ul>
         </div>
       </header>
 
       <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Количество команд</h2>
+        <h2 className="quiz-home__section-title">Количество участников</h2>
         <div className="quiz-home__options">
-          {TEAM_COUNT_OPTIONS.map((count) => (
+          {PARTICIPANT_COUNT_OPTIONS.map((count) => (
             <button
               key={count}
               type="button"
-              className={`btn btn--ghost quiz-home__option-btn ${teamCount === count ? 'quiz-home__option-btn--active' : ''}`}
-              onClick={() => handleTeamCount(count)}
+              className={`btn btn--ghost quiz-home__option-btn ${participantCount === count ? 'quiz-home__option-btn--active' : ''}`}
+              onClick={() => handleParticipantCount(count)}
             >
               {count}
             </button>
@@ -230,7 +172,7 @@ function QuizHome() {
       </section>
 
       <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Вопросов</h2>
+        <h2 className="quiz-home__section-title">Количество вопросов</h2>
         <div className="quiz-home__options">
           {QUESTION_COUNTS.map((n) => (
             <button
@@ -246,7 +188,10 @@ function QuizHome() {
       </section>
 
       <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Категории <span className="quiz-home__section-hint">(выберите одну или несколько)</span></h2>
+        <h2 className="quiz-home__section-title">Категории</h2>
+        {tags.length === 0 && (
+          <p className="quiz-home__category-hint" role="status">Выберите минимум одну категорию</p>
+        )}
         <div className="quiz-home__categories">
           {TAGS.map((tag) => (
             <button
@@ -262,86 +207,26 @@ function QuizHome() {
         </div>
       </section>
 
-      <section className="quiz-home__section quiz-home__section--teams">
-        <h2 className="quiz-home__teams-title">Команды</h2>
-        <div className="quiz-home__teams-list">
-          {visibleTeams.map((team, slotIndex) => (
-            <div key={slotIndex} className="quiz-home__team-card card">
-              <label className="quiz-home__team-label">Название команды</label>
-              <input
-                type="text"
-                className="quiz-home__team-input"
-                placeholder={`Команда ${slotIndex + 1}`}
-                value={team.name}
-                onChange={(e) => handleTeamName(slotIndex, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    ;(e.target as HTMLInputElement).blur()
-                  }
-                }}
-                inputMode="text"
-                enterKeyHint="done"
-                autoCorrect="off"
-                autoCapitalize="words"
-                maxLength={32}
-              />
-              <div className="quiz-home__team-players">
-                <span className="quiz-home__players-label">
-                  Игроки {team.players.length < 2 && <span className="quiz-home__hint">(минимум 2)</span>}
-                </span>
-                <ul className="quiz-home__player-list">
-                  {team.players.map((playerName, playerIndex) => (
-                    <li key={playerIndex} className="quiz-home__player-item">
-                      <span className="quiz-home__player-name">{playerName}</span>
-                      <button
-                        type="button"
-                        className="btn btn--ghost quiz-home__player-remove"
-                        onClick={() => handleRemovePlayer(slotIndex, playerIndex)}
-                        aria-label="Удалить"
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                <div className="quiz-home__add-row">
-                  <input
-                    ref={(el) => {
-                      playerInputRefs.current[slotIndex] = el
-                    }}
-                    type="text"
-                    className="quiz-home__team-input quiz-home__team-input--small"
-                    placeholder="Имя игрока"
-                    value={playerInputs[slotIndex] ?? ''}
-                    onChange={(e) => {
-                      setPlayerInputs((prev) => {
-                        const next = [...prev]
-                        next[slotIndex] = e.target.value
-                        return next
-                      })
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleAddPlayer(slotIndex)
-                      }
-                    }}
-                    inputMode="text"
-                    enterKeyHint="done"
-                    autoCorrect="off"
-                    autoCapitalize="words"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn--secondary quiz-home__add-btn"
-                    onClick={() => handleAddPlayer(slotIndex)}
-                  >
-                    Добавить
-                  </button>
-                </div>
-              </div>
-            </div>
+      <section className="quiz-home__section quiz-home__section--participants">
+        <h2 className="quiz-home__participants-title">Введите имена участников</h2>
+        <div className="quiz-home__participants-list">
+          {Array.from({ length: participantCount }, (_, i) => (
+            <input
+              key={i}
+              type="text"
+              className="quiz-home__name-input card"
+              placeholder={`Участник ${i + 1}`}
+              value={names[i] ?? ''}
+              onChange={(e) => handleName(i, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              }}
+              inputMode="text"
+              enterKeyHint="done"
+              autoCorrect="off"
+              autoCapitalize="words"
+              maxLength={32}
+            />
           ))}
         </div>
       </section>

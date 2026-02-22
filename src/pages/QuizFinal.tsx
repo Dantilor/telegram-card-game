@@ -9,7 +9,10 @@ function QuizFinal() {
   const navigate = useNavigate()
   const { state, dispatch } = useQuizGame()
 
-  const sorted = [...state.players].sort((a, b) => b.score - a.score)
+  const sorted = [...state.players].sort((a, b) => {
+    if (b.correctCount !== a.correctCount) return b.correctCount - a.correctCount
+    return b.score - a.score
+  })
   const winner = sorted[0]
 
   const handlePlayAgain = () => {
@@ -37,11 +40,11 @@ function QuizFinal() {
 
       <header className="quiz-final__header">
         <h1 className="quiz-final__title">Игра окончена!</h1>
-        {winner && winner.score > 0 && (
+        {winner && (winner.correctCount > 0 || winner.score > 0) && (
           <div className="quiz-final__winner">
             <span className="quiz-final__winner-label">Победитель</span>
             <span className="quiz-final__winner-name">{winner.name}</span>
-            <span className="quiz-final__winner-score">{winner.score} очков</span>
+            <span className="quiz-final__winner-score">{winner.correctCount} верно · {winner.score} очков</span>
           </div>
         )}
       </header>
@@ -53,6 +56,8 @@ function QuizFinal() {
             <div key={p.id} className={`quiz-final__row ${i === 0 ? 'quiz-final__row--winner' : ''}`}>
               <span className="quiz-final__rank">{i + 1}</span>
               <span className="quiz-final__name">{p.name}</span>
+              <span className="quiz-final__correct">{p.correctCount} верно</span>
+              <span className="quiz-final__wrong">{p.wrongCount} неверно</span>
               <span className="quiz-final__score">{p.score}</span>
             </div>
           ))}

@@ -30,6 +30,8 @@ function createPlayer(id: string, name: string): Player {
     name,
     score: 0,
     streak: 0,
+    correctCount: 0,
+    wrongCount: 0,
     boosters: { fiftyFifty: 0, pause: 0, insurance: 0 },
     usedBoostersThisGame: { fiftyFifty: 0, pause: 0, insurance: 0 },
     nextQuestionBonusMultiplier: 1,
@@ -199,6 +201,17 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
           },
         }
         const allAnswered = state.players.every((p) => round[p.id])
+        if (allAnswered) {
+          newPlayers = newPlayers.map((p) => {
+            const r = round[p.id]
+            if (!r) return p
+            return {
+              ...p,
+              correctCount: p.correctCount + (r.isCorrect ? 1 : 0),
+              wrongCount: p.wrongCount + (r.isCorrect ? 0 : 1),
+            }
+          })
+        }
         const nextIdx = state.currentPlayerIndex + 1
         return {
           ...state,
@@ -226,7 +239,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         speedBonus: false,
         insurance: !isCorrect && insurance,
       })
-      const newPlayers = state.players.map((p) => {
+      let newPlayers = state.players.map((p) => {
         if (p.id !== action.playerId) return p
         const updated = { ...p, score: Math.max(0, p.score + earned - lost) }
         return applyStreakBonus(updated, isCorrect)
@@ -242,6 +255,15 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
           wasFirstCorrect: false,
         },
       }
+      newPlayers = newPlayers.map((p) => {
+        const r = round[p.id]
+        if (!r) return p
+        return {
+          ...p,
+          correctCount: p.correctCount + (r.isCorrect ? 1 : 0),
+          wrongCount: p.wrongCount + (r.isCorrect ? 0 : 1),
+        }
+      })
       return {
         ...state,
         round,
@@ -260,7 +282,14 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       if (!currentPlayer) return state
       const insurance = state.uiFlags.insuranceArmedByPlayerId === currentPlayer.id
       const { lost } = calculatePoints(cur, mult, false, { insurance })
-      const updated = applyStreakBonus({ ...currentPlayer, score: Math.max(0, currentPlayer.score - lost) }, false)
+      const updated = applyStreakBonus(
+        {
+          ...currentPlayer,
+          score: Math.max(0, currentPlayer.score - lost),
+          wrongCount: currentPlayer.wrongCount + 1,
+        },
+        false
+      )
       const round: RoundAnswers = {
         ...state.round,
         [currentPlayer.id]: { answerIndex: -1, timeMs: 0, isCorrect: false, pointsEarned: 0, pointsLost: lost },
@@ -274,8 +303,19 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
           phase: 'result',
         }
       }
-      const newPlayers = state.players.map((p) => (p.id === currentPlayer.id ? updated : p))
+      let newPlayers = state.players.map((p) => (p.id === currentPlayer.id ? updated : p))
       const allAnswered = state.players.every((p) => round[p.id])
+      if (allAnswered) {
+        newPlayers = newPlayers.map((p) => {
+          const r = round[p.id]
+          if (!r) return p
+          return {
+            ...p,
+            correctCount: p.correctCount + (r.isCorrect ? 1 : 0),
+            wrongCount: p.wrongCount + (r.isCorrect ? 0 : 1),
+          }
+        })
+      }
       const nextIdx = state.currentPlayerIndex + 1
       return {
         ...state,
@@ -316,6 +356,8 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         ...p,
         score: 0,
         streak: 0,
+        correctCount: 0,
+        wrongCount: 0,
         usedBoostersThisGame: { fiftyFifty: 0, pause: 0, insurance: 0 } as const,
         nextQuestionBonusMultiplier: 1,
       }))

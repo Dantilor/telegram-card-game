@@ -11,7 +11,11 @@ function QuizMiniSummary() {
   const { state, dispatch } = useQuizGame()
   const [showExitConfirm, setShowExitConfirm] = useState(false)
 
-  const sorted = [...state.players].sort((a, b) => b.score - a.score)
+  const sorted = [...state.players].sort((a, b) => {
+    if (b.correctCount !== a.correctCount) return b.correctCount - a.correctCount
+    return b.score - a.score
+  })
+  const leader = sorted[0]
 
   const handleContinue = () => {
     hapticSelection()
@@ -47,12 +51,17 @@ function QuizMiniSummary() {
 
       <h1 className="quiz-mini-summary__title">Мини-итог</h1>
       <p className="quiz-mini-summary__subtitle">После {state.questionsAnswered} вопросов</p>
+      {leader && (
+        <p className="quiz-mini-summary__leader-label">В лидерах: {leader.name}</p>
+      )}
 
       <div className="quiz-mini-summary__leaderboard card">
         {sorted.map((p, i) => (
           <div key={p.id} className={`quiz-mini-summary__row ${i === 0 ? 'quiz-mini-summary__row--leader' : ''}`}>
             <span className="quiz-mini-summary__rank">{i + 1}</span>
             <span className="quiz-mini-summary__name">{p.name}</span>
+            <span className="quiz-mini-summary__correct">{p.correctCount} верно</span>
+            <span className="quiz-mini-summary__wrong">{p.wrongCount} неверно</span>
             <span className="quiz-mini-summary__score">{p.score}</span>
           </div>
         ))}

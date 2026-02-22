@@ -279,7 +279,8 @@ function tdReducer(state: TDState, action: TDAction): TDState {
     case 'CONTINUE_10':
       return {
         ...state,
-        totalStepsTarget: state.totalStepsTarget + 10,
+        stepCount: 0,
+        totalStepsTarget: 10,
         phase: 'choice',
       }
     case 'RESET':

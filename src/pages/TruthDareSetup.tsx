@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTruthDare } from '../games/truth-dare/TruthDareContext'
-import { TAGS, TAG_LABELS } from '../games/truth-dare/types'
+import { TAGS, TAG_LABELS, TAG_EMOJIS } from '../games/truth-dare/types'
 import { loadSettings, saveSettings } from '../games/truth-dare/settings'
 import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
@@ -74,16 +74,19 @@ function TruthDareSetup() {
       </div>
       <header className="truth-dare-setup__header">
         <h1 className="truth-dare-setup__title">Правда или действие</h1>
-        <div className="truth-dare-setup__rules-box">
-          <p className="truth-dare-setup__rules">
-            Сначала выбор. Потом последствия. Игрок выбирает: правда или действие.
-            Отказ — штраф. С каждым раундом задания становятся смелее.
-          </p>
+        <p className="truth-dare-setup__tagline">Сначала выбор. Потом последствия.</p>
+        <div className="truth-dare-setup__how card">
+          <h3 className="truth-dare-setup__how-title">Как играть</h3>
+          <ul className="truth-dare-setup__how-list">
+            <li>Выбери правду или действие.</li>
+            <li>Ответь честно или выполни задание.</li>
+            <li>С каждым раундом игра становится смелее.</li>
+          </ul>
         </div>
       </header>
 
       <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Игроки</h2>
+        <h2 className="truth-dare-setup__section-title">Количество участников</h2>
         <div className="truth-dare-setup__count-row">
           {Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => MIN_PLAYERS + i).map((n) => (
             <button
@@ -94,26 +97,6 @@ function TruthDareSetup() {
             >
               {n}
             </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Введите имена участников</h2>
-        <div className="truth-dare-setup__names">
-          {names.slice(0, count).map((name, i) => (
-            <input
-              key={i}
-              type="text"
-              className="truth-dare-setup__input card"
-              placeholder="Имя игрока"
-              value={name}
-              onChange={(e) => {
-                const next = [...names]
-                next[i] = e.target.value
-                setNames(next)
-              }}
-            />
           ))}
         </div>
       </section>
@@ -135,16 +118,37 @@ function TruthDareSetup() {
       </section>
 
       <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Тема (опционально)</h2>
-        <div className="truth-dare-setup__tags">
+        <h2 className="truth-dare-setup__section-title">Введите имена участников</h2>
+        <div className="truth-dare-setup__names">
+          {names.slice(0, count).map((name, i) => (
+            <input
+              key={i}
+              type="text"
+              className="truth-dare-setup__input card"
+              placeholder={`Игрок ${i + 1}`}
+              value={name}
+              onChange={(e) => {
+                const next = [...names]
+                next[i] = e.target.value
+                setNames(next)
+              }}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="truth-dare-setup__section">
+        <h2 className="truth-dare-setup__section-title">Категории <span className="truth-dare-setup__section-hint">(выберите одну или несколько)</span></h2>
+        <div className="truth-dare-setup__categories">
           {TAGS.map((tag) => (
             <button
               key={tag}
               type="button"
-              className={`btn truth-dare-setup__tag-btn ${tags.includes(tag) ? 'is-active' : ''}`}
+              className={`truth-dare-setup__category-card card ${tags.includes(tag) ? 'truth-dare-setup__category-card--active' : ''}`}
               onClick={() => toggleTag(tag)}
             >
-              {TAG_LABELS[tag]}
+              <span className="truth-dare-setup__category-emoji">{TAG_EMOJIS[tag]}</span>
+              <span className="truth-dare-setup__category-title">{TAG_LABELS[tag]}</span>
             </button>
           ))}
         </div>

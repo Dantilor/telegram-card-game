@@ -223,7 +223,11 @@
   box-shadow: 0 0 14px var(--glowCyan), 0 0 0 1px var(--neonCyan) !important;
 }
 [data-theme="neon-light"] .truth-dare-setup__category-card--active .truth-dare-setup__category-title {
-  color: #fff;
+  color: var(--text);
+  text-shadow: none;
+}
+[data-theme="neon-light"] .truth-dare-setup__category-card--active .truth-dare-setup__category-emoji {
+  filter: none;
 }
 
 [data-theme="portal"] .truth-dare-setup__count-btn.is-active,

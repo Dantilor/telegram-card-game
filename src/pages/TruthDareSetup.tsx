@@ -25,7 +25,11 @@ function TruthDareSetup() {
     const s = loadSettings()
     if (s.lastPlayers.length >= 2) {
       setCount(s.lastPlayers.length)
-      setNames(s.lastPlayers)
+      setNames(
+        s.lastPlayers.map((name) =>
+          /^Игрок \d+$/.test(name.trim()) ? '' : name
+        )
+      )
     }
     if (s.lastSteps) setSteps(s.lastSteps)
     if (s.lastTags.length) setTags(s.lastTags)

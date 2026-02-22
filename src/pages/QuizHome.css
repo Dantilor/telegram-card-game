@@ -31,12 +31,13 @@
 }
 
 .quiz-home__tagline {
-  margin: 0 0 1rem;
+  margin: 0 0 1.25rem;
   font-size: 0.95rem;
   color: var(--muted);
 }
 
 .quiz-home__how {
+  margin-top: 1.25rem;
   margin-bottom: 0;
   padding: 0.85rem 1rem;
 }

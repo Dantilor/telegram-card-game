@@ -91,6 +91,8 @@ function QuizQuestion() {
   const hasAnswered = !!state.round[currentPlayer.id]
   const canAnswer = !hasAnswered
   const isClutch = state.timer.leftSec > 0 && state.timer.leftSec <= CLUTCH_SEC
+  const roundHasAnswers = Object.keys(state.round).length > 0
+  const showTurnBanner = state.mode === 'room' && state.players.length > 1 && roundHasAnswers
 
   return (
     <div className="quiz-question">
@@ -100,6 +102,13 @@ function QuizQuestion() {
         </button>
         <HomeButton onBeforeNavigate={handleHomeClick} />
       </div>
+
+      {showTurnBanner && (
+        <div className="quiz-question__turn-banner card" role="status">
+          <span className="quiz-question__turn-label">Вопрос переходит к участнику</span>
+          <span className="quiz-question__turn-name">{currentPlayer.name}</span>
+        </div>
+      )}
 
       <div className="quiz-question__score-bar">
         <span className="quiz-question__score-item">

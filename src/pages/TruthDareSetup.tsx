@@ -32,7 +32,7 @@ function TruthDareSetup() {
       )
     }
     if (s.lastSteps) setSteps(s.lastSteps)
-    if (s.lastTags.length) setTags(s.lastTags)
+    /* Категории не восстанавливаем — игрок каждый раз выбирает сам */
   }, [])
 
   const updateCount = (n: number) => {
@@ -122,6 +122,23 @@ function TruthDareSetup() {
       </section>
 
       <section className="truth-dare-setup__section">
+        <h2 className="truth-dare-setup__section-title">Категории <span className="truth-dare-setup__section-hint">(выберите одну или несколько)</span></h2>
+        <div className="truth-dare-setup__categories">
+          {TAGS.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              className={`truth-dare-setup__category-card card ${tags.includes(tag) ? 'truth-dare-setup__category-card--active' : ''}`}
+              onClick={() => toggleTag(tag)}
+            >
+              <span className="truth-dare-setup__category-emoji">{TAG_EMOJIS[tag]}</span>
+              <span className="truth-dare-setup__category-title">{TAG_LABELS[tag]}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="truth-dare-setup__section">
         <h2 className="truth-dare-setup__section-title">Введите имена участников</h2>
         <div className="truth-dare-setup__names">
           {names.slice(0, count).map((name, i) => (
@@ -137,23 +154,6 @@ function TruthDareSetup() {
                 setNames(next)
               }}
             />
-          ))}
-        </div>
-      </section>
-
-      <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Категории <span className="truth-dare-setup__section-hint">(выберите одну или несколько)</span></h2>
-        <div className="truth-dare-setup__categories">
-          {TAGS.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              className={`truth-dare-setup__category-card card ${tags.includes(tag) ? 'truth-dare-setup__category-card--active' : ''}`}
-              onClick={() => toggleTag(tag)}
-            >
-              <span className="truth-dare-setup__category-emoji">{TAG_EMOJIS[tag]}</span>
-              <span className="truth-dare-setup__category-title">{TAG_LABELS[tag]}</span>
-            </button>
           ))}
         </div>
       </section>

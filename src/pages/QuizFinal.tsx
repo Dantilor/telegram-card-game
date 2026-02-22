@@ -24,7 +24,7 @@ function QuizFinal() {
   const handleBackToMenu = () => {
     haptic('light')
     dispatch({ type: 'RESET' })
-    navigate('/quiz')
+    navigate('/games')
   }
 
   const handleHomeClick = () => {

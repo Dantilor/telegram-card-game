@@ -56,7 +56,7 @@ export const GAMES: Game[] = [
     id: 'quiz',
     title: 'Битва умов',
     emoji: '❓',
-    description: 'Ставка сделана. Ответишь правильно?',
+    description: 'Скорость • Дуэли\nВикторина',
     status: 'ready',
     image: IMAGES.quiz.png,
   },

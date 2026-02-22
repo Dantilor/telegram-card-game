@@ -85,7 +85,7 @@ function QuizHome() {
     haptic('medium')
     startRequestedRef.current = true
 
-    const playerNames = visibleNames.map((n, i) => n.trim() || `Участник ${i + 1}`)
+    const playerNames = visibleNames.map((n, i) => n.trim() || `Игрок ${i + 1}`)
     dispatch({ type: 'START_ROOM', tags, totalQuestions: questionCount })
     dispatch({ type: 'SET_ROOM_PLAYERS', names: playerNames })
   }
@@ -188,7 +188,7 @@ function QuizHome() {
       </section>
 
       <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Категории</h2>
+        <h2 className="quiz-home__section-title">Категории <span className="quiz-home__section-hint">(выберите одну или несколько)</span></h2>
         {tags.length === 0 && (
           <p className="quiz-home__category-hint" role="status">Выберите минимум одну категорию</p>
         )}
@@ -215,7 +215,7 @@ function QuizHome() {
               key={i}
               type="text"
               className="quiz-home__name-input card"
-              placeholder={`Участник ${i + 1}`}
+              placeholder={`Игрок ${i + 1}`}
               value={names[i] ?? ''}
               onChange={(e) => handleName(i, e.target.value)}
               onKeyDown={(e) => {

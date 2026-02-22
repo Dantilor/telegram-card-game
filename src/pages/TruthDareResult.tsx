@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTruthDare } from '../games/truth-dare/TruthDareContext'
 import { useBack } from '../hooks/useBack'
-import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import './TruthDareResult.css'

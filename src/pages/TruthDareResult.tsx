@@ -99,17 +99,6 @@ function TruthDareResult() {
         >
           Новая игра
         </button>
-        <button
-          type="button"
-          className="btn btn--ghost truth-dare-result__btn"
-          onClick={() => {
-            haptic('light')
-            dispatch({ type: 'RESET' })
-            navigate('/truth-dare')
-          }}
-        >
-          Сменить тему
-        </button>
       </div>
     </div>
   )

@@ -52,7 +52,7 @@ function SabotageTask() {
       <div className="sabotage-task__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost sabotage-task__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
 

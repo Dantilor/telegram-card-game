@@ -57,7 +57,7 @@ function SabotageRole() {
       <div className="sabotage-role__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost sabotage-role__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
 

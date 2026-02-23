@@ -35,7 +35,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={() => navigate('/mafia')}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <div className="mafia-night__intro card">
@@ -73,7 +73,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <MafiaNightStepLayout
@@ -105,7 +105,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <MafiaNightStepLayout
@@ -134,7 +134,7 @@ function MafiaNight() {
           <div className="mafia-night__top">
             <HomeButton />
             <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-              ← В меню
+              ← Назад
             </button>
           </div>
           <MafiaNightStepLayout
@@ -162,7 +162,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <MafiaNightStepLayout
@@ -200,7 +200,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <MafiaNightStepLayout
@@ -228,7 +228,7 @@ function MafiaNight() {
           <div className="mafia-night__top">
             <HomeButton />
             <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-              ← В меню
+              ← Назад
             </button>
           </div>
           <MafiaNightStepLayout
@@ -256,7 +256,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <MafiaNightStepLayout
@@ -294,7 +294,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <MafiaNightStepLayout
@@ -325,7 +325,7 @@ function MafiaNight() {
           <div className="mafia-night__top">
             <HomeButton />
             <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-              ← В меню
+              ← Назад
             </button>
           </div>
           <MafiaNightStepLayout
@@ -355,7 +355,7 @@ function MafiaNight() {
         <div className="mafia-night__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <MafiaNightStepLayout
@@ -405,7 +405,7 @@ function MafiaNight() {
       <div className="mafia-night__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
       <MafiaNightStepLayout

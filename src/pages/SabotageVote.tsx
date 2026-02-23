@@ -45,7 +45,7 @@ function SabotageVote() {
       <div className="sabotage-vote__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost sabotage-vote__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
 

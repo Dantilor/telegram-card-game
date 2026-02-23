@@ -202,11 +202,12 @@
   font-size: clamp(0.875rem, 2.5vw, 0.95rem);
 }
 
-/* About — flex: 1 заполняет низ экрана, контент прижат вниз */
+/* About — flex: 1 заполняет низ экрана, контент прижат вниз, по центру */
 .home-about {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: flex-end;
   margin-top: clamp(1rem, 4vw, 1.5rem);
   padding: 0 clamp(0.5rem, 2vw, 0.75rem) 1.5rem;
@@ -219,6 +220,7 @@
   font-weight: 600;
   color: var(--muted);
   text-align: center;
+  width: 100%;
 }
 
 .home-about__chips {
@@ -246,8 +248,7 @@
   color: var(--muted);
   text-align: center;
   max-width: 22rem;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
 }
 
 /* Планшеты и ПК: подпись по центру внизу */
@@ -258,10 +259,7 @@
   }
 
   .home-about__text {
-    width: 100%;
     max-width: 28rem;
     text-align: center;
-    margin-left: auto;
-    margin-right: auto;
   }
 }

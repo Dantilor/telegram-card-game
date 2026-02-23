@@ -66,7 +66,7 @@ function MafiaSetup() {
       <div className="mafia-setup__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost home-btn mafia-setup__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
       <header className="mafia-setup__header">

@@ -59,7 +59,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={() => navigate('/mafia')}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
@@ -79,7 +79,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <div className="mafia-voting__summary card mafia-voting__round-result">
@@ -122,7 +122,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <div className="mafia-voting__summary card">
@@ -158,7 +158,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
@@ -177,7 +177,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <div className="mafia-voting__summary card">
@@ -211,7 +211,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
@@ -227,7 +227,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
@@ -244,7 +244,7 @@ function MafiaVoting() {
         <div className="mafia-voting__top">
           <HomeButton />
           <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← В меню
+            ← Назад
           </button>
         </div>
         <div className="mafia-voting__summary card">
@@ -269,7 +269,7 @@ function MafiaVoting() {
       <div className="mafia-voting__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
 

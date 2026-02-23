@@ -57,7 +57,7 @@ function SabotageSetup() {
       <div className="sabotage-setup__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost home-btn sabotage-setup__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
       <header className="sabotage-setup__header">

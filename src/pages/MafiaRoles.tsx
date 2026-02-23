@@ -80,7 +80,7 @@ function MafiaRoles() {
       <div className="mafia-roles__top">
         <HomeButton />
         <button type="button" className="btn btn--ghost home-btn mafia-roles__back" onClick={handleBack}>
-          ← В меню
+          ← Назад
         </button>
       </div>
 

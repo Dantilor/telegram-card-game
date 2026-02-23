@@ -1,4 +1,3 @@
-import { Icon } from '../ui/icons'
 import { haptic } from '../utils/telegram'
 import './HomeButton.css'
 
@@ -21,10 +20,7 @@ export default function BackButton({ onClick, className, children = 'Назад'
       }}
       aria-label="Назад"
     >
-      <span className="ui-icon-with-text">
-        <Icon name="arrow-left" size="sm" />
-        {children}
-      </span>
+      ← {children}
     </button>
   )
 }

@@ -9,7 +9,7 @@ export default function LegalTerms() {
     <div className="legal-page">
       <div className="legal-page__header">
         <HomeButton />
-        <button type="button" className="btn btn--ghost legal-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn legal-page__back" onClick={handleBack}>
           ← Назад
         </button>
         <h1 className="legal-page__title">Условия использования</h1>

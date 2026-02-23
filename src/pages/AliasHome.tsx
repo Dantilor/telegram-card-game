@@ -162,7 +162,7 @@ function AliasHome() {
             return false
           }}
         />
-        <button type="button" className="btn btn--ghost alias-home__back" onClick={handleBackClick}>
+        <button type="button" className="btn btn--ghost home-btn alias-home__back" onClick={handleBackClick}>
           ← Назад
         </button>
       </div>

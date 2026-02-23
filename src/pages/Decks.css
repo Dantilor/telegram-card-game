@@ -6,11 +6,13 @@
 
 .decks-page__top {
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .decks-page__back {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
 .decks-page__header {

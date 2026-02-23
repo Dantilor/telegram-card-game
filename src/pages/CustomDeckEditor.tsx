@@ -68,7 +68,7 @@ function CustomDeckEditor() {
     <div className="custom-editor-page">
       <div className="custom-editor-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost custom-editor-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn custom-editor-page__back" onClick={handleBack}>
           ← Назад
         </button>
       </div>

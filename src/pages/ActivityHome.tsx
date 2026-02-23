@@ -137,7 +137,7 @@ function ActivityHome() {
             return false
           }}
         />
-        <button type="button" className="btn btn--ghost activity-home__back" onClick={handleBackClick}>
+        <button type="button" className="btn btn--ghost home-btn activity-home__back" onClick={handleBackClick}>
           ← Назад
         </button>
       </div>

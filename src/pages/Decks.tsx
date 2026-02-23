@@ -77,7 +77,7 @@ function Decks() {
     <div className="decks-page">
       <div className="decks-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost decks-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn decks-page__back" onClick={handleBack}>
           ← Назад
         </button>
       </div>

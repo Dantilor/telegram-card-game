@@ -13,7 +13,7 @@ function GameStub() {
     <div className="game-stub-page">
       <div className="game-stub-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost game-stub-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn game-stub-page__back" onClick={handleBack}>
           ← Назад
         </button>
       </div>

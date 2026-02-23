@@ -12,7 +12,7 @@
 }
 
 .truth-dare-card__back {
-  padding: 0.4rem 0.6rem;
+  flex-shrink: 0;
 }
 
 .truth-dare-card__level {

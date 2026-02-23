@@ -43,7 +43,7 @@ function MafiaResult() {
         <HomeButton />
         <button
           type="button"
-          className="btn btn--ghost mafia-result__back"
+          className="btn btn--ghost home-btn mafia-result__back"
           onClick={() => { haptic('light'); dispatch({ type: 'RESET' }); navigate('/mafia') }}
         >
           ← Назад

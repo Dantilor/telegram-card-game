@@ -42,7 +42,7 @@ function TruthDareTurn() {
   return (
     <div className="truth-dare-turn">
       <div className="truth-dare-turn__top">
-        <button type="button" className="btn btn--ghost truth-dare-turn__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn truth-dare-turn__back" onClick={handleBack}>
           ←
         </button>
         <HomeButton />

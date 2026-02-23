@@ -51,7 +51,7 @@ function QuizResult() {
   return (
     <div className="quiz-result">
       <div className="quiz-result__top">
-        <button type="button" className="btn btn--ghost quiz-result__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn quiz-result__back" onClick={handleBack}>
           ←
         </button>
         <HomeButton onBeforeNavigate={handleHomeClick} />

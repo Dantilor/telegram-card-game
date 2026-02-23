@@ -72,7 +72,7 @@ function TruthDareSetup() {
     <div className="truth-dare-setup">
       <div className="truth-dare-setup__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost truth-dare-setup__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn truth-dare-setup__back" onClick={handleBack}>
           ← В меню
         </button>
       </div>

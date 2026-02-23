@@ -94,7 +94,7 @@ function ModePage() {
       <div className="mode-page">
         <div className="mode-page__top">
           <HomeButton />
-          <button type="button" className="btn btn--ghost mode-page__back" onClick={handleBack}>
+          <button type="button" className="btn btn--ghost home-btn mode-page__back" onClick={handleBack}>
             ← Назад
           </button>
         </div>
@@ -110,7 +110,7 @@ function ModePage() {
     <div className="mode-page">
       <div className="mode-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost mode-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn mode-page__back" onClick={handleBack}>
           ← Назад
         </button>
       </div>

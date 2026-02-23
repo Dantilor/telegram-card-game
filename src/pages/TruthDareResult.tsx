@@ -38,7 +38,7 @@ function TruthDareResult() {
   return (
     <div className="truth-dare-result">
       <div className="truth-dare-result__top">
-        <button type="button" className="btn btn--ghost truth-dare-result__back" onClick={onBack}>
+        <button type="button" className="btn btn--ghost home-btn truth-dare-result__back" onClick={onBack}>
           ←
         </button>
         <HomeButton />

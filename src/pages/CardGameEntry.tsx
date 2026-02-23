@@ -20,7 +20,7 @@ function CardGameEntry() {
     <div className="card-entry-page">
       <div className="card-entry-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost card-entry-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn card-entry-page__back" onClick={handleBack}>
           ← Назад
         </button>
       </div>

@@ -138,7 +138,7 @@ function QuizHome() {
             return false
           }}
         />
-        <button type="button" className="btn btn--ghost quiz-home__back" onClick={handleBackClick}>
+        <button type="button" className="btn btn--ghost home-btn quiz-home__back" onClick={handleBackClick}>
           ← Назад
         </button>
       </div>

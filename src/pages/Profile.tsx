@@ -65,7 +65,7 @@ function Profile() {
     <div className="profile-page">
       <div className="profile-page__header">
         <HomeButton />
-        <button type="button" className="btn btn--ghost profile-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn profile-page__back" onClick={handleBack}>
           ← Назад
         </button>
         <h1 className="profile-page__title">Профиль</h1>

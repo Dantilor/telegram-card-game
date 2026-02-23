@@ -42,7 +42,7 @@ function SabotageResult() {
         <HomeButton />
         <button
           type="button"
-          className="btn btn--ghost sabotage-result__back"
+          className="btn btn--ghost home-btn sabotage-result__back"
           onClick={() => navigate('/sabotage')}
         >
           ← Назад

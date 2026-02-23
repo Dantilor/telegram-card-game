@@ -50,7 +50,7 @@ function MafiaDay() {
     <div className="mafia-day">
       <div className="mafia-day__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost mafia-day__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn mafia-day__back" onClick={handleBack}>
           ← В меню
         </button>
       </div>

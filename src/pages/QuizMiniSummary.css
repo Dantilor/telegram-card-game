@@ -12,7 +12,7 @@
 }
 
 .quiz-mini-summary__back {
-  padding: 0.4rem 0.6rem;
+  flex-shrink: 0;
 }
 
 .quiz-mini-summary__title {

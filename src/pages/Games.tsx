@@ -136,7 +136,7 @@ function Games() {
     <div className="games-page">
       <div className="games-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost games-page__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn games-page__back" onClick={handleBack}>
           ← Назад
         </button>
       </div>

@@ -12,7 +12,7 @@
 }
 
 .truth-dare-result__back {
-  padding: 0.4rem 0.6rem;
+  flex-shrink: 0;
 }
 
 .truth-dare-result__title {

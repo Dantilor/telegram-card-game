@@ -14,8 +14,7 @@
 }
 
 .sabotage-setup__back {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
 .sabotage-setup__header {

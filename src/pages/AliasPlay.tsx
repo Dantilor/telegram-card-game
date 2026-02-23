@@ -12,9 +12,11 @@ const TICK_MS = 250
 const REDIRECT_STUCK_MS = 4000
 
 /** Redirect to /alias when phase is setup; avoid navigate() during render (mobile WebView fix). */
-function AliasRedirectToHome({ onNavigate }: { onNavigate: () => void }) {
+function AliasRedirectToHome({ onNavigate, onGoHome }: { onNavigate: () => void; onGoHome?: () => void }) {
   const [stuck, setStuck] = useState(false)
   const didRedirect = useRef(false)
+  const navigate = useNavigate()
+  const goHome = onGoHome ?? (() => navigate('/'))
 
   useEffect(() => {
     if (didRedirect.current) return
@@ -59,7 +61,7 @@ function AliasRedirectToHome({ onNavigate }: { onNavigate: () => void }) {
             className="btn btn--ghost alias-play__stuck-btn"
             onClick={() => {
               haptic('light')
-              window.location.hash = '#/'
+              goHome()
             }}
           >
             На главную

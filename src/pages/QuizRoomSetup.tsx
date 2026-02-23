@@ -60,7 +60,7 @@ function QuizRoomSetup() {
     <div className="quiz-room-setup">
       <div className="quiz-room-setup__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost quiz-room-setup__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn quiz-room-setup__back" onClick={handleBack}>
           ← Назад
         </button>
       </div>

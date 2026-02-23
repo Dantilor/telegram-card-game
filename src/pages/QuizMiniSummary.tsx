@@ -43,7 +43,7 @@ function QuizMiniSummary() {
   return (
     <div className="quiz-mini-summary">
       <div className="quiz-mini-summary__top">
-        <button type="button" className="btn btn--ghost quiz-mini-summary__back" onClick={handleBack}>
+        <button type="button" className="btn btn--ghost home-btn quiz-mini-summary__back" onClick={handleBack}>
           ←
         </button>
         <HomeButton onBeforeNavigate={handleHomeClick} />

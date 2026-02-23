@@ -109,7 +109,7 @@ textarea::placeholder {
   }
 }
 
-/* Единая кнопка «Назад» во всех страницах (как кнопка Домой: ~123×47px) */
+/* Единая кнопка «Назад» во всех страницах (как кнопка Домой: ~123×47px), один размер на телефоне и ПК */
 #root .btn.btn--ghost[class*="__back"] {
   padding: 11px 22px;
   font-size: clamp(0.8rem, 2.5vw, 0.9rem);
@@ -117,13 +117,4 @@ textarea::placeholder {
   min-height: 47px;
   min-width: 121px;
   box-sizing: border-box;
-}
-@media (max-width: 430px) {
-  #root .btn.btn--ghost[class*="__back"] {
-    padding: 0.22rem 0.5rem;
-    font-size: 0.8rem;
-    border-radius: 10px;
-    min-height: 32px;
-    min-width: unset;
-  }
 }

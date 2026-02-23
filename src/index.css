@@ -113,6 +113,7 @@ textarea::placeholder {
 #root .btn.btn--ghost[class*="__back"] {
   padding: 11px 22px;
   font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  font-weight: 700;
   flex-shrink: 0;
   min-height: 47px;
   min-width: 121px;

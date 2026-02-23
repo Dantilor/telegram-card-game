@@ -7,6 +7,7 @@ import { isModeLocked } from '../utils/access'
 import type { ModeId } from '../data/modes'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import SmartImage from '../components/SmartImage'
 import './CardGameEntry.css'
@@ -20,9 +21,7 @@ function CardGameEntry() {
     <div className="card-entry-page">
       <div className="card-entry-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn card-entry-page__back" onClick={handleBack}>
-          ← Назад
-        </button>
+        <BackButton onClick={handleBack} className="card-entry-page__back" />
       </div>
       <header className="card-entry-page__header">
         <h1 className="card-entry-page__title">GameNight Cards</h1>

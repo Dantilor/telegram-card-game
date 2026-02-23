@@ -6,6 +6,7 @@ import { usePremium } from '../contexts/PremiumContext'
 import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import HeroGameCard from '../components/HeroGameCard'
 import GamesGrid from '../components/GamesGrid'
@@ -136,9 +137,7 @@ function Games() {
     <div className="games-page">
       <div className="games-page__top">
         <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn games-page__back" onClick={handleBack}>
-          ← Назад
-        </button>
+        <BackButton onClick={handleBack} className="games-page__back" />
       </div>
       <header className="games-page__header">
         <h1 className="games-page__title">GameNight Host</h1>

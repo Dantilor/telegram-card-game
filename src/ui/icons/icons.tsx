@@ -154,6 +154,9 @@ export const ICONS: Record<string, () => ReactNode> = {
   ban: () => (
     <svg {...SVG_PROPS}><circle cx="12" cy="12" r="10" /><path d="M4.93 4.93l14.14 14.14" {...accent} /></svg>
   ),
+  'arrow-left': () => (
+    <svg {...SVG_PROPS}><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+  ),
 }
 
 export type IconName = keyof typeof ICONS

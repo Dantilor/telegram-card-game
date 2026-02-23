@@ -257,3 +257,27 @@
 .btn--danger:hover:not(:disabled) {
   box-shadow: 0 0 20px rgba(255, 77, 77, 0.45);
 }
+
+/* Кнопка «Назад» = размер и стиль как «Домой» (принудительно для мини-апп и кэша) */
+#root .btn.btn--ghost[class*="__back"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 11px 22px !important;
+  font-size: clamp(0.8rem, 2.5vw, 0.9rem) !important;
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  flex-shrink: 0 !important;
+  min-height: 47px !important;
+  min-width: 121px !important;
+  box-sizing: border-box !important;
+  border-radius: var(--radius, 12px) !important;
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+}
+@media (max-width: 430px) {
+  #root .btn.btn--ghost[class*="__back"] {
+    font-size: 0.8rem !important;
+  }
+}

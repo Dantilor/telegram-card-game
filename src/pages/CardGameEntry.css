@@ -27,20 +27,6 @@
 
 .card-entry-page__back {
   flex-shrink: 0;
-  /* Match .home-btn size (same as Home link in header) */
-  padding: clamp(0.3rem, 2vw, 0.4rem) clamp(0.5rem, 2vw, 0.6rem);
-  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  min-height: 46px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 430px) {
-  .card-entry-page__back {
-    padding: 0.22rem 0.5rem;
-    font-size: 0.8rem;
-    border-radius: 10px;
-    min-height: 32px;
-  }
 }
 
 .card-entry-page__header {

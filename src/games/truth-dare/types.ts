@@ -68,3 +68,11 @@ export const TAG_EMOJIS: Record<(typeof TAGS)[number], string> = {
   hard: '🔥',
   '18plus': '🔞',
 }
+
+export const TAG_ICONS: Record<(typeof TAGS)[number], string> = {
+  party: 'party',
+  couples: 'heart',
+  light: 'sparkle',
+  hard: 'fire',
+  '18plus': 'adult',
+}

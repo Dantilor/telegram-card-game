@@ -52,7 +52,7 @@ function SabotageResult() {
       <div className={`sabotage-result__card card ${showReveal ? 'sabotage-result__card--reveal' : ''}`}>
         {!showReveal ? (
           <div className="sabotage-result__wait">
-            <span className="sabotage-result__wait-emoji">😏</span>
+            <span className="sabotage-result__wait-emoji" aria-hidden>😏</span>
             <p className="sabotage-result__wait-text">Раскрываем...</p>
           </div>
         ) : (

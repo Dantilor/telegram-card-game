@@ -50,21 +50,21 @@ function TruthDareResult() {
         <h2 className="truth-dare-result__section-title">Титулы</h2>
         {bravest && bravest.courage > 0 && (
           <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-emoji">🔥</span>
+            <span className="truth-dare-result__award-emoji" aria-hidden>🔥</span>
             <span className="truth-dare-result__award-label">Самый безбашенный</span>
             <span className="truth-dare-result__award-name">— {bravest.name}</span>
           </p>
         )}
         {honest && honest.respect > 0 && (
           <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-emoji">👑</span>
+            <span className="truth-dare-result__award-emoji" aria-hidden>👑</span>
             <span className="truth-dare-result__award-label">Любимец публики</span>
             <span className="truth-dare-result__award-name">— {honest.name}</span>
           </p>
         )}
         {shameKing && shameKing.shame > 0 && (
           <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-emoji">😈</span>
+            <span className="truth-dare-result__award-emoji" aria-hidden>😈</span>
             <span className="truth-dare-result__award-label">Провокатор</span>
             <span className="truth-dare-result__award-name">— {shameKing.name}</span>
           </p>

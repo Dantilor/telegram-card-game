@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Icon } from '../ui/icons'
 import { haptic } from '../utils/telegram'
 import './HomeButton.css'
 
@@ -18,7 +19,7 @@ export default function HomeButton({ onBeforeNavigate }: HomeButtonProps) {
       }}
       aria-label="Домой"
     >
-      🏠 Домой
+      <span className="ui-icon-with-text"><Icon name="home" size="sm" /> Домой</span>
     </Link>
   )
 }

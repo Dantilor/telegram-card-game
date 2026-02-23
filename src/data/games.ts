@@ -6,6 +6,7 @@ export type Game = {
   id: string
   title: string
   emoji: string
+  icon: string
   description: string
   status: GameStatus
   image?: string
@@ -16,6 +17,7 @@ export const GAMES: Game[] = [
     id: 'card',
     title: 'GameNight Cards',
     emoji: '🃏',
+    icon: 'card',
     description: 'Колоды • Пары • Компания',
     status: 'ready',
     image: IMAGES.cardGameHero.png,
@@ -24,6 +26,7 @@ export const GAMES: Game[] = [
     id: 'mafia',
     title: 'Мафия Lite',
     emoji: '🌙',
+    icon: 'moon',
     description: 'Роли • Блеф\nРазоблачение',
     status: 'ready',
     image: IMAGES.mafia.png,
@@ -32,6 +35,7 @@ export const GAMES: Game[] = [
     id: 'alias',
     title: 'Ассоциации',
     emoji: '💬',
+    icon: 'message',
     description: 'Слова • Образы\nИнтуиция',
     status: 'ready',
     image: IMAGES.alias.png,
@@ -40,6 +44,7 @@ export const GAMES: Game[] = [
     id: 'activity',
     title: 'Активитус',
     emoji: '🎯',
+    icon: 'target',
     description: 'Покажи • Объясни\nУгадай',
     status: 'ready',
     image: IMAGES.activity.png,
@@ -48,6 +53,7 @@ export const GAMES: Game[] = [
     id: 'sabotage',
     title: 'Саботаж',
     emoji: '😈',
+    icon: 'devil',
     description: 'Диверсия • Тайна\nПодозрение',
     status: 'ready',
     image: IMAGES.sabotage.png,
@@ -56,6 +62,7 @@ export const GAMES: Game[] = [
     id: 'quiz',
     title: 'Битва умов',
     emoji: '❓',
+    icon: 'question',
     description: 'Скорость • Дуэли\nВикторина',
     status: 'ready',
     image: IMAGES.quiz.png,
@@ -64,6 +71,7 @@ export const GAMES: Game[] = [
     id: 'truth-dare',
     title: 'Правда или действие',
     emoji: '🎲',
+    icon: 'dice',
     description: 'Выбор • Риск\nДавление',
     status: 'ready',
     image: IMAGES.truthDare.png,

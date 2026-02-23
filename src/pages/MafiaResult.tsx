@@ -85,7 +85,7 @@ function MafiaResult() {
                   className="mafia-result__roles-icon mafia-result__roles-icon--img"
                 />
               ) : (
-                <span className="mafia-result__roles-emoji">{roleEmoji[p.role]}</span>
+                <span className="mafia-result__roles-emoji" aria-hidden>{roleEmoji[p.role]}</span>
               )}
               <span className="mafia-result__roles-name">{p.name}</span>
               <span className="mafia-result__roles-role">{ROLE_LABELS[p.role]}</span>

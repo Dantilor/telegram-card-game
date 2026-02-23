@@ -200,7 +200,7 @@ function QuizHome() {
               className={`quiz-home__category-card card ${tags.includes(tag) ? 'quiz-home__category-card--active' : ''}`}
               onClick={() => toggleTag(tag)}
             >
-              <span className="quiz-home__category-emoji">{TAG_EMOJIS[tag]}</span>
+              <span className="quiz-home__category-emoji" aria-hidden>{TAG_EMOJIS[tag]}</span>
               <span className="quiz-home__category-title">{TAG_LABELS[tag]}</span>
             </button>
           ))}

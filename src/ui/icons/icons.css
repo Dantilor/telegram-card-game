@@ -1,0 +1,49 @@
+/* Centralized icon system – integrates with theme */
+.ui-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  color: var(--text, currentColor);
+  vertical-align: middle;
+}
+
+.ui-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ui-icon .icon-accent {
+  stroke: var(--icon-accent, currentColor);
+  fill: none;
+}
+
+.ui-icon--sm {
+  width: 18px;
+  height: 18px;
+}
+
+.ui-icon--md {
+  width: 20px;
+  height: 20px;
+}
+
+.ui-icon--lg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Inline with text: flex alignment */
+.ui-icon-with-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-icon-with-text .ui-icon {
+  flex-shrink: 0;
+}

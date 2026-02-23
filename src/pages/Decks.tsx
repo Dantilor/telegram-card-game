@@ -122,9 +122,7 @@ function Decks() {
                     setPremiumOverlayOpen(true)
                   }}
                 >
-                  <span className="deck-card__chip" aria-hidden>
-                    {DECK_ICONS[deck.id] ?? '📇'}
-                  </span>
+                <span className="deck-card__chip" aria-hidden>{DECK_ICONS[deck.id] ?? '📇'}</span>
                   <div className="deck-card__body">
                     <div className="deck-card__header">
                       <h2 className="deck-card__title">{deck.title}</h2>
@@ -144,9 +142,7 @@ function Decks() {
               style={{ animationDelay: `${i * 0.06}s` }}
             >
               <Link to={`/play/${deck.id}`} className="deck-card__link">
-                <span className="deck-card__chip" aria-hidden>
-                  {DECK_ICONS[deck.id] ?? '📇'}
-                </span>
+                <span className="deck-card__chip" aria-hidden>{DECK_ICONS[deck.id] ?? '📇'}</span>
                 <div className="deck-card__body">
                   <div className="deck-card__header">
                     <h2 className="deck-card__title">{deck.title}</h2>

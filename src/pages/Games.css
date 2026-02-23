@@ -187,7 +187,9 @@
 }
 
 .games-grid__emoji {
-  font-size: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 0.35rem;
   line-height: 1;
 }
@@ -359,6 +361,8 @@
 }
 
 .hero-game-card__emoji {
+  display: inline-flex;
+  align-items: center;
   margin-top: 0.5rem;
 }
 

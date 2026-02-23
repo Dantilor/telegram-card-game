@@ -37,7 +37,13 @@
   text-shadow: 0 0 24px var(--glowCyan);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
+}
+
+.mode-page__title-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 [data-theme="neon-light"] .mode-page__title {

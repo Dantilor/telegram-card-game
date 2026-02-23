@@ -131,7 +131,7 @@ function TruthDareSetup() {
               className={`truth-dare-setup__category-card card ${tags.includes(tag) ? 'truth-dare-setup__category-card--active' : ''}`}
               onClick={() => toggleTag(tag)}
             >
-              <span className="truth-dare-setup__category-emoji">{TAG_EMOJIS[tag]}</span>
+              <span className="truth-dare-setup__category-emoji" aria-hidden>{TAG_EMOJIS[tag]}</span>
               <span className="truth-dare-setup__category-title">{TAG_LABELS[tag]}</span>
             </button>
           ))}

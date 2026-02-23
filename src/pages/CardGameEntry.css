@@ -19,11 +19,24 @@
 
 .card-entry-page__top {
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .card-entry-page__back {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.9rem;
+  padding: clamp(0.3rem, 2vw, 0.4rem) clamp(0.5rem, 2vw, 0.6rem);
+  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  flex-shrink: 0;
+}
+
+@media (max-width: 430px) {
+  .card-entry-page__back {
+    padding: 0.22rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    min-height: 32px;
+  }
 }
 
 .card-entry-page__header {
@@ -94,7 +107,8 @@
 }
 
 .card-entry-page__emoji {
-  font-size: 1.5rem;
+  display: inline-flex;
+  align-items: center;
   margin-bottom: 0.25rem;
 }
 

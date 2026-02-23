@@ -147,9 +147,7 @@ function ModePage() {
 
           const content = (
             <>
-              <span className="mode-page__chip" aria-hidden>
-                {DECK_ICONS[deck.id] ?? '📇'}
-              </span>
+              <span className="mode-page__chip" aria-hidden>{DECK_ICONS[deck.id] ?? '📇'}</span>
               <div className="mode-page__body">
                 <div className="mode-page__deck-header">
                   <h2 className="mode-page__deck-title">{deck.title}</h2>

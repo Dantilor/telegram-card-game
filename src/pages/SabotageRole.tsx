@@ -79,9 +79,7 @@ function SabotageRole() {
         ) : (
           <div className={`sabotage-role__reveal ${isSaboteur ? 'sabotage-role__reveal--saboteur' : ''}`}>
             <p className="sabotage-role__player-name">Игрок: {player.name}</p>
-            <span className="sabotage-role__emoji" aria-hidden>
-              {isSaboteur ? '😈' : '👤'}
-            </span>
+            <span className="sabotage-role__emoji" aria-hidden>{isSaboteur ? '😈' : '👤'}</span>
             <h2 className="sabotage-role__role">{ROLE_LABELS[player.role]}</h2>
             {isSaboteur && (
               <p className="sabotage-role__hint-text">Мешай аккуратно: сомневайся, отвлекай, усложняй</p>

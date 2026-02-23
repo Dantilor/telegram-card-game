@@ -6,6 +6,7 @@ export type ActivityCategory = {
   id: ActivityCategoryId
   title: string
   emoji: string
+  icon: string
   paid: boolean
   words: string[]
 }
@@ -59,13 +60,13 @@ const SCENES_WORDS = [
 ]
 
 export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
-  { id: 'emotions', title: 'Эмоции', emoji: '😶', paid: false, words: EMOTIONS_WORDS },
-  { id: 'behaviors', title: 'Поведение', emoji: '🎭', paid: false, words: BEHAVIORS_WORDS },
-  { id: 'characters', title: 'Персонажи', emoji: '👤', paid: false, words: CHARACTERS_WORDS },
-  { id: 'lifeSituations', title: 'Ситуации', emoji: '🌍', paid: false, words: LIFE_SITUATIONS_WORDS },
-  { id: 'awkwardMoments', title: 'Неловкость', emoji: '😅', paid: false, words: AWKWARD_MOMENTS_WORDS },
-  { id: 'communication', title: 'Общение', emoji: '💬', paid: false, words: COMMUNICATION_WORDS },
-  { id: 'scenes', title: 'Сцены', emoji: '🎬', paid: false, words: SCENES_WORDS },
+  { id: 'emotions', title: 'Эмоции', emoji: '😶', icon: 'emotions', paid: false, words: EMOTIONS_WORDS },
+  { id: 'behaviors', title: 'Поведение', emoji: '🎭', icon: 'mask', paid: false, words: BEHAVIORS_WORDS },
+  { id: 'characters', title: 'Персонажи', emoji: '👤', icon: 'user', paid: false, words: CHARACTERS_WORDS },
+  { id: 'lifeSituations', title: 'Ситуации', emoji: '🌍', icon: 'globe', paid: false, words: LIFE_SITUATIONS_WORDS },
+  { id: 'awkwardMoments', title: 'Неловкость', emoji: '😅', icon: 'awkward', paid: false, words: AWKWARD_MOMENTS_WORDS },
+  { id: 'communication', title: 'Общение', emoji: '💬', icon: 'message', paid: false, words: COMMUNICATION_WORDS },
+  { id: 'scenes', title: 'Сцены', emoji: '🎬', icon: 'cinema', paid: false, words: SCENES_WORDS },
 ]
 
 export function getCategoryById(id: ActivityCategoryId): ActivityCategory | undefined {

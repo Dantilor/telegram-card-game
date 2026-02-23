@@ -4,6 +4,7 @@ export type AliasCategory = {
   id: AliasCategoryId
   title: string
   emoji: string
+  icon: string
   paid: boolean
   adult?: boolean
   words: string[]
@@ -86,6 +87,7 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
     id: 'basic',
     title: 'База',
     emoji: '📦',
+    icon: 'box',
     paid: false,
     words: BASIC_WORDS,
   },
@@ -93,6 +95,7 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
     id: 'cinema',
     title: 'Кино',
     emoji: '🎬',
+    icon: 'cinema',
     paid: true,
     words: CINEMA_WORDS,
   },
@@ -100,6 +103,7 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
     id: 'memes',
     title: 'Мемы',
     emoji: '😂',
+    icon: 'laugh',
     paid: true,
     words: MEMES_WORDS,
   },
@@ -107,6 +111,7 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
     id: 'jobs',
     title: 'Профессии',
     emoji: '💼',
+    icon: 'briefcase',
     paid: true,
     words: JOBS_WORDS,
   },
@@ -114,6 +119,7 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
     id: 'lifeSituations',
     title: 'Ситуации',
     emoji: '🌍',
+    icon: 'globe',
     paid: false,
     words: LIFE_SITUATIONS_WORDS,
   },
@@ -121,6 +127,7 @@ export const ALIAS_CATEGORIES: AliasCategory[] = [
     id: 'adult',
     title: '18+',
     emoji: '🔥',
+    icon: 'fire',
     paid: true,
     adult: true,
     words: ADULT_WORDS,

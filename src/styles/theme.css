@@ -37,6 +37,7 @@
   --td-dare-border: rgba(255, 60, 172, 0.3);
   --td-truth-bg: rgba(43, 210, 255, 0.15);
   --td-truth-bg-hover: rgba(43, 210, 255, 0.25);
+  --icon-accent: #00F0FF;
 }
 
 /* neon-light — почти дневная, светлый лавандово-голубой */
@@ -79,6 +80,7 @@
   --td-truth-bg-hover: rgba(6, 182, 212, 0.25);
   /* В Light выделение как в Мафии: бирюзовый фон + белый текст */
   --selection-bg-light: rgba(6, 182, 212, 0.28);
+  --icon-accent: #6C63FF;
 }
 
 /* portal — зелёно-циановые градиенты */
@@ -119,6 +121,7 @@
   --td-dare-border: rgba(0, 255, 204, 0.35);
   --td-truth-bg: rgba(0, 255, 204, 0.15);
   --td-truth-bg-hover: rgba(0, 255, 204, 0.25);
+  --icon-accent: #7B5CFF;
 }
 
 /* soft-light — мягкий светлый */
@@ -159,6 +162,7 @@
   --td-dare-border: rgba(124, 58, 237, 0.3);
   --td-truth-bg: rgba(34, 211, 238, 0.15);
   --td-truth-bg-hover: rgba(34, 211, 238, 0.25);
+  --icon-accent: #6C63FF;
 }
 
 /* sunset — тёплый закат */
@@ -199,6 +203,7 @@
   --td-dare-border: rgba(251, 191, 36, 0.4);
   --td-truth-bg: rgba(251, 191, 36, 0.15);
   --td-truth-bg-hover: rgba(251, 191, 36, 0.25);
+  --icon-accent: #FF8A65;
 }
 
 /* minimal-calm — минималистичный спокойный */
@@ -239,6 +244,7 @@
   --td-dare-border: rgba(56, 189, 248, 0.35);
   --td-truth-bg: rgba(56, 189, 248, 0.15);
   --td-truth-bg-hover: rgba(56, 189, 248, 0.25);
+  --icon-accent: currentColor;
 }
 
 /* Gradient background + glow blobs (uses theme variables) + slow move */

@@ -109,11 +109,13 @@ textarea::placeholder {
   }
 }
 
-/* Кнопка «Назад» — такой же размер и шрифт, как кнопка Домой */
+/* Кнопка «Назад» — такой же размер и стиль текста, как кнопка Домой */
 #root .btn.btn--ghost[class*="__back"] {
   padding: 11px 22px;
   font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-  font-weight: 700;
+  font-family: inherit;
+  font-weight: 600;
+  text-align: center;
   flex-shrink: 0;
   min-height: 47px;
   min-width: 121px;

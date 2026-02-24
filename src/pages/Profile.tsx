@@ -10,7 +10,7 @@ import PremiumOverlay from '../components/PremiumOverlay'
 import DocumentModal from '../components/DocumentModal'
 import './Profile.css'
 
-const SUPPORT_BOT_URL = 'https://t.me/GameNightHostBot'
+const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
 
 function Profile() {
   const handleBack = useBack('/')

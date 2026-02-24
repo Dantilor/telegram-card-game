@@ -8,4 +8,4 @@ export const TERMS_DOCUMENT = `Используя приложение, вы п�
 
 ## Контакты
 
-По вопросам работы приложения: @GameNightHostBot`
+По вопросам работы приложения: @GameNightHelp`

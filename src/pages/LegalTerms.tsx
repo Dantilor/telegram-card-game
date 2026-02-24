@@ -20,7 +20,7 @@ export default function LegalTerms() {
         <p>Мы предоставляем игры и контент в рамках возможностей сервиса. Просим соблюдать авторские права и правила Telegram.</p>
 
         <h2>Контакты</h2>
-        <p>По вопросам работы приложения: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
+        <p>По вопросам работы приложения: <a href="https://t.me/GameNightHelp" target="_blank" rel="noopener noreferrer">@GameNightHelp</a></p>
       </div>
     </div>
   )

@@ -32,7 +32,7 @@ export default function LegalPrivacy() {
         </ul>
 
         <h2>Контакты</h2>
-        <p>По любым вопросам о данных и подписке: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
+        <p>По любым вопросам о данных и подписке: <a href="https://t.me/GameNightHelp" target="_blank" rel="noopener noreferrer">@GameNightHelp</a></p>
       </div>
     </div>
   )

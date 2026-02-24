@@ -25,10 +25,10 @@ export default function LegalPremium() {
         </ul>
 
         <h2>Восстановление покупки</h2>
-        <p>Если Premium не отображается после оплаты, откройте раздел «Профиль» и нажмите «Восстановить покупки». Если проблема остаётся — напишите в поддержку: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
+        <p>Если Premium не отображается после оплаты, откройте раздел «Профиль» и нажмите «Восстановить покупки». Если проблема остаётся — напишите в поддержку: <a href="https://t.me/GameNightHelp" target="_blank" rel="noopener noreferrer">@GameNightHelp</a></p>
 
         <h2>Поддержка</h2>
-        <p>Вопросы по подписке и оплате: <a href="https://t.me/GameNightHostBot" target="_blank" rel="noopener noreferrer">@GameNightHostBot</a></p>
+        <p>Вопросы по подписке и оплате: <a href="https://t.me/GameNightHelp" target="_blank" rel="noopener noreferrer">@GameNightHelp</a></p>
       </div>
     </div>
   )

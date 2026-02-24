@@ -5,7 +5,7 @@ import { getTelegramWebApp } from '../lib/telegram'
 import { haptic } from '../utils/telegram'
 import './DocumentModal.css'
 
-const SUPPORT_BOT_URL = 'https://t.me/GameNightHostBot'
+const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
 
 function parseDocument(text: string): React.ReactNode[] {
   const blocks = text.split(/\n\n+/).filter(Boolean)

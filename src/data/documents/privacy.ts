@@ -18,4 +18,4 @@ export const PRIVACY_DOCUMENT = `Мы заботимся о вашей конф�
 
 ## Контакты
 
-По любым вопросам о данных и подписке: @GameNightHostBot`
+По любым вопросам о данных и подписке: @GameNightHelp`

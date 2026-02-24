@@ -50,6 +50,15 @@ if (bot) {
     if (chatId && sent?.message_id) {
       lastStartMessageId.set(chatId, sent.message_id)
     }
+
+    // Убираем кнопку меню (Web App и т.д.) в этом чате — клавиатура не появляется
+    if (chatId && ctx.chat?.type === 'private') {
+      try {
+        await ctx.telegram.setChatMenuButton(chatId, { type: 'default' })
+      } catch (e) {
+        console.warn('[bot] setChatMenuButton failed', e)
+      }
+    }
   })
 
   bot.command('ping', async (ctx: Context) => {

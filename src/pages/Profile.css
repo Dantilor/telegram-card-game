@@ -92,6 +92,10 @@
   color: var(--muted);
 }
 
+.profile-card--support .profile-premium__btn {
+  margin-top: 1rem;
+}
+
 .profile-card__links {
   display: flex;
   flex-direction: column;

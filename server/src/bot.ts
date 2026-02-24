@@ -75,6 +75,13 @@ if (bot) {
 
 export async function launchBot(): Promise<void> {
   if (bot) {
+    // Глобальное меню — список команд вместо Web App (меньше провокаций на появление клавиатуры)
+    try {
+      await (bot.telegram as any).setChatMenuButton({ type: 'commands' })
+      console.log('[bot] default menu button set to commands')
+    } catch (e) {
+      console.warn('[bot] setChatMenuButton default failed', e)
+    }
     await bot.launch()
     console.log('Bot started')
   }

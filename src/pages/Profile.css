@@ -203,6 +203,19 @@
   color: var(--muted);
 }
 
+.profile-premium__inactive {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-premium__short {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .profile-premium__description {
   font-size: 0.9rem;
   line-height: 1.55;

@@ -10,8 +10,7 @@ if (!BOT_TOKEN) {
 
 const START_MESSAGE = `<b>Ваш вечер начинается прямо сейчас!</b> ✨
 
-Здесь решают эмоции, интеллект и смелость.
-Вы не наблюдаете — вы управляете игрой.
+Здесь решают эмоции, интеллект и смелость. Вы не наблюдаете — вы управляете игрой.
 
 Соберите тех, с кем хочется разделить этот вечер
 Выберите формат игры
@@ -43,7 +42,10 @@ if (bot) {
       lastStartMessageId.delete(chatId)
     }
 
-    const sent = await ctx.reply(START_MESSAGE, { parse_mode: 'HTML' })
+    const sent = await ctx.reply(START_MESSAGE, {
+      parse_mode: 'HTML',
+      reply_markup: { remove_keyboard: true },
+    })
 
     if (chatId && sent?.message_id) {
       lastStartMessageId.set(chatId, sent.message_id)

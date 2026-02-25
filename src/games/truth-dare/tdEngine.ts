@@ -14,8 +14,7 @@ export function shouldLevelUpAfterStreak(streak: number): boolean {
 export function applyCompletion(
   player: TDPlayer,
   cardType: 'truth' | 'dare',
-  cardLevel: number,
-  voteHarder: boolean
+  cardLevel: number
 ): TDPlayer {
   let courage = player.courage + 1
   let respect = player.respect
@@ -24,23 +23,14 @@ export function applyCompletion(
   if (cardType === 'truth') respect += 1
   if (cardType === 'dare' && cardLevel >= 3) respect += 1
 
-  if (voteHarder) {
-    courage += 1
-    if (Math.random() < 0.5) {
-      currentLevel = clampLevel(currentLevel + 1)
-    } else {
-      currentLevel = clampLevel(currentLevel + 1)
-    }
-  } else if (player.streakCompleted >= 2 && shouldLevelUpAfterStreak(player.streakCompleted + 1)) {
+  if (player.streakCompleted >= 2 && shouldLevelUpAfterStreak(player.streakCompleted + 1)) {
     currentLevel = clampLevel(currentLevel + 1)
   }
 
   const newStreak = player.streakCompleted + 1
   let tokens = { ...player.tokens }
   if (newStreak > 0 && newStreak % 3 === 0) {
-    tokens = Math.random() < 0.5
-      ? { ...tokens, skipNoShame: tokens.skipNoShame + 1 }
-      : { ...tokens, rerollSameLevel: tokens.rerollSameLevel + 1 }
+    tokens = { ...tokens, rerollSameLevel: tokens.rerollSameLevel + 1 }
   }
 
   return {
@@ -62,13 +52,11 @@ export function applyRefusal(player: TDPlayer): TDPlayer {
   }
 }
 
-export function applySkipNoShame(player: TDPlayer): TDPlayer {
+export function applyNotCounted(player: TDPlayer): TDPlayer {
   return {
     ...player,
-    tokens: {
-      ...player.tokens,
-      skipNoShame: Math.max(0, player.tokens.skipNoShame - 1),
-    },
+    notCounted: player.notCounted + 1,
+    streakCompleted: 0,
   }
 }
 

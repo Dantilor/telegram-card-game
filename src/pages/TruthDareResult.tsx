@@ -12,10 +12,12 @@ function TruthDareResult() {
   const sortedByCourage = [...state.players].sort((a, b) => b.courage - a.courage)
   const sortedByRespect = [...state.players].sort((a, b) => b.respect - a.respect)
   const sortedByShame = [...state.players].sort((a, b) => b.shame - a.shame)
+  const sortedByNotCounted = [...state.players].sort((a, b) => b.notCounted - a.notCounted)
 
   const bravest = sortedByCourage[0]
   const honest = sortedByRespect[0]
   const shameKing = sortedByShame[0]
+  const mostNotCounted = sortedByNotCounted[0]
 
   const handleContinue = () => {
     hapticSelection()
@@ -69,6 +71,13 @@ function TruthDareResult() {
             <span className="truth-dare-result__award-name">— {shameKing.name}</span>
           </p>
         )}
+        {mostNotCounted && mostNotCounted.notCounted > 0 && (
+          <p className="truth-dare-result__award">
+            <span className="truth-dare-result__award-emoji" aria-hidden>🙅</span>
+            <span className="truth-dare-result__award-label">Не убедил</span>
+            <span className="truth-dare-result__award-name">— {mostNotCounted.name}</span>
+          </p>
+        )}
       </div>
 
       <div className="truth-dare-result__table card">
@@ -79,6 +88,7 @@ function TruthDareResult() {
             <span className="truth-dare-result__stat">Смелость: {p.courage}</span>
             <span className="truth-dare-result__stat">Репутация: {p.respect}</span>
             <span className="truth-dare-result__stat">Стыд: {p.shame}</span>
+            <span className="truth-dare-result__stat">Не засчитано: {p.notCounted}</span>
           </div>
         ))}
       </div>

@@ -31,13 +31,6 @@ function TruthDareCard() {
     navigate('/truth-dare/turn')
   }
 
-  const handleSkipNoShame = () => {
-    if (!player || player.tokens.skipNoShame <= 0) return
-    hapticSelection()
-    dispatch({ type: 'SKIP_NO_SHAME' })
-    navigate('/truth-dare/turn')
-  }
-
   const handleReroll = () => {
     if (!player || player.tokens.rerollSameLevel <= 0) return
     hapticSelection()
@@ -87,20 +80,6 @@ function TruthDareCard() {
       </div>
 
       <div className="truth-dare-card__tokens">
-        {player.tokens.skipNoShame > 0 && (
-          <div className="truth-dare-card__token-wrapper">
-            <button
-              type="button"
-              className="btn btn--ghost truth-dare-card__token"
-              onClick={handleSkipNoShame}
-            >
-              Скип без стыда ({player.tokens.skipNoShame})
-            </button>
-            <p className="truth-dare-card__token-hint">
-              Пропустить задание без штрафа и потери очков стыда
-            </p>
-          </div>
-        )}
         {player.tokens.rerollSameLevel > 0 && (
           <div className="truth-dare-card__token-wrapper">
             <button

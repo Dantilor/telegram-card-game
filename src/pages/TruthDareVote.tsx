@@ -19,7 +19,7 @@ function TruthDareVote() {
     if (state.phase === 'result') navigate('/truth-dare/result')
   }, [state.phase, navigate])
 
-  const handleVote = (vote: 'ok' | 'harder') => {
+  const handleVote = (vote: 'ok' | 'notCounted') => {
     if (!currentVoter) return
     hapticSelection()
     dispatch({ type: 'VOTE', playerId: currentVoter.id, vote })
@@ -48,7 +48,7 @@ function TruthDareVote() {
         {currentPlayer?.name} выполнил задание.
       </p>
       <p className="truth-dare-vote__subtitle">
-        {currentVoter ? `${currentVoter.name}, засчитываем или усложняем?` : 'Все проголосовали.'}
+        {currentVoter ? `${currentVoter.name}, засчитываем или нет?` : 'Все проголосовали.'}
       </p>
 
       {currentVoter ? (
@@ -62,10 +62,10 @@ function TruthDareVote() {
           </button>
           <button
             type="button"
-            className="btn truth-dare-vote__btn truth-dare-vote__btn--harder"
-            onClick={() => handleVote('harder')}
+            className="btn truth-dare-vote__btn truth-dare-vote__btn--not-counted"
+            onClick={() => handleVote('notCounted')}
           >
-            😈 Жёстче
+            ❌ Не засчитано
           </button>
         </div>
       ) : (

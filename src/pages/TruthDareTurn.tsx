@@ -58,6 +58,7 @@ function TruthDareTurn() {
           <span>Смелость: {player.courage}</span>
           <span>Репутация: {player.respect}</span>
           <span>Стыд: {player.shame}</span>
+          <span>Не засчитано: {player.notCounted}</span>
         </div>
       </div>
 

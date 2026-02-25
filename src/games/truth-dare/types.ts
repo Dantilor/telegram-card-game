@@ -12,7 +12,6 @@ export type Card = {
 }
 
 export type PlayerTokens = {
-  skipNoShame: number
   rerollSameLevel: number
 }
 
@@ -22,12 +21,13 @@ export type TDPlayer = {
   courage: number
   shame: number
   respect: number
+  notCounted: number
   tokens: PlayerTokens
   streakCompleted: number
   currentLevel: CardLevel
 }
 
-export type VoteChoice = 'ok' | 'harder'
+export type VoteChoice = 'ok' | 'notCounted'
 
 export type TDPhase = 'setup' | 'choice' | 'card' | 'vote' | 'result'
 

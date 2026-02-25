@@ -145,7 +145,7 @@
 }
 
 .truth-dare .truth-dare-vote__btn--ok,
-.truth-dare .truth-dare-vote__btn--harder {
+.truth-dare .truth-dare-vote__btn--not-counted {
   background: var(--td-btn-ghost-bg) !important;
   color: var(--td-text-strong) !important;
 }
@@ -154,6 +154,6 @@
   border-color: var(--neonCyan);
 }
 
-.truth-dare .truth-dare-vote__btn--harder {
+.truth-dare .truth-dare-vote__btn--not-counted {
   border-color: var(--neonPink);
 }

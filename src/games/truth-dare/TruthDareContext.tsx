@@ -9,7 +9,7 @@ import { pickCard, pickShameCard } from './data/cards'
 import {
   applyCompletion,
   applyRefusal,
-  applySkipNoShame,
+  applyNotCounted,
   applyShameCardHeroism,
   clampLevel,
 } from './tdEngine'
@@ -19,9 +19,8 @@ type TDAction =
   | { type: 'CHOICE'; choice: CardType }
   | { type: 'COMPLETED' }
   | { type: 'REFUSED' }
-  | { type: 'SKIP_NO_SHAME' }
   | { type: 'REROLL' }
-  | { type: 'VOTE'; playerId: string; vote: 'ok' | 'harder' }
+  | { type: 'VOTE'; playerId: string; vote: 'ok' | 'notCounted' }
   | { type: 'FINISH_VOTE' }
   | { type: 'NEXT_TURN' }
   | { type: 'CONTINUE_10' }
@@ -32,10 +31,11 @@ function createPlayer(id: string, name: string): TDPlayer {
   return {
     id,
     name,
-    courage: 0,
+        courage: 0,
     shame: 0,
     respect: 0,
-    tokens: { skipNoShame: 1, rerollSameLevel: 1 },
+    notCounted: 0,
+    tokens: { rerollSameLevel: 1 },
     streakCompleted: 0,
     currentLevel: 1,
   }
@@ -121,9 +121,7 @@ function tdReducer(state: TDState, action: TDAction): TDState {
       if (!player || !card) return state
 
       const newPlayers = state.players.map((p) =>
-        p.id === player.id
-          ? applyCompletion(p, card.type, card.level, false)
-          : p
+        p.id === player.id ? applyCompletion(p, card.type, card.level) : p
       )
       const others = state.players.filter((p) => p.id !== player.id)
 
@@ -182,23 +180,6 @@ function tdReducer(state: TDState, action: TDAction): TDState {
         currentCard: null,
       }
     }
-    case 'SKIP_NO_SHAME': {
-      const player = state.players[state.currentPlayerIndex]
-      if (!player || player.tokens.skipNoShame <= 0) return state
-
-      const newPlayers = state.players.map((p) =>
-        p.id === player.id ? applySkipNoShame(p) : p
-      )
-      return {
-        ...state,
-        players: newPlayers,
-        stepCount: state.stepCount + 1,
-        currentPlayerIndex: (state.currentPlayerIndex + 1) % state.players.length,
-        phase: 'choice',
-        currentChoice: null,
-        currentCard: null,
-      }
-    }
     case 'REROLL': {
       const player = state.players[state.currentPlayerIndex]
       const card = state.currentCard
@@ -232,14 +213,17 @@ function tdReducer(state: TDState, action: TDAction): TDState {
     }
     case 'FINISH_VOTE': {
       const votes = Object.values(state.vote.votes)
-      const harderCount = votes.filter((v) => v === 'harder').length
-      const voteResult = harderCount > votes.length / 2 ? 'harder' : 'ok'
+      const notCountedCount = votes.filter((v) => v === 'notCounted').length
+      const voteResult = notCountedCount > votes.length / 2 ? 'notCounted' : 'ok'
 
       const player = state.players[state.currentPlayerIndex]
       const card = state.currentCard
       if (!player || !card) return state
 
-      const updated = applyCompletion(player, card.type, card.level, voteResult === 'harder')
+      const updated =
+        voteResult === 'ok'
+          ? applyCompletion(player, card.type, card.level)
+          : applyNotCounted(player)
       const newPlayers = state.players.map((p) => (p.id === player.id ? updated : p))
 
       if ((state.stepCount + 1) >= state.totalStepsTarget) {

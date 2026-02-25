@@ -45,7 +45,7 @@
   border-color: var(--neonCyan);
 }
 
-.truth-dare-vote__btn--harder {
+.truth-dare-vote__btn--not-counted {
   background: var(--td-dare-bg);
   border-color: var(--neonPink);
 }

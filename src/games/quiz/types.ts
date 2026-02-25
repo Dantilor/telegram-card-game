@@ -75,6 +75,8 @@ export type GameState = {
   questionStartTime: number
   totalQuestions: number
   questionsAnswered: number
+  /** Время на ответ (сек): 30, 60 или 120 */
+  timePerQuestionSec: number
 }
 
 export type QuizProgress = {

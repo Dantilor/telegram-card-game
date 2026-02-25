@@ -51,22 +51,24 @@ export type TDState = {
   }
 }
 
-export const TAGS = ['party', 'couples', 'light', 'hard', '18plus'] as const
+export const TAGS = ['party', 'couples', 'light', 'hard', '18plus', 'intim'] as const
 
-export const TAG_LABELS: Record<(typeof TAGS)[number], string> = {
-  party: 'Вечеринка',
-  couples: 'Пары',
-  light: 'Лёгкое',
-  hard: 'Жёсткое',
-  '18plus': '18+',
+export const TAG_LABELS: Record<(typeof TAGS)[number], { main: string; sub: string }> = {
+  party: { main: 'Лайт', sub: 'Компания' },
+  couples: { main: 'Драйв', sub: 'Компания' },
+  light: { main: 'Хардкор', sub: 'Компания' },
+  hard: { main: '18+', sub: 'Компания' },
+  '18plus': { main: 'Сближение', sub: 'Пара' },
+  intim: { main: 'Страсть', sub: 'Пара' },
 }
 
 export const TAG_EMOJIS: Record<(typeof TAGS)[number], string> = {
-  party: '🎉',
-  couples: '💕',
-  light: '✨',
-  hard: '🔥',
-  '18plus': '🔞',
+  party: '✨',
+  couples: '⚡',
+  light: '💀',
+  hard: '🔞',
+  '18plus': '💕',
+  intim: '❤️‍🔥',
 }
 
 export const TAG_ICONS: Record<(typeof TAGS)[number], string> = {
@@ -75,4 +77,5 @@ export const TAG_ICONS: Record<(typeof TAGS)[number], string> = {
   light: 'sparkle',
   hard: 'fire',
   '18plus': 'adult',
+  intim: 'heart',
 }

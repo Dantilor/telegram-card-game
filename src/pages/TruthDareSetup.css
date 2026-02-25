@@ -177,11 +177,26 @@
 }
 
 .truth-dare-setup__category-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
   font-size: 0.85rem;
-  font-weight: 600;
   text-align: center;
   color: var(--text);
   transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.truth-dare-setup__category-main {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.truth-dare-setup__category-sub {
+  font-weight: 450;
+  font-size: 0.78em;
+  opacity: 0.82;
+  line-height: 1.2;
 }
 
 /* neon-dark — всё выделение как в Активитусе */
@@ -259,6 +274,27 @@
 }
 [data-theme="minimal-calm"] .truth-dare-setup__category-card--active .truth-dare-setup__category-title {
   color: var(--neonCyan);
+}
+
+[data-theme="sunset"] .truth-dare-setup__count-btn.is-active,
+[data-theme="sunset"] .truth-dare-setup__step-btn.is-active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary);
+  box-shadow: 0 0 12px var(--glowPink);
+}
+[data-theme="sunset"] .truth-dare-setup__count-btn.is-active:hover,
+[data-theme="sunset"] .truth-dare-setup__step-btn.is-active:hover {
+  box-shadow: 0 0 16px var(--glowPink);
+}
+[data-theme="sunset"] .truth-dare-setup__category-card--active {
+  background: var(--td-active-bg) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 14px var(--glowPink), 0 0 0 1px var(--primary) !important;
+}
+[data-theme="sunset"] .truth-dare-setup__category-card--active .truth-dare-setup__category-title {
+  color: var(--primary);
+  text-shadow: 0 0 10px var(--glowPink);
 }
 
 .truth-dare-setup__actions {

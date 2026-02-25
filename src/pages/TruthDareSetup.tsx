@@ -22,6 +22,7 @@ function TruthDareSetup() {
   const [steps, setSteps] = useState(20)
   const [tags, setTags] = useState<string[]>([])
   const [adultConfirmOpen, setAdultConfirmOpen] = useState(false)
+  const [pendingAdultTag, setPendingAdultTag] = useState<string | null>(null)
 
   useEffect(() => {
     const s = loadSettings()
@@ -49,11 +50,12 @@ function TruthDareSetup() {
 
   const toggleTag = (tag: string) => {
     hapticSelection()
-    if (tag === '18plus') {
+    if (tag === '18plus' || tag === 'intim') {
       if (tags.includes(tag)) {
         setTags((prev) => prev.filter((t) => t !== tag))
         return
       }
+      setPendingAdultTag(tag)
       setAdultConfirmOpen(true)
       return
     }
@@ -64,11 +66,14 @@ function TruthDareSetup() {
 
   const handleAdultConfirm = () => {
     setAdultConfirmOpen(false)
-    setTags((prev) => (prev.includes('18plus') ? prev : [...prev, '18plus']))
+    const tag = pendingAdultTag
+    setPendingAdultTag(null)
+    if (tag) setTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]))
   }
 
   const handleAdultCancel = () => {
     setAdultConfirmOpen(false)
+    setPendingAdultTag(null)
   }
 
   const handleStart = () => {
@@ -151,7 +156,10 @@ function TruthDareSetup() {
               onClick={() => toggleTag(tag)}
             >
               <span className="truth-dare-setup__category-emoji" aria-hidden>{TAG_EMOJIS[tag]}</span>
-              <span className="truth-dare-setup__category-title">{TAG_LABELS[tag]}</span>
+              <span className="truth-dare-setup__category-title">
+                <span className="truth-dare-setup__category-main">{TAG_LABELS[tag].main}</span>
+                <span className="truth-dare-setup__category-sub">{TAG_LABELS[tag].sub}</span>
+              </span>
             </button>
           ))}
         </div>

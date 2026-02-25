@@ -9,6 +9,7 @@ import HomeButton from '../components/HomeButton'
 import './QuizHome.css'
 
 const QUESTION_COUNTS = [5, 10, 20] as const
+const TIME_PER_QUESTION_OPTIONS = [30, 60, 120] as const
 const PARTICIPANT_COUNT_OPTIONS = [2, 3, 4, 5, 6, 7, 8] as const
 
 function QuizHome() {
@@ -17,6 +18,7 @@ function QuizHome() {
   const { state, dispatch } = useQuizGame()
   const [tags, setTags] = useState<string[]>([])
   const [questionCount, setQuestionCount] = useState(5)
+  const [timePerQuestion, setTimePerQuestion] = useState(60)
   const [tagError, setTagError] = useState<string | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
 
@@ -35,6 +37,7 @@ function QuizHome() {
     if (state.phase === 'setup') {
       setTags([])
       setQuestionCount(5)
+      setTimePerQuestion(60)
       setTagError(null)
       setParticipantCount(2)
       setNames(Array(8).fill(''))
@@ -86,7 +89,7 @@ function QuizHome() {
     startRequestedRef.current = true
 
     const playerNames = visibleNames.map((n, i) => n.trim() || `Игрок ${i + 1}`)
-    dispatch({ type: 'START_ROOM', tags, totalQuestions: questionCount })
+    dispatch({ type: 'START_ROOM', tags, totalQuestions: questionCount, timePerQuestionSec: timePerQuestion })
     dispatch({ type: 'SET_ROOM_PLAYERS', names: playerNames })
   }
 
@@ -182,6 +185,22 @@ function QuizHome() {
               onClick={() => { hapticSelection(); setQuestionCount(n) }}
             >
               {n}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="quiz-home__section">
+        <h2 className="quiz-home__section-title">Время на задание</h2>
+        <div className="quiz-home__options">
+          {TIME_PER_QUESTION_OPTIONS.map((sec) => (
+            <button
+              key={sec}
+              type="button"
+              className={`btn btn--ghost quiz-home__option-btn ${timePerQuestion === sec ? 'quiz-home__option-btn--active' : ''}`}
+              onClick={() => { hapticSelection(); setTimePerQuestion(sec) }}
+            >
+              {sec} сек
             </button>
           ))}
         </div>

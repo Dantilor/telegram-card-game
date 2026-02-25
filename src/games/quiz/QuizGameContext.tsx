@@ -9,8 +9,8 @@ import { getQuestionsByTags, shuffleQuestions } from './data/questions'
 import { calculatePoints, getFiftyFiftyIndices, getRandomBooster } from './gameEngine'
 
 type QuizAction =
-  | { type: 'START_SOLO'; tags: string[]; totalQuestions: number }
-  | { type: 'START_ROOM'; tags: string[]; totalQuestions: number }
+  | { type: 'START_SOLO'; tags: string[]; totalQuestions: number; timePerQuestionSec?: number }
+  | { type: 'START_ROOM'; tags: string[]; totalQuestions: number; timePerQuestionSec: number }
   | { type: 'SET_ROOM_PLAYERS'; names: string[] }
   | { type: 'SELECT_BET'; multiplier: Multiplier }
   | { type: 'USE_FIFTY_FIFTY' }
@@ -56,7 +56,11 @@ function applyStreakBonus(player: Player, isCorrect: boolean): Player {
   return { ...player, streak: 0, nextQuestionBonusMultiplier: 1 }
 }
 
-const initialTimer = { totalSec: 15, leftSec: 15, running: false }
+const DEFAULT_TIME_SEC = 60
+
+function createTimer(sec: number) {
+  return { totalSec: sec, leftSec: sec, running: false }
+}
 
 function quizReducer(state: GameState, action: QuizAction): GameState {
   switch (action.type) {
@@ -65,6 +69,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       if (questions.length < action.totalQuestions) {
         return state
       }
+      const timeSec = action.timePerQuestionSec ?? DEFAULT_TIME_SEC
       const q = shuffleQuestions(questions).slice(0, action.totalQuestions)
       const player = createPlayer('solo-1', 'Игрок')
       return {
@@ -74,7 +79,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         currentPlayerIndex: 0,
         questionQueue: q,
         currentQuestionIndex: 0,
-        timer: { ...initialTimer },
+        timer: createTimer(timeSec),
         currentMultiplier: null,
         round: {},
         uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
@@ -82,6 +87,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         questionStartTime: Date.now(),
         totalQuestions: action.totalQuestions,
         questionsAnswered: 0,
+        timePerQuestionSec: timeSec,
       }
     }
     case 'START_ROOM': {
@@ -92,11 +98,13 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         phase: 'room_setup',
         questionQueue: [],
         totalQuestions: action.totalQuestions,
+        timePerQuestionSec: action.timePerQuestionSec,
       }
     }
     case 'SET_ROOM_PLAYERS': {
       const pool = getQuestionsByTags(state.selectedTags, 100)
       if (pool.length < state.totalQuestions) return state
+      const timeSec = state.timePerQuestionSec ?? DEFAULT_TIME_SEC
       const q = shuffleQuestions(pool).slice(0, state.totalQuestions)
       const players = action.names.map((name, i) => createPlayer(`p-${i}-${Date.now()}`, name))
       return {
@@ -104,7 +112,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         players,
         questionQueue: q,
         currentQuestionIndex: 0,
-        timer: { ...initialTimer },
+        timer: createTimer(timeSec),
         currentMultiplier: null,
         round: {},
         uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
@@ -217,7 +225,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
           ...state,
           round,
           players: newPlayers,
-          timer: allAnswered ? { ...state.timer, running: false } : { ...initialTimer },
+          timer: allAnswered ? { ...state.timer, running: false } : createTimer(state.timePerQuestionSec ?? DEFAULT_TIME_SEC),
           phase: allAnswered ? 'result' : 'question',
           currentPlayerIndex: allAnswered ? state.currentPlayerIndex : nextIdx,
           currentMultiplier: allAnswered ? state.currentMultiplier : null,
@@ -321,7 +329,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         ...state,
         round,
         players: newPlayers,
-        timer: allAnswered ? { ...state.timer, running: false } : { ...initialTimer },
+        timer: allAnswered ? { ...state.timer, running: false } : createTimer(state.timePerQuestionSec ?? DEFAULT_TIME_SEC),
         phase: allAnswered ? 'result' : 'question',
         currentPlayerIndex: allAnswered ? state.currentPlayerIndex : nextIdx,
         currentMultiplier: allAnswered ? state.currentMultiplier : null,
@@ -347,7 +355,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
         phase: 'question',
         questionStartTime: Date.now(),
-        timer: { ...initialTimer },
+        timer: createTimer(state.timePerQuestionSec ?? DEFAULT_TIME_SEC),
         questionsAnswered,
       }
     }
@@ -374,7 +382,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
         phase: 'question',
         questionStartTime: Date.now(),
-        timer: { ...initialTimer },
+        timer: createTimer(state.timePerQuestionSec ?? DEFAULT_TIME_SEC),
         questionsAnswered: 0,
       }
     }
@@ -394,7 +402,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         round: {},
         uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
         questionStartTime: Date.now(),
-        timer: { ...initialTimer },
+        timer: createTimer(state.timePerQuestionSec ?? DEFAULT_TIME_SEC),
       }
     }
     case 'RESET':
@@ -405,7 +413,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         currentPlayerIndex: 0,
         questionQueue: [],
         currentQuestionIndex: 0,
-        timer: initialTimer,
+        timer: createTimer(DEFAULT_TIME_SEC),
         currentMultiplier: null,
         round: {},
         uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
@@ -413,6 +421,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         questionStartTime: 0,
         totalQuestions: 5,
         questionsAnswered: 0,
+        timePerQuestionSec: DEFAULT_TIME_SEC,
       }
     default:
       return state
@@ -426,7 +435,7 @@ const initialState: GameState = {
   currentPlayerIndex: 0,
   questionQueue: [],
   currentQuestionIndex: 0,
-  timer: initialTimer,
+  timer: createTimer(DEFAULT_TIME_SEC),
   currentMultiplier: null,
   round: {},
   uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
@@ -434,6 +443,7 @@ const initialState: GameState = {
   questionStartTime: 0,
   totalQuestions: 5,
   questionsAnswered: 0,
+  timePerQuestionSec: DEFAULT_TIME_SEC,
 }
 
 const QuizContext = createContext<{

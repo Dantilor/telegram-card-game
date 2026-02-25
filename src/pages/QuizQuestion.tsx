@@ -7,7 +7,6 @@ import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import './QuizQuestion.css'
 
-const TIMER_TOTAL = 15
 const CLUTCH_SEC = 3
 
 function QuizQuestion() {
@@ -37,9 +36,10 @@ function QuizQuestion() {
     }
     
     timerRef.current = setInterval(() => {
+      const totalSec = state.timer.totalSec
       const elapsed = Math.floor((Date.now() - startRef.current) / 1000)
       const bonus = state.uiFlags.pauseBonusSeconds ?? 0
-      const left = Math.max(0, TIMER_TOTAL + bonus - elapsed)
+      const left = Math.max(0, totalSec + bonus - elapsed)
       dispatch({ type: 'TIMER_TICK', leftSec: left })
       if (left <= CLUTCH_SEC && left > 0) {
         hapticImpact('medium')
@@ -53,7 +53,7 @@ function QuizQuestion() {
       if (timerRef.current) clearInterval(timerRef.current)
       timerRef.current = null
     }
-  }, [state.phase, state.currentQuestionIndex, state.currentPlayerIndex, state.uiFlags.pauseBonusSeconds, state.currentMultiplier, dispatch])
+  }, [state.phase, state.currentQuestionIndex, state.currentPlayerIndex, state.timer.totalSec, state.uiFlags.pauseBonusSeconds, state.currentMultiplier, dispatch])
 
   useEffect(() => {
     if (state.phase === 'result') navigate('/quiz/result')
@@ -118,7 +118,7 @@ function QuizQuestion() {
       <div className={`quiz-question__timer ${isClutch ? 'quiz-question__timer--clutch' : ''}`}>
         <div
           className="quiz-question__timer-bar"
-          style={{ width: `${(state.timer.leftSec / TIMER_TOTAL) * 100}%` }}
+          style={{ width: `${state.timer.totalSec > 0 ? (state.timer.leftSec / state.timer.totalSec) * 100 : 0}%` }}
         />
         <span className="quiz-question__timer-text">{state.timer.leftSec} сек</span>
       </div>

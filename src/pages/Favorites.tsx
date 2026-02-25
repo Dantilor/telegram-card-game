@@ -98,7 +98,7 @@ function Favorites() {
         <div className="favorites-page__empty card">
           <p className="favorites-page__empty-text">Пока нет избранных вопросов</p>
           <p className="favorites-page__empty-hint">Отмечай ⭐ при игре — они появятся здесь</p>
-          <Link to="/games" className="btn btn--primary" onClick={() => haptic('light')}>
+          <Link to="/games" className="btn btn--primary favorites-page__empty-btn" onClick={() => haptic('light')}>
             Выбрать игру
           </Link>
         </div>

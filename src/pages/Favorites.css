@@ -34,9 +34,13 @@
 }
 
 .favorites-page__empty-hint {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1rem;
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+.favorites-page__empty-btn {
+  margin-top: 1rem;
 }
 
 .favorites-page__toolbar {

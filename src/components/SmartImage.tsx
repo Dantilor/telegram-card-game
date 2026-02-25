@@ -15,6 +15,10 @@ type Props = {
 export default function SmartImage({ src, alt, className, priority, webpSrc, aspectRatio = '4 / 3', objectFit = 'cover' }: Props) {
   const [loaded, setLoaded] = useState(false)
 
+  const handleLoad = () => {
+    setLoaded(true)
+  }
+
   const imgEl = (
     <img
       src={src}
@@ -22,7 +26,15 @@ export default function SmartImage({ src, alt, className, priority, webpSrc, asp
       className={`smart-image__img ${loaded ? 'smart-image__img--loaded' : ''}`}
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
-      onLoad={() => setLoaded(true)}
+      {...(priority && { fetchPriority: 'high' as const })}
+      onLoad={(e) => {
+        const img = e.currentTarget
+        if (img.decode) {
+          img.decode().then(handleLoad).catch(handleLoad)
+        } else {
+          handleLoad()
+        }
+      }}
       style={{ objectFit }}
     />
   )

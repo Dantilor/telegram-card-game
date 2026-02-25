@@ -50,6 +50,16 @@ export const IMAGES: Record<string, ImageAsset> = {
   mafiaHost: { png: mafiaHost },
 }
 
+/** URL картинок Мафии для preload при входе в игру */
+export const PRELOAD_MAFIA_URLS: string[] = [
+  IMAGES.mafiaDoctor.png,
+  IMAGES.mafiaRole.png,
+  IMAGES.mafiaSheriff.png,
+  IMAGES.mafiaCivilian1.png,
+  IMAGES.mafiaCivilian2.png,
+  IMAGES.mafiaHost.png,
+]
+
 /** URL картинок первого экрана (сетка игр + режимы карточной игры) для preload */
 export const PRELOAD_CRITICAL_URLS: string[] = [
   IMAGES.cardGameHero.png,

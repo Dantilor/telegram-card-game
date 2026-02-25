@@ -55,14 +55,20 @@ function CardGameEntry() {
         <p className="card-entry-page__tagline">Выбери режим</p>
       </header>
       <div className="card-entry-page__modes">
-        {MODES.map((mode) => {
+        {MODES.map((mode, idx) => {
           const locked = isModeLocked(mode.id as ModeId, isPremium)
           const modeContent = (
             <>
               {mode.image ? (
                 <>
                   <div className="card-entry-page__mode-image-wrap">
-                    <SmartImage src={mode.image} alt="" className="card-entry-page__mode-img" objectFit="cover" />
+                    <SmartImage
+                      src={mode.image}
+                      alt=""
+                      className="card-entry-page__mode-img"
+                      objectFit="cover"
+                      priority={idx < 4}
+                    />
                   </div>
                   <div className="card-entry-page__mode-text">
                     <span className="card-entry-page__mode-title">{mode.title}</span>

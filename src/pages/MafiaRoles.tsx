@@ -93,13 +93,13 @@ function MafiaRoles() {
             <p className="mafia-roles__role mafia-roles__role--above">Твоя роль: {roleLabel}</p>
             <div className="mafia-roles__role-media">
               {isDoctor ? (
-                <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--doctor" />
+                <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--doctor" decoding="async" loading="eager" />
               ) : isMafia ? (
-                <img src={IMAGES.mafiaRole.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--mafia" />
+                <img src={IMAGES.mafiaRole.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--mafia" decoding="async" loading="eager" />
               ) : isSheriff ? (
-                <img src={IMAGES.mafiaSheriff.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--sheriff" />
+                <img src={IMAGES.mafiaSheriff.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--sheriff" decoding="async" loading="eager" />
               ) : civilianImg ? (
-                <img src={civilianImg} alt="" className="mafia-roles__role-img mafia-roles__role-img--civilian" />
+                <img src={civilianImg} alt="" className="mafia-roles__role-img mafia-roles__role-img--civilian" decoding="async" loading="eager" />
               ) : (
                 <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
               )}

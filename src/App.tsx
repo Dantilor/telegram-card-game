@@ -1,8 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { trackEvent } from './lib/analytics'
-import { preloadImages } from './utils/preloadImages'
-import { PRELOAD_CRITICAL_URLS } from './assets/images'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
@@ -74,7 +72,6 @@ function App() {
       }
     }, 1800)
     trackEvent('app_open')
-    preloadImages(PRELOAD_CRITICAL_URLS)
     return () => clearTimeout(fallbackT)
   }, [])
 

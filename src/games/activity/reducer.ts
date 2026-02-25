@@ -1,33 +1,32 @@
 import type { ActivityState, TaskType, ActivityCategoryId } from './types'
 import { getInitialActivityState } from './state'
-import { ACTIVITY_CATEGORIES } from './data/activityWords'
+import { ACTIVITY_CATEGORIES, parseActivityItem } from './data/activityWords'
 
-const TASK_TYPES: TaskType[] = ['explain', 'show', 'draw']
-
-function pickRandomTask(): TaskType {
-  return TASK_TYPES[Math.floor(Math.random() * TASK_TYPES.length)] ?? 'explain'
-}
-
-function getAllWords(categoryIds: ActivityCategoryId[]): string[] {
-  const words: string[] = []
+function getAllItems(categoryIds: ActivityCategoryId[]): string[] {
+  const items: string[] = []
   for (const id of categoryIds) {
     const cat = ACTIVITY_CATEGORIES.find((c) => c.id === id)
-    if (cat) words.push(...cat.words)
+    if (cat) items.push(...cat.words)
   }
-  return words
+  return items
 }
 
-function pickWord(categoryIds: ActivityCategoryId[], usedWords: string[]): { word: string; usedWords: string[] } {
-  const allWords = getAllWords(categoryIds)
-  const available = allWords.filter((w) => !usedWords.includes(w))
-  
+function pickItem(
+  categoryIds: ActivityCategoryId[],
+  usedWords: string[]
+): { word: string; taskType: TaskType; usedWords: string[] } {
+  const allItems = getAllItems(categoryIds)
+  const available = allItems.filter((item) => !usedWords.includes(item))
+
   if (available.length === 0) {
-    const randomWord = allWords[Math.floor(Math.random() * allWords.length)] ?? ''
-    return { word: randomWord, usedWords: [randomWord] }
+    const item = allItems[Math.floor(Math.random() * allItems.length)] ?? ''
+    const { word, taskType } = parseActivityItem(item)
+    return { word, taskType, usedWords: [item] }
   }
-  
-  const word = available[Math.floor(Math.random() * available.length)] ?? ''
-  return { word, usedWords: [...usedWords, word] }
+
+  const item = available[Math.floor(Math.random() * available.length)] ?? ''
+  const { word, taskType } = parseActivityItem(item)
+  return { word, taskType, usedWords: [...usedWords, item] }
 }
 
 export type ActivityAction =
@@ -115,7 +114,7 @@ export function activityReducer(state: ActivityState, action: ActivityAction): A
 
     case 'START_ROUND': {
       if (state.phase !== 'turn_ready') return state
-      const { word, usedWords } = pickWord(state.categoryIds, state.usedWords)
+      const { word, taskType, usedWords } = pickItem(state.categoryIds, state.usedWords)
       return {
         ...state,
         phase: 'in_round',
@@ -124,7 +123,7 @@ export function activityReducer(state: ActivityState, action: ActivityAction): A
         skipped: 0,
         roundEndFired: false,
         currentWord: word,
-        currentTaskType: pickRandomTask(),
+        currentTaskType: taskType,
         usedWords,
       }
     }
@@ -136,28 +135,28 @@ export function activityReducer(state: ActivityState, action: ActivityAction): A
       const teamGuessed = [...state.teamGuessed]
       teamScores[slotIdx] = (teamScores[slotIdx] ?? 0) + 1
       teamGuessed[slotIdx] = (teamGuessed[slotIdx] ?? 0) + 1
-      
-      const { word, usedWords } = pickWord(state.categoryIds, state.usedWords)
-      
+
+      const { word, taskType, usedWords } = pickItem(state.categoryIds, state.usedWords)
+
       return {
         ...state,
         teamScores,
         teamGuessed,
         guessed: state.guessed + 1,
         currentWord: word,
-        currentTaskType: pickRandomTask(),
+        currentTaskType: taskType,
         usedWords,
       }
     }
 
     case 'SKIPPED': {
       if (state.phase !== 'in_round') return state
-      const { word, usedWords } = pickWord(state.categoryIds, state.usedWords)
+      const { word, taskType, usedWords } = pickItem(state.categoryIds, state.usedWords)
       return {
         ...state,
         skipped: state.skipped + 1,
         currentWord: word,
-        currentTaskType: pickRandomTask(),
+        currentTaskType: taskType,
         usedWords,
       }
     }
@@ -208,11 +207,11 @@ export function activityReducer(state: ActivityState, action: ActivityAction): A
     }
 
     case 'NEXT_WORD': {
-      const { word, usedWords } = pickWord(state.categoryIds, state.usedWords)
+      const { word, taskType, usedWords } = pickItem(state.categoryIds, state.usedWords)
       return {
         ...state,
         currentWord: word,
-        currentTaskType: pickRandomTask(),
+        currentTaskType: taskType,
         usedWords,
       }
     }

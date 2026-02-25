@@ -60,6 +60,8 @@ export type Deck = {
   description: string
   isPremium: boolean
   questionsCount: number
+  /** Текст над каждым вопросом (например, для колоды «Байки из прошлого») */
+  cardPrompt?: string
 }
 
 export const CUSTOM_DECK_PREFIX = 'custom-'
@@ -239,6 +241,7 @@ export const decks: Deck[] = [
     description: 'Время мощных историй! Делимся смешными и захватывающими случаями, о которых остальные могли даже не догадываться.',
     isPremium: true,
     questionsCount: 50,
+    cardPrompt: 'Вспомни и расскажи историю из жизни, когда...',
   },
   {
     id: 'awkwardSituations',

@@ -98,7 +98,7 @@ function MafiaSetup() {
       <section className="mafia-setup__section">
         <h2 className="mafia-setup__section-title">Ведущий</h2>
         <div className="mafia-setup__name-row mafia-setup__name-row--host card">
-          <img src={IMAGES.mafiaHost.png} alt="" className="mafia-setup__host-thumb" />
+          <img src={IMAGES.mafiaHost.png} alt="" className="mafia-setup__host-thumb" decoding="async" loading="eager" />
           <div className="mafia-setup__name-row-inner">
             <input
               type="text"

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Game } from '../data/games'
 import { hapticSelection } from '../utils/haptics'
+import SmartImage from './SmartImage'
 import '../pages/Games.css'
 
 type Props = {
@@ -18,12 +19,11 @@ export default function HeroGameCard({ game, isLocked, onPremiumOpen }: Props) {
       <span className="hero-game-card__badge" aria-hidden>🔥 HIT</span>
       {hasImage ? (
         <div className="hero-game-card__media">
-          <img
-            className="hero-game-card__img"
+          <SmartImage
             src={imageSrc}
             alt=""
-            loading="eager"
-            decoding="async"
+            className="hero-game-card__img"
+            priority
           />
         </div>
       ) : (

@@ -403,6 +403,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.play-card__prompt {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--muted, rgba(255, 255, 255, 0.7));
+}
+
 .play-card__text {
   margin: 0 0 1.5rem;
   font-size: 1.15rem;

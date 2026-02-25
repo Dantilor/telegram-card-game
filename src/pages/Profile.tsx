@@ -81,6 +81,8 @@ function Profile() {
                 src={user.photo_url}
                 alt=""
                 className="profile-card__photo"
+                decoding="async"
+                loading="lazy"
               />
             )}
             <div className="profile-card__user-info">

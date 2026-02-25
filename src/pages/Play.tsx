@@ -416,6 +416,8 @@ export default function Play() {
   }
 
   const current = state.status === 'ready' ? state.cards[displayIndex] : null
+  const deckFull = state.status === 'ready' ? getDeckFull(state.deckId) : null
+  const cardPrompt = deckFull?.cardPrompt
   const cardPhaseClass =
     transitionPhase === 'leaving'
       ? 'play-card--leave'
@@ -471,6 +473,9 @@ export default function Play() {
           className={`play-card ${cardPhaseClass}`}
           onAnimationEnd={handleCardAnimationEnd}
         >
+          {cardPrompt && (
+            <p className="play-card__prompt">{cardPrompt}</p>
+          )}
           <div className="play-card__text">{current?.text ?? ''}</div>
         </div>
       </div>

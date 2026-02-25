@@ -202,14 +202,15 @@
   font-size: clamp(0.875rem, 2.5vw, 0.95rem);
 }
 
-/* Premium CTA — карточка Premium PRO, ширина как у hero-кнопок */
+/* Premium CTA — карточка ровно между Профиль и «Игры для компании...» */
 .home-premium-cta {
   width: 100%;
   max-width: min(20rem, calc(100vw - 2rem));
-  padding: clamp(0.75rem, 3vw, 1.25rem) clamp(0.5rem, 3vw, 1rem);
-  margin: 0 auto;
+  margin: clamp(0.75rem, 4vw, 1.75rem) auto;
+  padding: 0 clamp(0.5rem, 3vw, 1rem);
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 /* Premium card — базовые стили (переменные тем) */
@@ -328,6 +329,32 @@
   font-size: 18px;
   margin-left: 4px;
   opacity: 0.85;
+}
+
+/* Premium card — адаптация под устройства */
+@media (max-width: 400px) {
+  .premium-card {
+    padding: 14px 16px;
+  }
+
+  .premium-card__title {
+    font-size: 15px;
+  }
+
+  .premium-card__sub {
+    font-size: 12px;
+  }
+
+  .premium-card__price-text {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 640px) {
+  .home-premium-cta {
+    margin-top: clamp(1rem, 5vw, 2rem);
+    margin-bottom: clamp(1rem, 5vw, 2rem);
+  }
 }
 
 /* neon-dark — дефолтная тёмная карточка */

@@ -202,15 +202,17 @@
   font-size: clamp(0.875rem, 2.5vw, 0.95rem);
 }
 
-/* Premium CTA — карточка ровно между Профиль и «Игры для компании...» */
+/* Premium CTA — карточка ровно по середине между Профиль и «Игры для компании...» */
 .home-premium-cta {
-  width: 100%;
-  max-width: min(20rem, calc(100vw - 2rem));
-  margin: clamp(0.75rem, 4vw, 1.75rem) auto;
-  padding: 0 clamp(0.5rem, 3vw, 1rem);
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  max-width: min(20rem, calc(100vw - 2rem));
+  margin: 0 auto;
+  padding: 0 clamp(0.5rem, 3vw, 1rem);
+  min-height: 0;
 }
 
 /* Premium card — базовые стили (переменные тем) */
@@ -331,52 +333,6 @@
   opacity: 0.85;
 }
 
-/* Premium card — адаптация под мобильные (телефон) */
-@media (max-width: 480px) {
-  .home-premium-cta {
-    width: 100%;
-    max-width: 100%;
-    padding-left: clamp(0.5rem, 3vw, 1rem);
-    padding-right: clamp(0.5rem, 3vw, 1rem);
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  .premium-card {
-    width: 100%;
-    max-width: 100%;
-    padding: 16px 18px;
-  }
-
-  .premium-card__title {
-    font-size: 15px;
-  }
-
-  .premium-card__sub {
-    font-size: 12px;
-  }
-
-  .premium-card__price-text {
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 400px) {
-  .premium-card {
-    padding: 14px 16px;
-  }
-
-  .premium-card__sub {
-    font-size: 11.5px;
-  }
-}
-
-@media (min-width: 641px) {
-  .home-premium-cta {
-    margin-top: clamp(1rem, 5vw, 2rem);
-    margin-bottom: clamp(1rem, 5vw, 2rem);
-  }
-}
 
 /* neon-dark — дефолтная тёмная карточка */
 :root,
@@ -539,20 +495,20 @@
   --premium-card-badge-border: rgba(0, 0, 0, 0.1);
 }
 
-/* About — flex: 1 заполняет низ экрана, контент прижат вниз, по центру */
+/* About — прижат к самому низу экрана */
 .home-about {
   flex: 1;
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  margin-top: clamp(2rem, 8vw, 4rem);
   padding: 0 clamp(0.5rem, 2vw, 0.75rem) 1.5rem;
   max-width: 100%;
 }
 
 .home-about__subtitle {
   margin: 0 0 0.75rem;
+  margin-top: auto;
   font-size: clamp(0.9rem, 2.5vw, 1rem);
   font-weight: 600;
   color: var(--muted);
@@ -565,7 +521,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.4rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .home-about__chip {

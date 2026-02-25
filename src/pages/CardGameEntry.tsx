@@ -35,7 +35,7 @@ function CardGameEntry() {
               {mode.image ? (
                 <>
                   <div className="card-entry-page__mode-image-wrap">
-                    <SmartImage src={mode.image} alt="" className="card-entry-page__mode-img" objectFit="contain" />
+                    <SmartImage src={mode.image} alt="" className="card-entry-page__mode-img" objectFit="cover" />
                   </div>
                   <div className="card-entry-page__mode-text">
                     <span className="card-entry-page__mode-title">{mode.title}</span>

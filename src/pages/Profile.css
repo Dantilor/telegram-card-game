@@ -289,3 +289,7 @@
   font-weight: 500;
   color: var(--text);
 }
+
+.profile-premium__active .profile-premium__actions {
+  margin-top: 1rem;
+}

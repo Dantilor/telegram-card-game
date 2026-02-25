@@ -182,6 +182,13 @@ function Profile() {
           >
             Условия Premium
           </button>
+          <button
+            type="button"
+            className="btn btn--ghost profile-card__link"
+            onClick={() => { haptic('light'); setDocumentModalType('adultPolicy') }}
+          >
+            Политика доступа к категориям 18+
+          </button>
         </div>
       </section>
 

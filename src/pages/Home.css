@@ -202,6 +202,25 @@
   font-size: clamp(0.875rem, 2.5vw, 0.95rem);
 }
 
+/* Premium CTA — по центру между hero и about, тот же размер что hero-кнопки */
+.home-premium-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: min(20rem, calc(100vw - 2rem));
+  padding: clamp(0.75rem, 3vw, 1.25rem) clamp(0.5rem, 3vw, 1rem);
+  margin: 0 auto;
+}
+
+.home-premium-cta__btn {
+  width: 100%;
+  min-width: 0;
+  max-width: 20rem;
+  padding: clamp(0.5rem, 2vw, 0.65rem) clamp(0.75rem, 3vw, 1rem);
+  font-size: clamp(0.875rem, 2.5vw, 0.95rem);
+}
+
 /* About — flex: 1 заполняет низ экрана, контент прижат вниз, по центру */
 .home-about {
   flex: 1;

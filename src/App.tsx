@@ -50,6 +50,7 @@ import TruthDareVote from './pages/TruthDareVote'
 import TruthDareResult from './pages/TruthDareResult'
 import CustomDeckEditor from './pages/CustomDeckEditor'
 import Profile from './pages/Profile'
+import PremiumPage from './pages/PremiumPage'
 import LegalPrivacy from './pages/LegalPrivacy'
 import LegalTerms from './pages/LegalTerms'
 import LegalPremium from './pages/LegalPremium'
@@ -139,6 +140,7 @@ function App() {
           }
         />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/premium" element={<PremiumPage />} />
         <Route path="/legal/privacy" element={<LegalPrivacy />} />
         <Route path="/legal/terms" element={<LegalTerms />} />
         <Route path="/legal/premium" element={<LegalPremium />} />

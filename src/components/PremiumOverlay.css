@@ -229,3 +229,7 @@
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
+
+.premium-overlay__btn--dismiss {
+  margin-top: 1rem;
+}

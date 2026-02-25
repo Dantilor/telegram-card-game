@@ -72,6 +72,19 @@ function Home() {
         </div>
       </section>
 
+      <section className="home-premium-cta">
+        <button
+          type="button"
+          className="btn btn--primary home-premium-cta__btn"
+          onClick={() => {
+            hapticImpact('light')
+            setPremiumOverlayOpen(true)
+          }}
+        >
+          Оформить Premium
+        </button>
+      </section>
+
       <section className="home-about">
         <h2 className="home-about__subtitle">Игры для компании, пары и вечеринок</h2>
         <div className="home-about__chips">

@@ -45,9 +45,11 @@ type Props = {
   isOpen: boolean
   onClose: () => void
   onBuyPremium?: () => void
+  /** Режим страницы: без оверлея, с кнопкой «Назад» */
+  asPage?: boolean
 }
 
-export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props) {
+export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }: Props) {
   const { refresh } = usePremium()
   const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
   const [plans, setPlans] = useState<Plan[]>([])
@@ -99,7 +101,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
   }
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !asPage) {
       trackEvent('click_premium')
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape') onClose()
@@ -111,7 +113,10 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
         document.body.style.overflow = ''
       }
     }
-  }, [isOpen, onClose])
+    if (isOpen && asPage) {
+      trackEvent('click_premium')
+    }
+  }, [isOpen, onClose, asPage])
 
   useEffect(() => {
     if (!isOpen) {
@@ -185,33 +190,28 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen && !asPage) return null
 
   const plan = plans[0]
   const priceText = plan
     ? `${plan.priceRub} ₽ / ${Math.round(plan.durationDays / 30)} мес.`
     : '259 ₽ / 3 мес.'
 
-  return (
-    <div
-      className="premium-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="premium-overlay-title"
-      onClick={handleBackdropClick}
-    >
-      <div className="premium-overlay__card" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          className="premium-overlay__close"
-          onClick={() => {
-            haptic('light')
-            onClose()
-          }}
-          aria-label="Закрыть"
-        >
-          ✕
-        </button>
+  const cardContent = (
+    <div className="premium-overlay__card" onClick={asPage ? undefined : (e: React.MouseEvent) => e.stopPropagation()}>
+        {!asPage && (
+          <button
+            type="button"
+            className="premium-overlay__close"
+            onClick={() => {
+              haptic('light')
+              onClose()
+            }}
+            aria-label="Закрыть"
+          >
+            ✕
+          </button>
+        )}
         <h2 id="premium-overlay-title" className="premium-overlay__heading">
           <span className="premium-overlay__icon" aria-hidden>💎</span>
           Premium-доступ
@@ -264,9 +264,13 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
           <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('privacy') }}>
             Политикой конфиденциальности
           </button>
-          {' '}и{' '}
+          ,{' '}
           <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('premium') }}>
             Условиями Premium
+          </button>
+          {' '}и{' '}
+          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('adultPolicy') }}>
+            Политикой доступа к категориям 18+
           </button>
           .
         </p>
@@ -288,15 +292,39 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium }: Props)
         </button>
         <button
           type="button"
-          className="btn btn--ghost premium-overlay__btn"
+          className="btn btn--ghost premium-overlay__btn premium-overlay__btn--dismiss"
           onClick={() => {
             haptic('light')
             onClose()
           }}
         >
-          Понятно
+          {asPage ? 'Назад' : 'Понятно'}
         </button>
       </div>
+  )
+
+  if (asPage) {
+    return (
+      <>
+        {cardContent}
+        <DocumentModal
+          isOpen={documentModalType !== null}
+          onClose={() => setDocumentModalType(null)}
+          documentType={documentModalType ?? 'privacy'}
+        />
+      </>
+    )
+  }
+
+  return (
+    <div
+      className="premium-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="premium-overlay-title"
+      onClick={handleBackdropClick}
+    >
+      {cardContent}
       <DocumentModal
         isOpen={documentModalType !== null}
         onClose={() => setDocumentModalType(null)}

@@ -115,9 +115,7 @@ function ModePage() {
         </button>
       </div>
       <header className="mode-page__header">
-        <h1 className="mode-page__title">
-          <span aria-hidden>{mode.emoji}</span> {mode.title}
-        </h1>
+        <h1 className="mode-page__title">{mode.title}</h1>
         <p className="mode-page__tagline">Выбери колоду</p>
         {isFavoritesLocked(isPremium) ? (
           <button

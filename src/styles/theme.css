@@ -1,8 +1,8 @@
 /* Default: neon-dark */
 :root,
 [data-theme="neon-dark"] {
-  --bg0: #070814;
-  --bg1: #120B2E;
+  --bg0: #0d0a1a;
+  --bg1: #181030;
   --panel: rgba(20, 22, 45, 0.92);
   --text: #F5F3FF;
   --muted: rgba(245, 243, 255, 0.82);

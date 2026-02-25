@@ -76,13 +76,25 @@ function Home() {
         <section className="home-premium-cta">
           <button
             type="button"
-            className="btn btn--primary home-premium-cta__btn"
+            className="premium-card"
             onClick={() => {
               hapticImpact('light')
               setPremiumOverlayOpen(true)
             }}
           >
-            Оформить Premium
+            <div className="premium-card__left">
+              <div className="premium-card__title-row">
+                <span className="premium-card__title">Premium</span>
+                <span className="premium-card__badge">PRO</span>
+              </div>
+              <div className="premium-card__sub">
+                Открывает все игры и режимы • без автосписаний
+              </div>
+            </div>
+            <div className="premium-card__right">
+              <span className="premium-card__price-text">259 ₽ / 3 мес</span>
+              <span className="premium-card__arrow" aria-hidden>→</span>
+            </div>
           </button>
         </section>
       )}
@@ -97,7 +109,7 @@ function Home() {
           ))}
         </div>
         <p className="home-about__text">
-          Выбирай игру → настрой режим → играй. Избранные вопросы сохраняются.
+          Выбирай игру → настрой режим → играй.
         </p>
       </section>
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />

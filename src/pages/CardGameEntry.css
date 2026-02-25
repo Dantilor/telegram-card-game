@@ -142,6 +142,7 @@
   color: var(--muted);
   text-align: center;
   line-height: 1.2;
+  white-space: pre-line;
 }
 
 .card-entry-page__mode-card--locked .badge--premium {

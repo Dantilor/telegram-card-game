@@ -18,9 +18,9 @@ export const DECK_INDEX: DeckIndexEntry[] = [
   { id: 'feelings', modeId: 'couples', title: 'Эмоциональный вайб', isPremium: false, freeLimit: 15 },
   { id: 'past', modeId: 'couples', title: 'Архив воспоминаний', isPremium: true },
   { id: 'future', modeId: 'couples', title: 'Следующая глава', isPremium: true },
-  { id: 'conflictsHonesty', modeId: 'couples', title: 'Разговоры, которые мы избегали', isPremium: true },
-  { id: 'desiresDreams', modeId: 'couples', title: 'Топливо нашей жизни', isPremium: true },
-  { id: 'iUnderstandYou', modeId: 'couples', title: 'Переводчик твоих чувств', isPremium: true },
+  { id: 'conflictsHonesty', modeId: 'couples', title: 'О чем мы молчим', isPremium: true },
+  { id: 'desiresDreams', modeId: 'couples', title: 'Топливо жизни', isPremium: true },
+  { id: 'iUnderstandYou', modeId: 'couples', title: 'Переводчик чувств', isPremium: true },
   /* Режим "Свидания" */
   { id: 'sparkFirstImpression', modeId: 'dates', title: 'Искра и первое впечатление', isPremium: true },
   { id: 'lightFlirt', modeId: 'dates', title: 'Лёгкий флирт и притяжение', isPremium: true },

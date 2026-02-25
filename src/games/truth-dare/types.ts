@@ -21,6 +21,8 @@ export type TDPlayer = {
   courage: number
   shame: number
   respect: number
+  truthCounted: number
+  dareCounted: number
   notCounted: number
   tokens: PlayerTokens
   streakCompleted: number

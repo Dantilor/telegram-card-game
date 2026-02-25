@@ -9,15 +9,15 @@ function TruthDareResult() {
   const navigate = useNavigate()
   const { state, dispatch } = useTruthDare()
 
-  const sortedByCourage = [...state.players].sort((a, b) => b.courage - a.courage)
-  const sortedByRespect = [...state.players].sort((a, b) => b.respect - a.respect)
-  const sortedByShame = [...state.players].sort((a, b) => b.shame - a.shame)
-  const sortedByNotCounted = [...state.players].sort((a, b) => b.notCounted - a.notCounted)
+  const sortedByTruth = [...state.players].sort((a, b) => b.truthCounted - a.truthCounted)
+  const sortedByDare = [...state.players].sort((a, b) => b.dareCounted - a.dareCounted)
+  const sortedByCunning = [...state.players].sort(
+    (a, b) => b.shame + b.notCounted - (a.shame + a.notCounted)
+  )
 
-  const bravest = sortedByCourage[0]
-  const honest = sortedByRespect[0]
-  const shameKing = sortedByShame[0]
-  const mostNotCounted = sortedByNotCounted[0]
+  const mostHonest = sortedByTruth[0]
+  const mostDaring = sortedByDare[0]
+  const mostCunning = sortedByCunning[0]
 
   const handleContinue = () => {
     hapticSelection()
@@ -50,32 +50,25 @@ function TruthDareResult() {
 
       <div className="truth-dare-result__titles card">
         <h2 className="truth-dare-result__section-title">Титулы</h2>
-        {bravest && bravest.courage > 0 && (
+        {mostHonest && mostHonest.truthCounted > 0 && (
+          <p className="truth-dare-result__award">
+            <span className="truth-dare-result__award-emoji" aria-hidden>💬</span>
+            <span className="truth-dare-result__award-label">Самый честный</span>
+            <span className="truth-dare-result__award-name">— {mostHonest.name}</span>
+          </p>
+        )}
+        {mostCunning && mostCunning.shame + mostCunning.notCounted > 0 && (
+          <p className="truth-dare-result__award">
+            <span className="truth-dare-result__award-emoji" aria-hidden>🦊</span>
+            <span className="truth-dare-result__award-label">Самый хитрый</span>
+            <span className="truth-dare-result__award-name">— {mostCunning.name}</span>
+          </p>
+        )}
+        {mostDaring && mostDaring.dareCounted > 0 && (
           <p className="truth-dare-result__award">
             <span className="truth-dare-result__award-emoji" aria-hidden>🔥</span>
-            <span className="truth-dare-result__award-label">Самый безбашенный</span>
-            <span className="truth-dare-result__award-name">— {bravest.name}</span>
-          </p>
-        )}
-        {honest && honest.respect > 0 && (
-          <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-emoji" aria-hidden>👑</span>
-            <span className="truth-dare-result__award-label">Любимец публики</span>
-            <span className="truth-dare-result__award-name">— {honest.name}</span>
-          </p>
-        )}
-        {shameKing && shameKing.shame > 0 && (
-          <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-emoji" aria-hidden>😈</span>
-            <span className="truth-dare-result__award-label">Провокатор</span>
-            <span className="truth-dare-result__award-name">— {shameKing.name}</span>
-          </p>
-        )}
-        {mostNotCounted && mostNotCounted.notCounted > 0 && (
-          <p className="truth-dare-result__award">
-            <span className="truth-dare-result__award-emoji" aria-hidden>🙅</span>
-            <span className="truth-dare-result__award-label">Не убедил</span>
-            <span className="truth-dare-result__award-name">— {mostNotCounted.name}</span>
+            <span className="truth-dare-result__award-label">Не боится действовать</span>
+            <span className="truth-dare-result__award-name">— {mostDaring.name}</span>
           </p>
         )}
       </div>
@@ -85,9 +78,9 @@ function TruthDareResult() {
         {state.players.map((p) => (
           <div key={p.id} className="truth-dare-result__row">
             <span className="truth-dare-result__name">{p.name}</span>
-            <span className="truth-dare-result__stat">Смелость: {p.courage}</span>
-            <span className="truth-dare-result__stat">Репутация: {p.respect}</span>
-            <span className="truth-dare-result__stat">Стыд: {p.shame}</span>
+            <span className="truth-dare-result__stat">
+              Засчитано: {p.truthCounted + p.dareCounted}
+            </span>
             <span className="truth-dare-result__stat">Не засчитано: {p.notCounted}</span>
           </div>
         ))}

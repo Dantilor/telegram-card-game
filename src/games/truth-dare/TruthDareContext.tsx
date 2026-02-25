@@ -34,6 +34,8 @@ function createPlayer(id: string, name: string): TDPlayer {
         courage: 0,
     shame: 0,
     respect: 0,
+    truthCounted: 0,
+    dareCounted: 0,
     notCounted: 0,
     tokens: { rerollSameLevel: 1 },
     streakCompleted: 0,

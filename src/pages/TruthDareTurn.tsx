@@ -55,16 +55,14 @@ function TruthDareTurn() {
       <div className="truth-dare-turn__player card">
         <h2 className="truth-dare-turn__name">{player.name}</h2>
         <div className="truth-dare-turn__stats">
-          <span>Смелость: {player.courage}</span>
-          <span>Репутация: {player.respect}</span>
-          <span>Стыд: {player.shame}</span>
+          <span>Засчитано: {player.truthCounted + player.dareCounted}</span>
           <span>Не засчитано: {player.notCounted}</span>
         </div>
       </div>
 
       {shameActive ? (
         <div className="truth-dare-turn__shame">
-          <p className="truth-dare-turn__shame-text">Карта стыда — нельзя отказаться!</p>
+          <p className="truth-dare-turn__shame-text">Нельзя отказаться!</p>
           <div className="truth-dare-turn__choices">
             <button
               type="button"

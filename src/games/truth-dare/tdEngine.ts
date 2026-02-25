@@ -37,6 +37,8 @@ export function applyCompletion(
     ...player,
     courage,
     respect,
+    truthCounted: cardType === 'truth' ? player.truthCounted + 1 : player.truthCounted,
+    dareCounted: cardType === 'dare' ? player.dareCounted + 1 : player.dareCounted,
     streakCompleted: newStreak,
     currentLevel,
     tokens,

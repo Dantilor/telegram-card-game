@@ -7,6 +7,7 @@ import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import AdultConfirmModal from '../components/AdultConfirmModal'
 import './TruthDareSetup.css'
 
 const MIN_PLAYERS = 2
@@ -20,6 +21,7 @@ function TruthDareSetup() {
   const [names, setNames] = useState<string[]>(() => Array(4).fill(''))
   const [steps, setSteps] = useState(20)
   const [tags, setTags] = useState<string[]>([])
+  const [adultConfirmOpen, setAdultConfirmOpen] = useState(false)
 
   useEffect(() => {
     const s = loadSettings()
@@ -47,9 +49,26 @@ function TruthDareSetup() {
 
   const toggleTag = (tag: string) => {
     hapticSelection()
+    if (tag === '18plus') {
+      if (tags.includes(tag)) {
+        setTags((prev) => prev.filter((t) => t !== tag))
+        return
+      }
+      setAdultConfirmOpen(true)
+      return
+    }
     setTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     )
+  }
+
+  const handleAdultConfirm = () => {
+    setAdultConfirmOpen(false)
+    setTags((prev) => (prev.includes('18plus') ? prev : [...prev, '18plus']))
+  }
+
+  const handleAdultCancel = () => {
+    setAdultConfirmOpen(false)
   }
 
   const handleStart = () => {
@@ -168,6 +187,12 @@ function TruthDareSetup() {
           Начать раунд
         </button>
       </div>
+
+      <AdultConfirmModal
+        isOpen={adultConfirmOpen}
+        onConfirm={handleAdultConfirm}
+        onCancel={handleAdultCancel}
+      />
     </div>
   )
 }

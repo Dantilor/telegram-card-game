@@ -179,6 +179,23 @@
   border: 1px solid var(--border);
 }
 
+.badge--adult {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--adult-badge-bg, linear-gradient(135deg, rgba(234, 88, 12, 0.25) 0%, rgba(194, 65, 12, 0.35) 100%));
+  color: var(--adult-badge-color, #fb923c);
+  border: 1px solid var(--adult-badge-border, rgba(234, 88, 12, 0.4));
+  box-shadow: 0 0 8px var(--adult-badge-glow, rgba(251, 146, 60, 0.2));
+}
+
 @keyframes badge-shimmer {
   0%, 100% { opacity: 1; filter: brightness(1); }
   50% { opacity: 0.9; filter: brightness(1.15); }

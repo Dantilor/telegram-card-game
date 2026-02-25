@@ -38,6 +38,10 @@
   --td-truth-bg: rgba(43, 210, 255, 0.15);
   --td-truth-bg-hover: rgba(43, 210, 255, 0.25);
   --icon-accent: #00F0FF;
+  --adult-badge-bg: linear-gradient(135deg, rgba(234, 88, 12, 0.25) 0%, rgba(194, 65, 12, 0.35) 100%);
+  --adult-badge-color: #fb923c;
+  --adult-badge-border: rgba(234, 88, 12, 0.4);
+  --adult-badge-glow: rgba(251, 146, 60, 0.25);
 }
 
 /* neon-light — почти дневная, светлый лавандово-голубой */
@@ -81,6 +85,10 @@
   /* В Light выделение как в Мафии: бирюзовый фон + белый текст */
   --selection-bg-light: rgba(6, 182, 212, 0.28);
   --icon-accent: #6C63FF;
+  --adult-badge-bg: linear-gradient(135deg, rgba(194, 65, 12, 0.18) 0%, rgba(234, 88, 12, 0.25) 100%);
+  --adult-badge-color: #c2410c;
+  --adult-badge-border: rgba(194, 65, 12, 0.4);
+  --adult-badge-glow: rgba(194, 65, 12, 0.15);
 }
 
 /* portal — зелёно-циановые градиенты */
@@ -122,6 +130,10 @@
   --td-truth-bg: rgba(0, 255, 204, 0.15);
   --td-truth-bg-hover: rgba(0, 255, 204, 0.25);
   --icon-accent: #7B5CFF;
+  --adult-badge-bg: linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 107, 0, 0.3) 100%);
+  --adult-badge-color: #ff9500;
+  --adult-badge-border: rgba(255, 149, 0, 0.45);
+  --adult-badge-glow: rgba(255, 149, 0, 0.2);
 }
 
 /* soft-light — мягкий светлый */
@@ -163,6 +175,10 @@
   --td-truth-bg: rgba(34, 211, 238, 0.15);
   --td-truth-bg-hover: rgba(34, 211, 238, 0.25);
   --icon-accent: #6C63FF;
+  --adult-badge-bg: linear-gradient(135deg, rgba(194, 65, 12, 0.2) 0%, rgba(234, 88, 12, 0.3) 100%);
+  --adult-badge-color: #ea580c;
+  --adult-badge-border: rgba(234, 88, 12, 0.5);
+  --adult-badge-glow: rgba(234, 88, 12, 0.2);
 }
 
 /* sunset — тёплый закат */
@@ -204,6 +220,10 @@
   --td-truth-bg: rgba(251, 191, 36, 0.15);
   --td-truth-bg-hover: rgba(251, 191, 36, 0.25);
   --icon-accent: #FF8A65;
+  --adult-badge-bg: linear-gradient(135deg, rgba(251, 146, 60, 0.3) 0%, rgba(249, 115, 22, 0.4) 100%);
+  --adult-badge-color: #fdba74;
+  --adult-badge-border: rgba(251, 146, 60, 0.55);
+  --adult-badge-glow: rgba(251, 146, 60, 0.3);
 }
 
 /* minimal-calm — минималистичный спокойный */
@@ -245,6 +265,10 @@
   --td-truth-bg: rgba(56, 189, 248, 0.15);
   --td-truth-bg-hover: rgba(56, 189, 248, 0.25);
   --icon-accent: currentColor;
+  --adult-badge-bg: linear-gradient(135deg, rgba(251, 146, 60, 0.2) 0%, rgba(234, 88, 12, 0.25) 100%);
+  --adult-badge-color: #fb923c;
+  --adult-badge-border: rgba(251, 146, 60, 0.45);
+  --adult-badge-glow: rgba(251, 146, 60, 0.2);
 }
 
 /* Gradient background + glow blobs (uses theme variables) + slow move */

@@ -145,14 +145,29 @@
   white-space: pre-line;
 }
 
-.card-entry-page__mode-card--locked .badge--premium {
+.card-entry-page__badges {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.card-entry-page__mode-card--locked .card-entry-page__badges {
   margin-top: 0.35rem;
 }
 
-.card-entry-page__mode-card--image.card-entry-page__mode-card--locked .badge--premium {
+.card-entry-page__mode-card--image.card-entry-page__mode-card--locked .card-entry-page__badges,
+.card-entry-page__mode-card--image .card-entry-page__badges {
   margin-top: auto;
-  flex-shrink: 0;
   padding-bottom: 0.5rem;
+}
+
+.card-entry-page__mode-card .badge--adult {
+  padding: 0.35rem 0.6rem 0.25rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
 }
 
 .card-entry-page__mode-card--image.card-entry-page__mode-card--locked .card-entry-page__mode-text {

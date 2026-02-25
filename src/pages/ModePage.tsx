@@ -13,6 +13,7 @@ import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import AdultConfirmModal from '../components/AdultConfirmModal'
 import './ModePage.css'
 
 const DECK_ICONS: Record<string, string> = {
@@ -81,7 +82,36 @@ function ModePage() {
   const mode = MODES.find((m) => m.id === modeId)
   const decks = modeId ? getDecksByMode(modeId as import('../data/modes').ModeId) : []
 
+  const [adultConfirmOpen, setAdultConfirmOpen] = useState(false)
+  const [pendingDeckId, setPendingDeckId] = useState<string | null>(null)
+
   const handleBack = useBack('/card')
+
+  const isAdultContent = (deck: { id: string; adult?: boolean }) =>
+    deck.adult || modeId === 'adult'
+
+  const handleDeckClick = (deckId: string, e: React.MouseEvent) => {
+    hapticSelection()
+    const deck = decks.find((d) => d.id === deckId)
+    if (deck && isAdultContent(deck)) {
+      e.preventDefault()
+      setPendingDeckId(deckId)
+      setAdultConfirmOpen(true)
+    }
+  }
+
+  const handleAdultConfirm = () => {
+    setAdultConfirmOpen(false)
+    if (pendingDeckId) {
+      navigate(`/play/${pendingDeckId}`, { state: { adultConfirmed: true } })
+      setPendingDeckId(null)
+    }
+  }
+
+  const handleAdultCancel = () => {
+    setAdultConfirmOpen(false)
+    setPendingDeckId(null)
+  }
 
   const getProgressIndex = (deckId: string): number => {
     const p = localState.progress?.[deckId]
@@ -167,6 +197,13 @@ function ModePage() {
 
           const locked = isDeckLocked(modeId as ModeId, deck.id, isPremium)
 
+          const badges = (
+            <>
+              {deck.adult && <span className="badge badge--adult">18+</span>}
+              {locked && <span className="badge badge--premium">Premium</span>}
+            </>
+          )
+
           if (locked) {
             return (
               <li
@@ -183,7 +220,7 @@ function ModePage() {
                   }}
                 >
                   {content}
-                  <span className="badge badge--premium">Premium</span>
+                  {badges}
                 </button>
               </li>
             )
@@ -201,14 +238,22 @@ function ModePage() {
                   className="mode-page__link"
                   onClick={() => {
                     hapticSelection()
-                    navigate(`/play/${deck.id}`)
+                    if (isAdultContent(deck)) {
+                      setPendingDeckId(deck.id)
+                      setAdultConfirmOpen(true)
+                    } else {
+                      navigate(`/play/${deck.id}`)
+                    }
                   }}
                 >
                   {content}
+                  {badges}
                 </button>
               </li>
             )
           }
+
+          const needsAdultConfirm = isAdultContent(deck)
 
           return (
             <li
@@ -216,14 +261,35 @@ function ModePage() {
               className={`mode-page__card card ${deck.isPremium ? 'mode-page__card--premium' : ''}`}
               style={{ animationDelay: `${i * 0.06}s` }}
             >
-              <Link to={`/play/${deck.id}`} className="mode-page__link" onClick={() => hapticSelection()}>
-                {content}
-              </Link>
+              {needsAdultConfirm ? (
+                <button
+                  type="button"
+                  className="mode-page__link"
+                  onClick={(e) => handleDeckClick(deck.id, e)}
+                >
+                  {content}
+                  {badges}
+                </button>
+              ) : (
+                <Link
+                  to={`/play/${deck.id}`}
+                  className="mode-page__link"
+                  onClick={(e) => handleDeckClick(deck.id, e)}
+                >
+                  {content}
+                  {badges}
+                </Link>
+              )}
             </li>
           )
         })}
       </ul>
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+      <AdultConfirmModal
+        isOpen={adultConfirmOpen}
+        onConfirm={handleAdultConfirm}
+        onCancel={handleAdultCancel}
+      />
     </div>
   )
 }

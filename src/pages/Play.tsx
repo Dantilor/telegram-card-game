@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { getDeckFull } from '../data/decks'
-import { getDeckFromIndex } from '../data/decksIndex'
+import { getDeckFromIndex, isDeckAdult } from '../data/decksIndex'
 import { getDeckQuestions, canOpenDeck } from '../lib/access'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
@@ -11,6 +11,7 @@ import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
 import { trackEvent } from '../lib/analytics'
 import PremiumOverlay from '../components/PremiumOverlay'
+import AdultConfirmModal from '../components/AdultConfirmModal'
 import './Play.css'
 
 type Card = { id: string; text: string }
@@ -48,6 +49,7 @@ const ANIMATION_NAME_ENTER = 'cardEnter'
 
 export default function Play() {
   const nav = useNavigate()
+  const location = useLocation()
   const params = useParams<{ deckId?: string }>()
   const [sp] = useSearchParams()
 
@@ -63,6 +65,16 @@ export default function Play() {
   const [localState, setLocalState] = useLocalState<UserState>('tcg_state', defaultUserState)
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const [adultGatePassed, setAdultGatePassed] = useState(() =>
+    (location.state as { adultConfirmed?: boolean } | null)?.adultConfirmed === true
+  )
+
+  const needsAdultConfirm = deckId && isDeckAdult(deckId) && !adultGatePassed
+
+  useEffect(() => {
+    const fromConfirm = (location.state as { adultConfirmed?: boolean } | null)?.adultConfirmed
+    setAdultGatePassed(fromConfirm === true)
+  }, [deckId])
 
   useEffect(() => {
     let cancelled = false
@@ -167,6 +179,14 @@ export default function Play() {
       clearTimeout(id)
     }
   }, [deckId, isPremium])
+
+  const handleAdultConfirm = () => {
+    setAdultGatePassed(true)
+  }
+
+  const handleAdultCancel = () => {
+    nav(-1)
+  }
 
   const handleNextClick = () => {
     if (state.status !== 'ready' || transitionPhase !== 'idle') return
@@ -301,6 +321,13 @@ export default function Play() {
           <div className="play-loading__title">Загрузка игры…</div>
           <div className="play-loading__hint">Подготавливаем карточки</div>
         </div>
+        {needsAdultConfirm && (
+          <AdultConfirmModal
+            isOpen
+            onConfirm={handleAdultConfirm}
+            onCancel={handleAdultCancel}
+          />
+        )}
       </div>
     )
   }
@@ -476,6 +503,13 @@ export default function Play() {
         </div>
       )}
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+      {needsAdultConfirm && (
+        <AdultConfirmModal
+          isOpen
+          onConfirm={handleAdultConfirm}
+          onCancel={handleAdultCancel}
+        />
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { decks } from '../data/decks'
-import { getDeckFromIndex } from '../data/decksIndex'
+import { getDeckFromIndex, isDeckAdult } from '../data/decksIndex'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { isDeckLocked, isFavoritesLocked } from '../utils/access'
@@ -10,6 +10,7 @@ import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import AdultConfirmModal from '../components/AdultConfirmModal'
 import './Decks.css'
 
 const DECK_ICONS: Record<string, string> = {
@@ -69,9 +70,34 @@ const DECK_ICONS: Record<string, string> = {
 }
 
 function Decks() {
+  const navigate = useNavigate()
   const handleBack = useBack('/games')
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const [adultConfirmOpen, setAdultConfirmOpen] = useState(false)
+  const [pendingDeckId, setPendingDeckId] = useState<string | null>(null)
+
+  const handleDeckClick = (deckId: string, e: React.MouseEvent) => {
+    hapticSelection()
+    if (isDeckAdult(deckId)) {
+      e.preventDefault()
+      setPendingDeckId(deckId)
+      setAdultConfirmOpen(true)
+    }
+  }
+
+  const handleAdultConfirm = () => {
+    setAdultConfirmOpen(false)
+    if (pendingDeckId) {
+      navigate(`/play/${pendingDeckId}`, { state: { adultConfirmed: true } })
+      setPendingDeckId(null)
+    }
+  }
+
+  const handleAdultCancel = () => {
+    setAdultConfirmOpen(false)
+    setPendingDeckId(null)
+  }
 
   return (
     <div className="decks-page">
@@ -141,7 +167,11 @@ function Decks() {
               className={`deck-card card ${deck.isPremium ? 'deck-card--premium' : ''}`}
               style={{ animationDelay: `${i * 0.06}s` }}
             >
-              <Link to={`/play/${deck.id}`} className="deck-card__link">
+              <Link
+                to={`/play/${deck.id}`}
+                className="deck-card__link"
+                onClick={(e) => handleDeckClick(deck.id, e)}
+              >
                 <span className="deck-card__chip" aria-hidden>{DECK_ICONS[deck.id] ?? '📇'}</span>
                 <div className="deck-card__body">
                   <div className="deck-card__header">
@@ -156,6 +186,11 @@ function Decks() {
         })}
       </ul>
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+      <AdultConfirmModal
+        isOpen={adultConfirmOpen}
+        onConfirm={handleAdultConfirm}
+        onCancel={handleAdultCancel}
+      />
     </div>
   )
 }

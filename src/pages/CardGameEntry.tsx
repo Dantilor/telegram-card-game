@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MODES } from '../data/modes'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
@@ -9,13 +9,40 @@ import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import AdultConfirmModal from '../components/AdultConfirmModal'
 import SmartImage from '../components/SmartImage'
 import './CardGameEntry.css'
 
 function CardGameEntry() {
+  const navigate = useNavigate()
   const handleBack = useBack('/games')
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const [adultConfirmOpen, setAdultConfirmOpen] = useState(false)
+  const [pendingAdultMode, setPendingAdultMode] = useState<string | null>(null)
+
+  const handleModeClick = (modeId: string, e: React.MouseEvent) => {
+    hapticSelection()
+    if (modeId === 'adult') {
+      e.preventDefault()
+      setPendingAdultMode(modeId)
+      setAdultConfirmOpen(true)
+      return
+    }
+  }
+
+  const handleAdultConfirm = () => {
+    setAdultConfirmOpen(false)
+    if (pendingAdultMode) {
+      navigate(`/mode/${pendingAdultMode}`)
+      setPendingAdultMode(null)
+    }
+  }
+
+  const handleAdultCancel = () => {
+    setAdultConfirmOpen(false)
+    setPendingAdultMode(null)
+  }
 
   return (
     <div className="card-entry-page">
@@ -52,6 +79,13 @@ function CardGameEntry() {
               )}
             </>
           )
+          const hasBadges = mode.id === 'adult' || locked
+          const badges = hasBadges ? (
+            <div className="card-entry-page__badges">
+              {mode.id === 'adult' && <span className="badge badge--adult">18+</span>}
+              {locked && <span className="badge badge--premium">Premium</span>}
+            </div>
+          ) : null
           if (locked) {
             return (
               <button
@@ -64,23 +98,29 @@ function CardGameEntry() {
                 }}
               >
                 {modeContent}
-                <span className="badge badge--premium">Premium</span>
+                {badges}
               </button>
             )
           }
           return (
             <Link
               key={mode.id}
-              to={`/mode/${mode.id}`}
+              to={mode.id === 'adult' ? '#' : `/mode/${mode.id}`}
               className={`card-entry-page__mode-card card tile--active ${mode.image ? 'card-entry-page__mode-card--image' : ''}`}
-              onClick={() => hapticSelection()}
+              onClick={(e) => handleModeClick(mode.id, e)}
             >
               {modeContent}
+              {badges}
             </Link>
           )
         })}
       </div>
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+      <AdultConfirmModal
+        isOpen={adultConfirmOpen}
+        onConfirm={handleAdultConfirm}
+        onCancel={handleAdultCancel}
+      />
     </div>
   )
 }

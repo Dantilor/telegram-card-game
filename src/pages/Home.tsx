@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
@@ -19,32 +19,9 @@ const APP_FEATURES = [
 ]
 
 function Home() {
-  const { isPremium, activeUntil, refreshPremium } = usePremium()
+  const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
-  const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
-  const [restoreLoading, setRestoreLoading] = useState(false)
-  const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const favoritesLocked = isFavoritesLocked(isPremium)
-
-  const handleRestorePurchase = useCallback(async () => {
-    haptic('medium')
-    if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current)
-    setRestoreStatus(null)
-    setRestoreLoading(true)
-    try {
-      const result = await refreshPremium()
-      const toast = result?.isPremium ? '✅ Покупки восстановлены' : 'Покупок не найдено'
-      setRestoreStatus(toast)
-    } catch {
-      setRestoreStatus('Ошибка синхронизации')
-    } finally {
-      setRestoreLoading(false)
-      restoreTimerRef.current = setTimeout(() => {
-        setRestoreStatus(null)
-        restoreTimerRef.current = null
-      }, 2500)
-    }
-  }, [refreshPremium])
 
   return (
     <div className="home-page">
@@ -95,25 +72,8 @@ function Home() {
         </div>
       </section>
 
-      <section className="home-premium-cta">
-        {isPremium ? (
-          <>
-            <p className="home-premium-cta__status">
-              Premium активен до {activeUntil ? new Date(activeUntil).toLocaleDateString('ru-RU') : '—'}
-            </p>
-            <button
-              type="button"
-              className="btn btn--ghost home-premium-cta__btn"
-              onClick={handleRestorePurchase}
-              disabled={restoreLoading}
-            >
-              {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
-            </button>
-            {restoreStatus && (
-              <span className="home-premium-cta__toast">{restoreStatus}</span>
-            )}
-          </>
-        ) : (
+      {!isPremium && (
+        <section className="home-premium-cta">
           <button
             type="button"
             className="btn btn--primary home-premium-cta__btn"
@@ -124,8 +84,8 @@ function Home() {
           >
             Оформить Premium
           </button>
-        )}
-      </section>
+        </section>
+      )}
 
       <section className="home-about">
         <h2 className="home-about__subtitle">Игры для компании, пары и вечеринок</h2>

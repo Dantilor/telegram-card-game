@@ -214,26 +214,12 @@
   margin: 0 auto;
 }
 
-.home-premium-cta__status {
-  margin: 0 0 0.5rem;
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
-  font-weight: 500;
-  color: var(--text);
-}
-
 .home-premium-cta__btn {
   width: 100%;
   min-width: 0;
   max-width: 20rem;
   padding: clamp(0.5rem, 2vw, 0.65rem) clamp(0.75rem, 3vw, 1rem);
   font-size: clamp(0.875rem, 2.5vw, 0.95rem);
-}
-
-.home-premium-cta__toast {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.85rem;
-  color: var(--muted);
 }
 
 /* About — flex: 1 заполняет низ экрана, контент прижат вниз, по центру */

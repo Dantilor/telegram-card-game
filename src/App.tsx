@@ -87,8 +87,7 @@ function App() {
   return (
     <PremiumProvider>
       <div className="app">
-        <Suspense fallback={<div className="page-loading app-loading app-route-fade"><span className="app-loading__spinner" aria-hidden />Загрузка…</div>}>
-        <div className="app-routes">
+        <Suspense fallback={<div className="page-loading app-loading"><span className="app-loading__spinner" aria-hidden />Загрузка…</div>}>
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />
@@ -153,7 +152,6 @@ function App() {
         <Route path="/legal/terms" element={<LegalTerms />} />
         <Route path="/legal/premium" element={<LegalPremium />} />
         </Routes>
-        </div>
         </Suspense>
       </div>
     </PremiumProvider>

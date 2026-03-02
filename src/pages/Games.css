@@ -8,12 +8,12 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .games-page {
-    animation: page-enter 0.45s var(--ease-out-smooth, ease-out) forwards;
+    animation: page-enter 0.35s ease-out;
   }
 }
 
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -82,18 +82,15 @@
   text-decoration: none;
   font: inherit;
   cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-med), border-color var(--transition-med);
   position: relative;
   overflow: hidden;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .games-grid__card {
-    animation: games-card-in 0.5s var(--ease-out-smooth) backwards;
+    animation: games-card-in 0.4s ease-out backwards;
   }
-}
-
-.games-grid__card {
-  transition: transform 0.18s var(--ease-out-smooth), box-shadow 0.3s ease, border-color 0.25s ease;
 }
 
 .games-grid__card:active {
@@ -143,8 +140,8 @@
 }
 
 @keyframes games-card-in {
-  from { opacity: 0; transform: translateY(14px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .games-grid__card .badge {

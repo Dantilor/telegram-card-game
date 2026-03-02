@@ -16,12 +16,12 @@
     rgba(255, 255, 255, 0.03) 100%
   );
   background-size: 200% 100%;
-  animation: smart-image-shimmer 2.2s var(--ease-in-out-smooth, ease-in-out) infinite;
+  animation: smart-image-shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes smart-image-shimmer {
-  0%, 100% { background-position: 200% 0; opacity: 0.9; }
-  50% { background-position: -100% 0; opacity: 1; }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .smart-image__img {
@@ -32,7 +32,7 @@
   display: block;
   vertical-align: middle;
   opacity: 0;
-  transition: opacity 0.45s var(--ease-out-smooth, ease-out);
+  transition: opacity 0.3s ease-out;
 }
 
 .smart-image__img--loaded {

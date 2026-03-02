@@ -6,28 +6,6 @@
   min-height: 0;
 }
 
-/* Плавное появление при загрузке роута */
-.app-routes {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .app-routes {
-    animation: app-route-in 0.35s var(--ease-out-smooth, ease-out) forwards;
-  }
-  .app-route-fade {
-    animation: app-route-in 0.2s var(--ease-out-smooth, ease-out) forwards;
-  }
-}
-
-@keyframes app-route-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .app {
   position: relative;
   z-index: 1;

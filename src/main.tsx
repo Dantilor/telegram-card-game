@@ -10,14 +10,8 @@ import './index.css'
 import './styles/tg.css'
 import App from './App.tsx'
 
-// Картинки предзагружаем после первого рендера, чтобы не конкурировать с JS
-const schedulePreload = () => {
-  if (typeof requestIdleCallback !== 'undefined') {
-    requestIdleCallback(() => preloadImages(PRELOAD_CRITICAL_URLS), { timeout: 400 })
-  } else {
-    setTimeout(() => preloadImages(PRELOAD_CRITICAL_URLS), 100)
-  }
-}
+// Предзагрузка критичных картинок до первого рендера
+preloadImages(PRELOAD_CRITICAL_URLS)
 
 let theme: ThemeId
 try {
@@ -43,4 +37,3 @@ createRoot(rootEl).render(
     </HashRouter>
   </StrictMode>,
 )
-requestAnimationFrame(() => schedulePreload())

@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "telegraf": "^4.16.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "pg": "^8.12.0",
+    "telegraf": "^4.16.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -25,6 +25,6 @@
     "typescript": "^5.5.4"
   },
   "engines": {
-    "node": ">=20"
+    "node": "20.x"
   }
 }

@@ -56,7 +56,7 @@ if (bot) {
     // Убираем кнопку меню (Web App и т.д.) в этом чате — клавиатура не появляется
     if (chatId && ctx.chat?.type === 'private') {
       try {
-        await ctx.telegram.setChatMenuButton(chatId, { type: 'default' })
+        await ctx.telegram.setChatMenuButton({ chatId, menuButton: { type: 'default' } })
       } catch (e) {
         console.warn('[bot] setChatMenuButton failed', e)
       }
@@ -77,7 +77,7 @@ export async function launchBot(): Promise<void> {
   if (bot) {
     // Глобальное меню — список команд вместо Web App (меньше провокаций на появление клавиатуры)
     try {
-      await (bot.telegram as any).setChatMenuButton({ type: 'commands' })
+      await bot.telegram.setChatMenuButton({ menuButton: { type: 'commands' } })
       console.log('[bot] default menu button set to commands')
     } catch (e) {
       console.warn('[bot] setChatMenuButton default failed', e)

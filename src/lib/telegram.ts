@@ -3,6 +3,8 @@
  * Requires script: https://telegram.org/js/telegram-web-app.js
  */
 
+import { getCachedInitData } from '../utils/telegramInitCache'
+
 export function getTelegramWebApp(): {
   initData?: string
   ready?: () => void
@@ -19,9 +21,13 @@ export function getTelegramWebApp(): {
   }
 }
 
+/** Raw initData для API. При обновлении страницы WebApp.initData может быть пуст — берём из кэша. */
 export function getInitData(): string {
   const tg = getTelegramWebApp()
-  return (tg && typeof tg.initData === 'string' ? tg.initData : '') || ''
+  const fromTg = (tg && typeof tg.initData === 'string' ? tg.initData : '') || ''
+  if (fromTg) return fromTg
+  const cached = getCachedInitData()
+  return cached?.initDataRaw ?? ''
 }
 
 let readyCalled = false

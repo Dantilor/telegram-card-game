@@ -9,6 +9,8 @@ const BASE_URL = (
   'https://telegram-card-game.onrender.com'
 ).replace(/\/$/, '')
 
+const API_TIMEOUT_MS = 15000 // Не зависать при cold start Render
+
 export function getBaseUrl(): string {
   return BASE_URL
 }
@@ -26,11 +28,14 @@ async function request<T>(path: string, options: RequestInit & { method?: string
   }
 
   const url = path.startsWith('http') ? path : `${BASE_URL}${path}`
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
   const res = await fetch(url, {
     ...options,
     headers,
     credentials: 'omit',
-  })
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeoutId))
 
   if (!res.ok) {
     const text = await res.text()

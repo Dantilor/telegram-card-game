@@ -37,7 +37,8 @@
           try { tg.ready(); tg.expand(); } catch (e) {}
           var v = parseFloat(tg.version || '0');
           if (v > 6) {
-            try { if (tg.requestFullscreen) tg.requestFullscreen(); tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
+            try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
+            /* requestFullscreen только по user gesture — вызывается в кнопке "Начать игру" */
           }
         }
 

@@ -179,7 +179,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       })
     } catch (e) {
       const err = e as Error & { status?: number }
-      console.error('[PremiumOverlay] YooKassa error:', err.message)
+      if (import.meta.env.DEV) console.warn('[PremiumOverlay] YooKassa error:', err.message)
       if (err.status === 401) {
         setError('Откройте приложение внутри Telegram для оплаты')
       } else {

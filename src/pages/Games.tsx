@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
 import { useBack } from '../hooks/useBack'
+import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
 import { usePremium } from '../contexts/PremiumContext'
 import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
@@ -68,7 +69,10 @@ function Games() {
           to="/card"
           className={cardClass}
           style={{ animationDelay: `${i * 0.05}s` }}
-          onClick={() => hapticSelection()}
+          onClick={() => {
+            hapticSelection()
+            requestFullscreenOnUserGesture()
+          }}
         >
           {cardContent}
         </Link>

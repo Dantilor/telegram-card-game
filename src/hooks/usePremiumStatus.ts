@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { getInitData } from '../lib/telegram'
 import { getMe, ApiAuthError } from '../api/subscription'
 import { defaultUserState } from '../data/types'
+import { devLog, devWarn } from '../utils/devLog'
 
 const CACHE_KEY = 'tcg_premium_status'
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
@@ -14,7 +15,6 @@ function clearCache(): void {
   }
 }
 const STATE_KEY = 'tcg_state'
-const isDev = import.meta.env.DEV
 
 type PremiumStatus = {
   isPremium: boolean
@@ -115,7 +115,7 @@ export function usePremiumStatus(): {
     const initData = getInitData()
 
     if (!initData) {
-      if (isDev) console.log('[TCG] Premium: no initData (open in Telegram)')
+      devLog('[TCG] Premium: no initData (open in Telegram)')
       doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false, serverError503: false })
       return null
     }
@@ -138,11 +138,11 @@ export function usePremiumStatus(): {
       }
       writeCache(data)
       updateTcgState(data.isPremium)
-      if (isDev) console.log('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
+      devLog('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
       doneLoading({ ...data, authError: false, authError401: false, serverError503: false })
       return data
     } catch (e) {
-      if (isDev) console.warn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
+      devWarn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
       const err = e as Error & { status?: number }
       doneLoading({
         isPremium: false,

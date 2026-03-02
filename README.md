@@ -31,6 +31,15 @@ npm run build
 npm run preview
 ```
 
+## Переменные окружения
+
+- **VITE_API_URL** — URL бэкенда (по умолчанию: `https://telegram-card-game.onrender.com`).
+  - Локальная разработка: `http://localhost:3001`
+  - В проде должен быть **https** (иначе CORS и mixed content).
+  - Если пустой — в dev выводится предупреждение в консоль.
+
+Скопируйте `.env.example` в `.env` и задайте `VITE_API_URL`.
+
 ## Подключение как Mini App
 
 1. Создайте бота в [@BotFather](https://t.me/BotFather).
@@ -38,6 +47,12 @@ npm run preview
 3. Открывайте приложение через кнопку меню или команду в боте.
 
 **Белая полоса сверху?** Настройте Loading Screen в BotFather: [docs/TELEGRAM_HEADER.md](docs/TELEGRAM_HEADER.md)
+
+## Консоль: типичные предупреждения
+
+- **Cache.put / NetworkError (Service Worker)** — в проекте нет своего Service Worker. Ошибка может возникать в браузере/расширениях. При добавлении PWA: кэшировать только `response.ok`, только http(s), оборачивать `Cache.put` в try/catch.
+- **Failed to fetch** — проверьте `VITE_API_URL`, CORS на бэкенде, HTTPS в проде.
+- **Permissions check failed** — Telegram WebApp API; не критично при работе вне клиента.
 
 ## Структура
 

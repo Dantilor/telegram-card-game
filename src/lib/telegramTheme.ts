@@ -45,7 +45,7 @@ function tgSupportsColors(): boolean {
   return parseFloat(tg.version) > 6
 }
 
-/** ready() + expand(). Вызывать при старте приложения. */
+/** ready() + expand(). requestFullscreen не вызывается — только по user gesture (кнопка "Начать игру"). */
 export function initTelegramUI(): void {
   const tg = getTg()
   if (!tg) return
@@ -53,13 +53,23 @@ export function initTelegramUI(): void {
     try {
       tg.ready?.()
       tg.expand?.()
-      if (tgSupportsColors() && tg.requestFullscreen) tg.requestFullscreen()
     } catch {
       // вне Telegram / браузер — игнорируем
     }
   }
   doExpand()
   setTimeout(doExpand, 300)
+}
+
+/** Запросить fullscreen только по user gesture (клик). Вызывать из onClick. */
+export function requestFullscreenOnUserGesture(): void {
+  try {
+    const tg = getTg()
+    if (!tg?.requestFullscreen || !tgSupportsColors()) return
+    tg.requestFullscreen()
+  } catch {
+    // тихий fail, не логируем
+  }
 }
 
 /** Применить цвета Telegram UI по themeId. Вызывать при смене темы и при первом рендере. */

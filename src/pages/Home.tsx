@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
+import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
 import { usePremium } from '../contexts/PremiumContext'
 import { isFavoritesLocked } from '../utils/access'
 import ThemeToggle from '../components/ThemeToggle'
@@ -37,7 +38,10 @@ function Home() {
             <Link
               to="/games"
               className="btn btn--primary home-hero__btn"
-              onClick={() => hapticImpact('light')}
+              onClick={() => {
+                hapticImpact('light')
+                requestFullscreenOnUserGesture()
+              }}
               onPointerEnter={() => { import('./Games') }}
             >
               Начать игру

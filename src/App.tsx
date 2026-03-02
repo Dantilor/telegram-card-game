@@ -1,59 +1,63 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { trackEvent } from './lib/analytics'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { readyAndExpand } from './utils/telegram'
-import Home from './pages/Home'
-import Games from './pages/Games'
-import CardGameEntry from './pages/CardGameEntry'
-import GameStub from './pages/GameStub'
-import Decks from './pages/Decks'
-import ModePage from './pages/ModePage'
-import Favorites from './pages/Favorites'
-import Play from './pages/Play'
-import AliasLayout from './pages/AliasLayout'
-import AliasHome from './pages/AliasHome'
-import AliasPlay from './pages/AliasPlay'
-import AliasResult from './pages/AliasResult'
-import ActivityLayout from './pages/ActivityLayout'
-import ActivityHome from './pages/ActivityHome'
-import ActivityPlay from './pages/ActivityPlay'
-import ActivityResult from './pages/ActivityResult'
-import MafiaLayout from './pages/MafiaLayout'
-import SabotageLayout from './pages/SabotageLayout'
-import MafiaSetup from './pages/MafiaSetup'
-import MafiaRoles from './pages/MafiaRoles'
-import MafiaNight from './pages/MafiaNight'
-import MafiaDay from './pages/MafiaDay'
-import MafiaVoting from './pages/MafiaVoting'
-import MafiaResult from './pages/MafiaResult'
-import SabotageSetup from './pages/SabotageSetup'
-import SabotageRole from './pages/SabotageRole'
-import SabotageTask from './pages/SabotageTask'
-import SabotageVote from './pages/SabotageVote'
-import SabotageResult from './pages/SabotageResult'
-import QuizLayout from './pages/QuizLayout'
-import QuizHome from './pages/QuizHome'
-import QuizQuestion from './pages/QuizQuestion'
-import QuizResult from './pages/QuizResult'
-import QuizMiniSummary from './pages/QuizMiniSummary'
-import QuizFinal from './pages/QuizFinal'
-import TruthDareLayout from './pages/TruthDareLayout'
-import TruthDareSetup from './pages/TruthDareSetup'
-import TruthDareTurn from './pages/TruthDareTurn'
-import TruthDareCard from './pages/TruthDareCard'
-import TruthDareVote from './pages/TruthDareVote'
-import TruthDareResult from './pages/TruthDareResult'
-import CustomDeckEditor from './pages/CustomDeckEditor'
-import Profile from './pages/Profile'
-import PremiumPage from './pages/PremiumPage'
-import LegalPrivacy from './pages/LegalPrivacy'
-import LegalTerms from './pages/LegalTerms'
-import LegalPremium from './pages/LegalPremium'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import './App.css'
+
+// Главная загружается сразу (первый экран)
+import Home from './pages/Home'
+
+// Остальные — ленивая загрузка для быстрого старта
+const Games = lazy(() => import('./pages/Games'))
+const CardGameEntry = lazy(() => import('./pages/CardGameEntry'))
+const GameStub = lazy(() => import('./pages/GameStub'))
+const Decks = lazy(() => import('./pages/Decks'))
+const ModePage = lazy(() => import('./pages/ModePage'))
+const Favorites = lazy(() => import('./pages/Favorites'))
+const Play = lazy(() => import('./pages/Play'))
+const AliasLayout = lazy(() => import('./pages/AliasLayout'))
+const ActivityLayout = lazy(() => import('./pages/ActivityLayout'))
+const MafiaLayout = lazy(() => import('./pages/MafiaLayout'))
+const SabotageLayout = lazy(() => import('./pages/SabotageLayout'))
+const QuizLayout = lazy(() => import('./pages/QuizLayout'))
+const TruthDareLayout = lazy(() => import('./pages/TruthDareLayout'))
+const CustomDeckEditor = lazy(() => import('./pages/CustomDeckEditor'))
+const AliasHome = lazy(() => import('./pages/AliasHome'))
+const AliasPlay = lazy(() => import('./pages/AliasPlay'))
+const AliasResult = lazy(() => import('./pages/AliasResult'))
+const ActivityHome = lazy(() => import('./pages/ActivityHome'))
+const ActivityPlay = lazy(() => import('./pages/ActivityPlay'))
+const ActivityResult = lazy(() => import('./pages/ActivityResult'))
+const MafiaSetup = lazy(() => import('./pages/MafiaSetup'))
+const MafiaRoles = lazy(() => import('./pages/MafiaRoles'))
+const MafiaNight = lazy(() => import('./pages/MafiaNight'))
+const MafiaDay = lazy(() => import('./pages/MafiaDay'))
+const MafiaVoting = lazy(() => import('./pages/MafiaVoting'))
+const MafiaResult = lazy(() => import('./pages/MafiaResult'))
+const SabotageSetup = lazy(() => import('./pages/SabotageSetup'))
+const SabotageRole = lazy(() => import('./pages/SabotageRole'))
+const SabotageTask = lazy(() => import('./pages/SabotageTask'))
+const SabotageVote = lazy(() => import('./pages/SabotageVote'))
+const SabotageResult = lazy(() => import('./pages/SabotageResult'))
+const QuizHome = lazy(() => import('./pages/QuizHome'))
+const QuizQuestion = lazy(() => import('./pages/QuizQuestion'))
+const QuizResult = lazy(() => import('./pages/QuizResult'))
+const QuizMiniSummary = lazy(() => import('./pages/QuizMiniSummary'))
+const QuizFinal = lazy(() => import('./pages/QuizFinal'))
+const TruthDareSetup = lazy(() => import('./pages/TruthDareSetup'))
+const TruthDareTurn = lazy(() => import('./pages/TruthDareTurn'))
+const TruthDareCard = lazy(() => import('./pages/TruthDareCard'))
+const TruthDareVote = lazy(() => import('./pages/TruthDareVote'))
+const TruthDareResult = lazy(() => import('./pages/TruthDareResult'))
+const Profile = lazy(() => import('./pages/Profile'))
+const PremiumPage = lazy(() => import('./pages/PremiumPage'))
+const LegalPrivacy = lazy(() => import('./pages/LegalPrivacy'))
+const LegalTerms = lazy(() => import('./pages/LegalTerms'))
+const LegalPremium = lazy(() => import('./pages/LegalPremium'))
 
 function App() {
   useAppHeight()
@@ -78,6 +82,7 @@ function App() {
   return (
     <PremiumProvider>
       <div className="app">
+        <Suspense fallback={<div className="page-loading">Загрузка…</div>}>
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />
@@ -142,6 +147,7 @@ function App() {
         <Route path="/legal/terms" element={<LegalTerms />} />
         <Route path="/legal/premium" element={<LegalPremium />} />
         </Routes>
+        </Suspense>
       </div>
     </PremiumProvider>
   )

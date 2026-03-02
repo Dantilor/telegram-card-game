@@ -76,13 +76,18 @@ function App() {
       }
     }, 1800)
     trackEvent('app_open')
-    return () => clearTimeout(fallbackT)
+    // Предзагрузка Games — пользователь чаще всего идёт туда
+    const prefetchT = setTimeout(() => import('./pages/Games'), 400)
+    return () => {
+      clearTimeout(fallbackT)
+      clearTimeout(prefetchT)
+    }
   }, [])
 
   return (
     <PremiumProvider>
       <div className="app">
-        <Suspense fallback={<div className="page-loading">Загрузка…</div>}>
+        <Suspense fallback={<div className="page-loading app-loading"><span className="app-loading__spinner" aria-hidden />Загрузка…</div>}>
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />

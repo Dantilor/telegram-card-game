@@ -15,6 +15,8 @@ import { bot } from './bot.js'
 const port = Number(process.env.PORT || 3001)
 const corsOriginRaw = process.env.CORS_ORIGIN || 'http://localhost:5173'
 const corsOrigins = corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean)
+const localhostOrigins = ['http://localhost:4173', 'http://localhost:5173', 'http://127.0.0.1:4173', 'http://127.0.0.1:5173']
+const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins])]
 
 const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3k2lQp').replace(/\/+$/, '')
 
@@ -22,7 +24,11 @@ console.log('[TCG] ENV PORT =', process.env.PORT)
 
 const app = express()
 app.use(cors({
-  origin: corsOrigins.length > 1 ? corsOrigins : (corsOrigins[0] || true),
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true)
+    if (allowedOrigins.includes(origin)) return cb(null, true)
+    cb(null, false)
+  },
 }))
 app.use(express.json({ limit: '2mb' }))
 

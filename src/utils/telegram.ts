@@ -98,7 +98,10 @@ export function readyAndExpand() {
 }
 
 export function haptic(type: 'light' | 'medium' | 'heavy' = 'light') {
-  getTg()?.HapticFeedback?.impactOccurred?.(type)
+  const tg = getTg() as { HapticFeedback?: { impactOccurred: (s: string) => void }; version?: string } | null
+  if (tg && parseFloat(tg.version || '0') > 6) {
+    tg.HapticFeedback?.impactOccurred?.(type)
+  }
 }
 
 export function setHeaderColor(color: string) {

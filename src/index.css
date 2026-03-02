@@ -82,6 +82,25 @@ h1, h2, .font-heading {
   padding: 1rem;
 }
 
+.app-loading {
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.app-loading__spinner {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border, rgba(255,255,255,0.15));
+  border-top-color: var(--neonCyan, #2bd2ff);
+  border-radius: 50%;
+  animation: app-loading-spin 0.7s linear infinite;
+}
+
+@keyframes app-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Inputs inherit readable colors */
 input,
 textarea {

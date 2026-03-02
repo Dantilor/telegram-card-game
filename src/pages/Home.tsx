@@ -38,6 +38,7 @@ function Home() {
               to="/games"
               className="btn btn--primary home-hero__btn"
               onClick={() => hapticImpact('light')}
+              onPointerEnter={() => { import('./Games') }}
             >
               Начать игру
             </Link>

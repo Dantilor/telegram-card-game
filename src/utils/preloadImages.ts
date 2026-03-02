@@ -5,8 +5,8 @@
  */
 export function preloadImages(urls: string[]): void {
   if (!urls.length) return
-  const batch1 = urls.slice(0, 5) // hero + первые 4 карточки
-  const batch2 = urls.slice(5)
+  const batch1 = urls.slice(0, 8) // hero + все карточки игр первого экрана
+  const batch2 = urls.slice(8)
   batch1.forEach((url) => {
     const img = new Image()
     img.src = url
@@ -19,9 +19,9 @@ export function preloadImages(urls: string[]): void {
       })
     }
     if (typeof requestIdleCallback !== 'undefined') {
-      requestIdleCallback(loadRest, { timeout: 500 })
+      requestIdleCallback(loadRest, { timeout: 200 })
     } else {
-      setTimeout(loadRest, 100)
+      setTimeout(loadRest, 50)
     }
   }
 }

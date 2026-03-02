@@ -1,12 +1,22 @@
 /**
  * Safe Telegram WebApp HapticFeedback helpers.
  * No-op when WebApp or HapticFeedback is unavailable.
+ * WebApp 6.0 не поддерживает HapticFeedback — проверяем версию.
  */
 
-function getHaptic() {
+function getTg() {
   if (typeof window === 'undefined') return null
-  const tg = (window as Window & { Telegram?: { WebApp?: { HapticFeedback?: unknown } } })?.Telegram?.WebApp
-  return tg?.HapticFeedback ?? null
+  return (window as Window & { Telegram?: { WebApp?: { HapticFeedback?: unknown; version?: string } } })?.Telegram?.WebApp ?? null
+}
+
+function hapticSupported(): boolean {
+  const tg = getTg()
+  return tg != null && parseFloat(tg.version || '0') > 6
+}
+
+function getHaptic() {
+  if (!hapticSupported()) return null
+  return getTg()?.HapticFeedback ?? null
 }
 
 /** selectionChanged — use when user selects an item (e.g. mode, game tile). */

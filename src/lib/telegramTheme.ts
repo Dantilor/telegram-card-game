@@ -30,11 +30,19 @@ interface TgWebApp {
   setHeaderColor?: (color: string) => void
   setBackgroundColor?: (color: string) => void
   setBottomBarColor?: (color: string) => void
+  version?: string
 }
 
 function getTg(): TgWebApp | null {
   if (typeof window === 'undefined') return null
   return (window as Window & { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp ?? null
+}
+
+/** WebApp 6.0 не поддерживает setHeaderColor/setBackgroundColor/requestFullscreen — проверяем версию */
+function tgSupportsColors(): boolean {
+  const tg = getTg()
+  if (!tg?.version) return false
+  return parseFloat(tg.version) > 6
 }
 
 /** ready() + expand(). Вызывать при старте приложения. */
@@ -45,19 +53,19 @@ export function initTelegramUI(): void {
     try {
       tg.ready?.()
       tg.expand?.()
-      tg.requestFullscreen?.()
+      if (tgSupportsColors() && tg.requestFullscreen) tg.requestFullscreen()
     } catch {
       // вне Telegram / браузер — игнорируем
     }
   }
   doExpand()
-  ;[100, 300, 800].forEach((d) => setTimeout(doExpand, d))
+  setTimeout(doExpand, 300)
 }
 
 /** Применить цвета Telegram UI по themeId. Вызывать при смене темы и при первом рендере. */
 export function applyTelegramColors(themeId: ThemeId): void {
   const tg = getTg()
-  if (!tg) return
+  if (!tg || !tgSupportsColors()) return
   const colors = TELEGRAM_THEME_COLORS[themeId] ?? TELEGRAM_THEME_COLORS['neon-dark']
   try {
     tg.setHeaderColor?.(colors.header)
@@ -69,7 +77,7 @@ export function applyTelegramColors(themeId: ThemeId): void {
 }
 
 /** Повторное применение цветов (на некоторых клиентах срабатывает с задержкой) */
-export function applyTelegramColorsRetry(themeId: ThemeId, delaysMs = [100, 300, 800]): void {
+export function applyTelegramColorsRetry(themeId: ThemeId, delaysMs = [100, 500]): void {
   applyTelegramColors(themeId)
   delaysMs.forEach((d) => setTimeout(() => applyTelegramColors(themeId), d))
 }

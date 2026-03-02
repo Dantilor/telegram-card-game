@@ -98,6 +98,7 @@ function CardGameEntry() {
                 key={mode.id}
                 type="button"
                 className={`card-entry-page__mode-card card tile--active card-entry-page__mode-card--locked ${mode.image ? 'card-entry-page__mode-card--image' : ''}`}
+                style={{ animationDelay: `${idx * 0.06}s` }}
                 onClick={() => {
                   hapticSelection()
                   setPremiumOverlayOpen(true)
@@ -113,6 +114,7 @@ function CardGameEntry() {
               key={mode.id}
               to={mode.id === 'adult' ? '#' : `/mode/${mode.id}`}
               className={`card-entry-page__mode-card card tile--active ${mode.image ? 'card-entry-page__mode-card--image' : ''}`}
+              style={{ animationDelay: `${idx * 0.06}s` }}
               onClick={(e) => handleModeClick(mode.id, e)}
             >
               {modeContent}

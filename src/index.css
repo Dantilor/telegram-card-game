@@ -27,6 +27,8 @@
   --glow: 0 0 20px var(--glowCyan, rgba(43, 210, 255, 0.35));
   --transition-fast: 150ms ease;
   --transition-med: 220ms ease;
+  --ease-out-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {

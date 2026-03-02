@@ -4,6 +4,17 @@
   box-sizing: border-box;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .play-page {
+    animation: page-enter 0.4s var(--ease-out-smooth, ease-out) forwards;
+  }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .play-page__top-bar {
   display: flex;
   align-items: center;
@@ -339,6 +350,17 @@
   min-height: 50vh;
   padding: 1.5rem;
   text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .play-loading {
+    animation: play-loading-in 0.35s var(--ease-out-smooth, ease-out) forwards;
+  }
+}
+
+@keyframes play-loading-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .play-loading__title,

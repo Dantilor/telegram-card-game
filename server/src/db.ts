@@ -1,7 +1,24 @@
 import pg, { Pool } from 'pg'
 
+const connectionString = process.env.DATABASE_URL
+
+if (connectionString) {
+  try {
+    const url = new URL(connectionString)
+    const host = url.hostname
+    const port = url.port || '5432'
+    const database = url.pathname.replace(/^\//, '') || '(default)'
+    const user = url.username ? decodeURIComponent(url.username) : '(none)'
+    console.log('[DB] config', { host, port, database, user })
+  } catch (e) {
+    console.warn('[DB] could not parse DATABASE_URL for log:', e instanceof Error ? e.message : String(e))
+  }
+} else {
+  console.warn('[DB] DATABASE_URL is not set')
+}
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: { rejectUnauthorized: false },
 })
 

@@ -15,9 +15,8 @@ export const FREE_LIMIT_PER_DECK = 15
 /** Игры, доступные для входа без подписки.
  * - truth-dare — полностью
  * - card — выбор режимов
- * - mafia — пока открыта как free
  */
-export const FREE_GAMES = ['card', 'truth-dare', 'mafia'] as const
+export const FREE_GAMES = ['card', 'truth-dare'] as const
 
 /** Бесплатные колоды карточной игры (по 15 вопросов).
  * game="card" — GameNight Cards (src/pages/CardGameEntry.tsx, /card)

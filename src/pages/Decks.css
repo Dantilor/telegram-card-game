@@ -153,8 +153,9 @@
   padding: 0.4rem 0.75rem;
   font-size: 0.8rem;
   font-weight: 600;
-  background: rgba(43, 210, 255, 0.15);
-  color: var(--neonCyan);
+  /* Premium chips — розовое свечение в неоне */
+  background: rgba(255, 60, 172, 0.16);
+  color: var(--neonPink);
   border-radius: 999px;
-  border: 1px solid rgba(43, 210, 255, 0.3);
+  border: 1px solid rgba(255, 60, 172, 0.32);
 }

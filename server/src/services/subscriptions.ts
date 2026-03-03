@@ -97,6 +97,23 @@ export async function getActiveSubscription(
   return row ? new Date(row.active_until) : null
 }
 
+/**
+ * Последняя по дате подписка пользователя (без фильтра по plan_id).
+ * premium в /api/me считают как active_until != null && active_until > now().
+ */
+export async function getLatestActiveUntil(telegramId: number): Promise<Date | null> {
+  const res = await query<{ active_until: Date }>(
+    `SELECT active_until
+     FROM subscriptions
+     WHERE telegram_id = $1
+     ORDER BY active_until DESC
+     LIMIT 1`,
+    [telegramId]
+  )
+  const row = res.rows[0]
+  return row ? new Date(row.active_until) : null
+}
+
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date)
   d.setDate(d.getDate() + days)

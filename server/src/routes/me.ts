@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { ensureUser, getActiveSubscription } from '../services/subscriptions.js'
+import { ensureUser, getLatestActiveUntil } from '../services/subscriptions.js'
 
 function toInitDataString(v: unknown): string {
   if (typeof v === 'string') return v
@@ -35,15 +35,17 @@ router.get('/me', async (req: Request, res: Response) => {
 
   try {
     await ensureUser(telegramId)
-    const activeUntil = await getActiveSubscription(telegramId, 'premium')
+    const activeUntilDate = await getLatestActiveUntil(telegramId)
     const now = new Date()
-    const isPremium = activeUntil != null && activeUntil > now
+    const premium = activeUntilDate != null && activeUntilDate > now
+    const activeUntil = activeUntilDate ? activeUntilDate.toISOString() : null
 
     res.status(200).json({
       telegramId,
-      isPremium,
-      premium: isPremium,
-      premiumUntil: activeUntil ? activeUntil.toISOString() : null,
+      isPremium: premium,
+      premium,
+      premiumUntil: activeUntil,
+      activeUntil,
     })
   } catch (e) {
     console.error('[API] /api/me DB error:', e)

@@ -302,16 +302,17 @@ async function handleWebhook(req: Request, res: Response) {
 
   const run = async () => {
     try {
+      const pid = paymentId ?? ''
+      if (!pid) return
       if (isPaymentSucceeded) {
-        const result = await grantPremiumByPaymentId(paymentId, { metadata })
+        const result = await grantPremiumByPaymentId(pid, { metadata })
         if (result.granted) {
-          console.log(`[YooKassa] webhook: premium granted paymentId=${paymentId} telegramId=${result.telegramId} planId=${result.planId} until=${result.activeUntil.toISOString()}`)
+          console.log(`[YooKassa] webhook: premium granted paymentId=${pid} telegramId=${result.telegramId} planId=${result.planId} until=${result.activeUntil.toISOString()}`)
         }
-        // уже succeeded или не хватило данных — идемпотентно, ничего не делаем
       } else if (newStatus) {
         await query(
           `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
-          [newStatus, paymentId]
+          [newStatus, pid]
         ).catch(() => {})
       }
     } catch (e) {

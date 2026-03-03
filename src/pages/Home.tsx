@@ -20,7 +20,7 @@ const APP_FEATURES = [
 ]
 
 function Home() {
-  const { isPremium } = usePremium()
+  const { isPremium, loading } = usePremium()
   const navigate = useNavigate()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const favoritesLocked = isFavoritesLocked(isPremium)
@@ -72,7 +72,7 @@ function Home() {
         </div>
       </section>
 
-      {!isPremium && (
+      {!loading && !isPremium && (
         <section className="home-premium-cta">
           <div className="premium-card-wrap">
             <button

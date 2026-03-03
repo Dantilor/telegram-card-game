@@ -160,17 +160,13 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     await query(
       `INSERT INTO payments (
-         telegram_id, plan_id, currency, total_amount,
-         provider_payment_charge_id, telegram_payment_charge_id,
-         invoice_payload, status
-       ) VALUES ($1, $2, 'RUB', $3, $4, NULL, $5, 'pending')`,
-      [
-        telegramId,
-        plan.plan_id,
-        plan.price_rub,
-        payment.id,
-        JSON.stringify(payment),
-      ]
+         provider_payment_charge_id,
+         telegram_id,
+         plan_id,
+         provider,
+         status
+       ) VALUES ($1, $2, $3, 'yookassa', 'pending')`,
+      [payment.id, telegramId, planId.trim()]
     )
 
     res.status(200).json({ confirmationUrl, paymentId: payment.id })

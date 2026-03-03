@@ -43,20 +43,18 @@ router.use((req, _res, next) => {
  * Сумма в receipt.items должна совпадать с amount платежа.
  */
 function buildReceipt(params: {
-  customerEmail?: string
+  customerEmail: string
   planTitle: string
   planId: string
   durationDays: number
   priceRub: number
-}): { customer?: { email: string }; items: Array<Record<string, unknown>> } {
+}): { customer: { email: string }; items: Array<Record<string, unknown>> } {
   const amountValue = `${params.priceRub}.00`
   const months = Math.round(params.durationDays / 30)
   const description = `Подписка GameNight Host Premium (${months} мес.)`
 
-  const customer = params.customerEmail ? { email: params.customerEmail } : undefined
-
   return {
-    customer,
+    customer: { email: params.customerEmail },
     items: [
       {
         description,
@@ -110,8 +108,8 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     const email =
       typeof req.body?.email === 'string' && req.body.email.trim()
-        ? req.body.email.trim()
-        : undefined
+        ? String(req.body.email).trim()
+        : `${telegramId}@gamenight.local`
 
     const receipt = buildReceipt({
       customerEmail: email,

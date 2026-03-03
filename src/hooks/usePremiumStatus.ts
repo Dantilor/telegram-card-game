@@ -6,6 +6,10 @@ import { devLog, devWarn } from '../utils/devLog'
 
 const CACHE_KEY = 'tcg_premium_status'
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const PREMIUM_POLL_INTERVAL_MS = 2000
+const PREMIUM_POLL_MAX_ATTEMPTS = 15
+const EXPECTING_PAYMENT_FLAG = 'tcg_expecting_payment'
+const EXPECTING_PAYMENT_MAX_AGE_MS = 120000 // 2 min
 
 function clearCache(): void {
   try {
@@ -166,9 +170,47 @@ export function usePremiumStatus(): {
     fetchStatus()
   }, [fetchStatus])
 
+  const premiumPollingRef = useRef(false)
+
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible') fetchStatus()
+      if (document.visibilityState !== 'visible') return
+      // One-time refresh when tab becomes visible
+      fetchStatus()
+      // If user likely returned from YooKassa, poll until premium is active
+      try {
+        const raw = sessionStorage.getItem(EXPECTING_PAYMENT_FLAG)
+        if (!raw || premiumPollingRef.current) return
+        const ts = Number(raw)
+        if (!Number.isFinite(ts) || Date.now() - ts > EXPECTING_PAYMENT_MAX_AGE_MS) return
+        premiumPollingRef.current = true
+        let attempts = 0
+        const run = async () => {
+          while (attempts < PREMIUM_POLL_MAX_ATTEMPTS) {
+            attempts += 1
+            try {
+              const me = await getMe()
+              if (me.premium) {
+                sessionStorage.removeItem(EXPECTING_PAYMENT_FLAG)
+                clearCache()
+                fetchStatus(true)
+                premiumPollingRef.current = false
+                return
+              }
+            } catch {
+              // ignore
+            }
+            if (attempts < PREMIUM_POLL_MAX_ATTEMPTS) {
+              await new Promise((r) => setTimeout(r, PREMIUM_POLL_INTERVAL_MS))
+            }
+          }
+          sessionStorage.removeItem(EXPECTING_PAYMENT_FLAG)
+          premiumPollingRef.current = false
+        }
+        run()
+      } catch {
+        // ignore
+      }
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)

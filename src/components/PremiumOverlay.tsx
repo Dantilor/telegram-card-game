@@ -8,8 +8,8 @@ import { apiPost, apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import './PremiumOverlay.css'
 
-const POLL_INTERVAL_MS = 3000
-const POLL_ATTEMPTS = 5
+const POLL_INTERVAL_MS = 2000
+const POLL_ATTEMPTS = 15
 
 function pollPremiumStatus(
   refresh: () => void,
@@ -161,6 +161,9 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         return
       }
       trackEvent('yookassa_redirect')
+      try {
+        sessionStorage.setItem('tcg_expecting_payment', String(Date.now()))
+      } catch { /* ignore */ }
 
       const tg = getTelegramWebApp()
       if (tg?.openLink) {

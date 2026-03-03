@@ -94,7 +94,7 @@ async function handleCreatePayment(req: Request, res: Response) {
 
   try {
     const planRow = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
-      `SELECT id AS plan_id, title, price_rub, duration_days FROM plans WHERE id = $1 AND is_active = true`,
+      `SELECT plan_id, title, price_rub, duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
       [planId.trim()]
     )
     const plan = planRow.rows[0]

@@ -24,6 +24,16 @@ if (connectionString) {
 export const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
+
+  // Ограничиваем количество соединений для Supabase pooler
+  max: 3,
+
+  // Таймауты
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+
+  // держит соединение живым
+  keepAlive: true,
 })
 
 pool.on('connect', () => {

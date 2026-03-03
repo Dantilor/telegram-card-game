@@ -22,6 +22,11 @@ const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3
 
 console.log('[TCG] ENV PORT =', process.env.PORT)
 
+if (process.env.DATABASE_URL) {
+  const u = new URL(process.env.DATABASE_URL)
+  console.log('[DB] user=', u.username, 'host=', u.host, 'port=', u.port, 'db=', u.pathname)
+}
+
 const app = express()
 app.use(cors({
   origin: (origin, cb) => {

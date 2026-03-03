@@ -146,3 +146,22 @@
   word-break: break-word;
   transition: opacity 0.4s, filter 0.4s;
 }
+
+@media (max-width: 430px) {
+  .mafia-roles__card {
+    padding: 1rem;
+  }
+
+  .mafia-roles__player-name {
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .mafia-roles__role-media {
+    min-height: 6rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .mafia-roles__next-btn {
+    margin-top: 0.75rem;
+  }
+}

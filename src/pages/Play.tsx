@@ -11,6 +11,7 @@ import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
 import { trackEvent } from '../lib/analytics'
 import PremiumOverlay from '../components/PremiumOverlay'
+import HomeButton from '../components/HomeButton'
 import AdultConfirmModal from '../components/AdultConfirmModal'
 import './Play.css'
 
@@ -452,9 +453,7 @@ export default function Play() {
         >
           ← Назад
         </button>
-        <Link to="/" className="btn btn--ghost play-page__home-btn" onClick={() => haptic('light')}>
-          Домой
-        </Link>
+        <HomeButton />
       </div>
 
       {state.status === 'ready' && (

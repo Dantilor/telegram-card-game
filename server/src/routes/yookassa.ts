@@ -308,10 +308,179 @@ async function handleWebhook(req: Request, res: Response) {
   setImmediate(run)
 }
 
+async function handleConfirm(req: Request, res: Response) {
+  const paymentIdRaw = req.body?.paymentId
+  const telegramIdBodyRaw = req.body?.telegramId
+
+  const paymentId = typeof paymentIdRaw === 'string' ? paymentIdRaw.trim() : ''
+  const telegramIdBody =
+    typeof telegramIdBodyRaw === 'number'
+      ? telegramIdBodyRaw
+      : typeof telegramIdBodyRaw === 'string' && telegramIdBodyRaw.trim()
+        ? Number.parseInt(telegramIdBodyRaw.trim(), 10)
+        : NaN
+
+  if (!paymentId) {
+    res.status(400).json({ ok: false, error: 'paymentId required' })
+    return
+  }
+
+  const shopId = process.env.YOOKASSA_SHOP_ID
+  const secretKey = process.env.YOOKASSA_SECRET_KEY
+  if (!shopId || !secretKey) {
+    console.error('[YooKassa] Missing YOOKASSA_SHOP_ID or YOOKASSA_SECRET_KEY')
+    res.status(503).json({ ok: false, error: 'Payment not configured' })
+    return
+  }
+
+  try {
+    const ykRes = await fetch(`https://api.yookassa.ru/v3/payments/${encodeURIComponent(paymentId)}`, {
+      method: 'GET',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${shopId}:${secretKey}`).toString('base64'),
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!ykRes.ok) {
+      const errText = await ykRes.text()
+      console.error('[YooKassa] confirm API error:', ykRes.status, errText)
+      res.status(502).json({ ok: false, error: 'Payment provider error' })
+      return
+    }
+
+    const payment = (await ykRes.json()) as {
+      id?: string
+      status?: string
+      metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string }
+    }
+
+    const status = payment.status ?? null
+    if (status !== 'succeeded') {
+      res.status(200).json({ ok: false, status })
+      return
+    }
+
+    const meta = payment.metadata ?? {}
+    const metaTelegramIdRaw = meta.telegram_id ?? meta.telegramId
+    const metaTelegramId = metaTelegramIdRaw ? Number.parseInt(String(metaTelegramIdRaw), 10) : NaN
+    const bodyTelegramId = Number.isFinite(telegramIdBody) ? telegramIdBody : NaN
+
+    let telegramId: number | null = Number.isFinite(bodyTelegramId) ? bodyTelegramId : null
+    if (!telegramId && Number.isFinite(metaTelegramId)) {
+      telegramId = metaTelegramId
+    }
+
+    // Попробуем найти платёж в БД, чтобы взять plan_id и telegram_id
+    let row: { id: number; telegram_id: number | null; plan_id: string | null } | undefined
+    try {
+      const existing = await query<{ id: number; telegram_id: number | null; plan_id: string | null }>(
+        `SELECT id, telegram_id, plan_id FROM payments
+         WHERE provider_payment_charge_id = $1
+         LIMIT 1`,
+        [paymentId]
+      )
+      row = existing.rows[0]
+    } catch (e) {
+      console.error('[YooKassa] confirm select by provider_payment_charge_id failed:', e)
+    }
+
+    if (!row) {
+      try {
+        const existingByPayload = await query<{ id: number; telegram_id: number | null; plan_id: string | null }>(
+          `SELECT id, telegram_id, plan_id FROM payments
+           WHERE invoice_payload::text LIKE $1
+           LIMIT 1`,
+          [`%${paymentId}%`]
+        )
+        row = existingByPayload.rows[0]
+      } catch (e) {
+        console.error('[YooKassa] confirm select by invoice_payload failed:', e)
+      }
+    }
+
+    const dbTelegramId = row?.telegram_id ?? null
+    const dbPlanId = row?.plan_id ?? null
+
+    telegramId = dbTelegramId || telegramId
+    const planIdFromMeta = (meta.plan_id ?? meta.planId)?.trim()
+    const planId = dbPlanId ?? planIdFromMeta ?? null
+
+    if (!telegramId || !planId) {
+      console.error('[YooKassa] confirm: cannot resolve telegramId/planId', {
+        paymentId,
+        telegramId,
+        dbTelegramId,
+        metaTelegramId,
+        planId,
+      })
+      res.status(400).json({ ok: false, error: 'Cannot resolve telegramId or planId' })
+      return
+    }
+
+    const planRow = await query<{ duration_days: number }>(
+      `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
+      [planId]
+    )
+    const plan = planRow.rows[0]
+    if (!plan) {
+      res.status(400).json({ ok: false, error: 'Plan not found or inactive' })
+      return
+    }
+
+    await ensureUser(telegramId)
+
+    const now = new Date()
+    const currentUntil = await getActiveSubscription(telegramId, 'premium')
+    const base = currentUntil && currentUntil > now ? currentUntil : now
+    const activeUntil = new Date(base)
+    activeUntil.setDate(activeUntil.getDate() + plan.duration_days)
+
+    await upsertSubscription(telegramId, 'premium', activeUntil)
+
+    if (row?.id) {
+      try {
+        await query(
+          `UPDATE payments SET status = 'succeeded', paid = true WHERE id = $1`,
+          [row.id]
+        )
+      } catch (e) {
+        const err = e as { code?: string }
+        if (err.code === '42703') {
+          // paid column does not exist — обновим только статус
+          await query(
+            `UPDATE payments SET status = 'succeeded' WHERE id = $1`,
+            [row.id]
+          )
+        } else {
+          throw e
+        }
+      }
+    }
+
+    console.log(
+      `[YooKassa] confirm -> premium granted paymentId=${paymentId} telegramId=${telegramId} planId=${planId} until=${activeUntil.toISOString()}`
+    )
+
+    res.status(200).json({
+      ok: true,
+      status,
+      paymentId,
+      telegramId,
+      planId,
+      activeUntil: activeUntil.toISOString(),
+    })
+  } catch (e) {
+    console.error('[YooKassa] confirm error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
+  }
+}
+
 router.post('/payments/create', handleCreatePayment)
 router.post('/payments/yookassa/create', handleCreatePayment)
 // Standard webhook URL: POST /api/yookassa/webhook (Render: .../api/yookassa/webhook)
 router.post('/yookassa/webhook', handleWebhook)
 router.post('/payments/yookassa/webhook', handleWebhook) // alias (legacy)
+router.post('/yookassa/confirm', handleConfirm)
 
 export default router

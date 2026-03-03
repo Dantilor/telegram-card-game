@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex, isDeckAdult } from '../data/decksIndex'
 import { getDeckQuestions, canOpenDeck } from '../lib/access'

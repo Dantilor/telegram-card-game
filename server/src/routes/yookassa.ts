@@ -43,18 +43,20 @@ router.use((req, _res, next) => {
  * Сумма в receipt.items должна совпадать с amount платежа.
  */
 function buildReceipt(params: {
-  customerEmail: string
+  customerEmail?: string
   planTitle: string
   planId: string
   durationDays: number
   priceRub: number
-}): { customer: { email: string }; items: Array<Record<string, unknown>> } {
+}): { customer?: { email: string }; items: Array<Record<string, unknown>> } {
   const amountValue = `${params.priceRub}.00`
   const months = Math.round(params.durationDays / 30)
   const description = `Подписка GameNight Host Premium (${months} мес.)`
 
+  const customer = params.customerEmail ? { email: params.customerEmail } : undefined
+
   return {
-    customer: { email: params.customerEmail },
+    customer,
     items: [
       {
         description,
@@ -106,16 +108,13 @@ async function handleCreatePayment(req: Request, res: Response) {
     const idempotenceKey = randomUUID()
     const amount = `${plan.price_rub}.00`
 
-    // Email для чека 54-ФЗ. TODO: требовать email на фронте (Telegram не передаёт email в initData).
-    let customerEmail = typeof req.body?.email === 'string' && req.body.email.trim()
-      ? req.body.email.trim()
-      : `${telegramId}@example.com`
-    if (!req.body?.email) {
-      console.warn(`[YooKassa] email не передан, используем fallback для telegramId=${telegramId}`)
-    }
+    const email =
+      typeof req.body?.email === 'string' && req.body.email.trim()
+        ? req.body.email.trim()
+        : undefined
 
     const receipt = buildReceipt({
-      customerEmail,
+      customerEmail: email,
       planTitle: plan.title,
       planId: plan.plan_id,
       durationDays: plan.duration_days,

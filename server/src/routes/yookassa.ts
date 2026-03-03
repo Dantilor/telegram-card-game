@@ -180,8 +180,85 @@ async function handleCreatePayment(req: Request, res: Response) {
   }
 }
 
+type GrantPremiumResult =
+  | { granted: true; telegramId: number; planId: string; activeUntil: Date }
+  | { granted: false; alreadyDone?: boolean }
+
+/**
+ * Общая логика выдачи premium по paymentId. Используется в webhook и confirm.
+ * Идемпотентно: если payments уже succeeded — просто возвращает alreadyDone.
+ */
+async function grantPremiumByPaymentId(
+  paymentId: string,
+  opts: {
+    metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string }
+    bodyTelegramId?: number
+  } = {}
+): Promise<GrantPremiumResult> {
+  const meta = opts.metadata ?? {}
+  const metaTgRaw = meta.telegram_id ?? meta.telegramId
+  const metaPlanId = (meta.plan_id ?? meta.planId)?.trim() || null
+
+  let row: { id: number; status: string; telegram_id: number | null; plan_id: string | null } | undefined
+  const existing = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
+    `SELECT id, status, telegram_id, plan_id FROM payments
+     WHERE provider_payment_charge_id = $1 LIMIT 1`,
+    [paymentId]
+  )
+  row = existing.rows[0]
+
+  if (!row) {
+    try {
+      const byPayload = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
+        `SELECT id, status, telegram_id, plan_id FROM payments
+         WHERE invoice_payload::text LIKE $1 LIMIT 1`,
+        [`%${paymentId}%`]
+      )
+      row = byPayload.rows[0]
+    } catch {
+      // ignore
+    }
+  }
+
+  if (row?.status === 'succeeded') {
+    return { granted: false, alreadyDone: true }
+  }
+
+  const telegramId = row?.telegram_id ?? (opts.bodyTelegramId ?? (metaTgRaw ? parseInt(String(metaTgRaw), 10) : NaN))
+  const planId = row?.plan_id ?? metaPlanId
+  const resolvedTelegramId = Number.isFinite(telegramId) ? (telegramId as number) : null
+
+  if (!resolvedTelegramId || !planId) {
+    return { granted: false }
+  }
+
+  const planRow = await query<{ duration_days: number }>(
+    `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
+    [planId]
+  )
+  const plan = planRow.rows[0]
+  if (!plan) {
+    return { granted: false }
+  }
+
+  await query(
+    `UPDATE payments SET status = 'succeeded' WHERE provider_payment_charge_id = $1`,
+    [paymentId]
+  )
+
+  await ensureUser(resolvedTelegramId)
+  const now = new Date()
+  const currentUntil = await getActiveSubscription(resolvedTelegramId, 'premium')
+  const base = currentUntil && currentUntil > now ? currentUntil : now
+  const activeUntil = new Date(base)
+  activeUntil.setDate(activeUntil.getDate() + plan.duration_days)
+  await upsertSubscription(resolvedTelegramId, 'premium', activeUntil)
+
+  return { granted: true, telegramId: resolvedTelegramId, planId, activeUntil }
+}
+
 async function handleWebhook(req: Request, res: Response) {
-  console.log('[YooKassa] webhook', { event: req.body?.event, paymentId: req.body?.object?.id })
+  console.log('[YooKassa] webhook received', { event: req.body?.event, paymentId: req.body?.object?.id })
 
   const expected = process.env.YOOKASSA_WEBHOOK_SECRET
   if (!expected) {
@@ -214,9 +291,6 @@ async function handleWebhook(req: Request, res: Response) {
 
   const paymentId = obj.id
   const metadata = obj.metadata ?? {}
-  const metaTelegramIdRaw = metadata.telegram_id ?? metadata.telegramId
-  const metaPlanId = (metadata.plan_id ?? metadata.planId)?.trim() || null
-
   const statusMap: Record<string, string> = {
     'payment.succeeded': 'succeeded',
     'payment.canceled': 'canceled',
@@ -228,72 +302,12 @@ async function handleWebhook(req: Request, res: Response) {
 
   const run = async () => {
     try {
-      const existing = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
-        `SELECT id, status, telegram_id, plan_id FROM payments
-         WHERE provider_payment_charge_id = $1`,
-        [paymentId]
-      )
-      let row = existing.rows[0]
-
-      if (!row && isPaymentSucceeded && metaTelegramIdRaw && metaPlanId) {
-        const tgId = parseInt(String(metaTelegramIdRaw), 10)
-        if (Number.isFinite(tgId)) {
-          const planRow = await query<{ duration_days: number; price_rub: number }>(
-            `SELECT duration_days, price_rub FROM plans WHERE plan_id = $1 AND is_active = true`,
-            [metaPlanId]
-          )
-          const plan = planRow.rows[0]
-          if (plan) {
-            await ensureUser(tgId)
-            try {
-              await query(
-                `INSERT INTO payments (
-                   telegram_id, plan_id, currency, total_amount,
-                   provider_payment_charge_id, telegram_payment_charge_id,
-                   invoice_payload, status
-                 ) VALUES ($1, $2, 'RUB', $3, $4, NULL, $5, 'pending')`,
-                [tgId, metaPlanId, plan.price_rub, paymentId, JSON.stringify(obj)]
-              )
-            } catch {
-              // Дубликат provider_payment_charge_id
-            }
-            const r2 = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
-              `SELECT id, status, telegram_id, plan_id FROM payments
-               WHERE provider_payment_charge_id = $1`,
-              [paymentId]
-            )
-            row = r2.rows[0]
-          }
-        }
-      }
-
-      const telegramId = row?.telegram_id ?? (metaTelegramIdRaw ? parseInt(String(metaTelegramIdRaw), 10) : NaN)
-      const planId = row?.plan_id ?? metaPlanId
-      const resolvedTelegramId = Number.isFinite(telegramId) ? (telegramId as number) : null
-
       if (isPaymentSucceeded) {
-        await query(
-          `UPDATE payments SET status = 'succeeded' WHERE provider_payment_charge_id = $1`,
-          [paymentId]
-        )
-
-        if (resolvedTelegramId && planId) {
-          const planRow = await query<{ duration_days: number }>(
-            `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
-            [planId]
-          )
-          const plan = planRow.rows[0]
-          if (plan) {
-            await ensureUser(resolvedTelegramId)
-            const now = new Date()
-            const currentUntil = await getActiveSubscription(resolvedTelegramId, 'premium')
-            const base = currentUntil && currentUntil > now ? currentUntil : now
-            const activeUntil = new Date(base)
-            activeUntil.setDate(activeUntil.getDate() + plan.duration_days)
-            await upsertSubscription(resolvedTelegramId, 'premium', activeUntil)
-            console.log(`[YooKassa] webhook: premium activated telegramId=${resolvedTelegramId} planId=${planId} until=${activeUntil.toISOString()}`)
-          }
+        const result = await grantPremiumByPaymentId(paymentId, { metadata })
+        if (result.granted) {
+          console.log(`[YooKassa] webhook: premium granted paymentId=${paymentId} telegramId=${result.telegramId} planId=${result.planId} until=${result.activeUntil.toISOString()}`)
         }
+        // уже succeeded или не хватило данных — идемпотентно, ничего не делаем
       } else if (newStatus) {
         await query(
           `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
@@ -362,115 +376,32 @@ async function handleConfirm(req: Request, res: Response) {
       return
     }
 
-    const meta = payment.metadata ?? {}
-    const metaTelegramIdRaw = meta.telegram_id ?? meta.telegramId
-    const metaTelegramId = metaTelegramIdRaw ? Number.parseInt(String(metaTelegramIdRaw), 10) : NaN
-    const bodyTelegramId = Number.isFinite(telegramIdBody) ? telegramIdBody : NaN
-
-    let telegramId: number | null = Number.isFinite(bodyTelegramId) ? bodyTelegramId : null
-    if (!telegramId && Number.isFinite(metaTelegramId)) {
-      telegramId = metaTelegramId
-    }
-
-    // Попробуем найти платёж в БД, чтобы взять plan_id и telegram_id
-    let row: { id: number; telegram_id: number | null; plan_id: string | null } | undefined
-    try {
-      const existing = await query<{ id: number; telegram_id: number | null; plan_id: string | null }>(
-        `SELECT id, telegram_id, plan_id FROM payments
-         WHERE provider_payment_charge_id = $1
-         LIMIT 1`,
-        [paymentId]
-      )
-      row = existing.rows[0]
-    } catch (e) {
-      console.error('[YooKassa] confirm select by provider_payment_charge_id failed:', e)
-    }
-
-    if (!row) {
-      try {
-        const existingByPayload = await query<{ id: number; telegram_id: number | null; plan_id: string | null }>(
-          `SELECT id, telegram_id, plan_id FROM payments
-           WHERE invoice_payload::text LIKE $1
-           LIMIT 1`,
-          [`%${paymentId}%`]
-        )
-        row = existingByPayload.rows[0]
-      } catch (e) {
-        console.error('[YooKassa] confirm select by invoice_payload failed:', e)
-      }
-    }
-
-    const dbTelegramId = row?.telegram_id ?? null
-    const dbPlanId = row?.plan_id ?? null
-
-    telegramId = dbTelegramId || telegramId
-    const planIdFromMeta = (meta.plan_id ?? meta.planId)?.trim()
-    const planId = dbPlanId ?? planIdFromMeta ?? null
-
-    if (!telegramId || !planId) {
-      console.error('[YooKassa] confirm: cannot resolve telegramId/planId', {
-        paymentId,
-        telegramId,
-        dbTelegramId,
-        metaTelegramId,
-        planId,
-      })
-      res.status(400).json({ ok: false, error: 'Cannot resolve telegramId or planId' })
-      return
-    }
-
-    const planRow = await query<{ duration_days: number }>(
-      `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
-      [planId]
-    )
-    const plan = planRow.rows[0]
-    if (!plan) {
-      res.status(400).json({ ok: false, error: 'Plan not found or inactive' })
-      return
-    }
-
-    await ensureUser(telegramId)
-
-    const now = new Date()
-    const currentUntil = await getActiveSubscription(telegramId, 'premium')
-    const base = currentUntil && currentUntil > now ? currentUntil : now
-    const activeUntil = new Date(base)
-    activeUntil.setDate(activeUntil.getDate() + plan.duration_days)
-
-    await upsertSubscription(telegramId, 'premium', activeUntil)
-
-    if (row?.id) {
-      try {
-        await query(
-          `UPDATE payments SET status = 'succeeded', paid = true WHERE id = $1`,
-          [row.id]
-        )
-      } catch (e) {
-        const err = e as { code?: string }
-        if (err.code === '42703') {
-          // paid column does not exist — обновим только статус
-          await query(
-            `UPDATE payments SET status = 'succeeded' WHERE id = $1`,
-            [row.id]
-          )
-        } else {
-          throw e
-        }
-      }
-    }
-
-    console.log(
-      `[YooKassa] confirm -> premium granted paymentId=${paymentId} telegramId=${telegramId} planId=${planId} until=${activeUntil.toISOString()}`
-    )
-
-    res.status(200).json({
-      ok: true,
-      status,
-      paymentId,
-      telegramId,
-      planId,
-      activeUntil: activeUntil.toISOString(),
+    const result = await grantPremiumByPaymentId(paymentId, {
+      metadata: payment.metadata,
+      bodyTelegramId: Number.isFinite(telegramIdBody) ? telegramIdBody : undefined,
     })
+
+    if (result.granted) {
+      console.log(
+        `[YooKassa] confirm -> premium granted paymentId=${paymentId} telegramId=${result.telegramId} planId=${result.planId} until=${result.activeUntil.toISOString()}`
+      )
+      res.status(200).json({
+        ok: true,
+        status,
+        paymentId,
+        telegramId: result.telegramId,
+        planId: result.planId,
+        activeUntil: result.activeUntil.toISOString(),
+      })
+      return
+    }
+
+    if (result.alreadyDone) {
+      res.status(200).json({ ok: true, status, paymentId, alreadyDone: true })
+      return
+    }
+
+    res.status(400).json({ ok: false, error: 'Cannot resolve telegramId or planId' })
   } catch (e) {
     console.error('[YooKassa] confirm error:', e)
     res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })

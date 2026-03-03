@@ -258,18 +258,23 @@ async function grantPremiumByPaymentId(
 }
 
 async function handleWebhook(req: Request, res: Response) {
-  console.log('[YooKassa] webhook received', { event: req.body?.event, paymentId: req.body?.object?.id })
+  console.log('[YooKassa] webhook received', {
+    event: req.body?.event,
+    paymentId: req.body?.object?.id,
+    status: req.body?.object?.status,
+  })
 
   const expected = process.env.YOOKASSA_WEBHOOK_SECRET
   if (!expected) {
     console.error('[YooKassa] YOOKASSA_WEBHOOK_SECRET is not set')
-    res.status(500).json({ error: 'Webhook not configured' })
+    res.status(200).json({ ok: true })
     return
   }
 
   const secret = req.headers['x-webhook-secret'] ?? req.query?.secret
   if (secret !== expected) {
-    res.status(401).json({ error: 'Unauthorized' })
+    console.warn('[YooKassa] webhook: invalid secret')
+    res.status(200).json({ ok: true })
     return
   }
 
@@ -290,7 +295,6 @@ async function handleWebhook(req: Request, res: Response) {
   }
 
   const paymentId = obj.id
-  const metadata = obj.metadata ?? {}
   const statusMap: Record<string, string> = {
     'payment.succeeded': 'succeeded',
     'payment.canceled': 'canceled',
@@ -302,19 +306,68 @@ async function handleWebhook(req: Request, res: Response) {
 
   const run = async () => {
     try {
-      const pid = paymentId ?? ''
+      const pid = typeof paymentId === 'string' ? paymentId.trim() : ''
       if (!pid) return
-      if (isPaymentSucceeded) {
-        const result = await grantPremiumByPaymentId(pid, { metadata })
-        if (result.granted) {
-          console.log(`[YooKassa] webhook: premium granted paymentId=${pid} telegramId=${result.telegramId} planId=${result.planId} until=${result.activeUntil.toISOString()}`)
+
+      // Не payment.succeeded — просто обновляем статус и выходим
+      if (!isPaymentSucceeded) {
+        if (newStatus) {
+          await query(
+            `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
+            [newStatus, pid]
+          ).catch(() => {})
         }
-      } else if (newStatus) {
-        await query(
-          `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
-          [newStatus, pid]
-        ).catch(() => {})
+        return
       }
+
+      // payment.succeeded — ищем платеж по provider_payment_charge_id
+      const payRes = await query<{
+        telegram_id: number | null
+        plan_id: string | null
+      }>(
+        `SELECT telegram_id, plan_id FROM payments
+         WHERE provider_payment_charge_id = $1
+         LIMIT 1`,
+        [pid]
+      )
+      const paymentRow = payRes.rows[0]
+      if (!paymentRow) {
+        console.error('[YooKassa] webhook: payment not found by provider_payment_charge_id=', pid)
+        return
+      }
+
+      const telegramId = paymentRow.telegram_id
+      if (!telegramId) {
+        console.error('[YooKassa] webhook: payment has no telegram_id, paymentId=', pid)
+        return
+      }
+
+      // 1) обновляем статус платежа на succeeded
+      await query(
+        `UPDATE payments
+         SET status = 'succeeded'
+         WHERE provider_payment_charge_id = $1`,
+        [pid]
+      )
+
+      // 2) создаем/обновляем подписку: 90 дней от now, план 'premium'
+      const now = new Date()
+      const activeUntil = new Date(now)
+      activeUntil.setDate(activeUntil.getDate() + 90)
+
+      await ensureUser(telegramId)
+
+      await query(
+        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
+         VALUES ($1, 'premium', $2)
+         ON CONFLICT (telegram_id, plan_id)
+         DO UPDATE SET active_until = EXCLUDED.active_until`,
+        [telegramId, activeUntil]
+      )
+
+      console.log(
+        `[YooKassa] webhook: premium granted paymentId=${pid} telegramId=${telegramId} until=${activeUntil.toISOString()}`
+      )
     } catch (e) {
       console.error('[YooKassa] webhook error:', e)
     }

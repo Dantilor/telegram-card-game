@@ -181,6 +181,8 @@ async function handleCreatePayment(req: Request, res: Response) {
 }
 
 async function handleWebhook(req: Request, res: Response) {
+  console.log('[YooKassa] webhook', { event: req.body?.event, paymentId: req.body?.object?.id })
+
   const expected = process.env.YOOKASSA_WEBHOOK_SECRET
   if (!expected) {
     console.error('[YooKassa] YOOKASSA_WEBHOOK_SECRET is not set')
@@ -194,8 +196,6 @@ async function handleWebhook(req: Request, res: Response) {
     return
   }
 
-  res.status(200).send('OK')
-
   const body = req.body as {
     type?: string
     event?: string
@@ -207,13 +207,15 @@ async function handleWebhook(req: Request, res: Response) {
   }
   const eventType = body.event ?? body.type
   const obj = body.object
-  if (!obj) return
+  if (!obj) {
+    res.status(200).json({ ok: true })
+    return
+  }
 
   const paymentId = obj.id
   const metadata = obj.metadata ?? {}
-  const telegramIdRaw = metadata.telegram_id ?? metadata.telegramId
-  const planId = metadata.plan_id ?? metadata.planId
-  const telegramId = telegramIdRaw ? parseInt(String(telegramIdRaw), 10) : null
+  const metaTelegramIdRaw = metadata.telegram_id ?? metadata.telegramId
+  const metaPlanId = (metadata.plan_id ?? metadata.planId)?.trim() || null
 
   const statusMap: Record<string, string> = {
     'payment.succeeded': 'succeeded',
@@ -222,83 +224,81 @@ async function handleWebhook(req: Request, res: Response) {
     'payment.failed': 'failed',
   }
   const newStatus = eventType ? statusMap[eventType] : obj.status ? statusMap[`payment.${obj.status}`] ?? obj.status : null
-
   const isPaymentSucceeded = eventType === 'payment.succeeded' || (!eventType && obj.status === 'succeeded')
 
   const run = async () => {
     try {
-      const existing = await query<{ id: number; status: string }>(
-        `SELECT id, status FROM payments
+      const existing = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
+        `SELECT id, status, telegram_id, plan_id FROM payments
          WHERE provider_payment_charge_id = $1`,
         [paymentId]
       )
       let row = existing.rows[0]
 
-      if (!row && isPaymentSucceeded && telegramId && planId) {
-        const planRow = await query<{ duration_days: number; price_rub: number }>(
-          `SELECT duration_days, price_rub FROM plans WHERE plan_id = $1 AND is_active = true`,
-          [planId]
-        )
-        const plan = planRow.rows[0]
-        if (plan) {
-          await ensureUser(telegramId)
-          try {
-            await query(
-              `INSERT INTO payments (
-                 telegram_id, plan_id, currency, total_amount,
-                 provider_payment_charge_id, telegram_payment_charge_id,
-                 invoice_payload, status
-               ) VALUES ($1, $2, 'RUB', $3, $4, NULL, $5, 'pending')`,
-              [telegramId, planId, plan.price_rub, paymentId, JSON.stringify(obj)]
-            )
-          } catch {
-            // Дубликат provider_payment_charge_id — платёж уже создан через create
-          }
-          const r2 = await query<{ id: number; status: string }>(
-            `SELECT id, status FROM payments
-             WHERE provider_payment_charge_id = $1`,
-            [paymentId]
+      if (!row && isPaymentSucceeded && metaTelegramIdRaw && metaPlanId) {
+        const tgId = parseInt(String(metaTelegramIdRaw), 10)
+        if (Number.isFinite(tgId)) {
+          const planRow = await query<{ duration_days: number; price_rub: number }>(
+            `SELECT duration_days, price_rub FROM plans WHERE plan_id = $1 AND is_active = true`,
+            [metaPlanId]
           )
-          row = r2.rows[0]
+          const plan = planRow.rows[0]
+          if (plan) {
+            await ensureUser(tgId)
+            try {
+              await query(
+                `INSERT INTO payments (
+                   telegram_id, plan_id, currency, total_amount,
+                   provider_payment_charge_id, telegram_payment_charge_id,
+                   invoice_payload, status
+                 ) VALUES ($1, $2, 'RUB', $3, $4, NULL, $5, 'pending')`,
+                [tgId, metaPlanId, plan.price_rub, paymentId, JSON.stringify(obj)]
+              )
+            } catch {
+              // Дубликат provider_payment_charge_id
+            }
+            const r2 = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
+              `SELECT id, status, telegram_id, plan_id FROM payments
+               WHERE provider_payment_charge_id = $1`,
+              [paymentId]
+            )
+            row = r2.rows[0]
+          }
         }
       }
 
-      if (!row) {
-        if (newStatus) {
-          await query(
-            `UPDATE payments SET status = $1
-             WHERE provider_payment_charge_id = $2`,
-            [newStatus, paymentId]
-          ).catch(() => {})
-        }
-        return
-      }
+      const telegramId = row?.telegram_id ?? (metaTelegramIdRaw ? parseInt(String(metaTelegramIdRaw), 10) : NaN)
+      const planId = row?.plan_id ?? metaPlanId
+      const resolvedTelegramId = Number.isFinite(telegramId) ? (telegramId as number) : null
 
-      if (newStatus && newStatus !== row.status) {
+      if (isPaymentSucceeded) {
         await query(
-          `UPDATE payments SET status = $1 WHERE id = $2`,
-          [newStatus, row.id]
+          `UPDATE payments SET status = 'succeeded' WHERE provider_payment_charge_id = $1`,
+          [paymentId]
         )
-      }
 
-      if (isPaymentSucceeded && row.status !== 'succeeded') {
-        const planRow = await query<{ duration_days: number }>(
-          `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
-          [planId]
-        )
-        const plan = planRow.rows[0]
-        if (!plan || !telegramId) return
-
-        const now = new Date()
-        const currentUntil = await getActiveSubscription(telegramId, 'premium')
-        const base = currentUntil && currentUntil > now ? currentUntil : now
-        const activeUntil = new Date(base)
-        activeUntil.setDate(activeUntil.getDate() + plan.duration_days)
-
-        await upsertSubscription(telegramId, 'premium', activeUntil)
-        await query(`UPDATE payments SET status = 'succeeded' WHERE id = $1`, [row.id])
-
-        console.log(`[YooKassa] webhook: premium activated telegramId=${telegramId} until=${activeUntil.toISOString()}`)
+        if (resolvedTelegramId && planId) {
+          const planRow = await query<{ duration_days: number }>(
+            `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
+            [planId]
+          )
+          const plan = planRow.rows[0]
+          if (plan) {
+            await ensureUser(resolvedTelegramId)
+            const now = new Date()
+            const currentUntil = await getActiveSubscription(resolvedTelegramId, 'premium')
+            const base = currentUntil && currentUntil > now ? currentUntil : now
+            const activeUntil = new Date(base)
+            activeUntil.setDate(activeUntil.getDate() + plan.duration_days)
+            await upsertSubscription(resolvedTelegramId, 'premium', activeUntil)
+            console.log(`[YooKassa] webhook: premium activated telegramId=${resolvedTelegramId} planId=${planId} until=${activeUntil.toISOString()}`)
+          }
+        }
+      } else if (newStatus) {
+        await query(
+          `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
+          [newStatus, paymentId]
+        ).catch(() => {})
       }
     } catch (e) {
       console.error('[YooKassa] webhook error:', e)
@@ -306,6 +306,7 @@ async function handleWebhook(req: Request, res: Response) {
   }
 
   setImmediate(run)
+  res.status(200).json({ ok: true })
 }
 
 async function handleConfirm(req: Request, res: Response) {

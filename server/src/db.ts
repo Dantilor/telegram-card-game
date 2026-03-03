@@ -1,6 +1,7 @@
 import pg, { Pool } from 'pg'
 
 const connectionString = process.env.DATABASE_URL
+const ssl = { rejectUnauthorized: false as const }
 
 if (connectionString) {
   try {
@@ -21,9 +22,11 @@ if (connectionString) {
   console.warn('[DB] DATABASE_URL is not set')
 }
 
+console.log('[DB] ssl rejectUnauthorized', ssl.rejectUnauthorized)
+
 export const pool = new Pool({
   connectionString,
-  ssl: { rejectUnauthorized: false },
+  ssl,
 
   // Ограничиваем количество соединений для Supabase pooler
   max: 3,

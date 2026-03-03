@@ -64,7 +64,82 @@
   line-height: 1.3;
 }
 
+.mafia-roles__flip {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  perspective: 1200px;
+  margin-top: 0.25rem;
+  overflow: hidden;
+}
+
+.mafia-roles__flip-inner {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mafia-roles__flip--flipped .mafia-roles__flip-inner {
+  transform: rotateY(180deg) scale(1.02);
+}
+
+.mafia-roles__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.mafia-roles__face--back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mafia-roles__flip-inner {
+    transition: none;
+  }
+
+  .mafia-roles__reveal--glow::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.mafia-roles__instructions {
+  width: 100%;
+  max-width: 20rem;
+  margin-top: 1.25rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.mafia-roles__instructions-main {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1rem, 2.9vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.mafia-roles__instructions-secondary {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
 .mafia-roles__reveal {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
@@ -72,6 +147,29 @@
   flex-direction: column;
   align-items: center;
   transition: opacity 0.4s ease;
+}
+
+.mafia-roles__reveal--glow::after {
+  content: '';
+  position: absolute;
+  inset: -4%;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.42) 0, rgba(255, 255, 255, 0) 60%);
+  opacity: 0;
+  animation: mafia-roles-reveal-glow 220ms ease-out forwards;
+}
+
+@keyframes mafia-roles-reveal-glow {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .mafia-roles__role-media {

@@ -88,39 +88,83 @@ function MafiaRoles() {
 
       <div className="mafia-roles__card card">
         <h2 className="mafia-roles__player-name">Игрок: {player.name}</h2>
-        {roleRevealed ? (
-          <div className={`mafia-roles__reveal ${roleDimmed ? 'mafia-roles__reveal--dimmed' : ''}`}>
-            <p className="mafia-roles__role mafia-roles__role--above">Твоя роль: {roleLabel}</p>
-            <div className="mafia-roles__role-media">
-              {isDoctor ? (
-                <img src={IMAGES.mafiaDoctor.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--doctor" decoding="async" loading="eager" />
-              ) : isMafia ? (
-                <img src={IMAGES.mafiaRole.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--mafia" decoding="async" loading="eager" />
-              ) : isSheriff ? (
-                <img src={IMAGES.mafiaSheriff.png} alt="" className="mafia-roles__role-img mafia-roles__role-img--sheriff" decoding="async" loading="eager" />
-              ) : civilianImg ? (
-                <img src={civilianImg} alt="" className="mafia-roles__role-img mafia-roles__role-img--civilian" decoding="async" loading="eager" />
-              ) : (
-                <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
-              )}
+        <div className={`mafia-roles__flip ${roleRevealed ? 'mafia-roles__flip--flipped' : ''}`}>
+          <div className="mafia-roles__flip-inner">
+            <div className="mafia-roles__face mafia-roles__face--front">
+              <div className="mafia-roles__instructions">
+                <p className="mafia-roles__instructions-main">
+                  Сейчас вы узнаете свою роль
+                  <br />
+                  Нажмите кнопку ниже, чтобы открыть её.
+                </p>
+                <p className="mafia-roles__instructions-secondary">
+                  Показывайте экран только себе.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn--primary mafia-roles__show-btn"
+                onClick={handleShowRole}
+              >
+                Показать мою роль
+              </button>
             </div>
-            <button
-              type="button"
-              className="btn btn--primary mafia-roles__next-btn"
-              onClick={handleNext}
-            >
-              {isLast ? 'Начать раунд' : 'Передать следующему'}
-            </button>
+
+            <div className="mafia-roles__face mafia-roles__face--back">
+              <div
+                className={`mafia-roles__reveal ${roleDimmed ? 'mafia-roles__reveal--dimmed' : ''} ${
+                  roleRevealed ? 'mafia-roles__reveal--glow' : ''
+                }`}
+              >
+                <p className="mafia-roles__role mafia-roles__role--above">Твоя роль: {roleLabel}</p>
+                <div className="mafia-roles__role-media">
+                  {isDoctor ? (
+                    <img
+                      src={IMAGES.mafiaDoctor.png}
+                      alt=""
+                      className="mafia-roles__role-img mafia-roles__role-img--doctor"
+                      decoding="async"
+                      loading="eager"
+                    />
+                  ) : isMafia ? (
+                    <img
+                      src={IMAGES.mafiaRole.png}
+                      alt=""
+                      className="mafia-roles__role-img mafia-roles__role-img--mafia"
+                      decoding="async"
+                      loading="eager"
+                    />
+                  ) : isSheriff ? (
+                    <img
+                      src={IMAGES.mafiaSheriff.png}
+                      alt=""
+                      className="mafia-roles__role-img mafia-roles__role-img--sheriff"
+                      decoding="async"
+                      loading="eager"
+                    />
+                  ) : civilianImg ? (
+                    <img
+                      src={civilianImg}
+                      alt=""
+                      className="mafia-roles__role-img mafia-roles__role-img--civilian"
+                      decoding="async"
+                      loading="eager"
+                    />
+                  ) : (
+                    <span className="mafia-roles__emoji" aria-hidden>{roleEmoji}</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--primary mafia-roles__next-btn"
+                  onClick={handleNext}
+                >
+                  {isLast ? 'Начать раунд' : 'Передать следующему'}
+                </button>
+              </div>
+            </div>
           </div>
-        ) : (
-          <button
-            type="button"
-            className="btn btn--primary mafia-roles__show-btn"
-            onClick={handleShowRole}
-          >
-            Показать мою роль
-          </button>
-        )}
+        </div>
       </div>
     </div>
   )

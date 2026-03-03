@@ -30,13 +30,17 @@ declare global {
             title?: string
           }
         }
+        version?: string
       }
     }
   }
 }
 
-export function getTg() {
-  return (typeof window !== 'undefined' && (window as any)?.Telegram?.WebApp) ?? null
+type TelegramWebApp = NonNullable<NonNullable<Window['Telegram']>['WebApp']>
+
+export function getTg(): TelegramWebApp | null {
+  if (typeof window === 'undefined') return null
+  return window.Telegram?.WebApp ?? null
 }
 
 import { getCachedInitData, parseAndCacheFromHash } from './telegramInitCache'
@@ -98,7 +102,7 @@ export function readyAndExpand() {
 }
 
 export function haptic(type: 'light' | 'medium' | 'heavy' = 'light') {
-  const tg = getTg() as { HapticFeedback?: { impactOccurred: (s: string) => void }; version?: string } | null
+  const tg = getTg()
   if (tg && parseFloat(tg.version || '0') > 6) {
     tg.HapticFeedback?.impactOccurred?.(type)
   }

@@ -9,7 +9,7 @@ const BASE_URL = (
   'https://telegram-card-game.onrender.com'
 ).replace(/\/$/, '')
 
-const API_TIMEOUT_MS = 15000 // Не зависать при cold start Render
+const API_TIMEOUT_MS = 7000 // Не зависать при cold start Render, но не держать UI 15+ секунд
 const isDev = import.meta.env.DEV
 
 /** Runtime check: предупреждение если API URL пустой или не https в проде */

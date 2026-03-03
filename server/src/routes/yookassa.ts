@@ -94,7 +94,7 @@ async function handleCreatePayment(req: Request, res: Response) {
 
   try {
     const planRow = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
-      `SELECT plan_id, title, price_rub, duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
+      `SELECT id AS plan_id, title, price_rub, duration_days FROM plans WHERE id = $1 AND is_active = true`,
       [planId.trim()]
     )
     const plan = planRow.rows[0]
@@ -184,12 +184,16 @@ async function handleCreatePayment(req: Request, res: Response) {
 
 async function handleWebhook(req: Request, res: Response) {
   const expected = process.env.YOOKASSA_WEBHOOK_SECRET
-  if (expected) {
-    const secret = req.headers['x-webhook-secret'] ?? req.query?.secret
-    if (secret !== expected) {
-      res.status(401).json({ error: 'Unauthorized' })
-      return
-    }
+  if (!expected) {
+    console.error('[YooKassa] YOOKASSA_WEBHOOK_SECRET is not set')
+    res.status(500).json({ error: 'Webhook not configured' })
+    return
+  }
+
+  const secret = req.headers['x-webhook-secret'] ?? req.query?.secret
+  if (secret !== expected) {
+    res.status(401).json({ error: 'Unauthorized' })
+    return
   }
 
   res.status(200).send('OK')
@@ -221,6 +225,8 @@ async function handleWebhook(req: Request, res: Response) {
   }
   const newStatus = eventType ? statusMap[eventType] : obj.status ? statusMap[`payment.${obj.status}`] ?? obj.status : null
 
+  const isPaymentSucceeded = eventType === 'payment.succeeded' || (!eventType && obj.status === 'succeeded')
+
   const run = async () => {
     try {
       const existing = await query<{ id: number; status: string }>(
@@ -230,7 +236,7 @@ async function handleWebhook(req: Request, res: Response) {
       )
       let row = existing.rows[0]
 
-      if (!row && telegramId && planId) {
+      if (!row && isPaymentSucceeded && telegramId && planId) {
         const planRow = await query<{ duration_days: number; price_rub: number }>(
           `SELECT duration_days, price_rub FROM plans WHERE plan_id = $1 AND is_active = true`,
           [planId]
@@ -247,7 +253,7 @@ async function handleWebhook(req: Request, res: Response) {
                ) VALUES ($1, $2, 'RUB', $3, $4, NULL, $5, 'pending')`,
               [telegramId, planId, plan.price_rub, paymentId, JSON.stringify(obj)]
             )
-          } catch (insertErr) {
+          } catch {
             // Дубликат provider_payment_charge_id — платёж уже создан через create
           }
           const r2 = await query<{ id: number; status: string }>(
@@ -277,7 +283,7 @@ async function handleWebhook(req: Request, res: Response) {
         )
       }
 
-      if (eventType === 'payment.succeeded' && row.status !== 'succeeded') {
+      if (isPaymentSucceeded && row.status !== 'succeeded') {
         const planRow = await query<{ duration_days: number }>(
           `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
           [planId]

@@ -13,10 +13,11 @@ function SabotageTask() {
   const [secondsLeft, setSecondsLeft] = useState(state.taskDurationSeconds)
   const endAtRef = useRef(0)
 
-  if (!state.players.length) {
-    navigate('/sabotage')
-    return null
-  }
+  useEffect(() => {
+    if (!state.players.length) {
+      navigate('/sabotage')
+    }
+  }, [state.players.length, navigate])
 
   useEffect(() => {
     endAtRef.current = Date.now() + state.taskDurationSeconds * 1000
@@ -39,6 +40,10 @@ function SabotageTask() {
   }, [secondsLeft, navigate])
 
   const handleBack = useBack('/sabotage/role')
+
+  if (!state.players.length) {
+    return null
+  }
 
   const handleVote = () => {
     haptic('medium')

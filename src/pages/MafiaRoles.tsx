@@ -17,10 +17,11 @@ function MafiaRoles() {
   const [roleRevealed, setRoleRevealed] = useState(false)
   const [roleDimmed, setRoleDimmed] = useState(false)
 
-  if (!state.players.length) {
-    navigate('/mafia')
-    return null
-  }
+  useEffect(() => {
+    if (!state.players.length) {
+      navigate('/mafia')
+    }
+  }, [state.players.length, navigate])
 
   const player = state.players[state.roleViewIndex]
   const isLast = state.roleViewIndex >= state.players.length - 1
@@ -59,6 +60,10 @@ function MafiaRoles() {
   }
 
   const handleBack = useBack('/mafia')
+
+  if (!state.players.length) {
+    return null
+  }
 
   if (!player) {
     navigate('/mafia')

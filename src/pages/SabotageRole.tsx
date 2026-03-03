@@ -13,10 +13,11 @@ function SabotageRole() {
   const { state, dispatch } = useSabotageGame()
   const [phase, setPhase] = useState<'pass' | 'role'>('pass')
 
-  if (!state.players.length) {
-    navigate('/sabotage')
-    return null
-  }
+  useEffect(() => {
+    if (!state.players.length) {
+      navigate('/sabotage')
+    }
+  }, [state.players.length, navigate])
 
   const player = state.players[state.roleViewIndex]
   const isLast = state.roleViewIndex >= state.players.length - 1
@@ -44,6 +45,10 @@ function SabotageRole() {
   }, [state.phase, navigate])
 
   const handleBack = useBack('/sabotage')
+
+  if (!state.players.length) {
+    return null
+  }
 
   if (!player) {
     navigate('/sabotage')

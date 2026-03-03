@@ -72,7 +72,7 @@ function Home() {
         </div>
       </section>
 
-      {!loading && !isPremium && (
+      {(!isPremium || loading) && (
         <section className="home-premium-cta">
           <div className="premium-card-wrap">
             <button
@@ -93,7 +93,9 @@ function Home() {
                 </div>
               </div>
               <div className="premium-card__right">
-                <span className="premium-card__price-text">259 ₽ / 3 мес</span>
+                <span className="premium-card__price-text">
+                  {loading ? 'Проверяем подписку…' : '259 ₽ / 3 мес'}
+                </span>
                 <span className="premium-card__arrow" aria-hidden>→</span>
               </div>
             </button>

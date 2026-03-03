@@ -182,8 +182,12 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       if (import.meta.env.DEV) console.warn('[PremiumOverlay] YooKassa error:', err.message)
       if (err.status === 401) {
         setError('Откройте приложение внутри Telegram для оплаты')
+      } else if (err.status === 502) {
+        setError('Платёжный сервис сейчас недоступен. Попробуйте ещё раз чуть позже.')
+      } else if (err.status === 503) {
+        setError('Оплата временно недоступна. Попробуйте позже.')
       } else {
-        setError(err.message || 'Не удалось создать платёж')
+        setError('Не удалось создать платёж. Попробуйте ещё раз.')
       }
     } finally {
       setLoading(false)

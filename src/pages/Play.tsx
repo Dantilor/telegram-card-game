@@ -350,7 +350,14 @@ export default function Play() {
           <button
             type="button"
             className="btn btn--primary play-error__btn"
-            onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+            onClick={() => {
+              haptic('light')
+              if (window.history.length > 1) {
+                nav(-1)
+              } else {
+                nav('/games')
+              }
+            }}
           >
             Назад
           </button>
@@ -367,7 +374,10 @@ export default function Play() {
             type="button"
             className="btn btn--ghost play-error__btn"
             style={{ position: 'absolute', top: '1rem', left: '1rem' }}
-            onClick={() => { haptic('light'); nav(-1) }}
+            onClick={() => {
+              haptic('light')
+              nav(-1)
+            }}
           >
             ← Назад
           </button>
@@ -389,7 +399,14 @@ export default function Play() {
           <button
             type="button"
             className="btn btn--primary play-error__btn"
-            onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+            onClick={() => {
+              haptic('light')
+              if (window.history.length > 1) {
+                nav(-1)
+              } else {
+                nav('/games')
+              }
+            }}
           >
             Назад
           </button>
@@ -411,7 +428,14 @@ export default function Play() {
             <button
               type="button"
               className="btn btn--ghost play-finish__btn"
-              onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+              onClick={() => {
+                haptic('light')
+                if (window.history.length > 1) {
+                  nav(-1)
+                } else {
+                  nav('/games')
+                }
+              }}
             >
               Назад
             </button>

@@ -27,8 +27,15 @@ export const bot = BOT_TOKEN ? new Telegraf(BOT_TOKEN) : null
 
 if (bot) {
   bot.catch((err, ctx) => {
-    console.error('[bot] telegraf error:', err)
-    console.error('[bot] update:', ctx.update)
+    const update = ctx.update as { update_id?: number } | undefined
+    const from = (ctx as { from?: { id?: number } }).from
+    const updateKeys = update ? Object.keys(update).filter((k) => k !== 'update_id') : []
+
+    console.error('[bot] telegraf error:', err instanceof Error ? err.message : String(err), {
+      update_id: update?.update_id,
+      user_id: from?.id,
+      update_keys: updateKeys,
+    })
   })
 
   bot.start(async (ctx: Context) => {

@@ -16,7 +16,7 @@ export function applyCompletion(
   cardType: 'truth' | 'dare',
   cardLevel: number
 ): TDPlayer {
-  let courage = player.courage + 1
+  const courage = player.courage + 1
   let respect = player.respect
   let currentLevel = player.currentLevel
 

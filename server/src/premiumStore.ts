@@ -135,12 +135,11 @@ export async function setPremiumWithPersistence(
   const durationMonths = getDurationMonths(planId)
   const now = new Date()
 
-  let base: Date
   const dbUntil = await getActiveUntilDb(telegramId)
   const mem = getUser(telegramId)
   const memUntil = mem?.premiumUntil ? new Date(mem.premiumUntil) : null
   const currentUntil = dbUntil ?? memUntil
-  base = currentUntil && currentUntil > now ? currentUntil : now
+  const base = currentUntil && currentUntil > now ? currentUntil : now
 
   const newUntil = addCalendarMonths(base, durationMonths)
   const newUntilTs = newUntil.getTime()
@@ -232,12 +231,11 @@ export async function adminGrantPremium(
   const days = opts.days ?? 0
 
   const now = new Date()
-  let base: Date
   const dbUntil = await getActiveUntilDb(telegramId)
   const mem = getUser(telegramId)
   const memUntil = mem?.premiumUntil ? new Date(mem.premiumUntil) : null
   const currentUntil = dbUntil ?? memUntil
-  base = currentUntil && currentUntil > now ? currentUntil : now
+  const base = currentUntil && currentUntil > now ? currentUntil : now
 
   const newUntil = new Date(base)
   newUntil.setMonth(newUntil.getMonth() + months)

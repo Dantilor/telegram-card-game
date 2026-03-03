@@ -67,7 +67,7 @@ function CardGameEntry() {
                       alt=""
                       className="card-entry-page__mode-img"
                       objectFit="cover"
-                      priority={idx < 4}
+                      priority={idx < 6}
                     />
                   </div>
                   <div className="card-entry-page__mode-text">

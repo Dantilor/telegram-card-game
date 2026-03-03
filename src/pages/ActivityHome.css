@@ -141,7 +141,15 @@
   position: relative;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: all 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .activity-home__category-card {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .activity-home__category-card--active .activity-home__category-emoji {
+    transform: scale(1.1);
+  }
 }
 
 .activity-home__category-card--active {
@@ -152,7 +160,6 @@
 
 .activity-home__category-card--active .activity-home__category-emoji {
   filter: drop-shadow(0 0 8px var(--primary));
-  transform: scale(1.1);
 }
 
 .activity-home__category-card--active .activity-home__category-title {
@@ -183,14 +190,24 @@
 .activity-home__category-emoji {
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
-  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .activity-home__category-emoji {
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
 }
 
 .activity-home__category-title {
   font-size: 0.85rem;
   font-weight: 600;
   text-align: center;
-  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .activity-home__category-title {
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+  }
 }
 
 .activity-home__actions {

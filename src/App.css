@@ -32,8 +32,16 @@
   color: var(--text);
 }
 
-/* Cards — glassmorphism + soft glow */
+/* Тяжёлые эффекты включаем после первого кадра, чтобы первый рендер был быстрым */
+.app:not(.is-ready) .card,
+.app:not(.is-ready) .premium-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Cards — glassmorphism + soft glow. Hover через pseudo (opacity), без анимации box-shadow. */
 .card {
+  position: relative;
   background: var(--panel);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -42,33 +50,33 @@
   box-shadow: var(--shadow);
   padding: 1rem;
   color: var(--text);
-  transition: transform var(--transition-fast), box-shadow var(--transition-med), border-color var(--transition-med);
 }
 
-@media (prefers-reduced-motion: no-preference) {
+/* Hover glow — слой с box-shadow, анимация только opacity (GPU-friendly) */
+@media (hover: hover) and (pointer: fine) {
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: calc(var(--radius, 12px) + 2px);
+    box-shadow: 0 0 24px var(--glowCyan);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-med);
+  }
+  .card:hover::before {
+    opacity: 1;
+  }
+  [data-theme="neon-light"] .card::before {
+    box-shadow: 0 0 16px var(--glowCyan);
+  }
   .card {
-    animation: card-glow-soft 8s ease-in-out infinite;
+    transition: transform var(--transition-fast), border-color var(--transition-med);
+    will-change: transform;
   }
-}
-
-@keyframes card-glow-soft {
-  0%, 100% { box-shadow: var(--shadow); }
-  50% { box-shadow: var(--shadow), 0 0 18px var(--glowCyan); }
-}
-
-.card:hover {
-  box-shadow: var(--shadow), 0 0 24px var(--glowCyan);
-  border-color: var(--cardHoverBorder, rgba(43, 210, 255, 0.35));
-}
-
-@media (prefers-reduced-motion: no-preference) {
   .card:hover {
-    animation: none;
+    border-color: var(--cardHoverBorder, rgba(43, 210, 255, 0.35));
   }
-}
-
-[data-theme="neon-light"] .card:hover {
-  box-shadow: var(--shadow), 0 0 16px var(--glowCyan);
 }
 
 /* Active tile: subtle sparkle in corner */
@@ -206,7 +214,7 @@
   50% { background-position: -100% 0; }
 }
 
-/* Buttons */
+/* Buttons. Hover только при мыши. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -219,7 +227,28 @@
   cursor: pointer;
   text-align: center;
   text-decoration: none;
-  transition: transform var(--transition-fast), box-shadow var(--transition-med), opacity var(--transition-med);
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn {
+    transition: transform var(--transition-fast), box-shadow var(--transition-med), opacity var(--transition-med);
+  }
+  .btn--primary:hover:not(:disabled) {
+    box-shadow: 0 0 28px var(--glowPink), 0 0 40px var(--glowPurple);
+  }
+  .btn--secondary:hover:not(:disabled) {
+    box-shadow: 0 0 20px var(--glowCyan);
+    background: rgba(43, 210, 255, 0.08);
+  }
+  .btn--ghost:hover:not(:disabled) {
+    background: var(--panel);
+    border-color: var(--secondary);
+    box-shadow: 0 0 16px var(--glowCyan);
+  }
+  .btn--danger:hover:not(:disabled) {
+    box-shadow: 0 0 20px rgba(255, 77, 77, 0.45);
+  }
 }
 
 .btn:active:not(:disabled) {
@@ -238,20 +267,11 @@
   box-shadow: 0 0 20px var(--glowPink);
 }
 
-.btn--primary:hover:not(:disabled) {
-  box-shadow: 0 0 28px var(--glowPink), 0 0 40px var(--glowPurple);
-}
-
 .btn--secondary {
   background: transparent;
   color: var(--neonCyan);
   border: 2px solid var(--neonCyan);
   box-shadow: 0 0 12px var(--glowCyan);
-}
-
-.btn--secondary:hover:not(:disabled) {
-  box-shadow: 0 0 20px var(--glowCyan);
-  background: rgba(43, 210, 255, 0.08);
 }
 
 .btn--ghost {
@@ -260,21 +280,11 @@
   border: 1px solid var(--border);
 }
 
-.btn--ghost:hover:not(:disabled) {
-  background: var(--panel);
-  border-color: var(--secondary);
-  box-shadow: 0 0 16px var(--glowCyan);
-}
-
 .btn--danger {
   background: var(--danger);
   color: #fff;
   border: none;
   box-shadow: 0 0 12px rgba(255, 77, 77, 0.35);
-}
-
-.btn--danger:hover:not(:disabled) {
-  box-shadow: 0 0 20px rgba(255, 77, 77, 0.45);
 }
 
 /* Кнопка «Назад» — размер как «Домой», шрифт — по умолчанию .btn */

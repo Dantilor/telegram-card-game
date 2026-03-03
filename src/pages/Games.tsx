@@ -34,7 +34,7 @@ function Games() {
       <>
         {hasImage ? (
           <div className="games-grid__card-image-wrap">
-            <SmartImage src={game.image!} alt="" className="games-grid__card-img" priority={i < 4} />
+            <SmartImage src={game.image!} alt="" className="games-grid__card-img" priority={i < 6} />
           </div>
         ) : (
           <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>

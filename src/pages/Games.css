@@ -82,9 +82,43 @@
   text-decoration: none;
   font: inherit;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-med), border-color var(--transition-med);
   position: relative;
   overflow: hidden;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .games-grid__card {
+    transition: transform var(--transition-fast), border-color var(--transition-med);
+    will-change: transform;
+  }
+  /* Glow через pseudo (opacity), карточка с overflow:hidden — inner glow */
+  .games-grid__card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-med);
+  }
+  .games-grid__card--ready::after {
+    box-shadow: inset 0 0 20px var(--glowCyan);
+  }
+  .games-grid__card--ready:hover::after {
+    opacity: 1;
+  }
+  .games-grid__card--ready:hover {
+    border-color: rgba(43, 210, 255, 0.3);
+  }
+  .games-grid__card--stub::after {
+    box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.08);
+  }
+  .games-grid__card--stub:hover::after {
+    opacity: 1;
+  }
+  .games-grid__card:active {
+    transform: scale(0.98);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -93,17 +127,8 @@
   }
 }
 
-.games-grid__card:active {
-  transform: scale(0.98);
-}
-
 .games-grid__card--ready {
   box-shadow: var(--shadow);
-}
-
-.games-grid__card--ready:hover {
-  box-shadow: var(--shadow), 0 0 20px var(--glowCyan);
-  border-color: rgba(43, 210, 255, 0.3);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -135,10 +160,6 @@
   box-shadow: var(--shadow);
 }
 
-.games-grid__card--stub:hover {
-  box-shadow: var(--shadow), 0 0 16px rgba(255, 255, 255, 0.08);
-}
-
 @keyframes games-card-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -146,6 +167,11 @@
 
 .games-grid__card .badge {
   margin-top: 0.5rem;
+}
+
+.games-grid__card--image .badge {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .games-grid__card--image {

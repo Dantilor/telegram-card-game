@@ -132,8 +132,10 @@
   color: var(--primary);
   box-shadow: 0 0 12px var(--glowCyan);
 }
-.alias-home__option-btn--active:hover {
-  box-shadow: 0 0 16px var(--glowCyan);
+@media (hover: hover) and (pointer: fine) {
+  .alias-home__option-btn--active:hover {
+    box-shadow: 0 0 16px var(--glowCyan);
+  }
 }
 
 .alias-home__section--teams {
@@ -203,10 +205,11 @@
   color: var(--primary);
   box-shadow: 0 0 12px var(--glowPink);
 }
-
-.alias-home__mode-btn--active.is-active:hover,
-.alias-home__timer-btn--active.is-active:hover {
-  box-shadow: 0 0 16px var(--glowPink);
+@media (hover: hover) and (pointer: fine) {
+  .alias-home__mode-btn--active.is-active:hover,
+  .alias-home__timer-btn--active.is-active:hover {
+    box-shadow: 0 0 16px var(--glowPink);
+  }
 }
 
 /* Light: выделение как в Мафии — бирюзовый фон, белый текст */
@@ -217,9 +220,11 @@
   color: #fff !important;
   box-shadow: 0 0 12px var(--glowCyan);
 }
-[data-theme="neon-light"] .alias-home__mode-btn--active.is-active:hover,
-[data-theme="neon-light"] .alias-home__timer-btn--active.is-active:hover {
-  box-shadow: 0 0 16px var(--glowCyan);
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="neon-light"] .alias-home__mode-btn--active.is-active:hover,
+  [data-theme="neon-light"] .alias-home__timer-btn--active.is-active:hover {
+    box-shadow: 0 0 16px var(--glowCyan);
+  }
 }
 [data-theme="neon-light"] .alias-home__option-btn--active {
   background: var(--selection-bg-light, rgba(6, 182, 212, 0.28)) !important;
@@ -245,9 +250,11 @@
   color: var(--neonCyan) !important;
   box-shadow: 0 0 12px var(--glowCyan);
 }
-[data-theme="portal"] .alias-home__mode-btn--active.is-active:hover,
-[data-theme="portal"] .alias-home__timer-btn--active.is-active:hover {
-  box-shadow: 0 0 16px var(--glowCyan);
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="portal"] .alias-home__mode-btn--active.is-active:hover,
+  [data-theme="portal"] .alias-home__timer-btn--active.is-active:hover {
+    box-shadow: 0 0 16px var(--glowCyan);
+  }
 }
 [data-theme="portal"] .alias-home__option-btn--active {
   background: var(--td-active-bg) !important;
@@ -273,9 +280,11 @@
   color: var(--neonCyan) !important;
   box-shadow: 0 0 12px var(--glowCyan);
 }
-[data-theme="minimal-calm"] .alias-home__mode-btn--active.is-active:hover,
-[data-theme="minimal-calm"] .alias-home__timer-btn--active.is-active:hover {
-  box-shadow: 0 0 16px var(--glowCyan);
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="minimal-calm"] .alias-home__mode-btn--active.is-active:hover,
+  [data-theme="minimal-calm"] .alias-home__timer-btn--active.is-active:hover {
+    box-shadow: 0 0 16px var(--glowCyan);
+  }
 }
 [data-theme="minimal-calm"] .alias-home__option-btn--active {
   background: var(--td-active-bg) !important;
@@ -325,8 +334,10 @@
   box-shadow: 0 0 0 1px var(--primary), 0 0 14px var(--glowCyan);
   color: var(--text);
 }
-.alias-home__category-card--active:hover {
-  box-shadow: 0 0 0 1px var(--primary), 0 0 18px var(--glowCyan);
+@media (hover: hover) and (pointer: fine) {
+  .alias-home__category-card--active:hover {
+    box-shadow: 0 0 0 1px var(--primary), 0 0 18px var(--glowCyan);
+  }
 }
 .alias-home__category-card--active .alias-home__category-title {
   color: var(--primary);

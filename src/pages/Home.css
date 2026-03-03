@@ -236,7 +236,37 @@
   overflow: hidden;
   cursor: pointer;
   text-align: left;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+/* Обёртка для hover-glow (псевдо), т.к. у .premium-card заняты ::before/::after */
+.premium-card-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 20rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .premium-card-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 24px;
+    box-shadow: var(--premium-card-shadow-hover);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .premium-card-wrap:hover::before {
+    opacity: 1;
+  }
+  .premium-card {
+    transition: transform 0.18s ease, border-color 0.18s ease;
+    will-change: transform;
+  }
+  .premium-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--premium-card-border-hover, rgba(255, 255, 255, 0.18));
+  }
 }
 
 .premium-card::before {
@@ -269,12 +299,6 @@
     transparent);
   opacity: 0.55;
   pointer-events: none;
-}
-
-.premium-card:hover {
-  transform: translateY(-1px);
-  border-color: var(--premium-card-border-hover, rgba(255, 255, 255, 0.18));
-  box-shadow: var(--premium-card-shadow-hover);
 }
 
 .premium-card__left {

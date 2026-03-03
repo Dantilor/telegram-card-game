@@ -79,28 +79,30 @@ function Home() {
 
       {!isPremium && (
         <section className="home-premium-cta">
-          <button
-            type="button"
-            className="premium-card"
-            onClick={() => {
-              hapticImpact('light')
-              setPremiumOverlayOpen(true)
-            }}
-          >
-            <div className="premium-card__left">
-              <div className="premium-card__title-row">
-                <span className="premium-card__title">Premium</span>
-                <span className="premium-card__badge">PRO</span>
+          <div className="premium-card-wrap">
+            <button
+              type="button"
+              className="premium-card"
+              onClick={() => {
+                hapticImpact('light')
+                setPremiumOverlayOpen(true)
+              }}
+            >
+              <div className="premium-card__left">
+                <div className="premium-card__title-row">
+                  <span className="premium-card__title">Premium</span>
+                  <span className="premium-card__badge">PRO</span>
+                </div>
+                <div className="premium-card__sub">
+                  Открывает все игры и режимы • без автосписаний
+                </div>
               </div>
-              <div className="premium-card__sub">
-                Открывает все игры и режимы • без автосписаний
+              <div className="premium-card__right">
+                <span className="premium-card__price-text">259 ₽ / 3 мес</span>
+                <span className="premium-card__arrow" aria-hidden>→</span>
               </div>
-            </div>
-            <div className="premium-card__right">
-              <span className="premium-card__price-text">259 ₽ / 3 мес</span>
-              <span className="premium-card__arrow" aria-hidden>→</span>
-            </div>
-          </button>
+            </button>
+          </div>
         </section>
       )}
 

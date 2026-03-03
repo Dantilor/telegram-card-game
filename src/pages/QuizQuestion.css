@@ -191,7 +191,7 @@
   font-size: 1rem;
   text-align: left;
   min-height: 3rem;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .quiz-question__answer:not(:disabled):active {

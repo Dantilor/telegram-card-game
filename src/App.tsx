@@ -1,10 +1,13 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, lazy, Suspense, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { trackEvent } from './lib/analytics'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { readyAndExpand } from './utils/telegram'
+import { getMe } from './api/subscription'
+import { preloadImages } from './utils/preloadImages'
+import { PRELOAD_CRITICAL_URLS } from './assets/images'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import './App.css'
 
@@ -60,8 +63,13 @@ const LegalTerms = lazy(() => import('./pages/LegalTerms'))
 const LegalPremium = lazy(() => import('./pages/LegalPremium'))
 
 function App() {
+  const [isReady, setReady] = useState(false)
   useAppHeight()
   useTelegramThemeSync()
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setReady(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
   useEffect(() => {
     try {
       readyAndExpand()
@@ -76,18 +84,46 @@ function App() {
       }
     }, 1800)
     trackEvent('app_open')
-    // Предзагрузка Games — пользователь чаще всего идёт туда
-    const prefetchT = setTimeout(() => import('./pages/Games'), 400)
+    // Prefetch профиля: getMe() с кэшем в subscription — usePremiumStatus не сделает повторный запрос
+    const t0 = setTimeout(() => {
+      getMe().catch(() => {})
+    }, 150)
+    // Предзагрузка изображений карточек/режимов (с кэшем в preloadImages)
+    const t0img = setTimeout(() => preloadImages(PRELOAD_CRITICAL_URLS), 200)
+    // Предзагрузка основных экранов
+    const t1 = setTimeout(() => import('./pages/Games'), 300)
+    const t2 = setTimeout(() => import('./pages/CardGameEntry'), 600)
+    const t3 = setTimeout(() => import('./pages/Profile'), 900)
+    const t4 = setTimeout(() => import('./pages/Decks'), 1200)
+    const t5 = setTimeout(() => import('./pages/ModePage'), 1500)
+    const t6 = setTimeout(() => import('./pages/Favorites'), 1800)
+    const t7 = setTimeout(() => import('./pages/Play'), 2100)
     return () => {
       clearTimeout(fallbackT)
-      clearTimeout(prefetchT)
+      clearTimeout(t0)
+      clearTimeout(t0img)
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+      clearTimeout(t4)
+      clearTimeout(t5)
+      clearTimeout(t6)
+      clearTimeout(t7)
     }
   }, [])
 
   return (
     <PremiumProvider>
-      <div className="app">
-        <Suspense fallback={<div className="page-loading app-loading"><span className="app-loading__spinner" aria-hidden />Загрузка…</div>}>
+      <div className={`app${isReady ? ' is-ready' : ''}`}>
+        <Suspense fallback={
+          <div className="page-loading page-loading-skeleton" aria-busy="true">
+            <ul className="page-loading-skeleton__grid">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <li key={i} className="page-loading-skeleton__card" aria-hidden />
+              ))}
+            </ul>
+          </div>
+        }>
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />

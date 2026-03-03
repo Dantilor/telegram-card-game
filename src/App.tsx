@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense, useState } from 'react'
+import { useEffect, lazy, Suspense, useState, type ReactNode } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { trackEvent } from './lib/analytics'
 import { useAppHeight } from './hooks/useAppHeight'
@@ -62,6 +62,18 @@ const LegalPrivacy = lazy(() => import('./pages/LegalPrivacy'))
 const LegalTerms = lazy(() => import('./pages/LegalTerms'))
 const LegalPremium = lazy(() => import('./pages/LegalPremium'))
 
+function DelayedFallback({ delayMs, children }: { delayMs: number; children: ReactNode }) {
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setShow(true), delayMs)
+    return () => window.clearTimeout(id)
+  }, [delayMs])
+
+  if (!show) return null
+  return <>{children}</>
+}
+
 function App() {
   const [isReady, setReady] = useState(false)
   useAppHeight()
@@ -115,15 +127,19 @@ function App() {
   return (
     <PremiumProvider>
       <div className={`app${isReady ? ' is-ready' : ''}`}>
-        <Suspense fallback={
-          <div className="page-loading page-loading-skeleton" aria-busy="true">
-            <ul className="page-loading-skeleton__grid">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <li key={i} className="page-loading-skeleton__card" aria-hidden />
-              ))}
-            </ul>
-          </div>
-        }>
+        <Suspense
+          fallback={
+            <DelayedFallback delayMs={250}>
+              <div className="page-loading page-loading-skeleton" aria-busy="true">
+                <ul className="page-loading-skeleton__grid">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <li key={i} className="page-loading-skeleton__card" aria-hidden />
+                  ))}
+                </ul>
+              </div>
+            </DelayedFallback>
+          }
+        >
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />

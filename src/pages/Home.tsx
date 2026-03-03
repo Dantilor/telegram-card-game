@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
 import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
@@ -21,6 +21,7 @@ const APP_FEATURES = [
 
 function Home() {
   const { isPremium } = usePremium()
+  const navigate = useNavigate()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const favoritesLocked = isFavoritesLocked(isPremium)
 
@@ -46,26 +47,20 @@ function Home() {
             >
               Начать игру
             </Link>
-            {favoritesLocked ? (
-              <button
-                type="button"
-                className="btn btn--secondary home-hero__btn"
-                onClick={() => {
-                  haptic('light')
+            <button
+              type="button"
+              className="btn btn--secondary home-hero__btn"
+              onClick={() => {
+                haptic('light')
+                if (favoritesLocked) {
                   setPremiumOverlayOpen(true)
-                }}
-              >
-                Моё избранное
-              </button>
-            ) : (
-              <Link
-                to="/favorites"
-                className="btn btn--secondary home-hero__btn"
-                onClick={() => haptic('light')}
-              >
-                Моё избранное
-              </Link>
-            )}
+                } else {
+                  navigate('/favorites')
+                }
+              }}
+            >
+              Моё избранное
+            </button>
             <Link
               to="/profile"
               className="btn btn--secondary home-hero__btn"

@@ -37,6 +37,10 @@
   transform: scale(0.98);
 }
 
+.play-page__home-btn {
+  margin-left: auto;
+}
+
 .play-page--success {
   position: relative;
 }

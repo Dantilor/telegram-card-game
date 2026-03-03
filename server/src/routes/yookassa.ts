@@ -261,8 +261,7 @@ async function handleWebhook(req: Request, res: Response) {
     status: req.body?.object?.status,
   })
 
-  const secretRaw = process.env.YOOKASSA_WEBHOOK_SECRET ?? ''
-  const secret = String(secretRaw).trim()
+  const secret = String(process.env.YOOKASSA_WEBHOOK_SECRET ?? '').trim()
 
   if (secret) {
     const authRaw = String(req.headers['authorization'] ?? '').trim()

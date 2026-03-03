@@ -73,6 +73,7 @@
   perspective: 1200px;
   margin-top: 0.25rem;
   overflow: hidden;
+  min-height: 11rem;
 }
 
 .mafia-roles__flip-inner {
@@ -261,6 +262,7 @@
 
   .mafia-roles__flip {
     margin-top: 0.5rem;
+    min-height: 10.5rem;
   }
 
   .mafia-roles__role-media {

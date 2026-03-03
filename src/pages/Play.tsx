@@ -271,6 +271,14 @@ export default function Play() {
     }
   }
 
+  const handleTopBarBack = () => {
+    if (transitionPhase !== 'idle') return
+    haptic('light')
+    const entry = getDeckFromIndex(deckId)
+    const modeId = entry?.modeId ?? 'party'
+    nav(`/mode/${modeId}`)
+  }
+
   const handleAddToFavorites = () => {
     if (state.status !== 'ready' || transitionPhase !== 'idle') return
     if (isFavoritesLocked(isPremium)) {
@@ -438,7 +446,7 @@ export default function Play() {
         <button
           type="button"
           className="play-page__back-btn btn btn--ghost"
-          onClick={handleBackClick}
+          onClick={handleTopBarBack}
           disabled={transitionPhase !== 'idle'}
           aria-label="Назад"
         >
@@ -501,7 +509,8 @@ export default function Play() {
           <button
             type="button"
             className="btn btn--ghost play-page__back"
-            onClick={() => { haptic('light'); window.history.length > 1 ? nav(-1) : nav('/games') }}
+            onClick={handleBackClick}
+            disabled={transitionPhase !== 'idle'}
           >
             Назад
           </button>

@@ -261,15 +261,25 @@ async function handleWebhook(req: Request, res: Response) {
     status: req.body?.object?.status,
   })
 
-  const expected = process.env.YOOKASSA_WEBHOOK_SECRET
-  if (!expected) {
-    console.error('[YooKassa] YOOKASSA_WEBHOOK_SECRET is not set')
-    res.status(200).json({ ok: true })
+  const secretRaw = process.env.YOOKASSA_WEBHOOK_SECRET ?? ''
+  const secret = String(secretRaw).trim()
+  if (!secret) {
+    console.error('[YooKassa] webhook secret not configured')
+    res.status(500).json({ error: 'Webhook not configured' })
     return
   }
 
-  const secret = req.headers['x-webhook-secret'] ?? req.query?.secret
-  if (secret !== expected) {
+  const authRaw = String(req.headers['authorization'] ?? '').trim()
+  const auth =
+    authRaw.toLowerCase().startsWith('bearer ') ? authRaw.slice(7).trim() : authRaw
+
+  const authPreview =
+    authRaw.length > 0
+      ? `${authRaw.length} chars, starts: ${authRaw.slice(0, 6)}...`
+      : 'absent'
+  console.log('[YooKassa] webhook authorization', authPreview)
+
+  if (auth !== secret) {
     console.warn('[YooKassa] webhook: invalid secret')
     res.status(200).json({ ok: true })
     return

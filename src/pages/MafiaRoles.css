@@ -104,6 +104,10 @@
   transform: rotateY(180deg);
 }
 
+.mafia-roles__face--front {
+  justify-content: center;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mafia-roles__flip-inner {
     transition: none;
@@ -118,8 +122,8 @@
 .mafia-roles__instructions {
   width: 100%;
   max-width: 20rem;
-  margin-top: 1.25rem;
-  margin-bottom: 1rem;
+  margin-top: 0;
+  margin-bottom: 1.1rem;
   text-align: center;
 }
 
@@ -147,6 +151,7 @@
   flex-direction: column;
   align-items: center;
   transition: opacity 0.4s ease;
+  padding-bottom: 1rem;
 }
 
 .mafia-roles__reveal--glow::after {
@@ -248,10 +253,15 @@
 @media (max-width: 430px) {
   .mafia-roles__card {
     padding: 1rem;
+    flex: 0 0 auto;
   }
 
   .mafia-roles__player-name {
     margin: 0.75rem 0 0.5rem;
+  }
+
+  .mafia-roles__flip {
+    margin-top: 0.5rem;
   }
 
   .mafia-roles__role-media {
@@ -261,5 +271,13 @@
 
   .mafia-roles__next-btn {
     margin-top: 0.75rem;
+  }
+
+  .mafia-roles__reveal {
+    padding-bottom: 1.5rem;
+  }
+
+  .mafia-roles__flip--flipped .mafia-roles__flip-inner {
+    transform: rotateY(180deg) scale(1.01);
   }
 }

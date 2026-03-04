@@ -30,6 +30,7 @@ interface TgWebApp {
   setHeaderColor?: (color: string) => void
   setBackgroundColor?: (color: string) => void
   setBottomBarColor?: (color: string) => void
+  disableVerticalSwipes?: () => void
   version?: string
 }
 
@@ -45,7 +46,7 @@ function tgSupportsColors(): boolean {
   return parseFloat(tg.version) > 6
 }
 
-/** ready() + expand(). requestFullscreen не вызывается — только по user gesture (кнопка "Начать игру"). */
+/** ready() + expand() + отключение смахивания вниз (закрытие только по кнопке «Закрыть»). */
 export function initTelegramUI(): void {
   const tg = getTg()
   if (!tg) return
@@ -53,6 +54,8 @@ export function initTelegramUI(): void {
     try {
       tg.ready?.()
       tg.expand?.()
+      // Цельное приложение: закрыть только кнопкой «Закрыть» слева сверху
+      tg.disableVerticalSwipes?.()
     } catch {
       // вне Telegram / браузер — игнорируем
     }

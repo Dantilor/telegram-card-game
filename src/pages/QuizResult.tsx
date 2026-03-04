@@ -57,39 +57,41 @@ function QuizResult() {
         <HomeButton onBeforeNavigate={handleHomeClick} />
       </div>
 
-      <header className="quiz-result__header">
-        <h1 className="quiz-result__title">Результаты</h1>
-        <p className="quiz-result__question-num">Вопрос {state.currentQuestionIndex + 1}</p>
-      </header>
+      <div className="quiz-result__scroll">
+        <header className="quiz-result__header">
+          <h1 className="quiz-result__title">Результаты</h1>
+          <p className="quiz-result__question-num">Вопрос {state.currentQuestionIndex + 1}</p>
+        </header>
 
-      <div className="quiz-result__scores card">
-        {state.players.map((p) => {
-          const r = state.round[p.id]
-          if (!r) return null
-          return (
-            <div key={p.id} className={`quiz-result__player ${r.isCorrect ? 'quiz-result__player--correct' : 'quiz-result__player--wrong'}`}>
-              <span className="quiz-result__player-name">{p.name}</span>
-              <span className={`quiz-result__points ${r.isCorrect ? 'quiz-result__points--win' : 'quiz-result__points--lose'}`}>
-                {r.isCorrect ? `+${r.pointsEarned}` : r.pointsLost > 0 ? `-${r.pointsLost}` : '0'}
-              </span>
-              <span className="quiz-result__status">
-                {r.isCorrect ? '✓' : '✗'}
-              </span>
-            </div>
-          )
-        })}
-      </div>
+        <div className="quiz-result__scores card">
+          {state.players.map((p) => {
+            const r = state.round[p.id]
+            if (!r) return null
+            return (
+              <div key={p.id} className={`quiz-result__player ${r.isCorrect ? 'quiz-result__player--correct' : 'quiz-result__player--wrong'}`}>
+                <span className="quiz-result__player-name">{p.name}</span>
+                <span className={`quiz-result__points ${r.isCorrect ? 'quiz-result__points--win' : 'quiz-result__points--lose'}`}>
+                  {r.isCorrect ? `+${r.pointsEarned}` : r.pointsLost > 0 ? `-${r.pointsLost}` : '0'}
+                </span>
+                <span className="quiz-result__status">
+                  {r.isCorrect ? '✓' : '✗'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
 
-      <div className="quiz-result__total card">
-        <h2 className="quiz-result__total-title">Текущий счёт</h2>
-        <div className="quiz-result__total-list">
-          {[...state.players].sort((a, b) => b.score - a.score).map((p, i) => (
-            <div key={p.id} className="quiz-result__total-row">
-              <span className="quiz-result__total-rank">{i + 1}</span>
-              <span className="quiz-result__total-name">{p.name}</span>
-              <span className="quiz-result__total-score">{p.score}</span>
-            </div>
-          ))}
+        <div className="quiz-result__total card">
+          <h2 className="quiz-result__total-title">Текущий счёт</h2>
+          <div className="quiz-result__total-list">
+            {[...state.players].sort((a, b) => b.score - a.score).map((p, i) => (
+              <div key={p.id} className="quiz-result__total-row">
+                <span className="quiz-result__total-rank">{i + 1}</span>
+                <span className="quiz-result__total-name">{p.name}</span>
+                <span className="quiz-result__total-score">{p.score}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

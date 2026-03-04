@@ -46,6 +46,16 @@ function tgSupportsColors(): boolean {
   return parseFloat(tg.version) > 6
 }
 
+function applyDisableVerticalSwipes(): void {
+  const tg = getTg()
+  if (!tg?.disableVerticalSwipes) return
+  try {
+    tg.disableVerticalSwipes()
+  } catch {
+    // вне Telegram / браузер — игнорируем
+  }
+}
+
 /** ready() + expand() + отключение смахивания вниз (закрытие только по кнопке «Закрыть»). */
 export function initTelegramUI(): void {
   const tg = getTg()
@@ -54,14 +64,15 @@ export function initTelegramUI(): void {
     try {
       tg.ready?.()
       tg.expand?.()
-      // Цельное приложение: закрыть только кнопкой «Закрыть» слева сверху
-      tg.disableVerticalSwipes?.()
+      applyDisableVerticalSwipes()
     } catch {
       // вне Telegram / браузер — игнорируем
     }
   }
   doExpand()
   setTimeout(doExpand, 300)
+  // При перезагрузке страницы WebApp может быть ещё не готов — повторяем, чтобы всегда было без смаха
+  ;[100, 300, 600, 1000].forEach((ms) => setTimeout(applyDisableVerticalSwipes, ms))
 }
 
 /** Запросить fullscreen только по user gesture (клик). Вызывать из onClick. */

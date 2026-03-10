@@ -20,9 +20,10 @@ export function getPenaltyMultiplier(mult: Multiplier): number {
   return PENALTY_MULT[mult] ?? 1
 }
 
+/** Простое начисление: +1 за правильный ответ, −1 за неправильный (суммируется). */
 export function calculatePoints(
-  question: Question,
-  multiplier: Multiplier,
+  _question: Question,
+  _multiplier: Multiplier,
   isCorrect: boolean,
   options: {
     streakBonus?: boolean
@@ -30,16 +31,9 @@ export function calculatePoints(
     insurance?: boolean
   }
 ): { earned: number; lost: number } {
-  const base = getBasePoints(question.difficulty)
-  if (isCorrect) {
-    let points = base * multiplier
-    if (options.streakBonus) points *= 1.2
-    if (options.speedBonus) points *= 1.3
-    return { earned: Math.round(points), lost: 0 }
-  }
+  if (isCorrect) return { earned: 1, lost: 0 }
   if (options.insurance) return { earned: 0, lost: 0 }
-  const penalty = Math.round(base * getPenaltyMultiplier(multiplier))
-  return { earned: 0, lost: penalty }
+  return { earned: 0, lost: 1 }
 }
 
 export function getFiftyFiftyIndices(correctIndex: number): number[] {

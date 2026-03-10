@@ -114,6 +114,25 @@
   color: #ff3b30;
 }
 
+.quiz-result__correct {
+  padding: 0.5rem 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.quiz-result__correct-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.quiz-result__correct-answer {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4cd964;
+}
+
 .quiz-result__total {
   padding: 0.5rem 0.65rem;
   margin-bottom: 0;

@@ -65,7 +65,7 @@ function createTimer(sec: number) {
 function quizReducer(state: GameState, action: QuizAction): GameState {
   switch (action.type) {
     case 'START_SOLO': {
-      const questions = getQuestionsByTags(action.tags, Math.max(action.totalQuestions, 50))
+      const questions = getQuestionsByTags(action.tags, action.totalQuestions)
       if (questions.length < action.totalQuestions) {
         return state
       }
@@ -102,7 +102,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       }
     }
     case 'SET_ROOM_PLAYERS': {
-      const pool = getQuestionsByTags(state.selectedTags, 100)
+      const pool = getQuestionsByTags(state.selectedTags, state.totalQuestions)
       if (pool.length < state.totalQuestions) return state
       const timeSec = state.timePerQuestionSec ?? DEFAULT_TIME_SEC
       const q = shuffleQuestions(pool).slice(0, state.totalQuestions)
@@ -194,7 +194,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         })
         let newPlayers = state.players.map((p) => {
           if (p.id !== action.playerId) return p
-          const updated = { ...p, score: Math.max(0, p.score + earned - lost) }
+          const updated = { ...p, score: p.score + earned - lost }
           return applyStreakBonus(updated, isCorrect)
         })
         const round: RoundAnswers = {
@@ -249,7 +249,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       })
       let newPlayers = state.players.map((p) => {
         if (p.id !== action.playerId) return p
-        const updated = { ...p, score: Math.max(0, p.score + earned - lost) }
+        const updated = { ...p, score: p.score + earned - lost }
         return applyStreakBonus(updated, isCorrect)
       })
       const round: RoundAnswers = {
@@ -293,7 +293,7 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       const updated = applyStreakBonus(
         {
           ...currentPlayer,
-          score: Math.max(0, currentPlayer.score - lost),
+          score: currentPlayer.score - lost,
           wrongCount: currentPlayer.wrongCount + 1,
         },
         false
@@ -343,7 +343,8 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       if (nextIdx >= state.questionQueue.length) {
         return { ...state, phase: 'final', questionsAnswered }
       }
-      if (state.mode === 'room' && questionsAnswered > 0 && questionsAnswered % 5 === 0) {
+      const hasMoreQuestions = nextIdx < state.questionQueue.length
+      if (state.mode === 'room' && hasMoreQuestions && questionsAnswered > 0 && questionsAnswered % 5 === 0) {
         return { ...state, phase: 'mini_summary', questionsAnswered }
       }
       return {
@@ -369,9 +370,9 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         usedBoostersThisGame: { fiftyFifty: 0, pause: 0, insurance: 0 } as const,
         nextQuestionBonusMultiplier: 1,
       }))
-      const pool = getQuestionsByTags(state.selectedTags, 100)
+      const pool = getQuestionsByTags(state.selectedTags, state.totalQuestions)
       const q = shuffleQuestions(pool).slice(0, state.totalQuestions)
-      if (q.length < 5) return state
+      if (q.length < state.totalQuestions) return state
       return {
         ...state,
         players,
@@ -387,17 +388,15 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       }
     }
     case 'CONTINUE_5': {
-      const pool = getQuestionsByTags(state.selectedTags, 100)
-      const usedIds = new Set(state.questionQueue.map((x) => x.id))
-      const extra = pool.filter((x) => !usedIds.has(x.id))
-      const more = shuffleQuestions(extra).slice(0, 5)
-      const q = [...state.questionQueue, ...more]
+      const nextIdx = state.currentQuestionIndex + 1
+      if (nextIdx >= state.questionQueue.length) {
+        return { ...state, phase: 'final' }
+      }
       return {
         ...state,
-        questionQueue: q,
-        totalQuestions: state.totalQuestions + 5,
         phase: 'question',
-        currentQuestionIndex: state.currentQuestionIndex + 1,
+        currentQuestionIndex: nextIdx,
+        currentPlayerIndex: 0,
         currentMultiplier: null,
         round: {},
         uiFlags: { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },

@@ -19,6 +19,7 @@ function QuizResult() {
     else if (state.phase === 'question') navigate('/quiz/play')
   }, [state.phase, navigate])
 
+  if (state.phase !== 'result') return null
   if (!question) {
     navigate('/quiz')
     return null
@@ -79,6 +80,11 @@ function QuizResult() {
               </div>
             )
           })}
+        </div>
+
+        <div className="quiz-result__correct card">
+          <h2 className="quiz-result__correct-title">Правильный ответ</h2>
+          <p className="quiz-result__correct-answer">{question.answers[question.correctIndex]}</p>
         </div>
 
         <div className="quiz-result__total card">

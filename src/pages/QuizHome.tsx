@@ -78,9 +78,9 @@ function QuizHome() {
       : 'Выберите минимум одну категорию и укажите участников'
 
   const handleStart = () => {
-    const pool = getQuestionsByTags(tags, 100)
+    const pool = getQuestionsByTags(tags, questionCount)
     if (pool.length < questionCount) {
-      setTagError(`По выбранным темам только ${pool.length} вопросов. Выберите другие категории.`)
+      setTagError(`По выбранным темам только ${pool.length} вопросов. Выберите другие категории или меньше вопросов.`)
       return
     }
     if (!canStart) return

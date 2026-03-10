@@ -102,7 +102,7 @@ function App() {
     }, 150)
     // Предзагрузка изображений карточек/режимов (с кэшем в preloadImages)
     const t0img = setTimeout(() => preloadImages(PRELOAD_CRITICAL_URLS), 200)
-    // Предзагрузка основных экранов
+    // Предзагрузка основных экранов и чанков игр — чтобы при первом запуске не подвисало
     const t1 = setTimeout(() => import('./pages/Games'), 300)
     const t2 = setTimeout(() => import('./pages/CardGameEntry'), 600)
     const t3 = setTimeout(() => import('./pages/Profile'), 900)
@@ -110,6 +110,15 @@ function App() {
     const t5 = setTimeout(() => import('./pages/ModePage'), 1500)
     const t6 = setTimeout(() => import('./pages/Favorites'), 1800)
     const t7 = setTimeout(() => import('./pages/Play'), 2100)
+    const gameChunks = [
+      () => import('./pages/AliasLayout'),
+      () => import('./pages/ActivityLayout'),
+      () => import('./pages/MafiaLayout'),
+      () => import('./pages/SabotageLayout'),
+      () => import('./pages/QuizLayout'),
+      () => import('./pages/TruthDareLayout'),
+    ]
+    const gameChunkTimers = gameChunks.map((fn, i) => setTimeout(fn, 400 + i * 80))
     return () => {
       clearTimeout(fallbackT)
       clearTimeout(t0)
@@ -121,6 +130,7 @@ function App() {
       clearTimeout(t5)
       clearTimeout(t6)
       clearTimeout(t7)
+      gameChunkTimers.forEach(clearTimeout)
     }
   }, [])
 

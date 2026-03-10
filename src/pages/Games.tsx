@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
 import { useBack } from '../hooks/useBack'
@@ -21,6 +21,16 @@ function Games() {
   const handleBack = useBack('/')
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+
+  // Предзагрузка чанков игр при открытии списка — чтобы при нажатии не было подвисания и сетки
+  useEffect(() => {
+    import('./AliasLayout')
+    import('./ActivityLayout')
+    import('./MafiaLayout')
+    import('./SabotageLayout')
+    import('./QuizLayout')
+    import('./TruthDareLayout')
+  }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)
   const otherGames = GAMES.filter((g) => g.id !== HERO_GAME_ID)

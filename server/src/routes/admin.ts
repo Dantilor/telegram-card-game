@@ -43,6 +43,10 @@ function parseTelegramId(v: unknown): number | null {
 const router = Router()
 router.use(requireAdmin)
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 router.get('/ping', (_req: Request, res: Response) => {
   res.status(200).json({ ok: true })
 })
@@ -175,6 +179,74 @@ router.post('/broadcast-test', async (req: Request, res: Response) => {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     console.error('[admin] broadcast-test error:', message)
+    res.status(500).json({ ok: false, error: message })
+  }
+})
+
+router.post('/broadcast', async (req: Request, res: Response) => {
+  try {
+    if (!bot) {
+      res.status(500).json({ ok: false, error: 'Bot is not initialized' })
+      return
+    }
+
+    const rawText = typeof req.body?.text === 'string' ? req.body.text.trim() : ''
+    if (!rawText) {
+      res.status(400).json({ ok: false, error: 'text is required' })
+      return
+    }
+
+    const rawLimit = Number(req.body?.limit)
+    const rawOffset = Number(req.body?.offset)
+
+    let limit = Number.isFinite(rawLimit) ? rawLimit : 10
+    if (limit < 1) limit = 1
+    if (limit > 100) limit = 100
+
+    let offset = Number.isFinite(rawOffset) ? rawOffset : 0
+    if (offset < 0) offset = 0
+
+    const result = await query<{ telegram_id: number }>(
+      `SELECT telegram_id
+       FROM users
+       ORDER BY created_at ASC, telegram_id ASC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    )
+
+    const rows = result.rows
+    const totalSelected = rows.length
+
+    let sentCount = 0
+    let failedCount = 0
+    const failures: Array<{ telegramId: number; error: string }> = []
+
+    for (const row of rows) {
+      const telegramId = row.telegram_id
+      try {
+        await bot.telegram.sendMessage(telegramId, rawText)
+        sentCount += 1
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e)
+        console.warn('[admin] broadcast error for telegramId=', telegramId, message)
+        failedCount += 1
+        failures.push({ telegramId, error: message })
+      }
+      await sleep(50)
+    }
+
+    res.status(200).json({
+      ok: true,
+      limit,
+      offset,
+      totalSelected,
+      sentCount,
+      failedCount,
+      failures,
+    })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    console.error('[admin] broadcast fatal error:', message)
     res.status(500).json({ ok: false, error: message })
   }
 })

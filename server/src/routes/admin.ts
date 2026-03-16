@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { query } from '../db.js'
+import { bot } from '../bot.js'
 
 const expectedToken = (process.env.ADMIN_TOKEN ?? '') as string
 
@@ -146,6 +147,35 @@ router.get('/user/:telegramId', async (req: Request, res: Response) => {
   } catch (e) {
     console.error('[admin] user error:', e)
     res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
+  }
+})
+
+router.post('/broadcast-test', async (req: Request, res: Response) => {
+  try {
+    if (!bot) {
+      res.status(500).json({ ok: false, error: 'Bot is not initialized' })
+      return
+    }
+
+    const telegramId = parseTelegramId(req.body?.telegramId)
+    if (telegramId == null) {
+      res.status(400).json({ ok: false, error: 'telegramId required (positive integer)' })
+      return
+    }
+
+    const text = typeof req.body?.text === 'string' ? req.body.text.trim() : ''
+    if (!text) {
+      res.status(400).json({ ok: false, error: 'text is required' })
+      return
+    }
+
+    await bot.telegram.sendMessage(telegramId, text)
+
+    res.status(200).json({ ok: true, telegramId })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    console.error('[admin] broadcast-test error:', message)
+    res.status(500).json({ ok: false, error: message })
   }
 })
 

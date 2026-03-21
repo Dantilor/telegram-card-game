@@ -276,7 +276,7 @@ router.post('/broadcast-photo-test', async (req: Request, res: Response) => {
       return
     }
 
-    await bot.telegram.sendPhoto(telegramId, photo, { caption })
+    await bot.telegram.sendPhoto(telegramId, photo, { caption, parse_mode: 'HTML' })
     res.status(200).json({ ok: true, telegramId })
   } catch (e) {
     console.error('[admin] broadcast-photo-test error:', e)
@@ -323,7 +323,7 @@ router.post('/broadcast-photo', async (req: Request, res: Response) => {
     for (const row of usersRes.rows) {
       const telegramId = row.telegram_id
       try {
-        await bot.telegram.sendPhoto(telegramId, photo, { caption })
+        await bot.telegram.sendPhoto(telegramId, photo, { caption, parse_mode: 'HTML' })
         sentCount += 1
       } catch (e) {
         failedCount += 1

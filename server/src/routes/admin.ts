@@ -173,7 +173,7 @@ router.post('/broadcast-test', async (req: Request, res: Response) => {
       return
     }
 
-    await bot.telegram.sendMessage(telegramId, text)
+    await bot.telegram.sendMessage(telegramId, text, { parse_mode: 'HTML' })
 
     res.status(200).json({ ok: true, telegramId })
   } catch (e) {
@@ -224,7 +224,7 @@ router.post('/broadcast', async (req: Request, res: Response) => {
     for (const row of rows) {
       const telegramId = row.telegram_id
       try {
-        await bot.telegram.sendMessage(telegramId, rawText)
+        await bot.telegram.sendMessage(telegramId, rawText, { parse_mode: 'HTML' })
         sentCount += 1
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e)

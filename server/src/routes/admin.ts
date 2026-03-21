@@ -40,12 +40,12 @@ function parseTelegramId(v: unknown): number | null {
   return null
 }
 
-const router = Router()
-router.use(requireAdmin)
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
+
+const router = Router()
+router.use(requireAdmin)
 
 router.get('/ping', (_req: Request, res: Response) => {
   res.status(200).json({ ok: true })
@@ -248,6 +248,105 @@ router.post('/broadcast', async (req: Request, res: Response) => {
     const message = e instanceof Error ? e.message : String(e)
     console.error('[admin] broadcast fatal error:', message)
     res.status(500).json({ ok: false, error: message })
+  }
+})
+
+router.post('/broadcast-photo-test', async (req: Request, res: Response) => {
+  try {
+    if (!bot) {
+      res.status(500).json({ ok: false, error: 'Bot not initialized' })
+      return
+    }
+
+    const telegramId = parseTelegramId(req.body?.telegramId)
+    if (telegramId == null) {
+      res.status(400).json({ ok: false, error: 'telegramId required (positive integer)' })
+      return
+    }
+
+    const photo = typeof req.body?.photo === 'string' ? req.body.photo.trim() : ''
+    if (!photo) {
+      res.status(400).json({ ok: false, error: 'photo required (non-empty string)' })
+      return
+    }
+
+    const caption = typeof req.body?.caption === 'string' ? req.body.caption : ''
+    if (!caption.trim()) {
+      res.status(400).json({ ok: false, error: 'caption required (non-empty string)' })
+      return
+    }
+
+    await bot.telegram.sendPhoto(telegramId, photo, { caption })
+    res.status(200).json({ ok: true, telegramId })
+  } catch (e) {
+    console.error('[admin] broadcast-photo-test error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
+  }
+})
+
+router.post('/broadcast-photo', async (req: Request, res: Response) => {
+  try {
+    if (!bot) {
+      res.status(500).json({ ok: false, error: 'Bot not initialized' })
+      return
+    }
+
+    const photo = typeof req.body?.photo === 'string' ? req.body.photo.trim() : ''
+    if (!photo) {
+      res.status(400).json({ ok: false, error: 'photo required (non-empty string)' })
+      return
+    }
+
+    const caption = typeof req.body?.caption === 'string' ? req.body.caption : ''
+    if (!caption.trim()) {
+      res.status(400).json({ ok: false, error: 'caption required (non-empty string)' })
+      return
+    }
+
+    const rawLimit = Number(req.body?.limit)
+    const rawOffset = Number(req.body?.offset)
+    const limit = Math.max(1, Math.min(100, Number.isFinite(rawLimit) ? Math.trunc(rawLimit) : 10))
+    const offset = Math.max(0, Number.isFinite(rawOffset) ? Math.trunc(rawOffset) : 0)
+
+    const usersRes = await query<{ telegram_id: number }>(
+      `SELECT telegram_id
+       FROM users
+       ORDER BY created_at ASC, telegram_id ASC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    )
+
+    let sentCount = 0
+    let failedCount = 0
+    const failures: Array<{ telegramId: number; error: string }> = []
+
+    for (const row of usersRes.rows) {
+      const telegramId = row.telegram_id
+      try {
+        await bot.telegram.sendPhoto(telegramId, photo, { caption })
+        sentCount += 1
+      } catch (e) {
+        failedCount += 1
+        failures.push({
+          telegramId,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      }
+      await sleep(50)
+    }
+
+    res.status(200).json({
+      ok: true,
+      limit,
+      offset,
+      totalSelected: usersRes.rows.length,
+      sentCount,
+      failedCount,
+      failures,
+    })
+  } catch (e) {
+    console.error('[admin] broadcast-photo error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
 })
 

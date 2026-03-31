@@ -1,5 +1,6 @@
 import { Telegraf, type Context } from 'telegraf'
 import { savePendingReferral } from './services/referrals.js'
+import { query } from './db.js'
 
 console.log('[bot] module loaded')
 
@@ -116,7 +117,25 @@ if (bot) {
     await ctx.reply(`Ваша реферальная ссылка:\n${link}`)
   })
 
-  console.log('[bot] handlers registered (start, ping, ref)')
+  bot.command('myrefs', async (ctx: Context) => {
+    const userId = ctx.from?.id
+    if (!userId) {
+      await ctx.reply('Не удалось определить ваш Telegram ID.')
+      return
+    }
+
+    const result = await query<{ total: number }>(
+      `SELECT COUNT(*)::int AS total
+       FROM users
+       WHERE referred_by = $1`,
+      [userId]
+    )
+
+    const total = result.rows[0]?.total ?? 0
+    await ctx.reply(`Вы пригласили: ${total}`)
+  })
+
+  console.log('[bot] handlers registered (start, ping, ref, myrefs)')
 } else {
   console.log('[bot] bot is null (no BOT_TOKEN), handlers skipped')
 }

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { verifyInitData } from '../telegram/verifyInitData.js'
 import { query } from '../db.js'
+import { finalizePendingReferral } from '../services/referrals.js'
 
 const router = Router()
 
@@ -30,6 +31,12 @@ router.post('/auth', async (req, res) => {
        ON CONFLICT (telegram_id) DO NOTHING`,
       [telegram_id]
     )
+
+    try {
+      await finalizePendingReferral(telegram_id)
+    } catch (refErr) {
+      console.warn('[auth] referral finalize failed:', refErr)
+    }
 
     res.json({ telegramId: telegram_id })
   } catch (e: unknown) {

@@ -44,6 +44,40 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+type BroadcastReplyMarkup = {
+  inline_keyboard: Array<Array<{ text: string; url: string }>>
+}
+
+function parseBroadcastReplyMarkup(body: {
+  buttonText?: unknown
+  buttonUrl?: unknown
+}):
+  | { error: string }
+  | { sendOptions: { parse_mode: 'HTML'; reply_markup?: BroadcastReplyMarkup } } {
+  const buttonText = typeof body.buttonText === 'string' ? body.buttonText.trim() : ''
+  const buttonUrl = typeof body.buttonUrl === 'string' ? body.buttonUrl.trim() : ''
+  const hasText = buttonText.length > 0
+  const hasUrl = buttonUrl.length > 0
+  if (hasText && !hasUrl) {
+    return { error: 'buttonUrl is required when buttonText is provided' }
+  }
+  if (!hasText && hasUrl) {
+    return { error: 'buttonText is required when buttonUrl is provided' }
+  }
+  let replyMarkup: BroadcastReplyMarkup | undefined
+  if (hasText && hasUrl) {
+    replyMarkup = {
+      inline_keyboard: [[{ text: buttonText, url: buttonUrl }]],
+    }
+  }
+  return {
+    sendOptions: {
+      parse_mode: 'HTML',
+      ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+    },
+  }
+}
+
 const router = Router()
 router.use(requireAdmin)
 
@@ -173,7 +207,13 @@ router.post('/broadcast-test', async (req: Request, res: Response) => {
       return
     }
 
-    await bot.telegram.sendMessage(telegramId, text, { parse_mode: 'HTML' })
+    const buttonParsed = parseBroadcastReplyMarkup(req.body ?? {})
+    if ('error' in buttonParsed) {
+      res.status(400).json({ ok: false, error: buttonParsed.error })
+      return
+    }
+
+    await bot.telegram.sendMessage(telegramId, text, buttonParsed.sendOptions)
 
     res.status(200).json({ ok: true, telegramId })
   } catch (e) {
@@ -193,6 +233,12 @@ router.post('/broadcast', async (req: Request, res: Response) => {
     const rawText = typeof req.body?.text === 'string' ? req.body.text.trim() : ''
     if (!rawText) {
       res.status(400).json({ ok: false, error: 'text is required' })
+      return
+    }
+
+    const buttonParsed = parseBroadcastReplyMarkup(req.body ?? {})
+    if ('error' in buttonParsed) {
+      res.status(400).json({ ok: false, error: buttonParsed.error })
       return
     }
 
@@ -224,7 +270,7 @@ router.post('/broadcast', async (req: Request, res: Response) => {
     for (const row of rows) {
       const telegramId = row.telegram_id
       try {
-        await bot.telegram.sendMessage(telegramId, rawText, { parse_mode: 'HTML' })
+        await bot.telegram.sendMessage(telegramId, rawText, buttonParsed.sendOptions)
         sentCount += 1
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e)

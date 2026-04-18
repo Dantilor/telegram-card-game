@@ -322,7 +322,19 @@ router.post('/broadcast-photo-test', async (req: Request, res: Response) => {
       return
     }
 
-    await bot.telegram.sendPhoto(telegramId, photo, { caption, parse_mode: 'HTML' })
+    const buttonParsed = parseBroadcastReplyMarkup(req.body ?? {})
+    if ('error' in buttonParsed) {
+      res.status(400).json({ ok: false, error: buttonParsed.error })
+      return
+    }
+
+    await bot.telegram.sendPhoto(telegramId, photo, {
+      caption,
+      parse_mode: 'HTML',
+      ...(buttonParsed.sendOptions.reply_markup
+        ? { reply_markup: buttonParsed.sendOptions.reply_markup }
+        : {}),
+    })
     res.status(200).json({ ok: true, telegramId })
   } catch (e) {
     console.error('[admin] broadcast-photo-test error:', e)
@@ -349,6 +361,12 @@ router.post('/broadcast-photo', async (req: Request, res: Response) => {
       return
     }
 
+    const buttonParsed = parseBroadcastReplyMarkup(req.body ?? {})
+    if ('error' in buttonParsed) {
+      res.status(400).json({ ok: false, error: buttonParsed.error })
+      return
+    }
+
     const rawLimit = Number(req.body?.limit)
     const rawOffset = Number(req.body?.offset)
     const limit = Math.max(1, Math.min(100, Number.isFinite(rawLimit) ? Math.trunc(rawLimit) : 10))
@@ -369,7 +387,13 @@ router.post('/broadcast-photo', async (req: Request, res: Response) => {
     for (const row of usersRes.rows) {
       const telegramId = row.telegram_id
       try {
-        await bot.telegram.sendPhoto(telegramId, photo, { caption, parse_mode: 'HTML' })
+        await bot.telegram.sendPhoto(telegramId, photo, {
+          caption,
+          parse_mode: 'HTML',
+          ...(buttonParsed.sendOptions.reply_markup
+            ? { reply_markup: buttonParsed.sendOptions.reply_markup }
+            : {}),
+        })
         sentCount += 1
       } catch (e) {
         failedCount += 1

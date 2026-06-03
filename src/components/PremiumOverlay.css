@@ -214,16 +214,6 @@
   border-top-color: rgba(0, 0, 0, 0.08);
 }
 
-.premium-overlay__plans-title {
-  margin: 0 0 1.15rem;
-  padding: 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  color: var(--text);
-}
-
 .premium-overlay__plans-loading {
   margin: 0;
   padding: 0 0.35rem;

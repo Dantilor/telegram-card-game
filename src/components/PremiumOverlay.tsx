@@ -267,7 +267,6 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         </div>
 
         <div className="premium-overlay__plans">
-          <p className="premium-overlay__plans-title">Выберите тариф</p>
           {plansLoading ? (
             <p className="premium-overlay__plans-loading">Загрузка тарифов…</p>
           ) : plans.length === 0 ? (

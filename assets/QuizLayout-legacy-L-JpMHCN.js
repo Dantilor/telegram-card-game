@@ -1,0 +1,1 @@
+System.register(["./index-legacy-D2Uv10EP.js","./QuizGameContext-legacy-C52bE_n4.js"],function(e,t){"use strict";var n,r,s;return{setters:[e=>{n=e.j,r=e.O},e=>{s=e.Q}],execute:function(){e("default",function(){return n.jsx(s,{children:n.jsx(r,{})})})}}});

@@ -5,10 +5,9 @@ import { query } from '../db.js'
 import {
   ensureUser,
   extendPremiumActiveUntil,
-  getPlanDurationDays,
   logPgError,
 } from '../services/subscriptions.js'
-import { planReceiptDescription } from '../services/plans.js'
+import { getActivePlanById, getPlanDurationDays, planReceiptDescription } from '../services/plans.js'
 
 function toInitDataString(v: unknown): string {
   if (typeof v === 'string') return v
@@ -96,14 +95,7 @@ async function handleCreatePayment(req: Request, res: Response) {
   }
 
   try {
-    const planRow = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
-      `SELECT plan_id, title, price_rub, duration_days
-       FROM plans
-       WHERE plan_id = $1 AND is_active = true
-       LIMIT 1`,
-      [planId.trim()]
-    )
-    const plan = planRow.rows[0]
+    const plan = await getActivePlanById(planId.trim())
     if (!plan) {
       res.status(400).json({ ok: false, error: 'Plan not found or inactive' })
       return

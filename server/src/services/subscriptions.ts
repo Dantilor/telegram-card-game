@@ -127,17 +127,6 @@ export async function getLatestActiveUntil(telegramId: number): Promise<Date | n
   return row ? new Date(row.active_until) : null
 }
 
-export async function getPlanDurationDays(planId: string): Promise<number | null> {
-  const res = await query<{ duration_days: number }>(
-    `SELECT duration_days FROM plans
-     WHERE plan_id = $1 AND is_active = true
-     LIMIT 1`,
-    [planId]
-  )
-  const row = res.rows[0]
-  return row?.duration_days ?? null
-}
-
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date)
   d.setDate(d.getDate() + days)

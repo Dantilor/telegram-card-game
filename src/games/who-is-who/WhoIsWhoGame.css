@@ -6,10 +6,7 @@
   flex-direction: column;
   min-height: 0;
   width: 100%;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 0%, var(--blob1) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 20%, var(--blob2) 0%, transparent 50%),
-    var(--bg0);
+  background: transparent;
 }
 
 .wiw-page {
@@ -70,12 +67,13 @@
   color: var(--muted);
 }
 
-/* Правила — плашка как в Ассоциациях */
+/* Правила — без отдельной плашки, текст на общем фоне */
 .wiw-how {
   margin-bottom: 1.25rem;
-  padding: 0.85rem 1rem;
-  background: var(--td-dare-bg) !important;
-  border-color: var(--td-dare-border) !important;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .wiw-how__title {
@@ -88,7 +86,7 @@
 .wiw-how__block + .wiw-how__block {
   margin-top: 0.85rem;
   padding-top: 0.85rem;
-  border-top: 1px solid var(--td-dare-border);
+  border-top: 1px solid var(--border);
 }
 
 .wiw-how__lead {
@@ -172,7 +170,10 @@
 }
 
 .wiw-slots__item {
-  padding: 0.75rem 1rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .wiw-slots__label {
@@ -874,8 +875,8 @@
 
 [data-theme="neon-light"] .wiw-how,
 [data-theme="soft-light"] .wiw-how {
-  background: var(--td-dare-bg) !important;
-  border-color: var(--td-dare-border) !important;
+  background: transparent;
+  border: none;
 }
 
 @media (min-width: 768px) {

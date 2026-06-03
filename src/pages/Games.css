@@ -391,3 +391,46 @@
   margin-top: 0.5rem;
 }
 
+.hero-game-card--bottom {
+  margin-bottom: 0;
+  margin-top: clamp(1rem, 4vw, 1.5rem);
+}
+
+.hero-game-card__badge--new {
+  background: linear-gradient(135deg, #00c853 0%, #00e676 100%);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 255, 140, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 14px rgba(0, 200, 83, 0.45),
+    0 0 18px rgba(0, 230, 118, 0.55);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-game-card__badge--new {
+    animation: hero-new-badge-glow 2.2s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-new-badge-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.2),
+      0 4px 14px rgba(0, 200, 83, 0.45),
+      0 0 14px rgba(0, 230, 118, 0.45);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.35),
+      0 4px 18px rgba(0, 230, 118, 0.65),
+      0 0 28px rgba(57, 255, 160, 0.85);
+  }
+}
+
+[data-theme="neon-light"] .hero-game-card__badge--new {
+  background: linear-gradient(135deg, #00a152 0%, #00c853 100%);
+  color: #fff;
+}
+

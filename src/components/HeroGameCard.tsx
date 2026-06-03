@@ -8,15 +8,37 @@ type Props = {
   game: Game
   isLocked: boolean
   onPremiumOpen: () => void
+  to?: string
+  badge?: string
+  badgeVariant?: 'hit' | 'new'
+  position?: 'top' | 'bottom'
 }
 
-export default function HeroGameCard({ game, isLocked, onPremiumOpen }: Props) {
+export default function HeroGameCard({
+  game,
+  isLocked,
+  onPremiumOpen,
+  to = '/card',
+  badge = '🔥 HIT',
+  badgeVariant = 'hit',
+  position = 'top',
+}: Props) {
   const hasImage = 'image' in game && game.image
   const imageSrc = hasImage ? game.image! : ''
+  const cardClass = `hero-game-card games-grid__card games-grid__card--ready games-grid__card--image${
+    position === 'bottom' ? ' hero-game-card--bottom' : ''
+  }`
 
   const cardContent = (
     <>
-      <span className="hero-game-card__badge" aria-hidden>🔥 HIT</span>
+      <span
+        className={`hero-game-card__badge${
+          badgeVariant === 'new' ? ' hero-game-card__badge--new' : ''
+        }`}
+        aria-hidden
+      >
+        {badge}
+      </span>
       {hasImage ? (
         <div className="hero-game-card__media">
           <SmartImage
@@ -40,7 +62,7 @@ export default function HeroGameCard({ game, isLocked, onPremiumOpen }: Props) {
     return (
       <button
         type="button"
-        className="hero-game-card games-grid__card games-grid__card--ready games-grid__card--image"
+        className={cardClass}
         onClick={() => {
           hapticSelection()
           onPremiumOpen()
@@ -54,8 +76,8 @@ export default function HeroGameCard({ game, isLocked, onPremiumOpen }: Props) {
 
   return (
     <Link
-      to="/card"
-      className="hero-game-card games-grid__card games-grid__card--ready games-grid__card--image"
+      to={to}
+      className={cardClass}
       onClick={() => hapticSelection()}
     >
       {cardContent}

@@ -336,7 +336,7 @@ function GamePage({
 
 function GameAboutCard() {
   return (
-    <div className="wiw-how card">
+    <div className="wiw-how">
       <section className="wiw-how__block">
         <h3 className="wiw-how__title">Что это за игра?</h3>
         <p className="wiw-how__lead">
@@ -591,7 +591,7 @@ function SetupScreen({
         </h2>
         <ul className="wiw-slots">
           {playerNames.map((name, index) => (
-            <li key={index} className="wiw-slots__item card">
+            <li key={index} className="wiw-slots__item">
               <label className="wiw-slots__label" htmlFor={`player-${index}`}>
                 Игрок {index + 1}
               </label>
@@ -771,7 +771,7 @@ function ResultScreen({
             {isLastInPack ? "Завершить сезон" : "Следующая ситуация"}
           </button>
           <button type="button" className="btn btn--ghost wiw-start-btn" onClick={onChangePlayers}>
-            Настройки
+            Меню игры
           </button>
         </div>
       }

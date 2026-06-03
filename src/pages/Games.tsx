@@ -15,6 +15,7 @@ import SmartImage from '../components/SmartImage'
 import './Games.css'
 
 const HERO_GAME_ID = 'card'
+const BOTTOM_HERO_GAME_ID = 'who-is-who'
 
 function Games() {
   const navigate = useNavigate()
@@ -34,7 +35,10 @@ function Games() {
   }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)
-  const otherGames = GAMES.filter((g) => g.id !== HERO_GAME_ID)
+  const bottomHeroGame = GAMES.find((g) => g.id === BOTTOM_HERO_GAME_ID)
+  const otherGames = GAMES.filter(
+    (g) => g.id !== HERO_GAME_ID && g.id !== BOTTOM_HERO_GAME_ID
+  )
 
   const renderGameCard = (game: (typeof GAMES)[0], i: number) => {
     const isReady = game.status === 'ready'
@@ -131,13 +135,6 @@ function Games() {
         </Link>
       )
     }
-    if (isReady && game.id === 'who-is-who') {
-      return (
-        <Link key={game.id} to="/who-is-who" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
-          {cardContent}
-        </Link>
-      )
-    }
     return (
       <button
         key={game.id}
@@ -176,6 +173,17 @@ function Games() {
         games={otherGames}
         renderCard={renderGameCard}
       />
+      {bottomHeroGame && (
+        <HeroGameCard
+          game={bottomHeroGame}
+          isLocked={isGameLocked(bottomHeroGame.id, isPremium)}
+          onPremiumOpen={() => setPremiumOverlayOpen(true)}
+          to="/who-is-who"
+          badge="NEW · новая"
+          badgeVariant="new"
+          position="bottom"
+        />
+      )}
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )

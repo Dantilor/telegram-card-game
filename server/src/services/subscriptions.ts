@@ -130,7 +130,7 @@ export async function getLatestActiveUntil(telegramId: number): Promise<Date | n
 export async function getPlanDurationDays(planId: string): Promise<number | null> {
   const res = await query<{ duration_days: number }>(
     `SELECT duration_days FROM plans
-     WHERE is_active = true AND (plan_id = $1 OR id = $1)
+     WHERE plan_id = $1 AND is_active = true
      LIMIT 1`,
     [planId]
   )

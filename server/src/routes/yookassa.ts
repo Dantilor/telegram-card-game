@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express'
 import { randomUUID } from 'node:crypto'
 import { verifyInitData } from '../telegram/verifyInitData.js'
 import { query } from '../db.js'
-import { ensureUser, getActiveSubscription, upsertSubscription } from '../services/subscriptions.js'
+import { ensureUser, extendPremiumActiveUntil } from '../services/subscriptions.js'
+import { planReceiptDescription } from '../services/plans.js'
 
 function toInitDataString(v: unknown): string {
   if (typeof v === 'string') return v
@@ -50,8 +51,7 @@ function buildReceipt(params: {
   priceRub: number
 }): { customer: { email: string }; items: Array<Record<string, unknown>> } {
   const amountValue = `${params.priceRub}.00`
-  const months = Math.round(params.durationDays / 30)
-  const description = `Подписка GameNight Host Premium (${months} мес.)`
+  const description = planReceiptDescription(params.durationDays)
 
   return {
     customer: { email: params.customerEmail },
@@ -125,7 +125,12 @@ async function handleCreatePayment(req: Request, res: Response) {
       confirmation: { type: 'redirect' as const, return_url: returnUrl },
       capture: true,
       description,
-      metadata: { telegram_id: String(telegramId), plan_id: plan.plan_id },
+      metadata: {
+        telegram_id: String(telegramId),
+        userId: String(telegramId),
+        plan_id: plan.plan_id,
+        planId: plan.plan_id,
+      },
       receipt,
     }
 
@@ -188,12 +193,12 @@ type GrantPremiumResult =
 async function grantPremiumByPaymentId(
   paymentId: string,
   opts: {
-    metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string }
+    metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string; userId?: string }
     bodyTelegramId?: number
   } = {}
 ): Promise<GrantPremiumResult> {
   const meta = opts.metadata ?? {}
-  const metaTgRaw = meta.telegram_id ?? meta.telegramId
+  const metaTgRaw = meta.telegram_id ?? meta.telegramId ?? meta.userId
   const metaPlanId = (meta.plan_id ?? meta.planId)?.trim() || null
 
   let row: { id: number; status: string; telegram_id: number | null; plan_id: string | null } | undefined
@@ -244,12 +249,7 @@ async function grantPremiumByPaymentId(
   )
 
   await ensureUser(resolvedTelegramId)
-  const now = new Date()
-  const currentUntil = await getActiveSubscription(resolvedTelegramId, 'premium')
-  const base = currentUntil && currentUntil > now ? currentUntil : now
-  const activeUntil = new Date(base)
-  activeUntil.setDate(activeUntil.getDate() + plan.duration_days)
-  await upsertSubscription(resolvedTelegramId, 'premium', activeUntil)
+  const activeUntil = await extendPremiumActiveUntil(resolvedTelegramId, plan.duration_days)
 
   return { granted: true, telegramId: resolvedTelegramId, planId, activeUntil }
 }
@@ -289,7 +289,7 @@ async function handleWebhook(req: Request, res: Response) {
     object?: {
       id?: string
       status?: string
-      metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string }
+      metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string; userId?: string }
     }
   }
   const eventType = body.event ?? body.type
@@ -326,77 +326,27 @@ async function handleWebhook(req: Request, res: Response) {
         return
       }
 
-      // payment.succeeded — ищем платеж по provider_payment_charge_id
-      const payRes = await query<{
-        telegram_id: number | null
-        plan_id: string | null
-      }>(
-        `SELECT telegram_id, plan_id FROM payments
-         WHERE provider_payment_charge_id = $1
-         LIMIT 1`,
-        [pid]
-      )
-      const paymentRow = payRes.rows[0] ?? null
+      // payment.succeeded — выдаём premium (grantPremiumByPaymentId помечает payments succeeded)
+      const result = await grantPremiumByPaymentId(pid, { metadata })
 
-      let telegramId: number | null = paymentRow?.telegram_id ?? null
-      let planId: string | null = paymentRow?.plan_id ?? null
-
-      // Fallback: берем из metadata, если нет в payments
-      if (!telegramId) {
-        const metaTgRaw = metadata.telegram_id ?? metadata.telegramId
-        if (metaTgRaw != null) {
-          const n = Number.parseInt(String(metaTgRaw), 10)
-          if (Number.isFinite(n) && n > 0) telegramId = n
-        }
-      }
-      if (!planId) {
-        const metaPlanId = (metadata.plan_id ?? metadata.planId)?.trim()
-        if (metaPlanId) planId = metaPlanId
-      }
-
-      // Всегда помечаем платеж succeeded, даже если не смогли выдать премиум
-      await query(
-        `UPDATE payments
-         SET status = 'succeeded'
-         WHERE provider_payment_charge_id = $1`,
-        [pid]
-      )
-
-      if (!telegramId) {
-        console.error('[YooKassa] webhook: cannot resolve telegramId for paymentId=', pid)
+      if (result.granted) {
+        console.log(
+          `[YooKassa] webhook: premium granted paymentId=${pid} telegramId=${result.telegramId} planId=${result.planId} until=${result.activeUntil.toISOString()}`
+        )
         return
       }
 
-      // durationDays по плану, если есть, иначе fallback 90 дней
-      let durationDays = 90
-      if (planId) {
-        const planRow = await query<{ duration_days: number }>(
-          `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
-          [planId]
-        )
-        const plan = planRow.rows[0]
-        if (plan && typeof plan.duration_days === 'number' && plan.duration_days > 0) {
-          durationDays = plan.duration_days
-        }
+      if (result.alreadyDone) {
+        return
       }
 
-      const now = new Date()
-      const activeUntil = new Date(now)
-      activeUntil.setDate(activeUntil.getDate() + durationDays)
-
-      await ensureUser(telegramId)
-
+      // Платёж прошёл, но premium не выдан — фиксируем succeeded для аудита
       await query(
-        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
-         VALUES ($1, 'premium', $2)
-         ON CONFLICT (telegram_id, plan_id)
-         DO UPDATE SET active_until = GREATEST(subscriptions.active_until, EXCLUDED.active_until)`,
-        [telegramId, activeUntil]
-      )
+        `UPDATE payments SET status = 'succeeded' WHERE provider_payment_charge_id = $1`,
+        [pid]
+      ).catch(() => {})
 
-      console.log(
-        `[YooKassa] webhook: premium granted paymentId=${pid} telegramId=${telegramId} planId=${planId ?? 'premium'} until=${activeUntil.toISOString()}`
-      )
+      console.error('[YooKassa] webhook: failed to grant premium paymentId=', pid)
     } catch (e) {
       console.error('[YooKassa] webhook error:', e)
     }
@@ -450,7 +400,7 @@ async function handleConfirm(req: Request, res: Response) {
     const payment = (await ykRes.json()) as {
       id?: string
       status?: string
-      metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string }
+      metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string; userId?: string }
     }
 
     const status = payment.status ?? null

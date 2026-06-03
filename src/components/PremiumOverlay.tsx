@@ -6,6 +6,13 @@ import { getTelegramWebApp, getInitData } from '../lib/telegram'
 import { trackEvent } from '../lib/analytics'
 import { apiPost, apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
+import {
+  DEFAULT_PLAN_ID,
+  formatPlanPeriod,
+  formatPlanPriceLabel,
+  isLifetimePlan,
+  type PlanOption,
+} from '../utils/planLabel'
 import './PremiumOverlay.css'
 
 const POLL_INTERVAL_MS = 2000
@@ -39,8 +46,6 @@ function pollPremiumStatus(
   return cancel
 }
 
-type Plan = { id: string; title: string; priceRub: number; durationDays: number }
-
 type Props = {
   isOpen: boolean
   onClose: () => void
@@ -52,7 +57,8 @@ type Props = {
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }: Props) {
   const { refresh } = usePremium()
   const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
-  const [plans, setPlans] = useState<Plan[]>([])
+  const [plans, setPlans] = useState<PlanOption[]>([])
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(DEFAULT_PLAN_ID)
   const [plansLoading, setPlansLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [restoreLoading, setRestoreLoading] = useState(false)
@@ -64,10 +70,12 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   useEffect(() => {
     if (isOpen) {
       setPlansLoading(true)
-      apiGet<{ ok?: boolean; plans?: Plan[] }>('/api/plans')
+      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
         .then((res) => {
-          if (res.ok && Array.isArray(res.plans)) {
+          if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
             setPlans(res.plans)
+            const hasDefault = res.plans.some((p) => p.id === DEFAULT_PLAN_ID)
+            setSelectedPlanId(hasDefault ? DEFAULT_PLAN_ID : res.plans[0].id)
           } else {
             setPlans([])
           }
@@ -76,6 +84,8 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         .finally(() => setPlansLoading(false))
     }
   }, [isOpen])
+
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId) ?? plans[0] ?? null
 
   const handleRestorePurchase = async () => {
     haptic('medium')
@@ -132,7 +142,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     }
   }
 
-  const handleBuyPremium = async (planId?: string) => {
+  const handleBuyPremium = async () => {
     haptic('medium')
     if (onBuyPremium) {
       onBuyPremium()
@@ -145,7 +155,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       return
     }
 
-    const pid = planId ?? plans[0]?.id ?? 'premium_3m'
+    const pid = selectedPlan?.id
     if (!pid) {
       setError('Нет доступных тарифов')
       return
@@ -154,7 +164,10 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     setError(null)
     setLoading(true)
     try {
-      const res = await apiPost<{ ok?: boolean; confirmationUrl?: string }>('/api/payments/yookassa/create', { planId: pid })
+      const res = await apiPost<{ ok?: boolean; confirmationUrl?: string }>(
+        '/api/payments/yookassa/create',
+        { planId: pid }
+      )
       const url = res.confirmationUrl
       if (!url) {
         setError('Не удалось создать платёж')
@@ -199,10 +212,9 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
 
   if (!isOpen && !asPage) return null
 
-  const plan = plans[0]
-  const priceText = plan
-    ? `${plan.priceRub} ₽ / ${Math.round(plan.durationDays / 30)} мес.`
-    : '259 ₽ / 3 мес.'
+  const buyLabel = selectedPlan
+    ? `Открыть Premium · ${formatPlanPriceLabel(selectedPlan)}`
+    : 'Открыть Premium'
 
   const cardContent = (
     <div className="premium-overlay__card" onClick={asPage ? undefined : (e: React.MouseEvent) => e.stopPropagation()}>
@@ -252,13 +264,43 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             <li>Темы оформления (Neon, Portal, Sunset и др.)</li>
             <li>Новые игры и колоды, которые будут появляться со временем</li>
           </ul>
-          {!plansLoading && (
-            <p className="premium-overlay__price">
-              Стоимость подписки:<br />
-              {priceText}
-            </p>
+        </div>
+
+        <div className="premium-overlay__plans">
+          <p className="premium-overlay__plans-title">Выберите тариф</p>
+          {plansLoading ? (
+            <p className="premium-overlay__plans-loading">Загрузка тарифов…</p>
+          ) : plans.length === 0 ? (
+            <p className="premium-overlay__plans-loading">Тарифы временно недоступны</p>
+          ) : (
+            <div className="premium-overlay__plans-list" role="radiogroup" aria-label="Тариф Premium">
+              {plans.map((plan) => {
+                const isSelected = plan.id === selectedPlanId
+                const isLifetime = isLifetimePlan(plan.id, plan.durationDays)
+                return (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    className={`premium-overlay__plan card${isSelected ? ' premium-overlay__plan--selected' : ''}`}
+                    onClick={() => {
+                      haptic('light')
+                      setSelectedPlanId(plan.id)
+                    }}
+                  >
+                    {isLifetime && (
+                      <span className="premium-overlay__plan-badge">Спецпредложение</span>
+                    )}
+                    <span className="premium-overlay__plan-period">{formatPlanPeriod(plan.durationDays)}</span>
+                    <span className="premium-overlay__plan-price">{plan.priceRub} ₽</span>
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
+
         <p className="premium-overlay__footer">
           Вы можете продолжить играть бесплатно или оформить Premium-подписку
         </p>
@@ -284,10 +326,10 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         <button
           type="button"
           className="btn btn--primary premium-overlay__btn premium-overlay__btn--buy"
-          onClick={() => handleBuyPremium()}
-          disabled={loading || plansLoading}
+          onClick={handleBuyPremium}
+          disabled={loading || plansLoading || !selectedPlan}
         >
-          {loading ? 'Загрузка…' : plansLoading ? 'Загрузка…' : `Открыть Premium · ${priceText}`}
+          {loading ? 'Загрузка…' : plansLoading ? 'Загрузка…' : buyLabel}
         </button>
         <button
           type="button"

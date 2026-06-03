@@ -1,5 +1,4 @@
 import { useBack } from '../hooks/useBack'
-import { PREMIUM_PLAN } from '../config/premium'
 import HomeButton from '../components/HomeButton'
 import './Legal.css'
 
@@ -18,10 +17,13 @@ export default function LegalPremium() {
       <div className="legal-page__content">
         <p>Premium — подписка, которая открывает полный доступ ко всем играм, колодам и функциям приложения.</p>
 
+        <h2>Тарифы</h2>
+        <p>Доступны тарифы на 1 месяц, 3 месяца и навсегда. Актуальные цены указаны на экране оформления подписки в приложении.</p>
+
         <h2>Условия подписки</h2>
         <ul>
-          <li>Срок действия: {PREMIUM_PLAN.durationMonths} месяцев</li>
           <li>Оплата производится через ЮKassa (картой или другими способами)</li>
+          <li>При продлении новый срок добавляется к текущему активному периоду</li>
         </ul>
 
         <h2>Восстановление покупки</h2>

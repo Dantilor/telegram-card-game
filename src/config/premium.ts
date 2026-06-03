@@ -1,30 +1,31 @@
 /**
  * Каноничная конфигурация Premium/Free-доступа.
- * Источник deckId: src/data/decksIndex.ts
+ * Цены и сроки тарифов — только из /api/plans (Supabase plans).
  */
 
+export const PREMIUM_PLAN_IDS = {
+  month: 'premium_1m',
+  quarter: 'premium_3m',
+  lifetime: 'premium_lifetime',
+} as const
+
+export const DEFAULT_PREMIUM_PLAN_ID = PREMIUM_PLAN_IDS.quarter
+
+/** @deprecated Используйте /api/plans; оставлено для совместимости типов */
 export const PREMIUM_PLAN = {
-  id: 'premium_3m',
-  priceRub: 259,
-  durationMonths: 3,
+  id: DEFAULT_PREMIUM_PLAN_ID,
 } as const
 
 /** Лимит бесплатных вопросов в бесплатных колодах. */
 export const FREE_LIMIT_PER_DECK = 15
 
-/** Игры, доступные для входа без подписки.
- * - truth-dare — полностью
- * - card — выбор режимов
- */
+/** Игры, доступные для входа без подписки. */
 export const FREE_GAMES = ['card', 'truth-dare'] as const
 
-/** Бесплатные колоды карточной игры (по 15 вопросов).
- * game="card" — GameNight Cards (src/pages/CardGameEntry.tsx, /card)
- * deckId из src/data/decksIndex.ts
- */
+/** Бесплатные колоды карточной игры (по 15 вопросов). */
 export const FREE_DECKS = [
-  { game: 'card' as const, mode: 'couples' as const, deckId: 'aboutUs' },   // Реальность нашей пары
-  { game: 'card' as const, mode: 'couples' as const, deckId: 'feelings' },  // Эмоциональный вайб
-  { game: 'card' as const, mode: 'party' as const, deckId: 'mostLikely' },  // Самый вероятный
-  { game: 'card' as const, mode: 'party' as const, deckId: 'factsAboutUs' }, // Факты про нас
+  { game: 'card' as const, mode: 'couples' as const, deckId: 'aboutUs' },
+  { game: 'card' as const, mode: 'couples' as const, deckId: 'feelings' },
+  { game: 'card' as const, mode: 'party' as const, deckId: 'mostLikely' },
+  { game: 'card' as const, mode: 'party' as const, deckId: 'factsAboutUs' },
 ] as const

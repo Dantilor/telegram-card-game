@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
 import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
 import { usePremium } from '../contexts/PremiumContext'
 import { isFavoritesLocked } from '../utils/access'
+import { apiGet } from '../lib/api'
+import { formatPlansFromPrice, type PlanOption } from '../utils/planLabel'
 import ThemeToggle from '../components/ThemeToggle'
 import PremiumOverlay from '../components/PremiumOverlay'
 import './Home.css'
@@ -24,7 +26,18 @@ function Home() {
   const { isPremium, loading } = usePremium()
   const navigate = useNavigate()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const [plansPriceLabel, setPlansPriceLabel] = useState('Premium')
   const favoritesLocked = isFavoritesLocked(isPremium)
+
+  useEffect(() => {
+    apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
+      .then((res) => {
+        if (res.ok && Array.isArray(res.plans)) {
+          setPlansPriceLabel(formatPlansFromPrice(res.plans))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="home-page">
@@ -95,7 +108,7 @@ function Home() {
               </div>
               <div className="premium-card__right">
                 <span className="premium-card__price-text">
-                  {loading ? 'Проверяем подписку…' : '259 ₽ / 3 мес'}
+                  {loading ? 'Проверяем подписку…' : plansPriceLabel}
                 </span>
                 <span className="premium-card__arrow" aria-hidden>→</span>
               </div>

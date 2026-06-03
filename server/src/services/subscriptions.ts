@@ -120,6 +120,22 @@ export function addDays(date: Date, days: number): Date {
   return d
 }
 
+/** Продлевает premium: новые дни добавляются к текущему active_until, если он ещё активен. */
+export async function extendPremiumActiveUntil(
+  telegramId: number,
+  durationDays: number
+): Promise<Date> {
+  const now = new Date()
+  const latest = await getLatestActiveUntil(telegramId)
+  const base = latest && latest > now ? latest : now
+  const activeUntil = addDays(base, durationDays)
+  await upsertSubscription(telegramId, 'premium', activeUntil)
+  return activeUntil
+}
+
+export const PREMIUM_ENTITLEMENT_PLAN_ID = 'premium'
+export const LIFETIME_DURATION_DAYS = 36500
+
 export const PREMIUM_DAYS = DAYS_6_MONTHS
 
 /**

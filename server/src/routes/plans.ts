@@ -8,7 +8,7 @@ router.get('/plans', async (_req: Request, res: Response) => {
     const r = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
       `SELECT plan_id, title, price_rub, duration_days
        FROM plans WHERE is_active = true
-       ORDER BY price_rub ASC`
+       ORDER BY duration_days ASC, price_rub ASC`
     )
     const plans = r.rows.map((row) => ({
       id: row.plan_id,

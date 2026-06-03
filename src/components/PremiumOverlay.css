@@ -196,6 +196,96 @@
   font-weight: 500;
 }
 
+.premium-overlay__plans {
+  margin-bottom: 1rem;
+}
+
+.premium-overlay__plans-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.premium-overlay__plans-loading {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.premium-overlay__plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.premium-overlay__plan {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.premium-overlay__plan--selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 16px var(--glowCyan);
+}
+
+.premium-overlay__plan-badge {
+  position: absolute;
+  top: -0.45rem;
+  right: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, #00c853 0%, #00e676 100%);
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.55);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .premium-overlay__plan-badge {
+    animation: premium-plan-badge-glow 2.2s ease-in-out infinite;
+  }
+}
+
+@keyframes premium-plan-badge-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 22px rgba(57, 255, 160, 0.85);
+  }
+}
+
+.premium-overlay__plan-period {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.premium-overlay__plan-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 .premium-overlay__footer {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;

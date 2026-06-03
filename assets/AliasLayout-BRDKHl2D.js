@@ -1,0 +1,1 @@
+import{j as r,O as t}from"./index-CWImdTLL.js";import{A as s}from"./AliasStateContext-Brl23Lwa.js";function i(){return r.jsx(s,{children:r.jsx(t,{})})}export{i as default};

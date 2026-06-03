@@ -292,9 +292,15 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
                     <span className="premium-overlay__plan-radio" aria-hidden />
                     <div className="premium-overlay__plan-main">
                       {isLifetime && (
-                        <span className="premium-overlay__plan-badge">Спецпредложение</span>
+                        <span className="premium-overlay__plan-badge">
+                          <span className="premium-overlay__plan-badge-icon" aria-hidden>✦</span>
+                          Лучший выбор
+                        </span>
                       )}
                       <span className="premium-overlay__plan-period">{formatPlanPeriod(plan.durationDays)}</span>
+                      {isLifetime && (
+                        <span className="premium-overlay__plan-tagline">Один раз — доступ навсегда</span>
+                      )}
                     </div>
                     <div className="premium-overlay__plan-price-wrap">
                       <span className="premium-overlay__plan-price">{plan.priceRub}</span>

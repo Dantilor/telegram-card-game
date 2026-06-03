@@ -1,0 +1,1 @@
+System.register(["./index-legacy-t6lOs595.js","./MafiaGameContext-legacy-D1pfSvNz.js"],function(e,t){"use strict";var n,r,s,c,u,i;return{setters:[e=>{n=e.r,r=e.x,s=e.j,c=e.O,u=e.y},e=>{i=e.M}],execute:function(){e("default",function(){return n.useEffect(()=>{r(u)},[]),s.jsx(i,{children:s.jsx(c,{})})})}}});

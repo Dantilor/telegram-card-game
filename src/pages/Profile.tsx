@@ -12,6 +12,21 @@ import './Profile.css'
 
 const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
 
+const DOCUMENT_LINKS: { type: DocumentType; label: string; icon: string }[] = [
+  { type: 'privacy', label: 'Политика конфиденциальности', icon: '🛡️' },
+  { type: 'terms', label: 'Условия использования', icon: '📄' },
+  { type: 'premium', label: 'Условия Premium', icon: '💎' },
+  { type: 'adultPolicy', label: 'Политика доступа к категориям 18+', icon: '🔞' },
+]
+
+const PREMIUM_PERKS = ['8 игр', 'Избранное', '18+ режимы', 'Без автосписаний']
+
+function getInitials(firstName?: string, lastName?: string): string {
+  const first = firstName?.trim()[0] ?? ''
+  const last = lastName?.trim()[0] ?? ''
+  return (first + last).toUpperCase() || '?'
+}
+
 function Profile() {
   const handleBack = useBack('/')
   const user = getTgUser()
@@ -61,8 +76,15 @@ function Profile() {
     return null
   }
 
+  const errorMessage = getErrorMessage()
+  const activeUntilLabel = activeUntil
+    ? new Date(activeUntil).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+
   return (
     <div className="profile-page">
+      <div className="profile-page__bg" aria-hidden />
+
       <div className="profile-page__header">
         <HomeButton />
         <button type="button" className="btn btn--ghost home-btn profile-page__back" onClick={handleBack}>
@@ -72,147 +94,159 @@ function Profile() {
         <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>
 
-      <section className="profile-card">
-        <h2 className="profile-card__heading">Пользователь</h2>
-        {user ? (
-          <div className="profile-card__user">
-            {user.photo_url && (
+      <div className="profile-shell">
+        <section className="profile-identity">
+          <div className="profile-identity__glow" aria-hidden />
+          <div className="profile-identity__avatar-wrap">
+            {user?.photo_url ? (
               <img
                 src={user.photo_url}
                 alt=""
-                className="profile-card__photo"
+                className="profile-identity__photo"
                 decoding="async"
                 loading="lazy"
               />
+            ) : (
+              <div className="profile-identity__initials" aria-hidden>
+                {user ? getInitials(user.first_name, user.last_name) : 'GN'}
+              </div>
             )}
-            <div className="profile-card__user-info">
-              <p className="profile-card__name">
+            {isPremium && <span className="profile-identity__crown" aria-hidden>✦</span>}
+          </div>
+
+          {user ? (
+            <>
+              <p className="profile-identity__name">
                 {user.first_name}
                 {user.last_name ? ` ${user.last_name}` : ''}
               </p>
               {user.username && (
-                <p className="profile-card__username">@{user.username}</p>
+                <p className="profile-identity__username">@{user.username}</p>
               )}
-            </div>
-          </div>
-        ) : (
-          <p className="profile-card__hint">
-            Откройте приложение внутри Telegram, чтобы отобразить ваш профиль и актуальный статус Premium.
-          </p>
-        )}
-      </section>
-
-      {getErrorMessage() && (
-        <p className="profile-card__hint profile-card__hint--error">
-          {getErrorMessage()}
-        </p>
-      )}
-
-      <section className={`profile-premium ${isPremium ? 'profile-premium--active' : ''}`}>
-        {isPremium ? (
-          <div className="profile-premium__active">
-            <p className="profile-premium__status-only">
-              Premium активен до {activeUntil ? new Date(activeUntil).toLocaleDateString('ru-RU') : '—'}
+            </>
+          ) : (
+            <p className="profile-identity__guest">
+              Откройте приложение внутри Telegram, чтобы увидеть профиль и статус Premium
             </p>
-            <div className="profile-premium__actions">
+          )}
+
+          <span className={`profile-identity__badge${isPremium ? ' profile-identity__badge--pro' : ''}`}>
+            {isPremium ? 'Premium активен' : 'Free'}
+          </span>
+        </section>
+
+        {errorMessage && (
+          <p className="profile-alert profile-alert--error">{errorMessage}</p>
+        )}
+
+        <section className={`profile-pass${isPremium ? ' profile-pass--active' : ''}`}>
+          {isPremium ? (
+            <div className="profile-pass__active">
+              <div className="profile-pass__active-head">
+                <span className="profile-pass__gem" aria-hidden>💎</span>
+                <div>
+                  <p className="profile-pass__active-label">Premium</p>
+                  <p className="profile-pass__active-date">
+                    {activeUntilLabel ? `до ${activeUntilLabel}` : 'активен'}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                className="btn btn--ghost profile-premium__btn"
+                className="profile-pass__restore"
                 onClick={handleRestorePurchase}
                 disabled={restoreLoading}
               >
                 {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
               </button>
               {restoreStatus && (
-                <span className="profile-premium__toast">{restoreStatus}</span>
+                <span className="profile-pass__toast">{restoreStatus}</span>
               )}
             </div>
+          ) : (
+            <div className="profile-pass__inactive">
+              <div className="profile-pass__head">
+                <span className="profile-pass__gem" aria-hidden>💎</span>
+                <div>
+                  <p className="profile-pass__eyebrow">Premium-доступ</p>
+                  <p className="profile-pass__title">Полный доступ к играм</p>
+                </div>
+              </div>
+              <p className="profile-pass__desc">
+                Все игры, колоды, избранное и 18+ режимы — без автосписаний.
+              </p>
+              <div className="profile-pass__perks">
+                {PREMIUM_PERKS.map((perk) => (
+                  <span key={perk} className="profile-pass__perk">{perk}</span>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="profile-pass__cta"
+                onClick={() => {
+                  haptic('medium')
+                  setPremiumOverlayOpen(true)
+                }}
+              >
+                <span className="profile-pass__cta-shine" aria-hidden />
+                Оформить Premium
+              </button>
+              <button
+                type="button"
+                className="profile-pass__restore"
+                onClick={handleRestorePurchase}
+                disabled={restoreLoading}
+              >
+                {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+              </button>
+              {restoreStatus && (
+                <span className="profile-pass__toast">{restoreStatus}</span>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="profile-menu">
+          <h2 className="profile-menu__title">Документы</h2>
+          <div className="profile-menu__panel">
+            {DOCUMENT_LINKS.map(({ type, label, icon }) => (
+              <button
+                key={type}
+                type="button"
+                className="profile-menu__row"
+                onClick={() => { haptic('light'); setDocumentModalType(type) }}
+              >
+                <span className="profile-menu__icon" aria-hidden>{icon}</span>
+                <span className="profile-menu__label">{label}</span>
+                <span className="profile-menu__chev" aria-hidden>›</span>
+              </button>
+            ))}
           </div>
-        ) : (
-          <div className="profile-premium__inactive">
-            <h2 className="profile-premium__heading">
-              <span className="profile-premium__icon" aria-hidden>💎</span>
-              Premium-доступ
-            </h2>
-            <p className="profile-premium__status">Статус: не активен</p>
-            <p className="profile-premium__short">
-              Откройте полный доступ ко всем играм, колодам и избранному контенту. Premium расширяет возможности приложения и делает игру ещё интереснее.
-            </p>
+        </section>
+
+        <section className="profile-menu profile-menu--support">
+          <h2 className="profile-menu__title">Поддержка</h2>
+          <div className="profile-menu__panel">
             <button
               type="button"
-              className="btn btn--primary profile-premium__btn"
-              onClick={() => {
-                haptic('medium')
-                setPremiumOverlayOpen(true)
-              }}
+              className="profile-menu__row profile-menu__row--support"
+              onClick={handleSupport}
             >
-              Оформить Premium
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost profile-premium__btn"
-              onClick={handleRestorePurchase}
-              disabled={restoreLoading}
-            >
-              {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+              <span className="profile-menu__icon" aria-hidden>💬</span>
+              <span className="profile-menu__label">
+                <span className="profile-menu__label-main">Написать в поддержку</span>
+                <span className="profile-menu__label-sub">Подписка, восстановление, вопросы</span>
+              </span>
+              <span className="profile-menu__chev" aria-hidden>›</span>
             </button>
           </div>
+        </section>
+
+        {import.meta.env.DEV && userId != null && (
+          <p className="profile-dev-id">id {userId}</p>
         )}
-      </section>
+      </div>
 
-      <section className="profile-card profile-card--documents">
-        <h2 className="profile-card__heading">Документы</h2>
-        <div className="profile-card__links">
-          <button
-            type="button"
-            className="btn btn--ghost profile-card__link"
-            onClick={() => { haptic('light'); setDocumentModalType('privacy') }}
-          >
-            Политика конфиденциальности
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost profile-card__link"
-            onClick={() => { haptic('light'); setDocumentModalType('terms') }}
-          >
-            Условия использования
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost profile-card__link"
-            onClick={() => { haptic('light'); setDocumentModalType('premium') }}
-          >
-            Условия Premium
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost profile-card__link"
-            onClick={() => { haptic('light'); setDocumentModalType('adultPolicy') }}
-          >
-            Политика доступа к категориям 18+
-          </button>
-        </div>
-      </section>
-
-      <section className="profile-card profile-card--support">
-        <h2 className="profile-card__heading">Поддержка</h2>
-        <p className="profile-card__hint">
-          Вопросы по подписке, восстановлению или работе приложения — напишите в поддержку.
-        </p>
-        <button
-          type="button"
-          className="btn btn--ghost profile-premium__btn"
-          onClick={handleSupport}
-        >
-          Поддержка
-        </button>
-      </section>
-
-      {import.meta.env.DEV && userId != null && (
-        <p className="profile-card__hint" style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7 }}>
-          id {userId}
-        </p>
-      )}
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       <DocumentModal
         isOpen={documentModalType !== null}

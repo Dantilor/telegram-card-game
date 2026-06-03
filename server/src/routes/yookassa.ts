@@ -182,16 +182,29 @@ async function handleCreatePayment(req: Request, res: Response) {
   }
 }
 
+function normalizeTelegramId(value: unknown): string | null {
+  if (value === null || value === undefined) return null
+  const s = String(value).trim()
+  if (!s || !/^\d+$/.test(s)) return null
+  return s
+}
+
+function resolvePlanId(rowPlanId: unknown, metaPlanId: string | null): string | null {
+  if (typeof rowPlanId === 'string' && rowPlanId.trim()) return rowPlanId.trim()
+  if (rowPlanId != null && String(rowPlanId).trim()) return String(rowPlanId).trim()
+  return metaPlanId
+}
+
 type PaymentGrantRow = {
   id: number
   status: string
-  telegram_id: number | null
+  telegram_id: string | number | null
   plan_id: string | null
   premium_granted_at: Date | null
 }
 
 type GrantPremiumResult =
-  | { granted: true; telegramId: number; planId: string; activeUntil: Date }
+  | { granted: true; telegramId: string; planId: string; activeUntil: Date }
   | { granted: false; alreadyDone?: boolean; reason?: string }
 
 function logGrantFailure(paymentId: string, reason: string, details: Record<string, unknown>): void {
@@ -248,7 +261,8 @@ async function releasePaymentGrantClaim(paymentId: string): Promise<void> {
 async function finalizePaymentGrant(paymentId: string): Promise<void> {
   await query(
     `UPDATE payments
-     SET status = 'succeeded'
+     SET status = 'succeeded',
+         premium_granted_at = COALESCE(premium_granted_at, now())
      WHERE provider_payment_charge_id = $1`,
     [paymentId]
   )
@@ -256,7 +270,7 @@ async function finalizePaymentGrant(paymentId: string): Promise<void> {
 
 async function ensurePaymentRowForGrant(
   paymentId: string,
-  telegramId: number,
+  telegramId: string,
   planId: string
 ): Promise<void> {
   await query(
@@ -268,7 +282,7 @@ async function ensurePaymentRowForGrant(
        status,
        currency
      )
-     VALUES ($1, $2, 'yookassa', $3, 'pending', 'RUB')
+     VALUES ($1::bigint, $2, 'yookassa', $3, 'pending', 'RUB')
      ON CONFLICT (provider, provider_payment_charge_id) DO NOTHING`,
     [telegramId, planId, paymentId]
   )
@@ -283,7 +297,7 @@ async function grantPremiumByPaymentId(
   paymentId: string,
   opts: {
     metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string; userId?: string }
-    bodyTelegramId?: number
+    bodyTelegramId?: string | number
   } = {}
 ): Promise<GrantPremiumResult> {
   const meta = opts.metadata ?? {}
@@ -300,9 +314,11 @@ async function grantPremiumByPaymentId(
     return { granted: false, alreadyDone: true, reason: 'already processed' }
   }
 
-  const telegramId = existingRow?.telegram_id ?? (opts.bodyTelegramId ?? (metaTgRaw ? parseInt(String(metaTgRaw), 10) : NaN))
-  const planId = existingRow?.plan_id ?? metaPlanId
-  const resolvedTelegramId = Number.isFinite(telegramId) ? (telegramId as number) : null
+  const resolvedTelegramId =
+    normalizeTelegramId(existingRow?.telegram_id) ??
+    normalizeTelegramId(opts.bodyTelegramId) ??
+    normalizeTelegramId(metaTgRaw)
+  const planId = resolvePlanId(existingRow?.plan_id, metaPlanId)
 
   if (!resolvedTelegramId || !planId) {
     logGrantFailure(paymentId, 'missing telegramId or planId', {
@@ -348,8 +364,8 @@ async function grantPremiumByPaymentId(
     return { granted: false, reason: 'claim failed' }
   }
 
-  const grantTelegramId = claimed.telegram_id ?? resolvedTelegramId
-  const grantPlanId = claimed.plan_id ?? planId
+  const grantTelegramId = normalizeTelegramId(claimed.telegram_id) ?? resolvedTelegramId
+  const grantPlanId = resolvePlanId(claimed.plan_id, planId) ?? planId
   const grantDurationDays = (await getPlanDurationDays(grantPlanId)) ?? durationDays
 
   await ensureUser(grantTelegramId)
@@ -472,12 +488,7 @@ async function handleConfirm(req: Request, res: Response) {
   const telegramIdBodyRaw = req.body?.telegramId
 
   const paymentId = typeof paymentIdRaw === 'string' ? paymentIdRaw.trim() : ''
-  const telegramIdBody =
-    typeof telegramIdBodyRaw === 'number'
-      ? telegramIdBodyRaw
-      : typeof telegramIdBodyRaw === 'string' && telegramIdBodyRaw.trim()
-        ? Number.parseInt(telegramIdBodyRaw.trim(), 10)
-        : NaN
+  const bodyTelegramId = normalizeTelegramId(telegramIdBodyRaw) ?? undefined
 
   if (!paymentId) {
     res.status(400).json({ ok: false, error: 'paymentId required' })
@@ -522,7 +533,7 @@ async function handleConfirm(req: Request, res: Response) {
 
     const result = await grantPremiumByPaymentId(paymentId, {
       metadata: payment.metadata,
-      bodyTelegramId: Number.isFinite(telegramIdBody) ? telegramIdBody : undefined,
+      bodyTelegramId,
     })
 
     if (result.granted) {

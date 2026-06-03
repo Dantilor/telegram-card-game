@@ -77,15 +77,15 @@ export async function savePaymentIfNew(payment: {
   return true
 }
 
-export async function ensureUser(telegramId: number): Promise<void> {
+export async function ensureUser(telegramId: string | number): Promise<void> {
   await query(
-    'INSERT INTO users (telegram_id) VALUES ($1) ON CONFLICT (telegram_id) DO NOTHING',
-    [telegramId]
+    'INSERT INTO users (telegram_id) VALUES ($1::bigint) ON CONFLICT (telegram_id) DO NOTHING',
+    [String(telegramId)]
   )
 }
 
 export async function upsertSubscription(
-  telegramId: number,
+  telegramId: string | number,
   planId: string,
   activeUntil: Date
 ): Promise<void> {
@@ -99,12 +99,12 @@ export async function upsertSubscription(
   )
 }
 
-export async function getActiveSubscription(telegramId: number): Promise<Date | null> {
+export async function getActiveSubscription(telegramId: string | number): Promise<Date | null> {
   const res = await query<{ active_until: Date }>(
     `SELECT active_until FROM subscriptions
-     WHERE telegram_id = $1
+     WHERE telegram_id = $1::bigint
      LIMIT 1`,
-    [telegramId]
+    [String(telegramId)]
   )
   const row = res.rows[0]
   return row ? new Date(row.active_until) : null
@@ -114,14 +114,14 @@ export async function getActiveSubscription(telegramId: number): Promise<Date | 
  * Последняя по дате подписка пользователя.
  * premium в /api/me считают как active_until != null && active_until > now().
  */
-export async function getLatestActiveUntil(telegramId: number): Promise<Date | null> {
+export async function getLatestActiveUntil(telegramId: string | number): Promise<Date | null> {
   const res = await query<{ active_until: Date }>(
     `SELECT active_until
      FROM subscriptions
-     WHERE telegram_id = $1
+     WHERE telegram_id = $1::bigint
      ORDER BY active_until DESC
      LIMIT 1`,
-    [telegramId]
+    [String(telegramId)]
   )
   const row = res.rows[0]
   return row ? new Date(row.active_until) : null
@@ -138,14 +138,14 @@ export function addDays(date: Date, days: number): Date {
  * Upsert по telegram_id (одна строка на пользователя).
  */
 export async function extendPremiumActiveUntil(
-  telegramId: number,
+  telegramId: string | number,
   planId: string,
   durationDays: number
 ): Promise<Date> {
   try {
     const res = await query<{ active_until: Date }>(
       `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
-       VALUES ($1, $2, now() + ($3::int || ' days')::interval, now())
+       VALUES ($1::bigint, $2, now() + ($3::int || ' days')::interval, now())
        ON CONFLICT (telegram_id) DO UPDATE SET
          plan_id = EXCLUDED.plan_id,
          active_until = CASE
@@ -154,7 +154,7 @@ export async function extendPremiumActiveUntil(
            ELSE now() + ($3::int || ' days')::interval
          END
        RETURNING active_until`,
-      [telegramId, planId, durationDays]
+      [String(telegramId), planId, durationDays]
     )
     const row = res.rows[0]
     if (!row) {

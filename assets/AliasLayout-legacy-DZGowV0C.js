@@ -1,1 +1,0 @@
-System.register(["./index-legacy-DIHpO5-x.js","./AliasStateContext-legacy-8sgfmIvZ.js"],function(e,t){"use strict";var n,s,r;return{setters:[e=>{n=e.j,s=e.O},e=>{r=e.A}],execute:function(){e("default",function(){return n.jsx(r,{children:n.jsx(s,{})})})}}});

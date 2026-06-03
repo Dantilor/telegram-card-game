@@ -1,0 +1,1 @@
+import{r,x as s,j as a,O as t,y as e}from"./index-epC21I70.js";import{M as o}from"./MafiaGameContext-DCJuM0aI.js";function m(){return r.useEffect(()=>{s(e)},[]),a.jsx(o,{children:a.jsx(t,{})})}export{m as default};

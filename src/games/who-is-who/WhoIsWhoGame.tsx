@@ -336,7 +336,7 @@ function GamePage({
 
 function GameAboutCard() {
   return (
-    <div className="wiw-how">
+    <div className="wiw-how card">
       <section className="wiw-how__block">
         <h3 className="wiw-how__title">Что это за игра?</h3>
         <p className="wiw-how__lead">

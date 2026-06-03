@@ -67,13 +67,12 @@
   color: var(--muted);
 }
 
-/* Правила — без отдельной плашки, текст на общем фоне */
+/* Правила — плашка как в Ассоциациях */
 .wiw-how {
   margin-bottom: 1.25rem;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  padding: 0.85rem 1rem;
+  background: var(--td-dare-bg) !important;
+  border-color: var(--td-dare-border) !important;
 }
 
 .wiw-how__title {
@@ -86,7 +85,7 @@
 .wiw-how__block + .wiw-how__block {
   margin-top: 0.85rem;
   padding-top: 0.85rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--td-dare-border);
 }
 
 .wiw-how__lead {
@@ -875,8 +874,8 @@
 
 [data-theme="neon-light"] .wiw-how,
 [data-theme="soft-light"] .wiw-how {
-  background: transparent;
-  border: none;
+  background: var(--td-dare-bg) !important;
+  border-color: var(--td-dare-border) !important;
 }
 
 @media (min-width: 768px) {

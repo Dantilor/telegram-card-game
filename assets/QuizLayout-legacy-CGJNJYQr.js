@@ -1,1 +1,0 @@
-System.register(["./index-legacy-t6lOs595.js","./QuizGameContext-legacy-BEtgvnkb.js"],function(e,t){"use strict";var n,r,s;return{setters:[e=>{n=e.j,r=e.O},e=>{s=e.Q}],execute:function(){e("default",function(){return n.jsx(s,{children:n.jsx(r,{})})})}}});

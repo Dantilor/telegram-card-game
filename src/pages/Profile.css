@@ -32,24 +32,14 @@
   z-index: 2;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1.15rem;
   flex-wrap: wrap;
 }
 
-.profile-page__title {
-  flex: 1;
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  text-shadow: 0 0 24px var(--glowCyan);
-}
-
-[data-theme="neon-light"] .profile-page__title,
-[data-theme="soft-light"] .profile-page__title {
-  text-shadow: none;
+.profile-page__header .theme-toggle-wrap {
+  margin-left: auto;
 }
 
 .profile-shell {

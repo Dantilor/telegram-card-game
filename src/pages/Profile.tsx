@@ -80,12 +80,11 @@ function Profile() {
     : null
 
   return (
-    <div className="profile-page">
+    <div className="profile-page" aria-label="Профиль">
       <div className="profile-page__bg" aria-hidden />
 
       <div className="profile-page__header">
         <HomeButton />
-        <h1 className="profile-page__title">Профиль</h1>
         <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>
 

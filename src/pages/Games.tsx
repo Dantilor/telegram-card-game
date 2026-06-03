@@ -179,7 +179,7 @@ function Games() {
           isLocked={isGameLocked(bottomHeroGame.id, isPremium)}
           onPremiumOpen={() => setPremiumOverlayOpen(true)}
           to="/who-is-who"
-          badge="NEW · новая"
+          badge="NEW"
           badgeVariant="new"
           position="bottom"
         />

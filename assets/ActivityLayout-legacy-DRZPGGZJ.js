@@ -1,0 +1,1 @@
+System.register(["./index-legacy-BVlzxrYu.js","./ActivityStateContext-legacy-CRwuKqpi.js"],function(t,e){"use strict";var n,r,s;return{setters:[t=>{n=t.j,r=t.O},t=>{s=t.A}],execute:function(){t("default",function(){return n.jsx(s,{children:n.jsx(r,{})})})}}});

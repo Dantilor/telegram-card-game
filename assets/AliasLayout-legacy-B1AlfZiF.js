@@ -1,1 +1,0 @@
-System.register(["./index-legacy-D2Uv10EP.js","./AliasStateContext-legacy-Bo12Y6_g.js"],function(e,t){"use strict";var n,s,r;return{setters:[e=>{n=e.j,s=e.O},e=>{r=e.A}],execute:function(){e("default",function(){return n.jsx(r,{children:n.jsx(s,{})})})}}});

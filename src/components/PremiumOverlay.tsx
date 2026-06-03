@@ -233,7 +233,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         )}
         <h2 id="premium-overlay-title" className="premium-overlay__heading">
           <span className="premium-overlay__icon" aria-hidden>💎</span>
-          Premium-доступ
+          <span className="premium-overlay__heading-text">Premium-доступ</span>
         </h2>
         <p className="premium-overlay__subtitle">Этот контент доступен по подписке</p>
         {success && (
@@ -283,17 +283,23 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
                     type="button"
                     role="radio"
                     aria-checked={isSelected}
-                    className={`premium-overlay__plan card${isSelected ? ' premium-overlay__plan--selected' : ''}`}
+                    className={`premium-overlay__plan${isSelected ? ' premium-overlay__plan--selected' : ''}${isLifetime ? ' premium-overlay__plan--lifetime' : ''}`}
                     onClick={() => {
                       haptic('light')
                       setSelectedPlanId(plan.id)
                     }}
                   >
-                    {isLifetime && (
-                      <span className="premium-overlay__plan-badge">Спецпредложение</span>
-                    )}
-                    <span className="premium-overlay__plan-period">{formatPlanPeriod(plan.durationDays)}</span>
-                    <span className="premium-overlay__plan-price">{plan.priceRub} ₽</span>
+                    <span className="premium-overlay__plan-radio" aria-hidden />
+                    <div className="premium-overlay__plan-main">
+                      {isLifetime && (
+                        <span className="premium-overlay__plan-badge">Спецпредложение</span>
+                      )}
+                      <span className="premium-overlay__plan-period">{formatPlanPeriod(plan.durationDays)}</span>
+                    </div>
+                    <div className="premium-overlay__plan-price-wrap">
+                      <span className="premium-overlay__plan-price">{plan.priceRub}</span>
+                      <span className="premium-overlay__plan-currency">₽</span>
+                    </div>
                   </button>
                 )
               })}

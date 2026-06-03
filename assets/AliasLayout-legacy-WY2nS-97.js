@@ -1,0 +1,1 @@
+System.register(["./index-legacy-CaqMbfek.js","./AliasStateContext-legacy-ClbeYTwn.js"],function(e,t){"use strict";var n,s,r;return{setters:[e=>{n=e.j,s=e.O},e=>{r=e.A}],execute:function(){e("default",function(){return n.jsx(r,{children:n.jsx(s,{})})})}}});

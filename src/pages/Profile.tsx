@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from 'react'
-import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
 import type { DocumentType } from '../data/documents'
@@ -28,7 +27,6 @@ function getInitials(firstName?: string, lastName?: string): string {
 }
 
 function Profile() {
-  const handleBack = useBack('/')
   const user = getTgUser()
   const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
   const initData = getInitData()
@@ -87,9 +85,6 @@ function Profile() {
 
       <div className="profile-page__header">
         <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn profile-page__back" onClick={handleBack}>
-          ← Назад
-        </button>
         <h1 className="profile-page__title">Профиль</h1>
         <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>

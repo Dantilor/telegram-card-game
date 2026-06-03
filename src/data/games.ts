@@ -76,6 +76,15 @@ export const GAMES: Game[] = [
     status: 'ready',
     image: IMAGES.truthDare.png,
   },
+  {
+    id: 'who-is-who',
+    title: 'Кто тут кто?',
+    emoji: '🎭',
+    icon: 'mask',
+    description: 'Ситуации • Роли\nОправдания',
+    status: 'ready',
+    image: IMAGES.whoIsWho.png,
+  },
 ]
 
 export function getGameById(gameId: string): Game | undefined {

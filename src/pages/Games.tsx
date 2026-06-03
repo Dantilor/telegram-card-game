@@ -30,6 +30,7 @@ function Games() {
     import('./SabotageLayout')
     import('./QuizLayout')
     import('./TruthDareLayout')
+    import('./WhoIsWhoLayout')
   }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)
@@ -126,6 +127,13 @@ function Games() {
     if (isReady && game.id === 'sabotage') {
       return (
         <Link key={game.id} to="/sabotage" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
+          {cardContent}
+        </Link>
+      )
+    }
+    if (isReady && game.id === 'who-is-who') {
+      return (
+        <Link key={game.id} to="/who-is-who" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
           {cardContent}
         </Link>
       )

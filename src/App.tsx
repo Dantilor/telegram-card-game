@@ -28,6 +28,7 @@ const MafiaLayout = lazy(() => import('./pages/MafiaLayout'))
 const SabotageLayout = lazy(() => import('./pages/SabotageLayout'))
 const QuizLayout = lazy(() => import('./pages/QuizLayout'))
 const TruthDareLayout = lazy(() => import('./pages/TruthDareLayout'))
+const WhoIsWhoLayout = lazy(() => import('./pages/WhoIsWhoLayout'))
 const CustomDeckEditor = lazy(() => import('./pages/CustomDeckEditor'))
 const AliasHome = lazy(() => import('./pages/AliasHome'))
 const AliasPlay = lazy(() => import('./pages/AliasPlay'))
@@ -117,6 +118,7 @@ function App() {
       () => import('./pages/SabotageLayout'),
       () => import('./pages/QuizLayout'),
       () => import('./pages/TruthDareLayout'),
+      () => import('./pages/WhoIsWhoLayout'),
     ]
     const gameChunkTimers = gameChunks.map((fn, i) => setTimeout(fn, 400 + i * 80))
     return () => {
@@ -200,6 +202,7 @@ function App() {
           <Route path="vote" element={<TruthDareVote />} />
           <Route path="result" element={<TruthDareResult />} />
         </Route>
+        <Route path="/who-is-who" element={<WhoIsWhoLayout />} />
         <Route
           path="/play/:deckId"
           element={

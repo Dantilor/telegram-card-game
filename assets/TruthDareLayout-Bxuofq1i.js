@@ -1,1 +1,0 @@
-import{j as r,O as t}from"./index-B8VjsueP.js";import{T as e}from"./TruthDareContext-B_m7O-YV.js";function o(){return r.jsx(e,{children:r.jsx("div",{className:"truth-dare",children:r.jsx(t,{})})})}export{o as default};

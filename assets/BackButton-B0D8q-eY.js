@@ -1,0 +1,1 @@
+import{j as a,e as s}from"./index-DW_VR7R5.js";import"./HomeButton-BgeY6sAN.js";function r({onClick:t,className:n,children:o="Назад"}){return a.jsxs("button",{type:"button",className:"btn btn--ghost home-btn ".concat(n),onClick:()=>{s("light"),t()},"aria-label":"Назад",children:["← ",o]})}export{r as B};

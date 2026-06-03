@@ -1,0 +1,1 @@
+System.register(["./index-legacy-BitDhvQ5.js","./AliasStateContext-legacy-DteKCtLQ.js"],function(e,t){"use strict";var n,s,r;return{setters:[e=>{n=e.j,s=e.O},e=>{r=e.A}],execute:function(){e("default",function(){return n.jsx(r,{children:n.jsx(s,{})})})}}});

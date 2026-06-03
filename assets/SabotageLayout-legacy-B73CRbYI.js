@@ -1,1 +1,0 @@
-System.register(["./index-legacy-CaqMbfek.js","./SabotageGameContext-legacy-Bb33HNrC.js"],function(e,t){"use strict";var n,r,s;return{setters:[e=>{n=e.j,r=e.O},e=>{s=e.S}],execute:function(){e("default",function(){return n.jsx(s,{children:n.jsx(r,{})})})}}});

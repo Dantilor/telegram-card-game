@@ -8,6 +8,7 @@ import {
   logPgError,
 } from '../services/subscriptions.js'
 import { getActivePlanById, getPlanDurationDays, planReceiptDescription } from '../services/plans.js'
+import { normalizeTelegramId, resolvePlanIdForGrant, resolveTelegramIdForGrant } from '../utils/telegramId.js'
 
 function toInitDataString(v: unknown): string {
   if (typeof v === 'string') return v
@@ -182,19 +183,6 @@ async function handleCreatePayment(req: Request, res: Response) {
   }
 }
 
-function normalizeTelegramId(value: unknown): string | null {
-  if (value === null || value === undefined) return null
-  const s = String(value).trim()
-  if (!s || !/^\d+$/.test(s)) return null
-  return s
-}
-
-function resolvePlanId(rowPlanId: unknown, metaPlanId: string | null): string | null {
-  if (typeof rowPlanId === 'string' && rowPlanId.trim()) return rowPlanId.trim()
-  if (rowPlanId != null && String(rowPlanId).trim()) return String(rowPlanId).trim()
-  return metaPlanId
-}
-
 type PaymentGrantRow = {
   id: number
   status: string
@@ -301,7 +289,6 @@ async function grantPremiumByPaymentId(
   } = {}
 ): Promise<GrantPremiumResult> {
   const meta = opts.metadata ?? {}
-  const metaTgRaw = meta.telegram_id ?? meta.telegramId ?? meta.userId
   const metaPlanId = (meta.plan_id ?? meta.planId)?.trim() || null
 
   const existingRow = await findPaymentGrantRow(paymentId)
@@ -314,11 +301,17 @@ async function grantPremiumByPaymentId(
     return { granted: false, alreadyDone: true, reason: 'already processed' }
   }
 
-  const resolvedTelegramId =
-    normalizeTelegramId(existingRow?.telegram_id) ??
-    normalizeTelegramId(opts.bodyTelegramId) ??
-    normalizeTelegramId(metaTgRaw)
-  const planId = resolvePlanId(existingRow?.plan_id, metaPlanId)
+  const resolvedTelegramId = resolveTelegramIdForGrant({
+    rowTelegramId: existingRow?.telegram_id,
+    bodyTelegramId: opts.bodyTelegramId,
+    metaTelegramId: meta.telegram_id,
+    metaTelegramIdAlt: meta.telegramId,
+  })
+  const planId = resolvePlanIdForGrant({
+    rowPlanId: existingRow?.plan_id,
+    metaPlanId: meta.plan_id,
+    metaPlanIdAlt: meta.planId,
+  })
 
   if (!resolvedTelegramId || !planId) {
     logGrantFailure(paymentId, 'missing telegramId or planId', {
@@ -326,7 +319,8 @@ async function grantPremiumByPaymentId(
       rowStatus: existingRow?.status ?? null,
       rowTelegramId: existingRow?.telegram_id ?? null,
       rowPlanId: existingRow?.plan_id ?? null,
-      metaTelegramId: metaTgRaw ?? null,
+      metaTelegramId: meta.telegram_id ?? null,
+      metaTelegramIdAlt: meta.telegramId ?? null,
       metaPlanId,
       resolvedTelegramId,
       planId,
@@ -364,8 +358,10 @@ async function grantPremiumByPaymentId(
     return { granted: false, reason: 'claim failed' }
   }
 
-  const grantTelegramId = normalizeTelegramId(claimed.telegram_id) ?? resolvedTelegramId
-  const grantPlanId = resolvePlanId(claimed.plan_id, planId) ?? planId
+  const grantTelegramId =
+    resolveTelegramIdForGrant({ rowTelegramId: claimed.telegram_id }) ?? resolvedTelegramId
+  const grantPlanId =
+    resolvePlanIdForGrant({ rowPlanId: claimed.plan_id }) ?? planId
   const grantDurationDays = (await getPlanDurationDays(grantPlanId)) ?? durationDays
 
   await ensureUser(grantTelegramId)
@@ -373,6 +369,12 @@ async function grantPremiumByPaymentId(
   try {
     const activeUntil = await extendPremiumActiveUntil(grantTelegramId, grantPlanId, grantDurationDays)
     await finalizePaymentGrant(paymentId)
+    console.log('[YooKassa] grantPremium: success', {
+      paymentId,
+      telegramId: grantTelegramId,
+      planId: grantPlanId,
+      activeUntil: activeUntil.toISOString(),
+    })
     return { granted: true, telegramId: grantTelegramId, planId: grantPlanId, activeUntil }
   } catch (e) {
     await releasePaymentGrantClaim(paymentId).catch((releaseErr) => {

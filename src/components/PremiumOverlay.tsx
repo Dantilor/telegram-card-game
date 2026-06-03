@@ -307,28 +307,6 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           )}
         </div>
 
-        <p className="premium-overlay__footer">
-          Вы можете продолжить играть бесплатно или оформить Premium-подписку
-        </p>
-        <p className="premium-overlay__legal">
-          Оплачивая Premium, вы соглашаетесь с{' '}
-          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('terms') }}>
-            Условиями использования
-          </button>
-          ,{' '}
-          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('privacy') }}>
-            Политикой конфиденциальности
-          </button>
-          ,{' '}
-          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('premium') }}>
-            Условиями Premium
-          </button>
-          {' '}и{' '}
-          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('adultPolicy') }}>
-            Политикой доступа к категориям 18+
-          </button>
-          .
-        </p>
         <button
           type="button"
           className="btn btn--primary premium-overlay__btn premium-overlay__btn--buy"
@@ -345,16 +323,44 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         >
           {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
         </button>
-        <button
-          type="button"
-          className="btn btn--ghost premium-overlay__btn premium-overlay__btn--dismiss"
-          onClick={() => {
-            haptic('light')
-            onClose()
-          }}
-        >
-          {asPage ? 'Назад' : 'Понятно'}
-        </button>
+
+        <div className="premium-overlay__bottom">
+          <p className="premium-overlay__footer">
+            Вы можете продолжить играть бесплатно или оформить Premium-подписку
+          </p>
+          <p className="premium-overlay__legal">
+            Оплачивая Premium, вы соглашаетесь с{' '}
+            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('terms') }}>
+              Условиями использования
+            </button>
+            ,{' '}
+            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('privacy') }}>
+              Политикой конфиденциальности
+            </button>
+            ,{' '}
+            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('premium') }}>
+              Условиями Premium
+            </button>
+            {' '}и{' '}
+            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('adultPolicy') }}>
+              Политикой доступа к категориям 18+
+            </button>
+            .
+          </p>
+        </div>
+
+        {asPage && (
+          <button
+            type="button"
+            className="btn btn--ghost premium-overlay__btn premium-overlay__btn--dismiss"
+            onClick={() => {
+              haptic('light')
+              onClose()
+            }}
+          >
+            Назад
+          </button>
+        )}
       </div>
   )
 

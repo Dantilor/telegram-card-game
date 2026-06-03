@@ -205,7 +205,7 @@
 /* --- Тарифы --- */
 .premium-overlay__plans {
   margin: 1.35rem 0 1.15rem;
-  padding: 1.15rem 0.15rem 0.25rem;
+  padding: 1.15rem 0.5rem 0.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -216,7 +216,7 @@
 
 .premium-overlay__plans-title {
   margin: 0 0 0.85rem;
-  padding: 0 0.35rem;
+  padding: 0 0.5rem;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -235,7 +235,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  padding: 0 0.15rem;
+  padding: 0 0.5rem;
 }
 
 .premium-overlay__plan {
@@ -392,16 +392,27 @@
 }
 
 .premium-overlay__footer {
-  margin: 0 0 0.65rem;
-  padding: 0 0.2rem;
+  margin: 0 0 0.55rem;
+  padding: 0 0.35rem;
   font-size: 0.78rem;
   line-height: 1.45;
   color: var(--muted);
   text-align: center;
 }
 
+.premium-overlay__bottom {
+  margin-top: 0.5rem;
+  padding: 0.85rem 0.35rem max(0.25rem, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="neon-light"] .premium-overlay__bottom,
+[data-theme="soft-light"] .premium-overlay__bottom {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
 .premium-overlay__legal {
-  margin: 0 0 1.1rem;
+  margin: 0;
   padding: 0 0.15rem;
   font-size: 0.72rem;
   line-height: 1.5;
@@ -428,8 +439,8 @@
 }
 
 .premium-overlay__btn--buy {
-  margin-top: 0.25rem;
-  margin-bottom: 0.65rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.55rem;
   min-height: 3rem;
   font-size: 0.95rem;
   font-weight: 600;
@@ -439,5 +450,5 @@
 }
 
 .premium-overlay__btn--dismiss {
-  margin-top: 0.65rem;
+  margin-top: 0.75rem;
 }

@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { getDocument, DOCUMENT_TITLES, type DocumentType } from '../data/documents'
 import { getTelegramWebApp } from '../lib/telegram'
 import { haptic } from '../utils/telegram'
@@ -120,7 +121,7 @@ export default function DocumentModal({ isOpen, onClose, documentType }: Props) 
     }
   }
 
-  return (
+  return createPortal(
     <div
       className="document-modal"
       role="dialog"
@@ -161,6 +162,7 @@ export default function DocumentModal({ isOpen, onClose, documentType }: Props) 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

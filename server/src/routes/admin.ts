@@ -100,10 +100,11 @@ router.post('/grant', async (req: Request, res: Response) => {
       [telegramId]
     )
     await query(
-      `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
-       VALUES ($1, 'premium', $2)
-       ON CONFLICT (telegram_id, plan_id)
-       DO UPDATE SET active_until = EXCLUDED.active_until`,
+      `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
+       VALUES ($1, 'premium', $2, now())
+       ON CONFLICT (telegram_id) DO UPDATE SET
+         plan_id = EXCLUDED.plan_id,
+         active_until = EXCLUDED.active_until`,
       [telegramId, activeUntil]
     )
 
@@ -139,7 +140,7 @@ router.post('/revoke', async (req: Request, res: Response) => {
     }
 
     await query(
-      "DELETE FROM subscriptions WHERE telegram_id = $1 AND plan_id = 'premium'",
+      'DELETE FROM subscriptions WHERE telegram_id = $1',
       [telegramId]
     )
 
@@ -161,8 +162,7 @@ router.get('/user/:telegramId', async (req: Request, res: Response) => {
     const res_ = await query<{ telegram_id: number; created_at: Date; active_until: Date | null }>(
       `SELECT u.telegram_id, u.created_at, s.active_until
        FROM users u
-       LEFT JOIN subscriptions s
-         ON s.telegram_id = u.telegram_id AND s.plan_id = 'premium'
+       LEFT JOIN subscriptions s ON s.telegram_id = u.telegram_id
        WHERE u.telegram_id = $1`,
       [telegramId]
     )

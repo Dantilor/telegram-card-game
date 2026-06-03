@@ -2,7 +2,12 @@ import { Router, Request, Response } from 'express'
 import { randomUUID } from 'node:crypto'
 import { verifyInitData } from '../telegram/verifyInitData.js'
 import { query } from '../db.js'
-import { ensureUser, extendPremiumActiveUntil } from '../services/subscriptions.js'
+import {
+  ensureUser,
+  extendPremiumActiveUntil,
+  getPlanDurationDays,
+  logPgError,
+} from '../services/subscriptions.js'
 import { planReceiptDescription } from '../services/plans.js'
 
 function toInitDataString(v: unknown): string {
@@ -92,7 +97,9 @@ async function handleCreatePayment(req: Request, res: Response) {
 
   try {
     const planRow = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
-      `SELECT plan_id, title, price_rub, duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
+      `SELECT COALESCE(plan_id, id) AS plan_id, title, price_rub, duration_days FROM plans
+       WHERE is_active = true AND (plan_id = $1 OR id = $1)
+       LIMIT 1`,
       [planId.trim()]
     )
     const plan = planRow.rows[0]
@@ -182,13 +189,102 @@ async function handleCreatePayment(req: Request, res: Response) {
   }
 }
 
+type PaymentGrantRow = {
+  id: number
+  status: string
+  telegram_id: number | null
+  plan_id: string | null
+  premium_granted_at: Date | null
+}
+
 type GrantPremiumResult =
   | { granted: true; telegramId: number; planId: string; activeUntil: Date }
-  | { granted: false; alreadyDone?: boolean }
+  | { granted: false; alreadyDone?: boolean; reason?: string }
+
+function logGrantFailure(paymentId: string, reason: string, details: Record<string, unknown>): void {
+  console.error(`[YooKassa] grantPremium: ${reason} paymentId=${paymentId}`, details)
+}
+
+async function findPaymentGrantRow(paymentId: string): Promise<PaymentGrantRow | undefined> {
+  const existing = await query<PaymentGrantRow>(
+    `SELECT id, status, telegram_id, plan_id, premium_granted_at
+     FROM payments
+     WHERE provider_payment_charge_id = $1
+     LIMIT 1`,
+    [paymentId]
+  )
+  if (existing.rows[0]) return existing.rows[0]
+
+  try {
+    const byPayload = await query<PaymentGrantRow>(
+      `SELECT id, status, telegram_id, plan_id, premium_granted_at
+       FROM payments
+       WHERE invoice_payload::text LIKE $1
+       LIMIT 1`,
+      [`%${paymentId}%`]
+    )
+    return byPayload.rows[0]
+  } catch {
+    return undefined
+  }
+}
+
+/** Атомарно «захватывает» платёж для выдачи premium. Возвращает строку только один раз на paymentId. */
+async function claimPaymentForPremiumGrant(paymentId: string): Promise<PaymentGrantRow | null> {
+  const res = await query<PaymentGrantRow>(
+    `UPDATE payments
+     SET premium_granted_at = now()
+     WHERE provider_payment_charge_id = $1
+       AND premium_granted_at IS NULL
+     RETURNING id, status, telegram_id, plan_id, premium_granted_at`,
+    [paymentId]
+  )
+  return res.rows[0] ?? null
+}
+
+async function releasePaymentGrantClaim(paymentId: string): Promise<void> {
+  await query(
+    `UPDATE payments
+     SET premium_granted_at = NULL
+     WHERE provider_payment_charge_id = $1
+       AND premium_granted_at IS NOT NULL`,
+    [paymentId]
+  )
+}
+
+async function finalizePaymentGrant(paymentId: string): Promise<void> {
+  await query(
+    `UPDATE payments
+     SET status = 'succeeded'
+     WHERE provider_payment_charge_id = $1`,
+    [paymentId]
+  )
+}
+
+async function ensurePaymentRowForGrant(
+  paymentId: string,
+  telegramId: number,
+  planId: string
+): Promise<void> {
+  await query(
+    `INSERT INTO payments (
+       telegram_id,
+       plan_id,
+       provider,
+       provider_payment_charge_id,
+       status,
+       currency
+     )
+     VALUES ($1, $2, 'yookassa', $3, 'pending', 'RUB')
+     ON CONFLICT (provider, provider_payment_charge_id) DO NOTHING`,
+    [telegramId, planId, paymentId]
+  )
+}
 
 /**
  * Общая логика выдачи premium по paymentId. Используется в webhook и confirm.
- * Идемпотентно: если payments уже succeeded — просто возвращает alreadyDone.
+ * Идемпотентно: premium выдаётся один раз на provider_payment_charge_id (premium_granted_at).
+ * Старые платежи со status=succeeded, но без premium_granted_at, можно обработать повторно.
  */
 async function grantPremiumByPaymentId(
   paymentId: string,
@@ -201,57 +297,81 @@ async function grantPremiumByPaymentId(
   const metaTgRaw = meta.telegram_id ?? meta.telegramId ?? meta.userId
   const metaPlanId = (meta.plan_id ?? meta.planId)?.trim() || null
 
-  let row: { id: number; status: string; telegram_id: number | null; plan_id: string | null } | undefined
-  const existing = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
-    `SELECT id, status, telegram_id, plan_id FROM payments
-     WHERE provider_payment_charge_id = $1 LIMIT 1`,
-    [paymentId]
-  )
-  row = existing.rows[0]
-
-  if (!row) {
-    try {
-      const byPayload = await query<{ id: number; status: string; telegram_id: number | null; plan_id: string | null }>(
-        `SELECT id, status, telegram_id, plan_id FROM payments
-         WHERE invoice_payload::text LIKE $1 LIMIT 1`,
-        [`%${paymentId}%`]
-      )
-      row = byPayload.rows[0]
-    } catch {
-      // ignore
-    }
+  const existingRow = await findPaymentGrantRow(paymentId)
+  if (existingRow?.premium_granted_at) {
+    console.log('[YooKassa] grantPremium: already processed', {
+      paymentId,
+      premiumGrantedAt: existingRow.premium_granted_at.toISOString(),
+      status: existingRow.status,
+    })
+    return { granted: false, alreadyDone: true, reason: 'already processed' }
   }
 
-  if (row?.status === 'succeeded') {
-    return { granted: false, alreadyDone: true }
-  }
-
-  const telegramId = row?.telegram_id ?? (opts.bodyTelegramId ?? (metaTgRaw ? parseInt(String(metaTgRaw), 10) : NaN))
-  const planId = row?.plan_id ?? metaPlanId
+  const telegramId = existingRow?.telegram_id ?? (opts.bodyTelegramId ?? (metaTgRaw ? parseInt(String(metaTgRaw), 10) : NaN))
+  const planId = existingRow?.plan_id ?? metaPlanId
   const resolvedTelegramId = Number.isFinite(telegramId) ? (telegramId as number) : null
 
   if (!resolvedTelegramId || !planId) {
-    return { granted: false }
+    logGrantFailure(paymentId, 'missing telegramId or planId', {
+      hasRow: !!existingRow,
+      rowStatus: existingRow?.status ?? null,
+      rowTelegramId: existingRow?.telegram_id ?? null,
+      rowPlanId: existingRow?.plan_id ?? null,
+      metaTelegramId: metaTgRaw ?? null,
+      metaPlanId,
+      resolvedTelegramId,
+      planId,
+    })
+    return { granted: false, reason: 'missing telegramId or planId' }
   }
 
-  const planRow = await query<{ duration_days: number }>(
-    `SELECT duration_days FROM plans WHERE plan_id = $1 AND is_active = true`,
-    [planId]
-  )
-  const plan = planRow.rows[0]
-  if (!plan) {
-    return { granted: false }
+  const durationDays = await getPlanDurationDays(planId)
+  if (durationDays == null) {
+    logGrantFailure(paymentId, 'plan not found or inactive', {
+      planId,
+      resolvedTelegramId,
+    })
+    return { granted: false, reason: 'plan not found' }
   }
 
-  await query(
-    `UPDATE payments SET status = 'succeeded' WHERE provider_payment_charge_id = $1`,
-    [paymentId]
-  )
+  if (!existingRow) {
+    await ensurePaymentRowForGrant(paymentId, resolvedTelegramId, planId)
+  }
 
-  await ensureUser(resolvedTelegramId)
-  const activeUntil = await extendPremiumActiveUntil(resolvedTelegramId, plan.duration_days)
+  const claimed = await claimPaymentForPremiumGrant(paymentId)
+  if (!claimed) {
+    const again = await findPaymentGrantRow(paymentId)
+    if (again?.premium_granted_at) {
+      console.log('[YooKassa] grantPremium: already processed (concurrent webhook)', {
+        paymentId,
+        premiumGrantedAt: again.premium_granted_at.toISOString(),
+      })
+      return { granted: false, alreadyDone: true, reason: 'already processed' }
+    }
+    logGrantFailure(paymentId, 'claim failed', {
+      resolvedTelegramId,
+      planId,
+    })
+    return { granted: false, reason: 'claim failed' }
+  }
 
-  return { granted: true, telegramId: resolvedTelegramId, planId, activeUntil }
+  const grantTelegramId = claimed.telegram_id ?? resolvedTelegramId
+  const grantPlanId = claimed.plan_id ?? planId
+  const grantDurationDays = (await getPlanDurationDays(grantPlanId)) ?? durationDays
+
+  await ensureUser(grantTelegramId)
+
+  try {
+    const activeUntil = await extendPremiumActiveUntil(grantTelegramId, grantPlanId, grantDurationDays)
+    await finalizePaymentGrant(paymentId)
+    return { granted: true, telegramId: grantTelegramId, planId: grantPlanId, activeUntil }
+  } catch (e) {
+    await releasePaymentGrantClaim(paymentId).catch((releaseErr) => {
+      logPgError('[YooKassa] grantPremium: failed to release claim', releaseErr)
+    })
+    logPgError('[YooKassa] grantPremium: subscription upsert failed', e)
+    throw e
+  }
 }
 
 async function handleWebhook(req: Request, res: Response) {
@@ -337,18 +457,16 @@ async function handleWebhook(req: Request, res: Response) {
       }
 
       if (result.alreadyDone) {
+        console.log('[YooKassa] webhook: already processed paymentId=', pid)
         return
       }
 
-      // Платёж прошёл, но premium не выдан — фиксируем succeeded для аудита
-      await query(
-        `UPDATE payments SET status = 'succeeded' WHERE provider_payment_charge_id = $1`,
-        [pid]
-      ).catch(() => {})
-
-      console.error('[YooKassa] webhook: failed to grant premium paymentId=', pid)
+      console.error('[YooKassa] webhook: failed to grant premium', {
+        paymentId: pid,
+        reason: result.reason ?? 'unknown',
+      })
     } catch (e) {
-      console.error('[YooKassa] webhook error:', e)
+      logPgError('[YooKassa] webhook error', e)
     }
   }
 
@@ -436,7 +554,7 @@ async function handleConfirm(req: Request, res: Response) {
 
     res.status(400).json({ ok: false, error: 'Cannot resolve telegramId or planId' })
   } catch (e) {
-    console.error('[YooKassa] confirm error:', e)
+    logPgError('[YooKassa] confirm error', e)
     res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
 }

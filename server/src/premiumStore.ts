@@ -47,8 +47,8 @@ export async function getActiveUntilDb(telegramId: number): Promise<Date | null>
   try {
     const query = await getQuery()
     const res = await query<{ active_until: Date }>(
-      `SELECT active_until FROM subscriptions WHERE telegram_id = $1 AND plan_id = $2`,
-      [telegramId, DEFAULT_PLAN_ID]
+      `SELECT active_until FROM subscriptions WHERE telegram_id = $1 LIMIT 1`,
+      [telegramId]
     )
     const row = res.rows[0]
     return row ? new Date(row.active_until) : null
@@ -154,9 +154,11 @@ export async function setPremiumWithPersistence(
         [telegramId]
       )
       await query(
-        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = $3`,
+        `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (telegram_id) DO UPDATE SET
+           plan_id = EXCLUDED.plan_id,
+           active_until = EXCLUDED.active_until`,
         [telegramId, DEFAULT_PLAN_ID, newUntil]
       )
     } catch (e) {
@@ -178,8 +180,8 @@ async function getPremiumFromDb(telegramId: number): Promise<{ premiumUntil: num
   try {
     const query = await getQuery()
     const res = await query<{ active_until: Date; plan_id: string }>(
-      `SELECT active_until, plan_id FROM subscriptions WHERE telegram_id = $1 AND plan_id = $2`,
-      [telegramId, DEFAULT_PLAN_ID]
+      `SELECT active_until, plan_id FROM subscriptions WHERE telegram_id = $1 LIMIT 1`,
+      [telegramId]
     )
     const row = res.rows[0]
     if (!row) return null
@@ -252,9 +254,11 @@ export async function adminGrantPremium(
         [telegramId]
       )
       await query(
-        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = $3`,
+        `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (telegram_id) DO UPDATE SET
+           plan_id = EXCLUDED.plan_id,
+           active_until = EXCLUDED.active_until`,
         [telegramId, DEFAULT_PLAN_ID, newUntil]
       )
     } catch (e) {
@@ -281,9 +285,11 @@ export async function adminRevokePremium(telegramId: number): Promise<void> {
         [telegramId]
       )
       await query(
-        `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (telegram_id, plan_id) DO UPDATE SET active_until = $3`,
+        `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (telegram_id) DO UPDATE SET
+           plan_id = EXCLUDED.plan_id,
+           active_until = EXCLUDED.active_until`,
         [telegramId, DEFAULT_PLAN_ID, now]
       )
     } catch (e) {

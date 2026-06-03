@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
 import { query } from '../db.js'
 
-const PREMIUM_PLAN_ID = 'premium'
 const QUERY_TIMEOUT_MS = 8000
 const isDev = process.env.NODE_ENV !== 'production'
 
@@ -44,8 +43,10 @@ router.get('/premium-status', async (req: Request, res: Response) => {
 
     const queryPromise = query<{ active_until: Date }>(
       `SELECT active_until FROM subscriptions
-       WHERE telegram_id = $1 AND plan_id = $2`,
-      [telegram_id, PREMIUM_PLAN_ID]
+       WHERE telegram_id = $1
+       ORDER BY active_until DESC
+       LIMIT 1`,
+      [telegram_id]
     )
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Query timeout')), QUERY_TIMEOUT_MS)

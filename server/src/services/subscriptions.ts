@@ -2,6 +2,21 @@ import { query } from '../db.js'
 
 const DAYS_6_MONTHS = 180
 
+export function logPgError(prefix: string, e: unknown): void {
+  if (e instanceof Error) {
+    console.error(prefix, e.message)
+    if (e.stack) console.error(e.stack)
+    return
+  }
+  if (e && typeof e === 'object') {
+    const err = e as { message?: string; code?: string; detail?: string; hint?: string }
+    const parts = [err.message, err.code && `code=${err.code}`, err.detail && `detail=${err.detail}`, err.hint && `hint=${err.hint}`].filter(Boolean)
+    console.error(prefix, parts.join(' | '))
+    return
+  }
+  console.error(prefix, e)
+}
+
 /**
  * Try to save payment; returns false if duplicate (skip subscription update).
  * Uses INSERT; on UNIQUE conflict (provider, charge_id) returns false.
@@ -75,30 +90,28 @@ export async function upsertSubscription(
   activeUntil: Date
 ): Promise<void> {
   await query(
-    `INSERT INTO subscriptions (telegram_id, plan_id, active_until)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (telegram_id, plan_id)
-     DO UPDATE SET active_until = EXCLUDED.active_until`,
+    `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
+     VALUES ($1, $2, $3, now())
+     ON CONFLICT (telegram_id) DO UPDATE SET
+       plan_id = EXCLUDED.plan_id,
+       active_until = EXCLUDED.active_until`,
     [telegramId, planId, activeUntil]
   )
 }
 
-export async function getActiveSubscription(
-  telegramId: number,
-  planId: string
-): Promise<Date | null> {
+export async function getActiveSubscription(telegramId: number): Promise<Date | null> {
   const res = await query<{ active_until: Date }>(
     `SELECT active_until FROM subscriptions
-     WHERE telegram_id = $1 AND plan_id = $2
+     WHERE telegram_id = $1
      LIMIT 1`,
-    [telegramId, planId]
+    [telegramId]
   )
   const row = res.rows[0]
   return row ? new Date(row.active_until) : null
 }
 
 /**
- * Последняя по дате подписка пользователя (без фильтра по plan_id).
+ * Последняя по дате подписка пользователя.
  * premium в /api/me считают как active_until != null && active_until > now().
  */
 export async function getLatestActiveUntil(telegramId: number): Promise<Date | null> {
@@ -114,23 +127,55 @@ export async function getLatestActiveUntil(telegramId: number): Promise<Date | n
   return row ? new Date(row.active_until) : null
 }
 
+export async function getPlanDurationDays(planId: string): Promise<number | null> {
+  const res = await query<{ duration_days: number }>(
+    `SELECT duration_days FROM plans
+     WHERE is_active = true AND (plan_id = $1 OR id = $1)
+     LIMIT 1`,
+    [planId]
+  )
+  const row = res.rows[0]
+  return row?.duration_days ?? null
+}
+
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date)
   d.setDate(d.getDate() + days)
   return d
 }
 
-/** Продлевает premium: новые дни добавляются к текущему active_until, если он ещё активен. */
+/**
+ * Продлевает premium: новые дни добавляются к active_until, если подписка ещё активна.
+ * Upsert по telegram_id (одна строка на пользователя).
+ */
 export async function extendPremiumActiveUntil(
   telegramId: number,
+  planId: string,
   durationDays: number
 ): Promise<Date> {
-  const now = new Date()
-  const latest = await getLatestActiveUntil(telegramId)
-  const base = latest && latest > now ? latest : now
-  const activeUntil = addDays(base, durationDays)
-  await upsertSubscription(telegramId, 'premium', activeUntil)
-  return activeUntil
+  try {
+    const res = await query<{ active_until: Date }>(
+      `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
+       VALUES ($1, $2, now() + ($3::int || ' days')::interval, now())
+       ON CONFLICT (telegram_id) DO UPDATE SET
+         plan_id = EXCLUDED.plan_id,
+         active_until = CASE
+           WHEN subscriptions.active_until > now()
+             THEN subscriptions.active_until + ($3::int || ' days')::interval
+           ELSE now() + ($3::int || ' days')::interval
+         END
+       RETURNING active_until`,
+      [telegramId, planId, durationDays]
+    )
+    const row = res.rows[0]
+    if (!row) {
+      throw new Error('Subscription upsert returned no rows')
+    }
+    return new Date(row.active_until)
+  } catch (e) {
+    logPgError('[subscriptions] extendPremiumActiveUntil failed', e)
+    throw e
+  }
 }
 
 export const PREMIUM_ENTITLEMENT_PLAN_ID = 'premium'

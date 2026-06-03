@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS payments (
   currency TEXT,
   telegram_payment_charge_id TEXT,
   provider_payment_charge_id TEXT,
+  premium_granted_at TIMESTAMPTZ,
   created_at TIMESTAMP DEFAULT now(),
   UNIQUE (provider, telegram_payment_charge_id),
   UNIQUE (provider, provider_payment_charge_id)

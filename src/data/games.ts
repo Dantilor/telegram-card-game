@@ -85,22 +85,6 @@ export const GAMES: Game[] = [
     status: 'ready',
     image: IMAGES.whoIsWho.png,
   },
-  {
-    id: 'ridiculous-auction',
-    title: 'Аукцион услуг',
-    emoji: '💸',
-    icon: 'auction',
-    description: 'Торги • Деньги\nНелепые лоты',
-    status: 'ready',
-  },
-  {
-    id: 'translator',
-    title: 'Переводчик',
-    emoji: '🗯️',
-    icon: 'translate',
-    description: 'Фразы • Переводы\nГолосование',
-    status: 'ready',
-  },
 ]
 
 export function getGameById(gameId: string): Game | undefined {

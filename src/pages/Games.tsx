@@ -24,8 +24,6 @@ const READY_GAME_ROUTES: Record<string, string> = {
   quiz: '/quiz',
   'truth-dare': '/truth-dare',
   sabotage: '/sabotage',
-  'ridiculous-auction': '/ridiculous-auction',
-  translator: '/translator',
 }
 
 function Games() {
@@ -43,8 +41,6 @@ function Games() {
     import('./QuizLayout')
     import('./TruthDareLayout')
     import('./WhoIsWhoLayout')
-    import('./RidiculousAuctionLayout')
-    import('./TranslatorLayout')
   }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)

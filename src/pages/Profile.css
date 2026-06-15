@@ -553,8 +553,88 @@
   }
 }
 
+.profile-page__container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+/* Планшет и ПК: центрируем колонку, не ломая мобильную вёрстку */
 @media (min-width: 640px) {
+  .profile-page__container {
+    max-width: 28rem;
+    margin-inline: auto;
+    padding-inline: clamp(0.5rem, 2vw, 1rem);
+  }
+
+  .profile-page__header {
+    margin-bottom: 1.35rem;
+  }
+
   .profile-shell {
-    max-width: 24rem;
+    gap: 1rem;
+  }
+
+  .profile-identity__photo,
+  .profile-identity__initials {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .profile-identity__initials {
+    font-size: 1.35rem;
+  }
+
+  .profile-menu__row {
+    min-height: 3.15rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .profile-menu__label {
+    font-size: 0.88rem;
+  }
+}
+
+/* Широкий экран: две колонки — профиль слева, меню справа */
+@media (min-width: 900px) {
+  .profile-page__container {
+    max-width: 56rem;
+    padding-inline: clamp(0.75rem, 3vw, 1.5rem);
+  }
+
+  .profile-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem 1.25rem;
+    align-items: start;
+  }
+
+  .profile-identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .profile-alert {
+    grid-column: 1 / -1;
+  }
+
+  .profile-pass {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .profile-menu:not(.profile-menu--support) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .profile-menu--support {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 0;
+  }
+
+  .profile-dev-id {
+    grid-column: 1 / -1;
   }
 }

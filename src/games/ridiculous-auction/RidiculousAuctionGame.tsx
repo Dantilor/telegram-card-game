@@ -52,6 +52,7 @@ function RidiculousAuctionGame() {
   const [sales, setSales] = useState<Sale[]>([])
 
   const currentLot = lots[roundIndex]
+  const lastSale = sales[sales.length - 1]
   const leader = useMemo(() => players.find((p) => p.id === leaderId) ?? null, [leaderId, players])
   const sortedPlayers = useMemo(
     () => [...players].sort((a, b) => b.balance - a.balance || b.wins - a.wins),
@@ -231,12 +232,12 @@ function RidiculousAuctionGame() {
         </section>
       )}
 
-      {screen === 'sold' && sales.at(-1) && (
+      {screen === 'sold' && lastSale && (
         <section className="auction-panel card">
           <span className="auction-hero__eyebrow">лот закрыт</span>
-          <h2>{sales.at(-1)?.lot.title}</h2>
-          {sales.at(-1)?.winnerName ? (
-            <p><b>{sales.at(-1)?.winnerName}</b> забирает обязательство за {sales.at(-1)?.price} ₽.</p>
+          <h2>{lastSale.lot.title}</h2>
+          {lastSale.winnerName ? (
+            <p><b>{lastSale.winnerName}</b> забирает обязательство за {lastSale.price} ₽.</p>
           ) : (
             <p>Лот ушёл без ставки. Компания делает вид, что так и было задумано.</p>
           )}

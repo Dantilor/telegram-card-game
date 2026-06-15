@@ -17,6 +17,17 @@ import './Games.css'
 const HERO_GAME_ID = 'card'
 const BOTTOM_HERO_GAME_ID = 'who-is-who'
 
+const READY_GAME_ROUTES: Record<string, string> = {
+  alias: '/alias',
+  activity: '/activity',
+  mafia: '/mafia',
+  quiz: '/quiz',
+  'truth-dare': '/truth-dare',
+  sabotage: '/sabotage',
+  'ridiculous-auction': '/ridiculous-auction',
+  translator: '/translator',
+}
+
 function Games() {
   const navigate = useNavigate()
   const handleBack = useBack('/')
@@ -32,6 +43,8 @@ function Games() {
     import('./QuizLayout')
     import('./TruthDareLayout')
     import('./WhoIsWhoLayout')
+    import('./RidiculousAuctionLayout')
+    import('./TranslatorLayout')
   }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)
@@ -93,48 +106,16 @@ function Games() {
         </Link>
       )
     }
-    if (isReady && game.id === 'alias') {
+
+    const route = READY_GAME_ROUTES[game.id]
+    if (isReady && route) {
       return (
-        <Link key={game.id} to="/alias" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
+        <Link key={game.id} to={route} className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
           {cardContent}
         </Link>
       )
     }
-    if (isReady && game.id === 'activity') {
-      return (
-        <Link key={game.id} to="/activity" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
-          {cardContent}
-        </Link>
-      )
-    }
-    if (isReady && game.id === 'mafia') {
-      return (
-        <Link key={game.id} to="/mafia" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
-          {cardContent}
-        </Link>
-      )
-    }
-    if (isReady && game.id === 'quiz') {
-      return (
-        <Link key={game.id} to="/quiz" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
-          {cardContent}
-        </Link>
-      )
-    }
-    if (isReady && game.id === 'truth-dare') {
-      return (
-        <Link key={game.id} to="/truth-dare" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
-          {cardContent}
-        </Link>
-      )
-    }
-    if (isReady && game.id === 'sabotage') {
-      return (
-        <Link key={game.id} to="/sabotage" className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
-          {cardContent}
-        </Link>
-      )
-    }
+
     return (
       <button
         key={game.id}

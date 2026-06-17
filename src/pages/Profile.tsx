@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef } from 'react'
+import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
 import type { DocumentType } from '../data/documents'
 import { haptic, getTgUser, getInitData } from '../utils/telegram'
-import ThemeToggle from '../components/ThemeToggle'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import DocumentModal from '../components/DocumentModal'
 import './Profile.css'
@@ -27,6 +28,7 @@ function getInitials(firstName?: string, lastName?: string): string {
 }
 
 function Profile() {
+  const handleBack = useBack('/')
   const user = getTgUser()
   const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
   const initData = getInitData()
@@ -81,15 +83,12 @@ function Profile() {
 
   return (
     <div className="profile-page" aria-label="Профиль">
-      <div className="profile-page__bg" aria-hidden />
+      <div className="profile-page__header">
+        <HomeButton className="profile-page__nav-btn" />
+        <BackButton onClick={handleBack} className="profile-page__nav-btn profile-page__back" />
+      </div>
 
-      <div className="profile-page__container">
-        <div className="profile-page__header">
-          <HomeButton />
-          <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
-        </div>
-
-        <div className="profile-shell">
+      <div className="profile-shell">
         <section className="profile-identity">
           <div className="profile-identity__glow" aria-hidden />
           <div className="profile-identity__avatar-wrap">
@@ -240,7 +239,6 @@ function Profile() {
         {import.meta.env.DEV && userId != null && (
           <p className="profile-dev-id">id {userId}</p>
         )}
-        </div>
       </div>
 
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />

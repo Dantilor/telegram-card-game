@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
-import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
-import HomeButton from '../components/HomeButton'
+import MafiaPageNav from '../components/MafiaPageNav'
+import MafiaHostLine from '../components/MafiaHostLine'
+import { HOST_RULES } from '../games/mafia/hostScript'
 import { MafiaNightStepLayout } from '../components/mafia/MafiaNightStepLayout'
 import './MafiaNight.css'
 
@@ -12,7 +13,6 @@ function MafiaNight() {
   const location = useLocation()
   const { state, dispatch } = useMafiaGame()
   const [showConfirm, setShowConfirm] = useState(false)
-  const handleBack = useBack('/mafia/roles')
 
   // Один переход на одно изменение фазы: навигация только если мы ещё не на целевом path (защита от StrictMode и двойного вызова)
   useEffect(() => {
@@ -31,14 +31,9 @@ function MafiaNight() {
 
   if (!state.players.length) {
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={() => navigate('/mafia')}>
-            ← Назад
-          </button>
-        </div>
-        <div className="mafia-night__intro card">
+      <div className="mafia-page mafia-page--night mafia-night">
+        <MafiaPageNav />
+        <div className="mafia-night__intro mafia-page__panel mafia-page__panel--glow-a">
           <p className="mafia-night__intro-text">Переход в меню…</p>
         </div>
       </div>
@@ -69,18 +64,16 @@ function MafiaNight() {
   // night_intro — "Ночь. Все закрывают глаза" + кнопка Начать
   if (state.phase === 'night_intro') {
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-page--night mafia-night mafia-night--intro-enter">
+        <MafiaPageNav />
+        <MafiaHostLine hostName={state.hostName}>
+          «Город засыпает». Все закрывают глаза. Начинается ночная фаза.
+        </MafiaHostLine>
         <MafiaNightStepLayout
-          stepTitle=""
+          stepTitle={`Ночь ${state.roundNumber}`}
           roleTitle="Ночь"
-          description="В городе GameNight Cards гаснут фонари. Жители в спешке закрывают ставни, надеясь, что завтрашний рассвет они встретят в том же составе."
-          primaryButtonLabel="Начать"
+          description={HOST_RULES.nightOrder}
+          primaryButtonLabel="Начать ночь"
           primaryButtonOnClick={() => {
             hapticSelection()
             if (mafia.length > 0) {
@@ -101,17 +94,15 @@ function MafiaNight() {
   // night_mafia_intro — перехват перед выбором мафии
   if (state.phase === 'night_mafia_intro' && mafia.length > 0) {
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-page--night mafia-night">
+        <MafiaPageNav />
+        <MafiaHostLine hostName={state.hostName}>
+          «Мафия, просыпайтесь!» Выберите жертву. Доктор и шериф ходят после вас.
+        </MafiaHostLine>
         <MafiaNightStepLayout
           stepTitle={`Ночь — шаг 1 / ${nightSteps.length}`}
           roleTitle="Ход: Мафия"
-          description="Но не всем сегодня до сна. Холодный блеск стали и запах пороха… Просыпается Мафия."
+          description="Мафия выбирает жертву. Ведущий фиксирует выбор."
           primaryButtonLabel="Начать"
           primaryButtonOnClick={() => {
             hapticSelection()
@@ -130,13 +121,8 @@ function MafiaNight() {
 
     if (showConfirm && hasSelection) {
       return (
-        <div className="mafia-night">
-          <div className="mafia-night__top">
-            <HomeButton />
-            <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-              ← Назад
-            </button>
-          </div>
+        <div className="mafia-page mafia-page--night mafia-night">
+          <MafiaPageNav />
           <MafiaNightStepLayout
             stepTitle={`Ночь — шаг 1 / ${nightSteps.length}`}
             statusBlock={
@@ -158,13 +144,8 @@ function MafiaNight() {
     }
 
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-page--night mafia-night">
+        <MafiaPageNav />
         <MafiaNightStepLayout
           stepTitle={`Ночь — шаг 1 / ${nightSteps.length}`}
           roleTitle="Мафия, выберите жертву"
@@ -179,7 +160,7 @@ function MafiaNight() {
             <button
               key={p.id}
               type="button"
-              className={`btn card mafia-night__target ${state.nightAction.mafiaTarget === p.id ? 'is-active' : ''}`}
+              className={`mafia-page__target ${state.nightAction.mafiaTarget === p.id ? 'is-selected' : ''}`}
               onClick={() => {
                 hapticSelection()
                 dispatch({ type: 'SET_NIGHT_MAFIA', target: p.id })
@@ -196,13 +177,8 @@ function MafiaNight() {
   // night_doctor_intro
   if (state.phase === 'night_doctor_intro' && doctor) {
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-page--night mafia-night">
+        <MafiaPageNav />
         <MafiaNightStepLayout
           stepTitle={`Ночь — шаг 2 / ${nightSteps.length}`}
           roleTitle="Ход: Доктор"
@@ -224,13 +200,8 @@ function MafiaNight() {
 
     if (showConfirm && hasSelection) {
       return (
-        <div className="mafia-night">
-          <div className="mafia-night__top">
-            <HomeButton />
-            <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-              ← Назад
-            </button>
-          </div>
+        <div className="mafia-page mafia-page--night mafia-night">
+          <MafiaPageNav />
           <MafiaNightStepLayout
             stepTitle={`Ночь — шаг 2 / ${nightSteps.length}`}
             statusBlock={
@@ -252,13 +223,8 @@ function MafiaNight() {
     }
 
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-page--night mafia-night">
+        <MafiaPageNav />
         <MafiaNightStepLayout
           stepTitle={`Ночь — шаг 2 / ${nightSteps.length}`}
           roleTitle="Доктор, кого лечить?"
@@ -273,7 +239,7 @@ function MafiaNight() {
             <button
               key={p.id}
               type="button"
-              className={`btn card mafia-night__target ${state.nightAction.doctorTarget === p.id ? 'is-active' : ''}`}
+              className={`mafia-page__target ${state.nightAction.doctorTarget === p.id ? 'is-selected' : ''}`}
               onClick={() => {
                 hapticSelection()
                 dispatch({ type: 'SET_NIGHT_DOCTOR', target: p.id })
@@ -290,13 +256,8 @@ function MafiaNight() {
   // night_sheriff_intro
   if (state.phase === 'night_sheriff_intro' && sheriff) {
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-page--night mafia-night">
+        <MafiaPageNav />
         <MafiaNightStepLayout
           stepTitle={`Ночь — шаг 3 / ${nightSteps.length}`}
           roleTitle="Ход: Шериф"
@@ -321,13 +282,8 @@ function MafiaNight() {
 
     if (showConfirm && hasSelection) {
       return (
-        <div className="mafia-night">
-          <div className="mafia-night__top">
-            <HomeButton />
-            <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-              ← Назад
-            </button>
-          </div>
+        <div className="mafia-page mafia-page--night mafia-night">
+          <MafiaPageNav />
           <MafiaNightStepLayout
             stepTitle={`Ночь — шаг 3 / ${nightSteps.length}`}
             statusBlock={
@@ -351,13 +307,8 @@ function MafiaNight() {
     }
 
     return (
-      <div className="mafia-night">
-        <div className="mafia-night__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-page--night mafia-night">
+        <MafiaPageNav />
         <MafiaNightStepLayout
           stepTitle={`Ночь — шаг 3 / ${nightSteps.length}`}
           roleTitle="Шериф, кого проверить?"
@@ -372,7 +323,7 @@ function MafiaNight() {
             <button
               key={p.id}
               type="button"
-              className={`btn card mafia-night__target ${sheriffTarget === p.id ? 'is-active' : ''}`}
+              className={`mafia-page__target ${sheriffTarget === p.id ? 'is-selected' : ''}`}
               disabled={hasSelection}
               onClick={() => {
                 if (hasSelection) return
@@ -401,13 +352,8 @@ function MafiaNight() {
     phase === 'round_summary' ||
     phase === 'result'
   return (
-    <div className="mafia-night">
-      <div className="mafia-night__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost mafia-night__back" onClick={handleBack}>
-          ← Назад
-        </button>
-      </div>
+    <div className="mafia-page mafia-page--night mafia-night">
+      <MafiaPageNav />
       <MafiaNightStepLayout
         stepTitle=""
         roleTitle="Переход"

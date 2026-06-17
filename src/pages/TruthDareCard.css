@@ -1,66 +1,71 @@
 .truth-dare-card {
-  padding: clamp(0.75rem, 3vw, 1rem);
-  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
-  min-height: var(--app-height, 100vh);
-}
-
-.truth-dare-card__top {
+  flex: 1 1 auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.truth-dare-card__back {
-  flex-shrink: 0;
-}
-
-.truth-dare-card__level {
-  margin-bottom: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--muted);
+  flex-direction: column;
+  min-height: 0;
 }
 
 .truth-dare-card__card {
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  min-height: 11rem;
+  margin-bottom: 1rem;
+  padding: 1.5rem 1.1rem;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .truth-dare-card__card {
+    animation: truth-dare-card-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes truth-dare-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .truth-dare-card__type {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  color: var(--neonPink);
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: var(--game-shell-readable-accent);
 }
 
 .truth-dare-card__text {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: clamp(1.05rem, 3.5vw, 1.25rem);
   line-height: 1.4;
-  color: var(--text);
+  font-weight: 600;
+  color: var(--game-shell-readable-text);
 }
 
 .truth-dare-card__actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.65rem;
   margin-bottom: 1rem;
-}
-
-.truth-dare-card__btn {
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-}
-
-.truth-dare-card__btn--refuse {
-  border-color: var(--danger);
-  color: var(--danger);
 }
 
 .truth-dare-card__tokens {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-top: auto;
+  padding-bottom: max(0.25rem, var(--safe-bottom));
 }
 
 .truth-dare-card__token-wrapper {
@@ -71,13 +76,23 @@
 }
 
 .truth-dare-card__token {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--game-shell-readable-muted);
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .truth-dare-card__token-hint {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--muted);
   text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .truth-dare-card__card {
+    animation: none;
+  }
 }

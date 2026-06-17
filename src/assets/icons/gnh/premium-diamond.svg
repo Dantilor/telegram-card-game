@@ -1,0 +1,21 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+  <linearGradient id="gnhNeon" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FF3FD8"/>
+    <stop offset="0.52" stop-color="#8B4DFF"/>
+    <stop offset="1" stop-color="#3B82FF"/>
+  </linearGradient>
+  <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="2.5" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+
+<path d="M15 22.5L25.5 10h21L57 22.5 36 62 15 22.5Z" fill="url(#gnhNeon)" opacity=".36" filter="url(#softGlow)"/>
+<path d="M15 22.5h42M25.5 10l10.5 52L46.5 10M15 22.5L36 62l21-39.5L46.5 10h-21L15 22.5Z" stroke="url(#gnhNeon)" stroke-width="3.2" stroke-linejoin="round"/>
+<path d="M25.5 10L31 22.5 36 10l5 12.5 5.5-12.5M31 22.5L36 62l5-39.5" stroke="#F5F7FF" stroke-opacity=".42" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

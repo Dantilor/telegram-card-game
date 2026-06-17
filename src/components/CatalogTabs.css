@@ -1,0 +1,59 @@
+.catalog-tabs {
+  margin: 0 0 1rem;
+  width: 100%;
+}
+
+.catalog-tabs__group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--games-card-bg, rgba(10, 16, 34, 0.88)) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--games-nav-btn-border, rgba(180, 90, 255, 0.28)) 70%, transparent);
+  box-shadow: var(--games-nav-btn-shadow, 0 4px 16px rgba(0, 0, 0, 0.12));
+}
+
+.catalog-tabs__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: clamp(0.82rem, 2.5vw, 0.92rem);
+  font-weight: 700;
+  font-family: inherit;
+  text-decoration: none;
+  color: var(--games-muted, #98a1c0);
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.catalog-tabs__btn--active {
+  color: var(--games-text, #f5f7ff);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--games-play-glow, #8b4dff) 55%, #fff 0%) 0%,
+    color-mix(in srgb, var(--games-play-glow, #8b4dff) 85%, #000 0%) 100%
+  );
+  border-color: color-mix(in srgb, var(--games-play-glow, #8b4dff) 35%, transparent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--games-play-glow, #8b4dff) 28%, transparent);
+}
+
+.catalog-tabs__btn:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .catalog-tabs__btn:not(.catalog-tabs__btn--active):hover {
+    color: var(--games-text, #f5f7ff);
+    background: color-mix(in srgb, var(--games-play-glow, #8b4dff) 8%, transparent);
+  }
+}

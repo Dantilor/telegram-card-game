@@ -5,6 +5,7 @@ import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './TruthDareTurn.css'
 
 function TruthDareTurn() {
@@ -40,19 +41,17 @@ function TruthDareTurn() {
   }
 
   return (
-    <div className="truth-dare-turn">
-      <div className="truth-dare-turn__top">
-        <button type="button" className="btn btn--ghost home-btn truth-dare-turn__back" onClick={handleBack}>
-          ←
-        </button>
-        <HomeButton />
+    <div className="game-page truth-dare-turn">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <div className="truth-dare-turn__meta">
-        <span>Ход {state.stepCount + 1} / {state.totalStepsTarget}</span>
-      </div>
+      <span className="game-page__progress">
+        Ход {state.stepCount + 1} / {state.totalStepsTarget}
+      </span>
 
-      <div className="truth-dare-turn__player card">
+      <div className="truth-dare-turn__player game-page__panel game-page__panel--glow-a">
         <h2 className="truth-dare-turn__name">{player.name}</h2>
         <div className="truth-dare-turn__stats">
           <span>Засчитано: {player.truthCounted + player.dareCounted}</span>
@@ -66,14 +65,14 @@ function TruthDareTurn() {
           <div className="truth-dare-turn__choices">
             <button
               type="button"
-              className="btn truth-dare-turn__choice-btn"
+              className="game-page__cta truth-dare-turn__choice--truth"
               onClick={() => handleChoice('truth')}
             >
               Правда (уровень 4)
             </button>
             <button
               type="button"
-              className="btn truth-dare-turn__choice-btn"
+              className="game-page__cta truth-dare-turn__choice--dare"
               onClick={() => handleChoice('dare')}
             >
               Действие (уровень 3)
@@ -84,14 +83,14 @@ function TruthDareTurn() {
         <div className="truth-dare-turn__choices">
           <button
             type="button"
-            className="btn truth-dare-turn__choice-btn truth-dare-turn__choice--truth"
+            className="game-page__cta truth-dare-turn__choice--truth"
             onClick={() => handleChoice('truth')}
           >
             Правда
           </button>
           <button
             type="button"
-            className="btn truth-dare-turn__choice-btn truth-dare-turn__choice--dare"
+            className="game-page__cta truth-dare-turn__choice--dare"
             onClick={() => handleChoice('dare')}
           >
             Действие

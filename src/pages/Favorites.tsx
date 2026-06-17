@@ -1,69 +1,123 @@
-import { useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocalState } from '../hooks/useLocalState'
 import { useBack } from '../hooks/useBack'
-import { usePremium } from '../contexts/PremiumContext'
+import { useTheme } from '../hooks/useTheme'
 import { defaultUserState, type UserState } from '../data/types'
 import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
-import { isFavoritesLocked } from '../utils/access'
+import { MODES, type ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
-import PremiumOverlay from '../components/PremiumOverlay'
+import BackButton from '../components/BackButton'
+import SmartImage from '../components/SmartImage'
+import iconFavoriteStar from '../assets/icons/gnh/action-favorite-star.svg'
+import iconLightFavorite from '../assets/icons/gnh-light-pro/light-favorite-star-pro.svg'
+import iconSunsetFavorite from '../assets/icons/gnh-sunset-pro/sunset-favorite-star-pro.svg'
+import iconCalmFavorite from '../assets/icons/gnh-calm-pro/calm-favorite-star-pro.svg'
+import iconChevronRight from '../assets/icons/gnh/chevron-right.svg'
+import iconLightChevron from '../assets/icons/gnh-light-pro/light-chevron-right-pro.svg'
+import iconSunsetChevron from '../assets/icons/gnh-sunset-pro/sunset-chevron-right-pro.svg'
+import iconCalmChevron from '../assets/icons/gnh-calm-pro/calm-chevron-right-pro.svg'
 import './Favorites.css'
+
+const STAR_BY_THEME = {
+  'neon-dark': iconFavoriteStar,
+  'neon-light': iconLightFavorite,
+  sunset: iconSunsetFavorite,
+  'minimal-calm': iconCalmFavorite,
+} as const
+
+const CHEVRON_BY_THEME = {
+  'neon-dark': iconChevronRight,
+  'neon-light': iconLightChevron,
+  sunset: iconSunsetChevron,
+  'minimal-calm': iconCalmChevron,
+} as const
+
+const DECK_BADGE: Partial<Record<string, { label: string; emoji: string }>> = {
+  aboutUs: { label: 'Для пар', emoji: '💞' },
+  feelings: { label: 'Настроение', emoji: '😊' },
+}
+
+const MODE_BADGE: Record<ModeId, { label: string; emoji: string }> = {
+  couples: { label: 'Для пар', emoji: '💞' },
+  dates: { label: 'Свидания', emoji: '💕' },
+  party: { label: 'Компания', emoji: '👥' },
+  adult: { label: '18+', emoji: '🔥' },
+  psychology: { label: 'Настроение', emoji: '🧠' },
+  lifeChoice: { label: 'Жизнь', emoji: '🎯' },
+}
 
 type FavoriteItem = {
   deckId: string
   deckTitle: string
+  modeId: ModeId
+  modeImage?: string
   questionIndex: number
   questionText: string
+  badge: { label: string; emoji: string }
+}
+
+function getDeckBadge(deckId: string, modeId: ModeId) {
+  return DECK_BADGE[deckId] ?? MODE_BADGE[modeId]
 }
 
 function Favorites() {
   const handleBack = useBack('/')
+  const [theme] = useTheme()
   const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
-  const { isPremium } = usePremium()
   const [search, setSearch] = useState('')
-  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
-  useEffect(() => {
-    if (isFavoritesLocked(isPremium)) {
-      setPremiumOverlayOpen(true)
-    }
-  }, [isPremium])
+  const starIcon = STAR_BY_THEME[theme]
+  const chevronIcon = CHEVRON_BY_THEME[theme]
 
-  const favorites = state.favorites ?? {}
-  const deckIds = Object.keys(favorites).filter((id) => {
-    const indices = favorites[id]
-    return Array.isArray(indices) && indices.length > 0
-  })
+  const items = useMemo(() => {
+    const favorites = state.favorites ?? {}
+    const deckIds = Object.keys(favorites).filter((id) => {
+      const indices = favorites[id]
+      return Array.isArray(indices) && indices.length > 0
+    })
 
-  const items: FavoriteItem[] = []
-  for (const deckId of deckIds) {
-    const full = getDeckFull(deckId)
-    const indices = favorites[deckId] as number[]
-    if (!full?.questions || !indices) continue
-    const title = full.title || getDeckFromIndex(deckId)?.title || deckId
-    for (const idx of indices) {
-      const text = full.questions[idx]
-      if (text != null && String(text).trim()) {
-        items.push({ deckId, deckTitle: title, questionIndex: idx, questionText: String(text).trim() })
+    const result: FavoriteItem[] = []
+    for (const deckId of deckIds) {
+      const full = getDeckFull(deckId)
+      const indexEntry = getDeckFromIndex(deckId)
+      const indices = favorites[deckId] as number[]
+      if (!full?.questions || !indices) continue
+
+      const modeId = (indexEntry?.modeId ?? 'party') as ModeId
+      const mode = MODES.find((m) => m.id === modeId)
+      const title = full.title || indexEntry?.title || deckId
+
+      for (const idx of indices) {
+        const text = full.questions[idx]
+        if (text != null && String(text).trim()) {
+          result.push({
+            deckId,
+            deckTitle: title,
+            modeId,
+            modeImage: mode?.image,
+            questionIndex: idx,
+            questionText: String(text).trim(),
+            badge: getDeckBadge(deckId, modeId),
+          })
+        }
       }
     }
-  }
+    return result
+  }, [state.favorites])
 
   const searchLower = search.trim().toLowerCase()
   const filtered =
     searchLower === ''
       ? items
-      : items.filter((i) => i.questionText.toLowerCase().includes(searchLower))
-
-  const byDeck = filtered.reduce<Record<string, FavoriteItem[]>>((acc, item) => {
-    const key = `${item.deckId}|${item.deckTitle}`
-    if (!acc[key]) acc[key] = []
-    acc[key]!.push(item)
-    return acc
-  }, {})
+      : items.filter(
+          (item) =>
+            item.questionText.toLowerCase().includes(searchLower) ||
+            item.deckTitle.toLowerCase().includes(searchLower) ||
+            item.badge.label.toLowerCase().includes(searchLower)
+        )
 
   const handleRemove = (deckId: string, questionIndex: number) => {
     haptic('light')
@@ -79,80 +133,102 @@ function Favorites() {
     })
   }
 
-  const handleClearAll = () => {
-    haptic('medium')
-    setState((prev) => ({ ...prev, favorites: {} }))
-  }
-
   return (
     <div className="favorites-page">
       <div className="favorites-page__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn favorites-page__back" onClick={handleBack}>
-          ← Назад
-        </button>
+        <HomeButton className="favorites-page__nav-btn" />
+        <BackButton onClick={handleBack} className="favorites-page__nav-btn favorites-page__back" />
       </div>
-      <h1 className="favorites-page__title">Моё избранное</h1>
+
+      <header className="favorites-page__header">
+        <h1 className="favorites-page__title">Моё избранное</h1>
+        {items.length > 0 && (
+          <p className="favorites-page__counter">
+            <img src={starIcon} alt="" className="favorites-page__counter-icon" decoding="async" aria-hidden />
+            <span>Сохранено: {items.length}</span>
+          </p>
+        )}
+      </header>
 
       {items.length === 0 ? (
-        <div className="favorites-page__empty card">
+        <div className="favorites-page__empty">
+          <span className="favorites-page__empty-star" aria-hidden>
+            <img src={starIcon} alt="" decoding="async" />
+          </span>
           <p className="favorites-page__empty-text">Пока нет избранных вопросов</p>
           <p className="favorites-page__empty-hint">Отмечай ⭐ при игре — они появятся здесь</p>
-          <Link to="/games" className="btn btn--primary favorites-page__empty-btn" onClick={() => haptic('light')}>
-            Выбрать игру
-          </Link>
         </div>
       ) : (
         <>
-          <div className="favorites-page__toolbar">
+          <label className="favorites-page__search-wrap">
+            <span className="favorites-page__search-icon" aria-hidden>⌕</span>
             <input
-              type="text"
-              className="favorites-page__search card"
-              placeholder="Поиск по тексту..."
+              type="search"
+              className="favorites-page__search"
+              placeholder="Поиск по вопросам..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              enterKeyHint="search"
             />
-            <button
-              type="button"
-              className="btn btn--ghost favorites-page__clear"
-              onClick={handleClearAll}
-            >
-              Очистить всё
-            </button>
-          </div>
+          </label>
 
-          <div className="favorites-page__list">
-            {Object.entries(byDeck).map(([key, deckItems]) => {
-              const first = deckItems[0]!
-              return (
-                <section key={key} className="favorites-page__deck card">
-                  <h2 className="favorites-page__deck-title">
-                    <Link to={`/play/${first.deckId}`} onClick={() => haptic('light')}>
-                      {first.deckTitle}
+          {filtered.length === 0 ? (
+            <p className="favorites-page__no-results">Ничего не найдено</p>
+          ) : (
+            <ul className="favorites-page__list">
+              {filtered.map((item) => (
+                <li key={`${item.deckId}-${item.questionIndex}`}>
+                  <article className="favorites-page__card">
+                    <Link
+                      to={`/play/${item.deckId}?from=favorites&q=${item.questionIndex}`}
+                      state={{ fromFavorites: true, questionIndex: item.questionIndex }}
+                      className="favorites-page__card-link"
+                      onClick={() => haptic('light')}
+                    >
+                      <span className="favorites-page__thumb-wrap" aria-hidden>
+                        {item.modeImage ? (
+                          <SmartImage
+                            src={item.modeImage}
+                            alt=""
+                            className="favorites-page__thumb"
+                            objectFit="cover"
+                            aspectRatio="1 / 1"
+                          />
+                        ) : (
+                          <span className="favorites-page__thumb-fallback">{item.badge.emoji}</span>
+                        )}
+                      </span>
+                      <span className="favorites-page__body">
+                        <span className="favorites-page__card-title">{item.deckTitle}</span>
+                        <span className="favorites-page__tag">
+                          <span className="favorites-page__tag-emoji" aria-hidden>{item.badge.emoji}</span>
+                          {item.badge.label}
+                        </span>
+                        <span className="favorites-page__desc">{item.questionText}</span>
+                      </span>
+                      <img
+                        src={chevronIcon}
+                        alt=""
+                        className="favorites-page__chev"
+                        decoding="async"
+                        aria-hidden
+                      />
                     </Link>
-                  </h2>
-                  <ul className="favorites-page__items">
-                    {deckItems.map((item) => (
-                      <li key={`${item.deckId}-${item.questionIndex}`} className="favorites-page__item">
-                        <span className="favorites-page__item-text">{item.questionText}</span>
-                        <button
-                          type="button"
-                          className="btn btn--ghost favorites-page__item-remove"
-                          onClick={() => handleRemove(item.deckId, item.questionIndex)}
-                          aria-label="Удалить из избранного"
-                        >
-                          ✕
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )
-            })}
-          </div>
+                    <button
+                      type="button"
+                      className="favorites-page__star-btn"
+                      onClick={() => handleRemove(item.deckId, item.questionIndex)}
+                      aria-label="Удалить из избранного"
+                    >
+                      <img src={starIcon} alt="" className="favorites-page__star-icon" decoding="async" />
+                    </button>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
-      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

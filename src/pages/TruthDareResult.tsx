@@ -3,6 +3,7 @@ import { useTruthDare } from '../games/truth-dare/TruthDareContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './TruthDareResult.css'
 
 function TruthDareResult() {
@@ -38,18 +39,16 @@ function TruthDareResult() {
   }
 
   return (
-    <div className="truth-dare-result">
-      <div className="truth-dare-result__top">
-        <button type="button" className="btn btn--ghost home-btn truth-dare-result__back" onClick={onBack}>
-          ←
-        </button>
-        <HomeButton />
+    <div className="game-page truth-dare-result">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={onBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <h1 className="truth-dare-result__title">Игра окончена</h1>
+      <h1 className="game-page__screen-title">Игра окончена</h1>
 
-      <div className="truth-dare-result__titles card">
-        <h2 className="truth-dare-result__section-title">Титулы</h2>
+      <div className="truth-dare-result__titles game-page__panel game-page__panel--glow-a">
+        <h2 className="game-page__section-title">Титулы</h2>
         {mostHonest && mostHonest.truthCounted > 0 && (
           <p className="truth-dare-result__award">
             <span className="truth-dare-result__award-emoji" aria-hidden>💬</span>
@@ -73,8 +72,8 @@ function TruthDareResult() {
         )}
       </div>
 
-      <div className="truth-dare-result__table card">
-        <h2 className="truth-dare-result__section-title">Итоги</h2>
+      <div className="truth-dare-result__table game-page__panel game-page__panel--glow-b">
+        <h2 className="game-page__section-title">Итоги</h2>
         {state.players.map((p) => (
           <div key={p.id} className="truth-dare-result__row">
             <span className="truth-dare-result__name">{p.name}</span>
@@ -86,17 +85,17 @@ function TruthDareResult() {
         ))}
       </div>
 
-      <div className="truth-dare-result__actions">
+      <div className="game-page__actions">
         <button
           type="button"
-          className="btn btn--primary truth-dare-result__btn"
+          className="game-page__cta"
           onClick={handleContinue}
         >
           Ещё 10 ходов
         </button>
         <button
           type="button"
-          className="btn btn--secondary truth-dare-result__btn"
+          className="game-page__btn game-page__btn--secondary"
           onClick={handleNewGame}
         >
           Новая игра

@@ -14,7 +14,6 @@
 }
 
 [data-theme="neon-light"] .document-modal,
-[data-theme="portal"] .document-modal,
 [data-theme="soft-light"] .document-modal,
 [data-theme="sunset"] .document-modal,
 [data-theme="minimal-calm"] .document-modal {
@@ -52,7 +51,6 @@
 }
 
 [data-theme="neon-light"] .document-modal__card,
-[data-theme="portal"] .document-modal__card,
 [data-theme="sunset"] .document-modal__card,
 [data-theme="minimal-calm"] .document-modal__card {
   background: #ffffff;
@@ -74,7 +72,6 @@
 }
 
 [data-theme="neon-light"] .document-modal__header,
-[data-theme="portal"] .document-modal__header,
 [data-theme="sunset"] .document-modal__header,
 [data-theme="minimal-calm"] .document-modal__header {
   border-bottom-color: rgba(0, 0, 0, 0.1);
@@ -112,33 +109,6 @@
 
 [data-theme="neon-light"] .document-modal__close:hover {
   color: #1a1a2e;
-}
-
-/* portal — тёмный текст на светлой карточке */
-[data-theme="portal"] .document-modal__title {
-  color: #0a1f1a;
-}
-
-[data-theme="portal"] .document-modal__content,
-[data-theme="portal"] .document-modal__content .document-modal__p,
-[data-theme="portal"] .document-modal__content .document-modal__li {
-  color: #0d3329;
-}
-
-[data-theme="portal"] .document-modal__content .document-modal__h2 {
-  color: #0f4a3a;
-}
-
-[data-theme="portal"] .document-modal__link {
-  color: var(--primary, #00ffcc);
-}
-
-[data-theme="portal"] .document-modal__close {
-  color: #0f4a3a;
-}
-
-[data-theme="portal"] .document-modal__close:hover {
-  color: #0a1f1a;
 }
 
 /* soft-light — тёмный текст на светлой карточке */
@@ -256,7 +226,6 @@
 }
 
 [data-theme="neon-light"] .document-modal__close:hover,
-[data-theme="portal"] .document-modal__close:hover,
 [data-theme="sunset"] .document-modal__close:hover,
 [data-theme="minimal-calm"] .document-modal__close:hover {
   background: rgba(0, 0, 0, 0.06);
@@ -325,7 +294,6 @@
 }
 
 [data-theme="neon-light"] .document-modal__footer,
-[data-theme="portal"] .document-modal__footer,
 [data-theme="sunset"] .document-modal__footer,
 [data-theme="minimal-calm"] .document-modal__footer {
   border-top-color: rgba(0, 0, 0, 0.1);

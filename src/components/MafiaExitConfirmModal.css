@@ -1,0 +1,159 @@
+.mafia-exit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.mafia-exit-modal {
+  width: min(100%, 21rem);
+  padding: 1.25rem 1.1rem;
+  text-align: center;
+  border-radius: 1rem;
+  border: 1.5px solid rgba(180, 90, 255, 0.28);
+  background: rgba(10, 16, 34, 0.96);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.32),
+    0 0 18px rgba(139, 77, 255, 0.14);
+  color: #f5f7ff;
+}
+
+.mafia-exit__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f5f7ff;
+  line-height: 1.35;
+}
+
+.mafia-exit__hint {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #c8d2e8;
+}
+
+.mafia-exit__buttons {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.mafia-exit__btn {
+  flex: 1;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mafia-exit__btn:active {
+  transform: scale(0.985);
+}
+
+.mafia-exit__btn--secondary {
+  color: #f5f7ff;
+  background: rgba(139, 77, 255, 0.14);
+  border: 1.5px solid rgba(180, 90, 255, 0.28);
+}
+
+.mafia-exit__btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #ff3fd8 0%, #8b4dff 52%, #3b82ff 100%);
+  border: none;
+  box-shadow: 0 10px 28px rgba(139, 77, 255, 0.38);
+}
+
+[data-theme="neon-light"] .mafia-exit-modal,
+[data-theme="soft-light"] .mafia-exit-modal {
+  background: #fff;
+  border-color: rgba(142, 99, 255, 0.22);
+  box-shadow: 0 10px 28px rgba(47, 42, 91, 0.1);
+  color: #181426;
+}
+
+[data-theme="neon-light"] .mafia-exit__title,
+[data-theme="soft-light"] .mafia-exit__title {
+  color: #181426;
+}
+
+[data-theme="neon-light"] .mafia-exit__hint,
+[data-theme="soft-light"] .mafia-exit__hint {
+  color: #2e3138;
+}
+
+[data-theme="neon-light"] .mafia-exit__btn--secondary,
+[data-theme="soft-light"] .mafia-exit__btn--secondary {
+  color: #181426;
+  background: rgba(142, 99, 255, 0.1);
+  border-color: rgba(142, 99, 255, 0.2);
+}
+
+[data-theme="neon-light"] .mafia-exit__btn--primary,
+[data-theme="soft-light"] .mafia-exit__btn--primary {
+  background: linear-gradient(135deg, #ff65d8 0%, #8e63ff 52%, #55b7ff 100%);
+  box-shadow: 0 10px 28px rgba(142, 99, 255, 0.28);
+}
+
+[data-theme="sunset"] .mafia-exit-modal {
+  background: #fff;
+  border-color: rgba(255, 154, 139, 0.28);
+  box-shadow: 0 10px 28px rgba(255, 150, 120, 0.14);
+  color: #1f1410;
+}
+
+[data-theme="sunset"] .mafia-exit__title {
+  color: #1f1410;
+}
+
+[data-theme="sunset"] .mafia-exit__hint {
+  color: #3d281f;
+}
+
+[data-theme="sunset"] .mafia-exit__btn--secondary {
+  color: #1f1410;
+  background: rgba(255, 154, 139, 0.12);
+  border-color: rgba(255, 154, 139, 0.24);
+}
+
+[data-theme="sunset"] .mafia-exit__btn--primary {
+  background: linear-gradient(135deg, #ff9a8b 0%, #ff7a5c 52%, #ff6a88 100%);
+  box-shadow: 0 10px 28px rgba(255, 154, 139, 0.32);
+}
+
+[data-theme="minimal-calm"] .mafia-exit-modal {
+  background: #fff;
+  border-color: rgba(139, 168, 150, 0.24);
+  box-shadow: 0 10px 28px rgba(120, 130, 125, 0.1);
+  color: #232931;
+}
+
+[data-theme="minimal-calm"] .mafia-exit__title {
+  color: #232931;
+}
+
+[data-theme="minimal-calm"] .mafia-exit__hint {
+  color: #252e35;
+}
+
+[data-theme="minimal-calm"] .mafia-exit__btn--secondary {
+  color: #232931;
+  background: rgba(139, 168, 150, 0.12);
+  border-color: rgba(139, 168, 150, 0.22);
+}
+
+[data-theme="minimal-calm"] .mafia-exit__btn--primary {
+  background: linear-gradient(135deg, #8ba896 0%, #5f7f74 52%, #6d9485 100%);
+  box-shadow: 0 10px 28px rgba(95, 127, 116, 0.28);
+}

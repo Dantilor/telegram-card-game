@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom'
 import { useTheme, type ThemeId } from '../hooks/useTheme'
 import { usePremium } from '../contexts/PremiumContext'
 import { isThemeLocked } from '../lib/access'
@@ -6,9 +7,8 @@ import { applyTelegramColorsRetry } from '../lib/telegramTheme'
 import './ThemeToggle.css'
 
 const OPTIONS: { id: ThemeId; label: string }[] = [
-  { id: 'neon-dark', label: 'Neon' },
   { id: 'neon-light', label: 'Light' },
-  { id: 'portal', label: 'Portal' },
+  { id: 'neon-dark', label: 'Neon' },
   { id: 'sunset', label: 'Sunset' },
   { id: 'minimal-calm', label: 'Calm' },
 ]
@@ -23,13 +23,15 @@ function ThemeToggle({ onPremiumRequired }: ThemeToggleProps) {
   const locked = isThemeLocked(isPremium)
 
   const handleThemeClick = (id: ThemeId) => {
+    if (theme === id) return
     haptic('light')
     if (locked) {
       onPremiumRequired?.()
       return
     }
-    setTheme(id)
-    // Сразу применяем цвета Telegram — без этого header не обновляется при смене темы внутри приложения
+    flushSync(() => {
+      setTheme(id)
+    })
     applyTelegramColorsRetry(id)
   }
 

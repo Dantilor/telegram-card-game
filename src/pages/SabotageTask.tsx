@@ -1,15 +1,15 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
-import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './SabotageTask.css'
 
 function SabotageTask() {
   const navigate = useNavigate()
-  const { state } = useSabotageGame()
+  const { state, dispatch } = useSabotageGame()
   const [secondsLeft, setSecondsLeft] = useState(state.taskDurationSeconds)
   const endAtRef = useRef(0)
 
@@ -39,7 +39,10 @@ function SabotageTask() {
     }
   }, [secondsLeft, navigate])
 
-  const handleBack = useBack('/sabotage/role')
+  const handleBack = useCallback(() => {
+    dispatch({ type: 'BACK_FROM_TASK' })
+    navigate('/sabotage/role')
+  }, [dispatch, navigate])
 
   if (!state.players.length) {
     return null
@@ -53,29 +56,27 @@ function SabotageTask() {
   const isLastTen = secondsLeft > 0 && secondsLeft <= 10
 
   return (
-    <div className="sabotage-task">
-      <div className="sabotage-task__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost sabotage-task__back" onClick={handleBack}>
-          ← Назад
-        </button>
+    <div className="game-page sabotage-task sabotage-flow">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
       <div className={`sabotage-task__timer-wrap ${isLastTen ? 'sabotage-task__timer-wrap--urgent' : ''}`}>
         <div
-          className="sabotage-task__timer-bar"
+          className={`sabotage-task__timer-bar ${isLastTen ? 'sabotage-task__timer-bar--pulse' : ''}`}
           style={{ width: `${(secondsLeft / state.taskDurationSeconds) * 100}%` }}
         />
         <span className="sabotage-task__timer-text">{secondsLeft}</span>
       </div>
 
-      <div className="sabotage-task__card card">
+      <div className="sabotage-task__card game-page__panel game-page__panel--glow-b">
         <p className="sabotage-task__label">Задание</p>
         <h2 className="sabotage-task__task">{state.task}</h2>
       </div>
 
-      <div className="sabotage-task__actions">
-        <button type="button" className="btn btn--primary sabotage-task__btn" onClick={handleVote}>
+      <div className="game-page__actions">
+        <button type="button" className="game-page__cta" onClick={handleVote}>
           Перейти к голосованию
         </button>
       </div>

@@ -107,16 +107,6 @@
   color: #fff !important;
 }
 
-/* Portal: выделение как в Мафии — зелёный акцент */
-[data-theme="portal"] .truth-dare .truth-dare-setup__count-btn.is-active,
-[data-theme="portal"] .truth-dare .truth-dare-setup__step-btn.is-active,
-[data-theme="portal"] .truth-dare .truth-dare-setup__tag-btn.is-active {
-  background: var(--td-active-bg) !important;
-  border-color: var(--neonCyan);
-  box-shadow: 0 0 12px var(--glowCyan);
-  color: var(--neonCyan) !important;
-}
-
 /* Calm (minimal-calm): выделение как в Мафии — голубой акцент */
 [data-theme="minimal-calm"] .truth-dare .truth-dare-setup__count-btn.is-active,
 [data-theme="minimal-calm"] .truth-dare .truth-dare-setup__step-btn.is-active,

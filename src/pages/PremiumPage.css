@@ -1,78 +1,54 @@
 .premium-page {
-  padding: clamp(1rem, 4vw, 1.5rem);
-  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
-  min-height: var(--app-height, 100vh);
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .premium-page {
-    animation: page-enter 0.35s ease-out;
-  }
-}
-
-@keyframes page-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.premium-page__top {
+  flex: 1 1 auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
+  flex-direction: column;
 }
 
 .premium-page__header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .premium-page__title {
   margin: 0;
-  font-size: 1.75rem;
+  font-family: "Unbounded", "Manrope", system-ui, sans-serif;
+  font-size: clamp(1.35rem, 4.5vw, 1.65rem);
   font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: var(--game-shell-readable-text);
 }
 
 .premium-page__card {
-  padding: 1.5rem;
-  border-radius: 16px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  padding: 1.25rem 1.1rem;
 }
 
 .premium-page__card--active {
-  background: rgba(43, 210, 255, 0.08);
-  border-color: rgba(43, 210, 255, 0.2);
+  box-shadow: var(--game-shell-chip-active-glow), var(--games-card-shadow);
 }
 
 .premium-page__status {
   margin: 0 0 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--game-shell-readable-text);
 }
 
 .premium-page__actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.premium-page__btn {
-  width: 100%;
+  gap: 0.55rem;
 }
 
 .premium-page__toast {
-  font-size: 0.9rem;
-  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--game-shell-readable-muted);
+  text-align: center;
 }
 
 .premium-page__content {
-  margin-top: -0.5rem;
+  flex: 1 1 auto;
+  margin-top: -0.25rem;
 }
 
 .premium-page__content .premium-overlay__card {

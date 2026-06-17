@@ -1,38 +1,25 @@
-.mafia-result {
-  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem);
-  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
-  min-height: var(--app-height, 100vh);
-  max-width: 100%;
-  overflow-x: hidden;
+.mafia-result.mafia-page {
+  justify-content: flex-start;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-}
-
-.mafia-result__top {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.mafia-result__back {
-  flex-shrink: 0;
 }
 
 .mafia-result__card {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: clamp(1.5rem, 5vw, 2rem);
+  flex: 0 0 auto;
+  min-height: auto;
+  padding: clamp(1.35rem, 4.5vw, 1.85rem) clamp(1.25rem, 4vw, 1.75rem);
   text-align: center;
-  margin: 0.75rem auto 1rem;
+  margin: 0.5rem auto 1rem;
   width: 100%;
   max-width: min(28rem, 92vw);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -53,52 +40,50 @@
 }
 
 .mafia-result__card--win {
-  border-color: rgba(43, 210, 255, 0.4);
-  box-shadow: 0 0 24px var(--glowCyan);
+  box-shadow:
+    var(--games-card-shadow),
+    0 0 28px color-mix(in srgb, var(--games-play-glow) 28%, transparent);
 }
 
 .mafia-result__card--lose {
-  border-color: rgba(138, 43, 226, 0.4);
+  box-shadow:
+    var(--games-card-shadow),
+    0 0 24px color-mix(in srgb, var(--games-play-glow) 18%, transparent);
 }
 
 .mafia-result__title {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: clamp(1.4rem, 4.5vw, 1.65rem);
   font-weight: 700;
-  line-height: 1.3;
-}
-
-.mafia-result__card--win .mafia-result__title {
-  color: var(--neonCyan);
-}
-
-.mafia-result__card--lose .mafia-result__title {
-  color: var(--neonPurple);
+  line-height: 1.35;
+  color: var(--mafia-readable-accent);
 }
 
 .mafia-result__subtitle {
-  margin: 0 0 0.35rem;
+  margin: 0;
   font-size: clamp(0.95rem, 2.5vw, 1.05rem);
-  color: var(--muted);
-  line-height: 1.45;
+  color: var(--mafia-readable-muted);
+  line-height: 1.5;
 }
 
-.mafia-result__subtitle:last-of-type {
-  margin-bottom: 0;
+.mafia-result__subtitle + .mafia-result__subtitle {
+  margin-top: 0.25rem;
 }
 
 .mafia-result__roles {
-  margin: 1rem 0 1.25rem;
-  padding: 0 0.5rem;
+  margin: 0 auto 1.25rem;
+  padding: 1rem 1.1rem;
   text-align: left;
-  max-width: 100%;
+  width: 100%;
+  max-width: min(28rem, 92vw);
+  box-sizing: border-box;
 }
 
 .mafia-result__roles-title {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--mafia-readable-muted);
   text-align: center;
   line-height: 1.3;
 }
@@ -114,7 +99,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--games-play-glow) 18%, transparent);
   line-height: 1.35;
 }
 
@@ -131,35 +116,32 @@
 }
 
 .mafia-result__roles-icon--img {
-  width: 3rem;
-  height: 3rem;
+  width: 3.75rem;
+  height: 3.75rem;
   object-fit: contain;
   border-radius: 8px;
 }
 
+.app .mafia-page img.mafia-result__roles-icon--img {
+  width: 3.75rem;
+  height: 3.75rem;
+  max-width: none;
+  object-fit: contain;
+}
+
 .mafia-result__roles-name {
   flex: 1;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--mafia-readable-text);
   word-break: break-word;
 }
 
 .mafia-result__roles-role {
   font-size: 0.9rem;
-  color: var(--muted);
+  color: var(--mafia-readable-muted);
 }
 
 .mafia-result__actions {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: min(28rem, 92vw);
-  margin: 0 auto;
-}
-
-.mafia-result__btn {
-  width: 100%;
-  padding: 0.85rem 1rem;
-  font-size: 1rem;
+  margin-top: auto;
+  padding-bottom: max(0.25rem, var(--safe-bottom));
 }

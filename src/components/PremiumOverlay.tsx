@@ -6,6 +6,7 @@ import { getTelegramWebApp, getInitData } from '../lib/telegram'
 import { trackEvent } from '../lib/analytics'
 import { apiPost, apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
+import { useTheme } from '../hooks/useTheme'
 import {
   DEFAULT_PLAN_ID,
   formatPlanPeriod,
@@ -13,7 +14,51 @@ import {
   isLifetimePlan,
   type PlanOption,
 } from '../utils/planLabel'
+import gemNeon from '../assets/icons/gnh-light-pro/premium-diamond-pro.png'
+import gemLight from '../assets/icons/gnh-calm-pro/premium-diamond-pro.png'
+import gemSunset from '../assets/icons/gnh-sunset-pro/premium-diamond-pro.png'
+import gemCalm from '../assets/icons/gnh/premium-diamond.png'
+import iconCheckCircle from '../assets/icons/premium-modal/check-circle.svg'
+import iconCloseX from '../assets/icons/premium-modal/close-x.svg'
+import iconClock from '../assets/icons/premium-modal/clock.svg'
+import iconRestorePurchases from '../assets/icons/premium-modal/restore-purchases.svg'
+import iconLockSecure from '../assets/icons/premium-modal/lock-secure.svg'
+import iconSparkle from '../assets/icons/premium-modal/sparkle.svg'
 import './PremiumOverlay.css'
+
+const GEMS_BY_THEME = {
+  'neon-dark': gemNeon,
+  'neon-light': gemLight,
+  sunset: gemSunset,
+  'minimal-calm': gemCalm,
+} as const
+
+const PREMIUM_INCLUDES = [
+  {
+    title: 'Все вопросы без лимитов',
+    text: 'Полный доступ ко всем колодам для пар, свиданий, друзей, компаний и 18+.',
+  },
+  {
+    title: 'Закрытые Premium-режимы',
+    text: 'Более глубокие, смешные и неожиданные вопросы, которые сильнее раскачивают разговор.',
+  },
+  {
+    title: 'Комикс-истории с героями GNH',
+    text: 'Сюжетные режимы, где вечер превращается не просто в карточки, а в мини-историю с героями, ситуациями и выбором.',
+  },
+  {
+    title: 'Персональные сценарии под вечер',
+    text: 'Для свидания, вечеринки, подруг, пары, компании или 18+ формата — GNH подбирает настроение игры под вас.',
+  },
+  {
+    title: 'Новые игры сразу после выхода',
+    text: 'Все свежие режимы, обновления и закрытые подборки будут доступны без отдельной покупки.',
+  },
+  {
+    title: 'Избранное и быстрый доступ',
+    text: 'Сохраняй самые сильные вопросы, чтобы возвращаться к ним в нужный момент.',
+  },
+] as const
 
 const POLL_INTERVAL_MS = 2000
 const POLL_ATTEMPTS = 15
@@ -56,6 +101,8 @@ type Props = {
 
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }: Props) {
   const { refresh } = usePremium()
+  const [theme] = useTheme()
+  const gem = GEMS_BY_THEME[theme]
   const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
   const [plans, setPlans] = useState<PlanOption[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState<string>(DEFAULT_PLAN_ID)
@@ -228,41 +275,54 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             }}
             aria-label="Закрыть"
           >
-            ✕
+            <img src={iconCloseX} alt="" className="premium-overlay__close-icon" decoding="async" />
           </button>
         )}
-        <h2 id="premium-overlay-title" className="premium-overlay__heading">
-          <span className="premium-overlay__icon" aria-hidden>💎</span>
-          <span className="premium-overlay__heading-text">Premium-доступ</span>
-        </h2>
-        <p className="premium-overlay__subtitle">Этот контент доступен по подписке</p>
+        <div className="premium-overlay__hero">
+          <span className="premium-overlay__gem-wrap" aria-hidden>
+            <img src={gem} alt="" className="premium-overlay__diamond" decoding="async" />
+          </span>
+          <h2 id="premium-overlay-title" className="premium-overlay__heading">
+            <span className="premium-overlay__heading-text">Premium-доступ</span>
+          </h2>
+        </div>
         {success && (
-          <p className="premium-overlay__success" style={{ color: 'var(--success, #22c55e)', marginBottom: '0.5rem' }}>
+          <p className="premium-overlay__success">
             Premium активирован
           </p>
         )}
         {error && (
-          <p className="premium-overlay__error" style={{ color: 'var(--accent)', marginBottom: '0.5rem' }}>
+          <p className="premium-overlay__error">
             {error}
           </p>
         )}
         {restoreToast && (
-          <p className="premium-overlay__toast" style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+          <p className="premium-overlay__toast">
             {restoreToast}
           </p>
         )}
         <div className="premium-overlay__description">
-          <p>
-            Откройте полный доступ ко всем играм, колодам и избранному контенту. Premium расширяет возможности приложения и делает игру ещё интереснее.
+          <p className="premium-overlay__tagline">
+            <span className="premium-overlay__tagline-text">
+              Premium — это когда не надо думать, чем занять вечер
+            </span>
           </p>
-          <p>Что даёт подписка:</p>
+          <p className="premium-overlay__includes-title">
+            <span className="premium-overlay__includes-title-line" aria-hidden />
+            <img src={iconSparkle} alt="" className="premium-overlay__title-sparkle" decoding="async" aria-hidden />
+            <span className="premium-overlay__includes-title-text">Что даёт подписка</span>
+            <span className="premium-overlay__includes-title-line premium-overlay__includes-title-line--reverse" aria-hidden />
+          </p>
           <ul className="premium-overlay__includes">
-            <li>Все колоды в карточной игре (вопросы для пар, компании, свиданий)</li>
-            <li>Все игры: Ассоциации, Мафия, Активитус, Саботаж, Битва умов</li>
-            <li>Правда или действие (расширенные наборы)</li>
-            <li>Избранное — сохраняй вопросы и возвращайся к ним</li>
-            <li>Темы оформления (Neon, Portal, Sunset и др.)</li>
-            <li>Новые игры и колоды, которые будут появляться со временем</li>
+            {PREMIUM_INCLUDES.map((item) => (
+              <li key={item.title}>
+                <img src={iconCheckCircle} alt="" className="premium-overlay__check-icon" decoding="async" aria-hidden />
+                <div className="premium-overlay__include-body">
+                  <span className="premium-overlay__include-title">{item.title}</span>
+                  <span className="premium-overlay__include-text">{item.text}</span>
+                </div>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -270,7 +330,10 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           {plansLoading ? (
             <p className="premium-overlay__plans-loading">Загрузка тарифов…</p>
           ) : plans.length === 0 ? (
-            <p className="premium-overlay__plans-loading">Тарифы временно недоступны</p>
+            <div className="premium-overlay__plans-empty">
+              <img src={iconClock} alt="" className="premium-overlay__plans-empty-icon" decoding="async" aria-hidden />
+              <p className="premium-overlay__plans-loading">Тарифы временно недоступны</p>
+            </div>
           ) : (
             <div className="premium-overlay__plans-list" role="radiogroup" aria-label="Тариф Premium">
               {plans.map((plan) => {
@@ -292,7 +355,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
                     <div className="premium-overlay__plan-main">
                       {isLifetime && (
                         <span className="premium-overlay__plan-badge">
-                          <span className="premium-overlay__plan-badge-icon" aria-hidden>✦</span>
+                          <img src={iconSparkle} alt="" className="premium-overlay__plan-badge-icon" decoding="async" aria-hidden />
                           Лучший выбор
                         </span>
                       )}
@@ -314,24 +377,31 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
 
         <button
           type="button"
-          className="btn btn--primary premium-overlay__btn premium-overlay__btn--buy"
+          className="premium-overlay__btn premium-overlay__btn--buy"
           onClick={handleBuyPremium}
           disabled={loading || plansLoading || !selectedPlan}
         >
-          {loading ? 'Загрузка…' : plansLoading ? 'Загрузка…' : buyLabel}
+          <img src={gem} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--gem" decoding="async" aria-hidden />
+          <span className="premium-overlay__btn-label">
+            {loading ? 'Загрузка…' : plansLoading ? 'Загрузка…' : buyLabel}
+          </span>
         </button>
         <button
           type="button"
-          className="btn btn--ghost premium-overlay__btn"
+          className="premium-overlay__btn premium-overlay__btn--restore"
           onClick={handleRestorePurchase}
           disabled={restoreLoading}
         >
-          {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+          <img src={iconRestorePurchases} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--restore" decoding="async" aria-hidden />
+          <span className="premium-overlay__btn-label">
+            {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+          </span>
         </button>
 
         <div className="premium-overlay__bottom">
           <p className="premium-overlay__footer">
-            Вы можете продолжить играть бесплатно или оформить Premium-подписку
+            <img src={iconLockSecure} alt="" className="premium-overlay__footer-lock" decoding="async" aria-hidden />
+            <span>Вы можете продолжить играть бесплатно или оформить Premium-подписку</span>
           </p>
           <p className="premium-overlay__legal">
             Оплачивая Premium, вы соглашаетесь с{' '}
@@ -357,7 +427,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         {asPage && (
           <button
             type="button"
-            className="btn btn--ghost premium-overlay__btn premium-overlay__btn--dismiss"
+            className="premium-overlay__btn premium-overlay__btn--dismiss"
             onClick={() => {
               haptic('light')
               onClose()

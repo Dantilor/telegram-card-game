@@ -4,6 +4,7 @@ import { useQuizGame } from '../games/quiz/QuizGameContext'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './QuizResult.css'
 
 function QuizResult() {
@@ -50,12 +51,10 @@ function QuizResult() {
   const isLastQuestion = state.currentQuestionIndex + 1 >= state.questionQueue.length
 
   return (
-    <div className="quiz-result">
-      <div className="quiz-result__top">
-        <button type="button" className="btn btn--ghost home-btn quiz-result__back" onClick={handleBack}>
-          ←
-        </button>
-        <HomeButton onBeforeNavigate={handleHomeClick} />
+    <div className="game-page quiz-result">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" onBeforeNavigate={handleHomeClick} />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
       <div className="quiz-result__scroll">
@@ -64,7 +63,7 @@ function QuizResult() {
           <p className="quiz-result__question-num">Вопрос {state.currentQuestionIndex + 1}</p>
         </header>
 
-        <div className="quiz-result__scores card">
+        <div className="quiz-result__scores game-page__panel game-page__panel--glow-a">
           {state.players.map((p) => {
             const r = state.round[p.id]
             if (!r) return null
@@ -82,12 +81,12 @@ function QuizResult() {
           })}
         </div>
 
-        <div className="quiz-result__correct card">
+        <div className="quiz-result__correct game-page__panel game-page__panel--glow-b">
           <h2 className="quiz-result__correct-title">Правильный ответ</h2>
           <p className="quiz-result__correct-answer">{question.answers[question.correctIndex]}</p>
         </div>
 
-        <div className="quiz-result__total card">
+        <div className="quiz-result__total game-page__panel game-page__panel--glow-a">
           <h2 className="quiz-result__total-title">Текущий счёт</h2>
           <div className="quiz-result__total-list">
             {[...state.players].sort((a, b) => b.score - a.score).map((p, i) => (
@@ -101,24 +100,24 @@ function QuizResult() {
         </div>
       </div>
 
-      <div className="quiz-result__actions">
-        <button type="button" className="btn btn--primary quiz-result__next" onClick={handleNext}>
+      <div className="game-page__actions">
+        <button type="button" className="game-page__cta" onClick={handleNext}>
           {isLastQuestion ? 'Показать итоги' : 'Следующий вопрос'}
         </button>
       </div>
 
       {showExitConfirm && (
-        <div className="quiz-result__modal-overlay" onClick={() => handleExitConfirm(false)}>
-          <div className="quiz-result__modal card" onClick={(e) => e.stopPropagation()}>
-            <p className="quiz-result__modal-text">Выйти из игры?</p>
-            <p className="quiz-result__modal-hint">
+        <div className="game-page__modal-overlay" onClick={() => handleExitConfirm(false)}>
+          <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
+            <p className="game-page__modal-text">Выйти из игры?</p>
+            <p className="game-page__modal-hint">
               Если выйти, весь прогресс будет сброшен.
             </p>
             <div className="quiz-result__modal-btns">
-              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+              <button type="button" className="game-page__btn game-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
                 Остаться
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+              <button type="button" className="game-page__cta" onClick={() => handleExitConfirm(true)}>
                 Выйти
               </button>
             </div>

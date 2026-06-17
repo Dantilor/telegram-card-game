@@ -1,0 +1,27 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+  <linearGradient id="gnhPinkBlue" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FF3FD8"/>
+    <stop offset="0.52" stop-color="#8B4DFF"/>
+    <stop offset="1" stop-color="#3B82FF"/>
+  </linearGradient>
+  <radialGradient id="softFill" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(25 19) rotate(52) scale(42)">
+    <stop stop-color="#FFFFFF" stop-opacity="0.72"/>
+    <stop offset="0.38" stop-color="#FF6BE1" stop-opacity="0.62"/>
+    <stop offset="0.72" stop-color="#6A4DFF" stop-opacity="0.78"/>
+    <stop offset="1" stop-color="#29D8FF" stop-opacity="0.8"/>
+  </radialGradient>
+  <filter id="gnhGlow" x="-70%" y="-70%" width="240%" height="240%">
+    <feGaussianBlur stdDeviation="3.2" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.9  0 1 0 0 0.15  0 0 1 0 1  0 0 0 0.7 0" result="coloredBlur"/>
+    <feMerge>
+      <feMergeNode in="coloredBlur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+
+<path d="M12 23 22 12h20l10 11-20 31L12 23Z" fill="url(#softFill)" filter="url(#gnhGlow)"/>
+<path d="M12 23h40M22 12l10 42 10-42M12 23l20 31 20-31-10-11H22L12 23Z" stroke="url(#gnhPinkBlue)" stroke-width="2.6" stroke-linejoin="round"/>
+</svg>

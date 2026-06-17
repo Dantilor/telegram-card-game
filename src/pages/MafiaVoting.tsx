@@ -2,16 +2,15 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
-import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
-import HomeButton from '../components/HomeButton'
+import MafiaPageNav from '../components/MafiaPageNav'
+import MafiaHostLine from '../components/MafiaHostLine'
 import './MafiaVoting.css'
 
 function MafiaVoting() {
   const navigate = useNavigate()
   const location = useLocation()
   const { state, dispatch } = useMafiaGame()
-  const handleBack = useBack('/mafia/day')
   const navigatedRef = useRef(false)
 
   const aliveCount = state.players.filter((p) => p.alive).length
@@ -55,13 +54,8 @@ function MafiaVoting() {
 
   if (!state.players.length) {
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={() => navigate('/mafia')}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
           Нет игроков. Вернитесь в настройки.
         </p>
@@ -75,14 +69,9 @@ function MafiaVoting() {
     const eliminatedPlayer = eliminatedId ? state.players.find((p) => p.id === eliminatedId) : null
     const wasMafia = eliminatedPlayer?.role === 'mafia'
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
-        <div className="mafia-voting__summary card mafia-voting__round-result">
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
+        <div className="mafia-voting__summary mafia-page__panel mafia-page__panel--glow-a mafia-voting__round-result">
           <h2 className="mafia-voting__summary-title">Итоги раунда</h2>
           {eliminatedPlayer ? (
             <>
@@ -99,7 +88,7 @@ function MafiaVoting() {
           <p className="mafia-voting__summary-text mafia-voting__round-continue">Игра продолжается.</p>
           <button
             type="button"
-            className="btn btn--primary mafia-voting__summary-btn"
+            className="mafia-page__cta mafia-voting__summary-btn"
             onClick={() => {
               hapticSelection()
               flushSync(() => dispatch({ type: 'START_NEXT_NIGHT' }))
@@ -118,14 +107,9 @@ function MafiaVoting() {
       ? state.players.find((p) => p.id === state.votingSummaryTargetId)
       : null
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
-        <div className="mafia-voting__summary card">
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
+        <div className="mafia-voting__summary mafia-page__panel mafia-page__panel--glow-a">
           <h2 className="mafia-voting__summary-title">Решение принято.</h2>
           <p className="mafia-voting__summary-text">
             {targetPlayer ? `Большинство выбрало: ${targetPlayer.name}` : 'Ничья. Никого не исключили.'}
@@ -133,7 +117,7 @@ function MafiaVoting() {
           <p className="mafia-voting__summary-hint">Толпа не ошибается… или ошибается?</p>
           <button
             type="button"
-            className="btn btn--primary mafia-voting__summary-btn"
+            className="mafia-page__cta mafia-voting__summary-btn"
             onClick={() => {
               hapticSelection()
               flushSync(() => dispatch({ type: 'CONFIRM_VOTING' }))
@@ -154,13 +138,8 @@ function MafiaVoting() {
   // Уже переход на ночь или результат — редирект в useLayoutEffect; пока не ушли — заглушка
   if (state.phase === 'night_intro' || state.phase === 'result') {
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
           Переход…
         </p>
@@ -173,21 +152,16 @@ function MafiaVoting() {
   const allowedVotingPhases = ['voting_collect', 'voting_summary', 'round_summary', 'night_intro', 'result']
   if (!allowedVotingPhases.includes(phase)) {
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
-        <div className="mafia-voting__summary card">
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
+        <div className="mafia-voting__summary mafia-page__panel mafia-page__panel--glow-a">
           <h2 className="mafia-voting__summary-title">Неверная страница</h2>
           <p className="mafia-voting__summary-text">
             Текущая фаза: {phase}. Ожидалась страница голосования или переход.
           </p>
           <button
             type="button"
-            className="btn btn--primary mafia-voting__summary-btn"
+            className="mafia-page__cta mafia-voting__summary-btn"
             onClick={() => (phase === 'day' ? navigate('/mafia/day') : navigate('/mafia/night'))}
           >
             {phase === 'day' ? 'К дню' : 'К ночи'}
@@ -207,13 +181,8 @@ function MafiaVoting() {
   // Если всё же остались на странице (редкий кейс), показываем заглушку вместо пустого экрана.
   if (!currentVoter || alive.length <= 1) {
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
           Переход…
         </p>
@@ -223,13 +192,8 @@ function MafiaVoting() {
 
   if (targets.length === 0) {
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
         <p className="mafia-voting__subtitle" style={{ padding: '1rem', textAlign: 'center' }}>
           Не за кого голосовать.
         </p>
@@ -240,21 +204,16 @@ function MafiaVoting() {
   // Защита от чёрного экрана: если фаза не voting_collect — показываем fallback вместо пустого экрана
   if (state.phase !== 'voting_collect') {
     return (
-      <div className="mafia-voting">
-        <div className="mafia-voting__top">
-          <HomeButton />
-          <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-            ← Назад
-          </button>
-        </div>
-        <div className="mafia-voting__summary card">
+      <div className="mafia-page mafia-voting">
+        <MafiaPageNav />
+        <div className="mafia-voting__summary mafia-page__panel mafia-page__panel--glow-a">
           <h2 className="mafia-voting__summary-title">Неизвестная фаза</h2>
           <p className="mafia-voting__summary-text">
             Фаза: {state.phase}. Нажмите «Запустить заново», чтобы вернуться в меню.
           </p>
           <button
             type="button"
-            className="btn btn--primary mafia-voting__summary-btn"
+            className="mafia-page__cta mafia-voting__summary-btn"
             onClick={() => navigate('/mafia')}
           >
             Запустить заново
@@ -265,16 +224,15 @@ function MafiaVoting() {
   }
 
   return (
-    <div className="mafia-voting">
-      <div className="mafia-voting__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost mafia-voting__back" onClick={handleBack}>
-          ← Назад
-        </button>
-      </div>
+    <div className="mafia-page mafia-voting">
+      <MafiaPageNav />
 
-      <h2 className="mafia-voting__title">Город требует крови.</h2>
-      <p className="mafia-voting__subtitle">Кто выглядит подозрительно?</p>
+      <MafiaHostLine hostName={state.hostName}>
+        Передавайте телефон каждому живому игроку — он тайно выбирает, кого исключить.
+      </MafiaHostLine>
+
+      <h2 className="mafia-page__screen-title">Голосование</h2>
+      <p className="mafia-page__screen-subtitle">Кто выглядит подозрительно?</p>
       <p className="mafia-voting__voter">
         {currentVoter.name}, кого исключить?
       </p>
@@ -284,7 +242,7 @@ function MafiaVoting() {
           <button
             key={p.id}
             type="button"
-            className="btn card mafia-voting__target"
+            className="mafia-page__target"
             onClick={() => handleVote(p.id)}
           >
             {p.name}

@@ -1,0 +1,44 @@
+/* In-game flow screens: stable layout, no page-enter jitter */
+.sabotage-flow {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sabotage-flow .game-page__panel {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.sabotage-flow .game-page__actions {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--app-page-bg-color, #050816) 92%, transparent) 35%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sabotage-flow .sabotage-task__card,
+  .sabotage-flow .sabotage-vote__targets {
+    animation: sabotage-panel-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes sabotage-panel-in {
+  from {
+    opacity: 0;
+    transform: translateZ(0) translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateZ(0) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sabotage-flow .sabotage-task__card,
+  .sabotage-flow .sabotage-vote__targets {
+    animation: none;
+  }
+}

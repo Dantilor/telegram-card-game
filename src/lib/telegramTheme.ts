@@ -18,7 +18,6 @@ export const TELEGRAM_THEME_COLORS: Record<
 > = {
   'neon-dark': { header: '#070814', background: '#070814' },
   'neon-light': { header: '#e8e6f5', background: '#e8e6f5' },
-  portal: { header: '#061410', background: '#061410' },
   sunset: { header: '#1c1917', background: '#1c1917' },
   'minimal-calm': { header: '#0f172a', background: '#0f172a' },
 }

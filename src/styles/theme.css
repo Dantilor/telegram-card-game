@@ -43,12 +43,17 @@
   --adult-badge-color: #fb923c;
   --adult-badge-border: rgba(234, 88, 12, 0.4);
   --adult-badge-glow: rgba(251, 146, 60, 0.25);
+  --app-page-bg-color: #050816;
+  --app-page-bg-image:
+    radial-gradient(ellipse 120% 75% at 50% -18%, rgba(139, 77, 255, 0.16) 0%, rgba(139, 77, 255, 0.04) 42%, transparent 72%),
+    radial-gradient(ellipse 85% 55% at 100% 12%, rgba(59, 130, 255, 0.08) 0%, transparent 68%),
+    linear-gradient(180deg, #050816 0%, #060a1c 55%, #050816 100%);
 }
 
 /* neon-light — почти дневная, светлый лавандово-голубой */
 [data-theme="neon-light"] {
-  --bg0: #e8e6f5;
-  --bg1: #d4d0ed;
+  --bg0: #f7f5ff;
+  --bg1: #f7f5ff;
   --panel: rgba(255, 255, 255, 0.95);
   --text: #1A102A;
   --muted: rgba(26, 16, 42, 0.8);
@@ -67,9 +72,9 @@
   --glowCyan: rgba(6, 182, 212, 0.18);
   --glowPurple: rgba(124, 58, 237, 0.2);
   --cardHoverBorder: rgba(6, 182, 212, 0.4);
-  --blob1: rgba(168, 85, 247, 0.06);
-  --blob2: rgba(6, 182, 212, 0.06);
-  --blob3: rgba(124, 58, 237, 0.05);
+  --blob1: rgba(142, 99, 255, 0.06);
+  --blob2: rgba(85, 183, 255, 0.05);
+  --blob3: rgba(255, 101, 216, 0.04);
   --td-panel-bg: rgba(255, 255, 255, 0.75);
   --td-text-strong: #1A102A;
   --td-text-muted: rgba(26, 16, 42, 0.85);
@@ -90,51 +95,11 @@
   --adult-badge-color: #c2410c;
   --adult-badge-border: rgba(194, 65, 12, 0.4);
   --adult-badge-glow: rgba(194, 65, 12, 0.15);
-}
-
-/* portal — зелёно-циановые градиенты */
-[data-theme="portal"] {
-  --bg0: #061410;
-  --bg1: #0a1f1a;
-  --panel: rgba(6, 30, 24, 0.94);
-  --text: #e8fff8;
-  --muted: rgba(224, 255, 244, 0.85);
-  --neonPink: #00e5b0;
-  --neonCyan: #00ffcc;
-  --neonPurple: #00c9a0;
-  --primary: #00ffcc;
-  --primary2: #00c9a0;
-  --secondary: #00e5b0;
-  --btn: #0d261e;
-  --btnText: #061410;
-  --danger: #ff6b6b;
-  --border: rgba(0, 255, 204, 0.15);
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --glowPink: rgba(0, 229, 176, 0.35);
-  --glowCyan: rgba(0, 255, 204, 0.4);
-  --glowPurple: rgba(0, 201, 160, 0.3);
-  --cardHoverBorder: rgba(0, 255, 204, 0.4);
-  --blob1: rgba(0, 255, 200, 0.12);
-  --blob2: rgba(0, 230, 180, 0.15);
-  --blob3: rgba(100, 255, 220, 0.1);
-  --td-panel-bg: rgba(0, 0, 0, 0.4);
-  --td-text-strong: #e8fff8;
-  --td-text-muted: rgba(224, 255, 244, 0.9);
-  --td-placeholder: rgba(224, 255, 244, 0.7);
-  --td-input-bg: rgba(0, 0, 0, 0.35);
-  --td-btn-ghost-bg: rgba(255, 255, 255, 0.1);
-  --td-border: rgba(255, 255, 255, 0.18);
-  --td-active-bg: rgba(0, 255, 204, 0.25);
-  --td-dare-bg: rgba(0, 229, 176, 0.15);
-  --td-dare-bg-strong: rgba(0, 229, 176, 0.2);
-  --td-dare-border: rgba(0, 255, 204, 0.35);
-  --td-truth-bg: rgba(0, 255, 204, 0.15);
-  --td-truth-bg-hover: rgba(0, 255, 204, 0.25);
-  --icon-accent: #7B5CFF;
-  --adult-badge-bg: linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 107, 0, 0.3) 100%);
-  --adult-badge-color: #ff9500;
-  --adult-badge-border: rgba(255, 149, 0, 0.45);
-  --adult-badge-glow: rgba(255, 149, 0, 0.2);
+  --app-page-bg-color: #f7f5ff;
+  --app-page-bg-image:
+    radial-gradient(ellipse 110% 70% at 50% -12%, rgba(255, 101, 216, 0.12) 0%, rgba(255, 101, 216, 0.03) 40%, transparent 70%),
+    radial-gradient(ellipse 80% 50% at 85% 8%, rgba(85, 183, 255, 0.1) 0%, transparent 65%),
+    linear-gradient(180deg, #fbfaff 0%, #f7f5ff 50%, #f4f2ff 100%);
 }
 
 /* soft-light — мягкий светлый */
@@ -225,6 +190,40 @@
   --adult-badge-color: #fdba74;
   --adult-badge-border: rgba(251, 146, 60, 0.55);
   --adult-badge-glow: rgba(251, 146, 60, 0.3);
+  --app-page-bg-color: #fff5f0;
+  --app-page-bg-image:
+    radial-gradient(ellipse 110% 70% at 50% -12%, rgba(255, 154, 139, 0.14) 0%, rgba(255, 154, 139, 0.04) 38%, transparent 70%),
+    radial-gradient(ellipse 80% 50% at 82% 10%, rgba(255, 153, 172, 0.1) 0%, transparent 65%),
+    linear-gradient(180deg, #fff8f4 0%, #fff5f0 50%, #fff0ea 100%);
+}
+
+/* Sunset / Calm: светлый shell — тёмный текст (не cream из --text) */
+[data-theme="sunset"] .home-page--sunset,
+[data-theme="sunset"] .games-page,
+[data-theme="sunset"] .card-entry-page,
+[data-theme="sunset"] .deck-select-page,
+[data-theme="sunset"] .play-page,
+[data-theme="sunset"] .mafia-page,
+[data-theme="sunset"] .alias-page,
+[data-theme="sunset"] .game-page,
+[data-theme="sunset"] .favorites-page {
+  --text: #1f1410;
+  --muted: #5c4038;
+  color: var(--text);
+}
+
+[data-theme="minimal-calm"] .home-page--calm,
+[data-theme="minimal-calm"] .games-page,
+[data-theme="minimal-calm"] .card-entry-page,
+[data-theme="minimal-calm"] .deck-select-page,
+[data-theme="minimal-calm"] .play-page,
+[data-theme="minimal-calm"] .mafia-page,
+[data-theme="minimal-calm"] .alias-page,
+[data-theme="minimal-calm"] .game-page,
+[data-theme="minimal-calm"] .favorites-page {
+  --text: #232931;
+  --muted: #4f5a55;
+  color: var(--text);
 }
 
 /* minimal-calm — минималистичный спокойный */
@@ -270,6 +269,11 @@
   --adult-badge-color: #fb923c;
   --adult-badge-border: rgba(251, 146, 60, 0.45);
   --adult-badge-glow: rgba(251, 146, 60, 0.2);
+  --app-page-bg-color: #f7f8f7;
+  --app-page-bg-image:
+    radial-gradient(ellipse 110% 70% at 50% -12%, rgba(139, 168, 150, 0.1) 0%, rgba(139, 168, 150, 0.03) 38%, transparent 70%),
+    radial-gradient(ellipse 80% 50% at 82% 10%, rgba(168, 181, 196, 0.08) 0%, transparent 65%),
+    linear-gradient(180deg, #f9faf9 0%, #f7f8f7 50%, #f3f5f4 100%);
 }
 
 /* Gradient background + glow blobs (uses theme variables) + slow move */

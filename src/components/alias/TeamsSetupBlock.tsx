@@ -48,11 +48,11 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch, teamHint }: Props)
       )}
       <div className="teams-setup__list">
         {visibleTeams.map((team, slotIndex) => (
-          <div key={slotIndex} className="teams-setup__card card">
+          <div key={slotIndex} className="teams-setup__card alias-page__panel alias-page__panel--glow-a">
             <label className="teams-setup__label">Название команды</label>
             <input
               type="text"
-              className="teams-setup__input"
+              className="teams-setup__input alias-page__input"
               placeholder={`Команда ${slotIndex + 1}`}
               value={team.name}
               onChange={(e) => handleTeamName(slotIndex, e.target.value)}
@@ -76,7 +76,7 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch, teamHint }: Props)
                     <span className="teams-setup__player-name">{playerName}</span>
                     <button
                       type="button"
-                      className="btn btn--ghost teams-setup__player-remove"
+                      className="teams-setup__player-remove"
                       onClick={() => handleRemovePlayer(slotIndex, playerIndex)}
                       aria-label="Удалить"
                     >
@@ -91,7 +91,7 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch, teamHint }: Props)
                     playerInputRefs.current[slotIndex] = el
                   }}
                   type="text"
-                  className="teams-setup__input teams-setup__input--small"
+                  className="teams-setup__input teams-setup__input--small alias-page__input"
                   placeholder="Имя игрока"
                   value={playerInputs[slotIndex] ?? ''}
                   onChange={(e) => {
@@ -114,7 +114,7 @@ export function TeamsSetupBlock({ teamCount, teams, dispatch, teamHint }: Props)
                 />
                 <button
                   type="button"
-                  className="btn btn--secondary teams-setup__add-btn"
+                  className="teams-setup__add-btn"
                   onClick={() => handleAddPlayer(slotIndex)}
                 >
                   Добавить

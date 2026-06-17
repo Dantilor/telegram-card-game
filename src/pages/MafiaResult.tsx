@@ -5,7 +5,8 @@ import { ROLE_LABELS } from '../games/mafia/types'
 import { IMAGES } from '../assets/images'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
-import HomeButton from '../components/HomeButton'
+import MafiaPageNav from '../components/MafiaPageNav'
+import { saveMafiaSetupFromGame } from '../games/mafia/setupStorage'
 import './MafiaResult.css'
 
 function MafiaResult() {
@@ -13,14 +14,23 @@ function MafiaResult() {
   const { state, dispatch } = useMafiaGame()
   const isPeacefulWin = state.winner === 'peaceful'
 
+  const persistRoster = () => {
+    saveMafiaSetupFromGame(
+      state.hostName,
+      state.players.map((p) => p.name),
+    )
+  }
+
   const handlePlayAgain = () => {
     hapticSelection()
+    persistRoster()
     dispatch({ type: 'RESET' })
     navigate('/mafia')
   }
 
   const handleBackToGames = () => {
     haptic('light')
+    persistRoster()
     dispatch({ type: 'RESET' })
     // В Telegram WebView navigate(-1) ломает приложение — всегда явный путь
     if (getTg() || window.history.length <= 1) {
@@ -38,19 +48,10 @@ function MafiaResult() {
   }
 
   return (
-    <div className="mafia-result">
-      <div className="mafia-result__top">
-        <HomeButton />
-        <button
-          type="button"
-          className="btn btn--ghost home-btn mafia-result__back"
-          onClick={() => { haptic('light'); dispatch({ type: 'RESET' }); navigate('/mafia') }}
-        >
-          ← Назад
-        </button>
-      </div>
+    <div className="mafia-page mafia-result">
+      <MafiaPageNav />
 
-      <div className={`mafia-result__card card ${isPeacefulWin ? 'mafia-result__card--win' : 'mafia-result__card--lose'}`}>
+      <div className={`mafia-result__card mafia-page__panel ${isPeacefulWin ? 'mafia-result__card--win mafia-page__panel--glow-a' : 'mafia-result__card--lose mafia-page__panel--glow-b'}`}>
         <h1 className="mafia-result__title">
           {isPeacefulWin ? 'Победа мирных' : 'Победа мафии'}
         </h1>
@@ -67,7 +68,7 @@ function MafiaResult() {
         )}
       </div>
 
-      <div className="mafia-result__roles card">
+      <div className="mafia-result__roles mafia-page__panel mafia-page__panel--glow-b">
         <h2 className="mafia-result__roles-title">Кто кем был</h2>
         <ul className="mafia-result__roles-list">
           {state.players.map((p) => (
@@ -96,17 +97,17 @@ function MafiaResult() {
         </ul>
       </div>
 
-      <div className="mafia-result__actions">
+      <div className="mafia-page__actions mafia-result__actions">
         <button
           type="button"
-          className="btn btn--primary mafia-result__btn"
+          className="mafia-page__cta"
           onClick={handlePlayAgain}
         >
           Сыграть ещё раз
         </button>
         <button
           type="button"
-          className="btn btn--ghost mafia-result__btn"
+          className="mafia-page__btn mafia-page__btn--secondary"
           onClick={handleBackToGames}
         >
           В меню игр

@@ -5,7 +5,9 @@ import { saveAliasState, getInitialAliasState } from '../games/alias/state'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './AliasResult.css'
+import './AliasHome.css'
 
 type ResultState = { guessed: number; skipped: number } | null
 
@@ -35,34 +37,31 @@ function AliasResult() {
     navigate('/alias')
   }
 
+  const handleBack = () => {
+    haptic('light')
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/alias')
+    }
+  }
+
   return (
-    <div className="alias-result">
-      <div className="alias-result__top">
+    <div className="alias-page alias-result game-page--enter">
+      <div className="alias-page__top">
         <HomeButton
+          className="alias-page__nav-btn"
           onBeforeNavigate={() => {
             setShowExitConfirm(true)
             return true
           }}
         />
-        <button
-          type="button"
-          className="btn btn--ghost home-btn alias-result__back"
-            onClick={() => {
-              haptic('light')
-              if (window.history.length > 1) {
-                navigate(-1)
-              } else {
-                navigate('/alias')
-              }
-            }}
-        >
-          ← Назад
-        </button>
+        <BackButton onClick={handleBack} className="alias-page__nav-btn alias-page__back" />
       </div>
       <header className="alias-result__header">
         <h1 className="alias-result__title">Итоги раунда</h1>
       </header>
-      <div className="alias-result__stats card">
+      <div className="alias-result__stats alias-page__panel alias-page__panel--glow-a">
         <div className="alias-result__stat">
           <span className="alias-result__stat-value">{result.guessed}</span>
           <span className="alias-result__stat-label">Угадано</span>
@@ -73,7 +72,7 @@ function AliasResult() {
         </div>
       </div>
       {state.mode === 'team' && (
-        <div className="alias-result__scores card">
+        <div className="alias-result__scores alias-page__panel alias-page__panel--glow-b">
           <h2 className="alias-result__scores-title">Счёт</h2>
           <p className="alias-result__scores-text">
             A: {state.scores.teamA} — B: {state.scores.teamB}
@@ -83,14 +82,14 @@ function AliasResult() {
       <div className="alias-result__actions">
         <button
           type="button"
-          className="btn btn--primary alias-result__btn"
+          className="alias-page__cta"
           onClick={handleNextRound}
         >
           Следующий раунд
         </button>
         <button
           type="button"
-          className="btn btn--ghost alias-result__btn"
+          className="alias-page__btn alias-page__btn--secondary"
           onClick={handleChangeCategory}
         >
           Сменить категорию
@@ -99,22 +98,22 @@ function AliasResult() {
 
       {showExitConfirm && (
         <div
-          className="alias-result__modal-overlay"
+          className="alias-home__modal-overlay"
           onClick={() => handleExitConfirm(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="alias-result-exit-title"
         >
-          <div className="alias-result__modal card" onClick={(e) => e.stopPropagation()}>
-            <p id="alias-result-exit-title" className="alias-result__modal-text">Выйти из игры?</p>
-            <p className="alias-result__modal-hint">
+          <div className="alias-home__modal alias-page__panel alias-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
+            <p id="alias-result-exit-title" className="alias-home__modal-text">Выйти из игры?</p>
+            <p className="alias-home__modal-hint">
               Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
             </p>
             <div className="alias-result__modal-buttons">
-              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+              <button type="button" className="alias-page__btn alias-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
                 Остаться
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+              <button type="button" className="alias-page__cta" onClick={() => handleExitConfirm(true)}>
                 Выйти
               </button>
             </div>

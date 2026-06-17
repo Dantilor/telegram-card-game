@@ -4,6 +4,7 @@ import { useTruthDare } from '../games/truth-dare/TruthDareContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './TruthDareCard.css'
 
 function TruthDareCard() {
@@ -45,17 +46,15 @@ function TruthDareCard() {
   }
 
   return (
-    <div className="truth-dare-card">
-      <div className="truth-dare-card__top">
-        <button type="button" className="btn btn--ghost truth-dare-card__back" onClick={handleBack}>
-          ←
-        </button>
-        <HomeButton />
+    <div className="game-page truth-dare-card">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <div className="truth-dare-card__level">Уровень {card.level}</div>
+      <span className="game-page__progress">Уровень {card.level}</span>
 
-      <div className="truth-dare-card__card card">
+      <div className="truth-dare-card__card game-page__panel game-page__panel--glow-b">
         <p className="truth-dare-card__type">{card.type === 'truth' ? 'Правда' : 'Действие'}</p>
         <p className="truth-dare-card__text">{card.text}</p>
       </div>
@@ -63,7 +62,7 @@ function TruthDareCard() {
       <div className="truth-dare-card__actions">
         <button
           type="button"
-          className="btn btn--primary truth-dare-card__btn"
+          className="game-page__cta"
           onClick={handleCompleted}
         >
           Выполнено
@@ -71,7 +70,7 @@ function TruthDareCard() {
         {!state.forcedNoRefuse && (
           <button
             type="button"
-            className="btn truth-dare-card__btn truth-dare-card__btn--refuse"
+            className="game-page__btn game-page__btn--secondary"
             onClick={handleRefused}
           >
             Отказ
@@ -84,12 +83,12 @@ function TruthDareCard() {
           <div className="truth-dare-card__token-wrapper">
             <button
               type="button"
-              className="btn btn--ghost truth-dare-card__token"
+              className="truth-dare-card__token"
               onClick={handleReroll}
             >
               Сменить карту ({player.tokens.rerollSameLevel})
             </button>
-            <p className="truth-dare-card__token-hint">
+            <p className="game-page__hint truth-dare-card__token-hint">
               Получить новое задание того же уровня
             </p>
           </div>

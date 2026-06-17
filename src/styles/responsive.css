@@ -1,0 +1,108 @@
+/* Mobile + desktop layout for Telegram Mini App — loaded last via App.css */
+
+:root {
+  --layout-pad: clamp(0.75rem, 3vw, 1rem);
+  --app-inset-top: calc(max(var(--layout-pad), var(--safe-top)) + var(--tg-header-offset));
+  --app-inset-bottom: max(var(--layout-pad), var(--safe-bottom));
+  --app-content-height: calc(var(--app-height) - var(--app-inset-top) - var(--app-inset-bottom));
+}
+
+/* Shell pages manage horizontal/bottom padding themselves */
+.app:has(.profile-page) {
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+}
+
+/* Page shells sit inside padded .app — avoid forcing full viewport height (double scroll / overlap) */
+.app .game-page,
+.app .alias-page,
+.app .mafia-page,
+.app .games-page,
+.app .favorites-page,
+.app .deck-select-page,
+.app .card-entry-page,
+.app .play-page,
+.app .profile-page,
+.app .quiz-room-setup,
+.app .home-page--neon,
+.app .home-page--light,
+.app .home-page--sunset,
+.app .home-page--calm {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+/* Internal scroll regions inside shells */
+.app .game-page__scroll,
+.app .quiz-result__scroll,
+.app .mafia-night {
+  min-height: 0;
+}
+
+/* Prevent horizontal overflow in narrow TG viewport */
+.app img:not(.smart-image__img),
+.app video,
+.app svg,
+.app canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.app pre,
+.app table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Comfortable tap targets on touch devices */
+@media (pointer: coarse) {
+  .game-page__nav-btn,
+  .game-page__btn,
+  .game-page__cta,
+  .game-page__chip,
+  .alias-page__nav-btn,
+  .mafia-page__nav-btn {
+    min-height: 2.75rem;
+  }
+}
+
+@media (min-width: 640px) {
+  :root {
+    --tg-header-offset: 3.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --tg-header-offset: 3rem;
+  }
+
+  .app {
+    max-width: min(var(--layout-content-max), 100%);
+    margin-inline: auto;
+  }
+
+  .game-page__actions,
+  .alias-home__actions {
+    padding-bottom: max(0.5rem, var(--safe-bottom));
+  }
+}
+
+@media (min-width: 1024px) {
+  html:not([data-tg-mobile="1"]) .app {
+    border-inline: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.08)) 55%, transparent);
+  }
+}
+
+/* Prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .app *,
+  .app *::before,
+  .app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

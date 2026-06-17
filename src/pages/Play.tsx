@@ -12,11 +12,18 @@ import { haptic } from '../utils/telegram'
 import { trackEvent } from '../lib/analytics'
 import PremiumOverlay from '../components/PremiumOverlay'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import AdultConfirmModal from '../components/AdultConfirmModal'
 import './Play.css'
 
 type Card = { id: string; text: string }
 type TransitionPhase = 'idle' | 'leaving' | 'entering' | 'back'
+
+type PlayNavState = {
+  adultConfirmed?: boolean
+  fromFavorites?: boolean
+  questionIndex?: number
+}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -59,6 +66,42 @@ export default function Play() {
     [params.deckId, sp]
   )
 
+  const fromFavorites = useMemo(
+    () =>
+      (location.state as PlayNavState | null)?.fromFavorites === true ||
+      sp.get('from') === 'favorites',
+    [location.state, sp]
+  )
+
+  const favoriteQuestionIndex = useMemo(() => {
+    const navState = location.state as PlayNavState | null
+    if (typeof navState?.questionIndex === 'number' && Number.isFinite(navState.questionIndex)) {
+      return navState.questionIndex
+    }
+    const q = sp.get('q')
+    if (q == null || q === '') return undefined
+    const n = Number(q)
+    return Number.isFinite(n) ? n : undefined
+  }, [location.state, sp])
+
+  const navigateLeavePlay = () => {
+    if (fromFavorites) {
+      nav('/favorites')
+      return
+    }
+    if (window.history.length > 1) nav(-1)
+    else nav('/games')
+  }
+
+  const navigateTopBarBack = () => {
+    if (fromFavorites) {
+      nav('/favorites')
+      return
+    }
+    const entry = getDeckFromIndex(deckId)
+    nav(`/mode/${entry?.modeId ?? 'party'}`)
+  }
+
   const [state, setState] = useState<GameState>({ status: 'loading' })
   const [displayIndex, setDisplayIndex] = useState(0)
   const [transitionPhase, setTransitionPhase] = useState<TransitionPhase>('idle')
@@ -67,15 +110,15 @@ export default function Play() {
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [adultGatePassed, setAdultGatePassed] = useState(() =>
-    (location.state as { adultConfirmed?: boolean } | null)?.adultConfirmed === true
+    (location.state as PlayNavState | null)?.adultConfirmed === true
   )
 
   const needsAdultConfirm = deckId && isDeckAdult(deckId) && !adultGatePassed
 
   useEffect(() => {
-    const fromConfirm = (location.state as { adultConfirmed?: boolean } | null)?.adultConfirmed
+    const fromConfirm = (location.state as PlayNavState | null)?.adultConfirmed
     setAdultGatePassed(fromConfirm === true)
-  }, [deckId])
+  }, [deckId, location.state])
 
   useEffect(() => {
     let cancelled = false
@@ -116,21 +159,31 @@ export default function Play() {
         const saved = localState.progress?.[deckId]
         const savedOrder = saved?.order
         const hasValidProgress =
+          !fromFavorites &&
           Array.isArray(savedOrder) &&
           savedOrder.length === rawCards.length &&
           savedOrder.every((i) => i >= 0 && i < rawCards.length)
-        const startIndex =
-          hasValidProgress && typeof saved.index === 'number'
-            ? Math.min(Math.max(0, saved.index), savedOrder.length - 1)
-            : 0
 
         let prepared: Card[]
-        if (hasValidProgress && savedOrder) {
+        let startIndex: number
+
+        if (fromFavorites && favoriteQuestionIndex !== undefined) {
+          prepared = [...rawCards]
+          const pos = prepared.findIndex((c) => Number(c.id) === favoriteQuestionIndex)
+          startIndex = pos >= 0 ? pos : 0
+        } else if (hasValidProgress && savedOrder) {
           prepared = savedOrder.map((origIdx) => rawCards[origIdx]).filter(Boolean)
           if (prepared.length !== rawCards.length) prepared = shuffle([...rawCards])
+          startIndex =
+            typeof saved.index === 'number'
+              ? Math.min(Math.max(0, saved.index), prepared.length - 1)
+              : 0
         } else {
           prepared = shuffle([...rawCards])
+          startIndex = 0
         }
+
+        const resolvedStartIndex = Math.min(Math.max(0, startIndex), prepared.length - 1)
 
         if (!cancelled) {
           trackEvent('open_deck', { deckId })
@@ -140,21 +193,22 @@ export default function Play() {
             deckId,
             title,
             cards: prepared,
-            index: startIndex,
+            index: resolvedStartIndex,
             finished: false,
           })
-          setDisplayIndex(startIndex)
+          setDisplayIndex(resolvedStartIndex)
           setTransitionPhase('idle')
           animationPhaseRef.current = 'idle'
-          if (!hasValidProgress) {
-            setLocalState((prev) => ({
-              ...prev,
-              progress: {
-                ...(prev.progress ?? {}),
-                [deckId]: { order: prepared.map((c) => Number(c.id)), index: 0 },
+          setLocalState((prev) => ({
+            ...prev,
+            progress: {
+              ...(prev.progress ?? {}),
+              [deckId]: {
+                order: prepared.map((c) => Number(c.id)),
+                index: resolvedStartIndex,
               },
-            }))
-          }
+            },
+          }))
         }
       } catch (e: unknown) {
         if (!cancelled) {
@@ -179,14 +233,14 @@ export default function Play() {
       cancelled = true
       clearTimeout(id)
     }
-  }, [deckId, isPremium])
+  }, [deckId, isPremium, fromFavorites, favoriteQuestionIndex])
 
   const handleAdultConfirm = () => {
     setAdultGatePassed(true)
   }
 
   const handleAdultCancel = () => {
-    nav(-1)
+    navigateLeavePlay()
   }
 
   const handleNextClick = () => {
@@ -267,17 +321,14 @@ export default function Play() {
         animationPhaseRef.current = 'idle'
       }, 200)
     } else {
-      if (window.history.length > 1) nav(-1)
-      else nav('/games')
+      navigateLeavePlay()
     }
   }
 
   const handleTopBarBack = () => {
     if (transitionPhase !== 'idle') return
     haptic('light')
-    const entry = getDeckFromIndex(deckId)
-    const modeId = entry?.modeId ?? 'party'
-    nav(`/mode/${modeId}`)
+    navigateTopBarBack()
   }
 
   const handleAddToFavorites = () => {
@@ -326,9 +377,10 @@ export default function Play() {
   if (state.status === 'loading') {
     return (
       <div className="play-page">
-        <div className="play-loading">
-          <div className="play-loading__title">Загрузка игры…</div>
-          <div className="play-loading__hint">Подготавливаем карточки</div>
+        <div className="play-page__state">
+          <div className="play-page__loader" aria-hidden />
+          <p className="play-page__state-title">Загрузка игры…</p>
+          <p className="play-page__state-hint">Подготавливаем карточки</p>
         </div>
         {needsAdultConfirm && (
           <AdultConfirmModal
@@ -344,19 +396,15 @@ export default function Play() {
   if (state.status === 'stub') {
     return (
       <div className="play-page">
-        <div className="play-error">
-          <div className="play-error__title">Колода в разработке</div>
-          <div className="play-error__msg">Вопросы для этой колоды пока не добавлены.</div>
+        <div className="play-page__state">
+          <p className="play-page__state-title">Колода в разработке</p>
+          <p className="play-page__state-hint">Вопросы для этой колоды пока не добавлены.</p>
           <button
             type="button"
-            className="btn btn--primary play-error__btn"
+            className="play-page__cta"
             onClick={() => {
               haptic('light')
-              if (window.history.length > 1) {
-                nav(-1)
-              } else {
-                nav('/games')
-              }
+              navigateLeavePlay()
             }}
           >
             Назад
@@ -369,22 +417,9 @@ export default function Play() {
   if (state.status === 'paywall') {
     return (
       <div className="play-page">
-        <div className="play-error">
-          <button
-            type="button"
-            className="btn btn--ghost play-error__btn"
-            style={{ position: 'absolute', top: '1rem', left: '1rem' }}
-            onClick={() => {
-              haptic('light')
-              nav(-1)
-            }}
-          >
-            ← Назад
-          </button>
-          <PremiumOverlay
-            isOpen
-            onClose={() => nav(-1)}
-          />
+        <div className="play-page__state">
+          <BackButton onClick={navigateLeavePlay} className="play-page__nav-btn play-page__state-back" />
+          <PremiumOverlay isOpen onClose={navigateLeavePlay} />
         </div>
       </div>
     )
@@ -393,19 +428,15 @@ export default function Play() {
   if (state.status === 'error') {
     return (
       <div className="play-page">
-        <div className="play-error">
-          <div className="play-error__title">Не удалось загрузить игру</div>
-          <div className="play-error__msg">{state.message}</div>
+        <div className="play-page__state">
+          <p className="play-page__state-title">Не удалось загрузить игру</p>
+          <p className="play-page__state-hint">{state.message}</p>
           <button
             type="button"
-            className="btn btn--primary play-error__btn"
+            className="play-page__cta"
             onClick={() => {
               haptic('light')
-              if (window.history.length > 1) {
-                nav(-1)
-              } else {
-                nav('/games')
-              }
+              navigateLeavePlay()
             }}
           >
             Назад
@@ -418,29 +449,26 @@ export default function Play() {
   if (state.status === 'ready' && state.finished) {
     return (
       <div className="play-page">
-        <div className="play-finish">
-          <div className="play-finish__title">Игра окончена</div>
-          <div className="play-finish__hint">Можно начать заново или выбрать другую колоду</div>
-          <div className="play-finish__actions">
-            <button type="button" className="btn btn--primary play-finish__btn" onClick={restart}>
+        <div className="play-page__state play-page__state--finish">
+          <span className="play-page__state-icon" aria-hidden>✦</span>
+          <h2 className="play-page__state-title">Игра окончена</h2>
+          <p className="play-page__state-hint">Можно начать заново или выбрать другую колоду</p>
+          <div className="play-page__state-actions">
+            <button type="button" className="play-page__cta" onClick={restart}>
               Начать заново
             </button>
             <button
               type="button"
-              className="btn btn--ghost play-finish__btn"
+              className="play-page__fav-btn"
               onClick={() => {
                 haptic('light')
-                if (window.history.length > 1) {
-                  nav(-1)
-                } else {
-                  nav('/games')
-                }
+                navigateTopBarBack()
               }}
             >
-              Назад
+              К колодам
             </button>
-            <button type="button" className="btn btn--ghost play-finish__btn" onClick={() => nav('/')}>
-              Домой
+            <button type="button" className="play-page__prev-btn" onClick={() => nav('/')}>
+              На главную
             </button>
           </div>
         </div>
@@ -466,37 +494,32 @@ export default function Play() {
   const isInFavorites = Number.isInteger(currentCardIndex) && deckFavorites.includes(currentCardIndex)
 
   return (
-    <div className="play-page play">
-      <div className="play-page__top-bar">
-        <button
-          type="button"
-          className="play-page__back-btn btn btn--ghost"
+    <div className="play-page">
+      <div className="play-page__top">
+        <HomeButton className="play-page__nav-btn" />
+        <BackButton
           onClick={handleTopBarBack}
-          disabled={transitionPhase !== 'idle'}
-          aria-label="Назад"
-        >
-          ← Назад
-        </button>
-        <HomeButton />
+          className="play-page__nav-btn play-page__back-nav"
+        />
       </div>
 
       {state.status === 'ready' && (
-        <>
+        <header className="play-page__header">
           <h1 className="play-page__title">{state.title}</h1>
           <div className="play-page__progress-wrap">
-            <div className="play-page__progress-bar">
+            <div className="play-page__progress-bar" aria-hidden>
               <div
                 className="play-page__progress-fill"
-                style={{
-                  width: `${((displayIndex + 1) / state.cards.length) * 100}%`,
-                }}
+                style={{ width: `${((displayIndex + 1) / state.cards.length) * 100}%` }}
               />
             </div>
             <p className="play-page__progress-text">
-              <span className="font-mono">{displayIndex + 1}</span> / <span className="font-mono">{state.cards.length}</span>
+              <span className="play-page__progress-current">{displayIndex + 1}</span>
+              <span className="play-page__progress-sep">/</span>
+              <span className="play-page__progress-total">{state.cards.length}</span>
             </p>
           </div>
-        </>
+        </header>
       )}
 
       <div className="play-card-wrap">
@@ -504,10 +527,10 @@ export default function Play() {
           className={`play-card ${cardPhaseClass}`}
           onAnimationEnd={handleCardAnimationEnd}
         >
-          {cardPrompt && (
-            <p className="play-card__prompt">{cardPrompt}</p>
-          )}
-          <div className="play-card__text">{current?.text ?? ''}</div>
+          <div className="play-card__inner">
+            {cardPrompt && <p className="play-card__prompt">{cardPrompt}</p>}
+            <p className="play-card__text">{current?.text ?? ''}</p>
+          </div>
         </div>
       </div>
 
@@ -515,15 +538,15 @@ export default function Play() {
         <div className="play-page__actions">
           <button
             type="button"
-            className="btn btn--primary"
+            className="play-page__cta"
             onClick={handleNextClick}
             disabled={transitionPhase !== 'idle'}
           >
-            {isLastCard ? 'Завершить' : 'Следующая'}
+            {isLastCard ? 'Завершить ✦' : 'Следующая →'}
           </button>
           <button
             type="button"
-            className={`btn btn--ghost ${isInFavorites ? 'btn--fav-active' : ''}`}
+            className={`play-page__fav-btn${isInFavorites ? ' play-page__fav-btn--active' : ''}`}
             onClick={handleAddToFavorites}
             disabled={isInFavorites || transitionPhase !== 'idle'}
           >
@@ -531,11 +554,11 @@ export default function Play() {
           </button>
           <button
             type="button"
-            className="btn btn--ghost play-page__back"
+            className="play-page__prev-btn"
             onClick={handleBackClick}
             disabled={transitionPhase !== 'idle'}
           >
-            Назад
+            ← Предыдущий вопрос
           </button>
         </div>
       )}

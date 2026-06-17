@@ -3,6 +3,7 @@ import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './SabotageVote.css'
 
 function SabotageVote() {
@@ -41,16 +42,14 @@ function SabotageVote() {
   }
 
   return (
-    <div className="sabotage-vote">
-      <div className="sabotage-vote__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost sabotage-vote__back" onClick={handleBack}>
-          ← Назад
-        </button>
+    <div className="game-page sabotage-vote sabotage-flow">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <h2 className="sabotage-vote__title">Кто саботёр?</h2>
-      <p className="sabotage-vote__voter">
+      <h2 className="game-page__screen-title">Кто саботёр?</h2>
+      <p className="game-page__screen-subtitle">
         {currentVoter.name}, кого подозреваешь?
       </p>
 
@@ -59,7 +58,7 @@ function SabotageVote() {
           <button
             key={p.id}
             type="button"
-            className="btn card sabotage-vote__target"
+            className="game-page__target sabotage-vote__target"
             onClick={() => handleVote(p.id)}
           >
             {p.name}
@@ -67,7 +66,7 @@ function SabotageVote() {
         ))}
       </div>
 
-      <p className="sabotage-vote__hint">
+      <p className="game-page__progress">
         {state.voteCollectIndex + 1} / {state.players.length}
       </p>
     </div>

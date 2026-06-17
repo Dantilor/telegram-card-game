@@ -8,9 +8,25 @@ import { haptic } from '../utils/telegram'
 import { hapticSelection, hapticSuccess } from '../utils/haptics'
 import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './ActivityPlay.css'
 
 const TICK_MS = 250
+
+function ActivityPlayTopNav({
+  onBack,
+  onBeforeHomeNavigate,
+}: {
+  onBack: () => void
+  onBeforeHomeNavigate?: () => boolean
+}) {
+  return (
+    <div className="game-page__top">
+      <HomeButton className="game-page__nav-btn" onBeforeNavigate={onBeforeHomeNavigate} />
+      <BackButton onClick={onBack} className="game-page__nav-btn game-page__back" />
+    </div>
+  )
+}
 
 function ActivityExitModal({
   onClose,
@@ -20,17 +36,17 @@ function ActivityExitModal({
   onConfirm: () => void
 }) {
   return (
-    <div className="activity-play__modal-overlay" onClick={onClose}>
-      <div className="activity-play__modal card" onClick={(e) => e.stopPropagation()}>
-        <p className="activity-play__modal-text">Выйти из игры?</p>
-        <p className="activity-play__modal-hint">
+    <div className="game-page__modal-overlay" onClick={onClose}>
+      <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
+        <p className="game-page__modal-text">Выйти из игры?</p>
+        <p className="game-page__modal-hint">
           Если выйти, весь прогресс будет сброшен.
         </p>
         <div className="activity-play__modal-btns">
-          <button type="button" className="btn btn--ghost" onClick={onClose}>
+          <button type="button" className="game-page__btn game-page__btn--secondary" onClick={onClose}>
             Остаться
           </button>
-          <button type="button" className="btn btn--primary" onClick={onConfirm}>
+          <button type="button" className="game-page__cta" onClick={onConfirm}>
             Выйти
           </button>
         </div>
@@ -49,7 +65,7 @@ function ActivityRedirectToHome({ onNavigate }: { onNavigate: () => void }) {
   }, [onNavigate])
 
   return (
-    <div className="activity-play">
+    <div className="game-page activity-play">
       <p className="activity-play__message">Переход…</p>
     </div>
   )
@@ -146,13 +162,8 @@ function TeamTurnReadyScreen({
   const totalTeams = state.activeTeamSlots.length
 
   return (
-    <div className="activity-play">
-      <div className="activity-play__top">
-        <button type="button" className="btn btn--ghost activity-play__back" onClick={onBack}>
-          ← Назад
-        </button>
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
-      </div>
+    <div className="game-page activity-play">
+      <ActivityPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
 
       <div className="activity-play__score-bar">
         <span className="activity-play__score-item">Раунд: {state.roundNumber}</span>
@@ -164,7 +175,7 @@ function TeamTurnReadyScreen({
         <p className="activity-play__team-name">{team?.name.trim() || '—'}</p>
       </header>
 
-      <div className="activity-play__turn-info card">
+      <div className="activity-play__turn-info game-page__panel game-page__panel--glow-a">
         <p className="activity-play__turn-timer">Время раунда: {state.timerSeconds} сек</p>
         <p className="activity-play__turn-hint">
           За это время нужно угадать как можно больше слов с указанным форматом
@@ -174,7 +185,7 @@ function TeamTurnReadyScreen({
       <div className="activity-play__turn-actions">
         <button
           type="button"
-          className="btn btn--primary activity-play__btn"
+          className="game-page__cta"
           onClick={() => {
             haptic('medium')
             dispatch({ type: 'START_ROUND' })
@@ -246,13 +257,8 @@ function TeamInRoundScreen({
   }
 
   return (
-    <div className="activity-play">
-      <div className="activity-play__top">
-        <button type="button" className="btn btn--ghost activity-play__back" onClick={onBack}>
-          ← Назад
-        </button>
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
-      </div>
+    <div className="game-page activity-play">
+      <ActivityPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
 
       <div className="activity-play__score-bar">
         <span className="activity-play__score-item activity-play__score-item--highlight">
@@ -271,7 +277,7 @@ function TeamInRoundScreen({
         <span className="activity-play__timer-text">{secondsLeft} сек</span>
       </div>
 
-      <div key={cardKey} className="activity-play__card card">
+      <div key={cardKey} className="activity-play__card game-page__panel game-page__panel--glow-b">
         <h2 className="activity-play__task">{TASK_LABELS[state.currentTaskType]}</h2>
         <p className="activity-play__word">{state.currentWord}</p>
       </div>
@@ -279,14 +285,14 @@ function TeamInRoundScreen({
       <div className="activity-play__actions">
         <button
           type="button"
-          className="btn btn--primary activity-play__btn activity-play__btn--guess"
+          className="game-page__cta"
           onClick={handleGuessed}
         >
           ✅ Угадали
         </button>
         <button
           type="button"
-          className="btn btn--ghost activity-play__btn"
+          className="game-page__btn game-page__btn--secondary"
           onClick={handleSkip}
         >
           ⏭️ Пропуск
@@ -296,7 +302,7 @@ function TeamInRoundScreen({
       <div className="activity-play__footer">
         <button
           type="button"
-          className="btn btn--ghost activity-play__exit"
+          className="activity-play__exit"
           onClick={onBack}
         >
           Выйти из игры
@@ -329,20 +335,15 @@ function TeamRoundResultsScreen({
   }
 
   return (
-    <div className="activity-play activity-play--results">
-      <div className="activity-play__top">
-        <button type="button" className="btn btn--ghost activity-play__back" onClick={onBack}>
-          ← Назад
-        </button>
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
-      </div>
+    <div className="game-page activity-play activity-play--results">
+      <ActivityPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
 
       <header className="activity-play__results-header">
         <h1 className="activity-play__results-title">Время вышло!</h1>
         <p className="activity-play__results-team">{team?.name.trim() || '—'}</p>
       </header>
 
-      <div className="activity-play__results-stats card">
+      <div className="activity-play__results-stats game-page__panel game-page__panel--glow-a">
         <div className="activity-play__results-stat">
           <span className="activity-play__results-value">{roundScore}</span>
           <span className="activity-play__results-label">Угадано за раунд</span>
@@ -353,7 +354,7 @@ function TeamRoundResultsScreen({
         </div>
       </div>
 
-      <div className="activity-play__results-total card">
+      <div className="activity-play__results-total game-page__panel game-page__panel--glow-b">
         <span className="activity-play__results-total-label">Всего очков:</span>
         <span className="activity-play__results-total-value">{totalScore}</span>
       </div>
@@ -361,7 +362,7 @@ function TeamRoundResultsScreen({
       <div className="activity-play__results-actions">
         <button
           type="button"
-          className="btn btn--primary activity-play__btn"
+          className="game-page__cta"
           onClick={handleNext}
         >
           {isLastTeam ? 'Показать результаты' : 'Ход следующей команды'}

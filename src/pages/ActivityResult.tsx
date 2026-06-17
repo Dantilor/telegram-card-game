@@ -43,9 +43,9 @@ function ActivityResult() {
   }
 
   return (
-    <div className="activity-result">
-      <div className="activity-result__top">
-        <HomeButton onBeforeNavigate={handleHomeClick} />
+    <div className="game-page activity-result game-page--enter">
+      <div className="game-page__top game-page__top--solo">
+        <HomeButton className="game-page__nav-btn" onBeforeNavigate={handleHomeClick} />
       </div>
 
       <header className="activity-result__header">
@@ -65,7 +65,7 @@ function ActivityResult() {
           {teamsWithScores.map((team, index) => (
             <div
               key={index}
-              className={`activity-result__score-row card ${index === 0 ? 'activity-result__score-row--winner' : ''}`}
+              className={`activity-result__score-row game-page__panel game-page__panel--glow-a ${index === 0 ? 'activity-result__score-row--winner' : ''}`}
             >
               <div className="activity-result__score-position">{index + 1}</div>
               <div className="activity-result__score-info">
@@ -81,14 +81,14 @@ function ActivityResult() {
       <div className="activity-result__actions">
         <button
           type="button"
-          className="btn btn--primary activity-result__btn"
+          className="game-page__cta"
           onClick={handlePlayAgain}
         >
           Играть ещё
         </button>
         <button
           type="button"
-          className="btn btn--ghost activity-result__btn"
+          className="game-page__btn game-page__btn--secondary"
           onClick={handleBackToMenu}
         >
           Назад в меню

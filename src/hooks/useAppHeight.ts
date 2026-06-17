@@ -8,8 +8,19 @@ function useThrottledAppHeight() {
 
   const update = () => {
     if (typeof document === 'undefined') return
-    const h = window.innerHeight
+    const tg = getTg() as { viewportStableHeight?: number; viewportHeight?: number } | null
+    const h =
+      (typeof tg?.viewportStableHeight === 'number' && tg.viewportStableHeight > 0
+        ? tg.viewportStableHeight
+        : typeof tg?.viewportHeight === 'number' && tg.viewportHeight > 0
+          ? tg.viewportHeight
+          : window.innerHeight)
     document.documentElement.style.setProperty('--app-height', `${h}px`)
+    if (tg) {
+      document.documentElement.dataset.tgMobile = '1'
+    } else {
+      delete document.documentElement.dataset.tgMobile
+    }
   }
 
   const schedule = () => {

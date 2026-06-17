@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useMafiaGame } from '../games/mafia/MafiaGameContext'
-import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
-import HomeButton from '../components/HomeButton'
+import { HOST_RULES } from '../games/mafia/hostScript'
+import MafiaPageNav from '../components/MafiaPageNav'
+import MafiaHostLine from '../components/MafiaHostLine'
 import './MafiaDay.css'
 
 function MafiaDay() {
@@ -44,35 +45,34 @@ function MafiaDay() {
     navigate('/mafia/voting')
   }
 
-  const handleBack = useBack('/mafia/night')
-
   return (
-    <div className="mafia-day">
-      <div className="mafia-day__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn mafia-day__back" onClick={handleBack}>
-          ← Назад
+    <div className="mafia-page mafia-day">
+      <MafiaPageNav />
+
+      <MafiaHostLine hostName={state.hostName}>
+        «Город просыпается!» Огласите итог ночи вслух, затем дайте время на обсуждение.
+      </MafiaHostLine>
+
+      <div className="mafia-day__result mafia-page__panel mafia-page__panel--glow-a">
+        <h2 className="mafia-day__result-title">День {state.roundNumber}</h2>
+        <p className="mafia-day__result-text">{state.nightResult ?? 'Ночь завершена.'}</p>
+      </div>
+
+      <div className="mafia-day__timer mafia-page__panel mafia-page__panel--glow-b">
+        <span className="mafia-day__timer-label">Обсуждение</span>
+        <span className="mafia-day__timer-value">{Math.floor(secondsLeft / 60)}:{(secondsLeft % 60).toString().padStart(2, '0')}</span>
+        <p className="mafia-day__timer-hint">{HOST_RULES.dayFlow}</p>
+      </div>
+
+      <div className="mafia-page__actions mafia-day__actions">
+        <button
+          type="button"
+          className="mafia-page__cta"
+          onClick={handleVoting}
+        >
+          Начать голосование
         </button>
       </div>
-
-      <div className="mafia-day__result card">
-        <h2 className="mafia-day__result-title">Город просыпается.</h2>
-        <p className="mafia-day__result-text">Кто-то больше не откроет глаза.</p>
-        {state.nightResult && <p className="mafia-day__result-night">{state.nightResult}</p>}
-      </div>
-
-      <div className="mafia-day__timer card">
-        <span className="mafia-day__timer-label">День. Обсуждение</span>
-        <span className="mafia-day__timer-value">{Math.floor(secondsLeft / 60)}:{(secondsLeft % 60).toString().padStart(2, '0')}</span>
-      </div>
-
-      <button
-        type="button"
-        className="btn btn--primary mafia-day__vote-btn"
-        onClick={handleVoting}
-      >
-        Перейти к голосованию
-      </button>
     </div>
   )
 }

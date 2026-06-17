@@ -1,0 +1,166 @@
+{
+  "source_file": "/mnt/data/интерфейс_выбора_игры_в_стиле_киберпанк.png",
+  "source_size": {
+    "width": 941,
+    "height": 1672
+  },
+  "note": "Crops are made from the approved generated games catalog screen. Use full reference as visual guide; UI should be built with code, not one flat image.",
+  "items": {
+    "top_header_full_reference.png": {
+      "folder": "01_header_sections",
+      "bbox": [
+        20,
+        12,
+        941,
+        330
+      ],
+      "size": {
+        "width": 921,
+        "height": 318
+      }
+    },
+    "nav_buttons_row_reference.png": {
+      "folder": "01_header_sections",
+      "bbox": [
+        35,
+        25,
+        941,
+        115
+      ],
+      "size": {
+        "width": 906,
+        "height": 90
+      }
+    },
+    "title_block_reference.png": {
+      "folder": "01_header_sections",
+      "bbox": [
+        48,
+        118,
+        941,
+        252
+      ],
+      "size": {
+        "width": 893,
+        "height": 134
+      }
+    },
+    "filters_row_reference.png": {
+      "folder": "01_header_sections",
+      "bbox": [
+        38,
+        255,
+        941,
+        345
+      ],
+      "size": {
+        "width": 903,
+        "height": 90
+      }
+    },
+    "title_gamenight_host.png": {
+      "folder": "02_title",
+      "bbox": [
+        95,
+        96,
+        930,
+        210
+      ],
+      "size": {
+        "width": 835,
+        "height": 114
+      }
+    },
+    "subtitle_choose_game.png": {
+      "folder": "02_title",
+      "bbox": [
+        360,
+        205,
+        665,
+        260
+      ],
+      "size": {
+        "width": 305,
+        "height": 55
+      }
+    },
+    "title_with_decor.png": {
+      "folder": "02_title",
+      "bbox": [
+        40,
+        95,
+        941,
+        260
+      ],
+      "size": {
+        "width": 901,
+        "height": 165
+      }
+    },
+    "button_home_exact.png": {
+      "folder": "03_buttons",
+      "bbox": [
+        38,
+        30,
+        225,
+        100
+      ],
+      "size": {
+        "width": 187,
+        "height": 70
+      }
+    },
+    "button_back_exact.png": {
+      "folder": "03_buttons",
+      "bbox": [
+        725,
+        30,
+        895,
+        100
+      ],
+      "size": {
+        "width": 170,
+        "height": 70
+      }
+    },
+    "decor_left_star.png": {
+      "folder": "04_decor",
+      "bbox": [
+        38,
+        122,
+        135,
+        210
+      ],
+      "size": {
+        "width": 97,
+        "height": 88
+      }
+    },
+    "decor_right_planet.png": {
+      "folder": "04_decor",
+      "bbox": [
+        830,
+        120,
+        941,
+        225
+      ],
+      "size": {
+        "width": 111,
+        "height": 105
+      }
+    },
+    "decor_small_sparkles_center.png": {
+      "folder": "04_decor",
+      "bbox": [
+        300,
+        180,
+        740,
+        260
+      ],
+      "size": {
+        "width": 440,
+        "height": 80
+      }
+    }
+  }
+}

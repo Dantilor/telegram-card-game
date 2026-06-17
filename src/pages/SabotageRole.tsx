@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
 import { ROLE_LABELS } from '../games/sabotage/types'
@@ -6,12 +6,14 @@ import { useBack } from '../hooks/useBack'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
 import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './SabotageRole.css'
 
 function SabotageRole() {
   const navigate = useNavigate()
   const { state, dispatch } = useSabotageGame()
   const [phase, setPhase] = useState<'pass' | 'role'>('pass')
+  const prevPhaseRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!state.players.length) {
@@ -39,7 +41,9 @@ function SabotageRole() {
   }, [])
 
   useEffect(() => {
-    if (state.phase === 'task') {
+    const prev = prevPhaseRef.current
+    prevPhaseRef.current = state.phase
+    if (prev != null && prev !== 'task' && state.phase === 'task') {
       navigate('/sabotage/task')
     }
   }, [state.phase, navigate])
@@ -58,24 +62,24 @@ function SabotageRole() {
   const isSaboteur = player.role === 'saboteur'
 
   return (
-    <div className="sabotage-role">
-      <div className="sabotage-role__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost sabotage-role__back" onClick={handleBack}>
-          ← Назад
-        </button>
+    <div className="game-page sabotage-role sabotage-flow">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <p className="sabotage-role__progress">Игрок {state.roleViewIndex + 1} / {state.players.length}</p>
+      <p className="game-page__progress">
+        Игрок {state.roleViewIndex + 1} / {state.players.length}
+      </p>
 
-      <div className={`sabotage-role__card card ${phase === 'role' ? 'sabotage-role__card--reveal' : ''}`}>
+      <div className="sabotage-role__card game-page__panel game-page__panel--glow-b">
         {phase === 'pass' ? (
           <div className="sabotage-role__pass">
             <p className="sabotage-role__pass-label">Передай телефон игроку:</p>
             <h2 className="sabotage-role__pass-name">{player.name}</h2>
             <button
               type="button"
-              className="btn btn--primary sabotage-role__show-btn"
+              className="game-page__cta sabotage-role__show-btn"
               onClick={handleRevealFromPass}
             >
               Показать мою роль
@@ -91,7 +95,7 @@ function SabotageRole() {
             )}
             <button
               type="button"
-              className="btn btn--primary sabotage-role__next-btn"
+              className="game-page__cta sabotage-role__next-btn"
               onClick={handleNext}
             >
               {isLast ? 'Начать задание' : 'Передать следующему игроку'}

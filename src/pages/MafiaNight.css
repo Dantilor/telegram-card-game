@@ -1,36 +1,14 @@
-/* Контейнер ночи: фиксированная высота под iPhone (--app-height в App) */
 .mafia-night {
-  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem);
-  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
-  min-height: var(--app-height, 100vh);
-  height: var(--app-height, 100vh);
-  max-width: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
-  color: var(--text);
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-.mafia-night__top {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.mafia-night__back {
-  flex-shrink: 0;
-}
-
-/* Карточка «переход в меню» (нет игроков) */
 .mafia-night__intro {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 16px;
+  padding: 1.25rem;
   text-align: center;
   margin: 0 auto;
   width: 100%;
@@ -39,52 +17,22 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: var(--radius, 12px);
-  border: 1px solid var(--border);
-  background: var(--panel);
   box-sizing: border-box;
 }
 
 .mafia-night__intro-text {
   margin: 0;
   font-size: 0.95rem;
-  color: var(--muted);
+  color: var(--mafia-readable-muted);
   line-height: 1.4;
 }
 
-/* Кнопки выбора игроков внутри MafiaNightStepLayout */
-.mafia-night__target {
-  width: 100%;
-  min-height: 3rem;
-  padding: 12px 16px;
-  text-align: center;
-  font-size: clamp(1rem, 2.8vw, 1.15rem);
-  font-weight: 600;
-  color: var(--text);
-  background: var(--panel);
-  word-break: break-word;
-  overflow-wrap: break-word;
-  line-height: 1.35;
-  border: 2px solid var(--border);
-  border-radius: var(--radius, 12px);
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, opacity 0.2s;
-  box-sizing: border-box;
-  touch-action: manipulation;
-  box-shadow: none;
-}
-
-.mafia-night__target:hover:not(:disabled) {
-  border-color: var(--cardHoverBorder);
-}
-
-.mafia-night__target:disabled {
+.mafia-night__mafia-name {
+  pointer-events: none;
   cursor: default;
-  opacity: 0.85;
+  font-weight: 700;
 }
 
-.mafia-night__target.is-active {
-  border-color: var(--secondary);
-  background: var(--td-active-bg, rgba(43, 210, 255, 0.2));
-  color: var(--text);
+.mafia-night-step__content {
+  gap: 0.65rem;
 }

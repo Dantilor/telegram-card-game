@@ -43,9 +43,9 @@ const APP_FEATURES = [
 ]
 
 const HOME_PICKS = [
-  { title: 'Правда или действие', image: IMAGES.truthDare.png, gameId: 'truth-dare', to: '/truth-dare' },
-  { title: 'Кто тут кто?', image: IMAGES.whoIsWho.png, gameId: 'who-is-who', to: '/who-is-who' },
-  { title: 'Битва умов', image: IMAGES.quiz.png, gameId: 'quiz', to: '/quiz' },
+  { title: 'Фигня но бесплатно', image: IMAGES.freebieTrash.png, gameId: 'freebie-trash', to: '/freebie-trash' },
+  { title: 'Переводчик фраз', image: IMAGES.phraseTranslator.png, gameId: 'phrase-translator', to: '/phrase-translator' },
+  { title: 'Где мы?', image: IMAGES.russiaTravel.png, gameId: 'russia-travel', to: '/russia-travel' },
 ] as const
 
 function HomePlayIcon({ size = 'picks' }: { size?: 'picks' | 'cta' }) {

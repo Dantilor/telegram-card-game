@@ -340,6 +340,11 @@ html:has(.game-page) #root {
   line-height: 1.3;
 }
 
+/* .app p { margin: 0 } resets progress badge spacing without higher specificity */
+.app .game-page .game-page__progress {
+  margin: 0.5rem auto 0.85rem;
+}
+
 .game-page__section {
   margin-bottom: 1.15rem;
 }

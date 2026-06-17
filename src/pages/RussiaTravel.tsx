@@ -40,7 +40,6 @@ export default function RussiaTravel() {
 
   return (
     <div className="game-page rt-page game-page--enter">
-      <div className="rt-page__atmosphere" aria-hidden />
       <div className="game-page__top">
         <HomeButton className="game-page__nav-btn" />
         <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />

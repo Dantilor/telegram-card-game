@@ -4,6 +4,8 @@ import { useCustomDecks } from '../hooks/useCustomDecks'
 import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
+import '../styles/GamePageShell.css'
 import './CustomDeckEditor.css'
 
 function CustomDeckEditor() {
@@ -65,22 +67,20 @@ function CustomDeckEditor() {
   }
 
   return (
-    <div className="custom-editor-page">
-      <div className="custom-editor-page__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn custom-editor-page__back" onClick={handleBack}>
-          ← Назад
-        </button>
+    <div className="game-page custom-editor-page game-page--enter">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
       <h1 className="custom-editor-page__title">
         {isNew ? 'Новая колода' : 'Редактировать колоду'}
       </h1>
-      <div className="custom-editor-page__form card">
+      <div className="custom-editor-page__form game-page__panel game-page__panel--glow-b">
         <label className="custom-editor-page__label">
           Название
           <input
             type="text"
-            className="custom-editor-page__input"
+            className="game-page__input"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Название колоды"
@@ -90,7 +90,7 @@ function CustomDeckEditor() {
           Описание (необязательно)
           <input
             type="text"
-            className="custom-editor-page__input"
+            className="game-page__input"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Краткое описание"
@@ -101,13 +101,13 @@ function CustomDeckEditor() {
           <div className="custom-editor-page__add">
             <input
               type="text"
-              className="custom-editor-page__input"
+              className="game-page__input"
               value={newQuestion}
               onChange={(e) => setNewQuestion(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addQuestion())}
               placeholder="Новый вопрос"
             />
-            <button type="button" className="btn btn--secondary" onClick={addQuestion}>
+            <button type="button" className="custom-editor-page__add-btn" onClick={addQuestion}>
               Добавить
             </button>
           </div>
@@ -117,7 +117,7 @@ function CustomDeckEditor() {
                 <span className="custom-editor-page__list-text">{q}</span>
                 <button
                   type="button"
-                  className="btn btn--ghost custom-editor-page__list-remove"
+                  className="custom-editor-page__list-remove"
                   onClick={() => removeQuestion(i)}
                   aria-label="Удалить"
                 >
@@ -133,13 +133,13 @@ function CustomDeckEditor() {
         <div className="custom-editor-page__actions">
           <button
             type="button"
-            className="btn btn--primary"
+            className="game-page__cta"
             onClick={handleSave}
             disabled={!title.trim() || questions.length === 0}
           >
             Сохранить
           </button>
-          <Link to="/favorites" className="btn btn--ghost" onClick={() => haptic('light')}>
+          <Link to="/favorites" className="custom-editor-page__cancel" onClick={() => haptic('light')}>
             Отмена
           </Link>
         </div>

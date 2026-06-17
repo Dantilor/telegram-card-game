@@ -6,13 +6,14 @@ import './HomeButton.css'
 type HomeButtonProps = {
   /** If returns true, navigation is prevented (e.g. to show exit confirm). */
   onBeforeNavigate?: () => boolean
+  className?: string
 }
 
-export default function HomeButton({ onBeforeNavigate }: HomeButtonProps) {
+export default function HomeButton({ onBeforeNavigate, className = '' }: HomeButtonProps) {
   return (
     <Link
       to="/"
-      className="btn btn--ghost home-btn"
+      className={`btn btn--ghost home-btn ${className}`.trim()}
       onClick={(e) => {
         haptic('light')
         if (onBeforeNavigate?.()) e.preventDefault()

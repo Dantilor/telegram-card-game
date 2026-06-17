@@ -4,6 +4,7 @@ import { useTruthDare } from '../games/truth-dare/TruthDareContext'
 import { useBack } from '../hooks/useBack'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './TruthDareVote.css'
 
 function TruthDareVote() {
@@ -35,19 +36,17 @@ function TruthDareVote() {
   if (state.phase !== 'vote') return null
 
   return (
-    <div className="truth-dare-vote">
-      <div className="truth-dare-vote__top">
-        <button type="button" className="btn btn--ghost truth-dare-vote__back" onClick={handleBack}>
-          ←
-        </button>
-        <HomeButton />
+    <div className="game-page truth-dare-vote">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <h2 className="truth-dare-vote__title">Голосование</h2>
-      <p className="truth-dare-vote__subtitle">
+      <h2 className="game-page__screen-title">Голосование</h2>
+      <p className="game-page__screen-subtitle">
         {currentPlayer?.name} выполнил задание.
       </p>
-      <p className="truth-dare-vote__subtitle">
+      <p className="game-page__screen-subtitle">
         {currentVoter ? `${currentVoter.name}, засчитываем или нет?` : 'Все проголосовали.'}
       </p>
 
@@ -55,30 +54,32 @@ function TruthDareVote() {
         <div className="truth-dare-vote__choices">
           <button
             type="button"
-            className="btn truth-dare-vote__btn truth-dare-vote__btn--ok"
+            className="game-page__cta truth-dare-vote__btn--ok"
             onClick={() => handleVote('ok')}
           >
             👍 Засчитано
           </button>
           <button
             type="button"
-            className="btn truth-dare-vote__btn truth-dare-vote__btn--not-counted"
+            className="game-page__btn game-page__btn--secondary"
             onClick={() => handleVote('notCounted')}
           >
             ❌ Не засчитано
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          className="btn btn--primary truth-dare-vote__finish"
-          onClick={handleFinish}
-        >
-          Продолжить
-        </button>
+        <div className="truth-dare-vote__finish-wrap">
+          <button
+            type="button"
+            className="game-page__cta"
+            onClick={handleFinish}
+          >
+            Продолжить
+          </button>
+        </div>
       )}
 
-      <p className="truth-dare-vote__hint">
+      <p className="game-page__hint truth-dare-vote__hint">
         Проголосовало: {Object.keys(state.vote.votes).length} / {voters.length}
       </p>
     </div>

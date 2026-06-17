@@ -7,6 +7,8 @@ import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
+import GamesPageHeader from '../components/GamesPageHeader'
 import AdultConfirmModal from '../components/AdultConfirmModal'
 import './TruthDareSetup.css'
 
@@ -93,34 +95,34 @@ function TruthDareSetup() {
   const handleBack = useBack('/games')
 
   return (
-    <div className="truth-dare-setup">
-      <div className="truth-dare-setup__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn truth-dare-setup__back" onClick={handleBack}>
-          ← Назад
-        </button>
+    <div className="game-page truth-dare-setup game-page--enter">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
-      <header className="truth-dare-setup__header">
-        <h1 className="truth-dare-setup__title">Правда или действие</h1>
-        <p className="truth-dare-setup__tagline">Сначала выбор. Потом последствия.</p>
-        <div className="truth-dare-setup__how card">
-          <h3 className="truth-dare-setup__how-title">Как играть</h3>
-          <ul className="truth-dare-setup__how-list">
-            <li>Выбери правду или действие.</li>
-            <li>Ответь честно или выполни задание.</li>
-            <li>С каждым раундом игра становится смелее.</li>
-          </ul>
-        </div>
-      </header>
 
-      <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Количество участников</h2>
-        <div className="truth-dare-setup__count-row">
+      <GamesPageHeader
+        title="Правда или действие"
+        tagline="Сначала выбор. Потом последствия."
+      />
+
+      <div className="truth-dare-setup__how game-page__panel game-page__panel--glow-b">
+        <h3 className="truth-dare-setup__how-title">Как играть</h3>
+        <ul className="truth-dare-setup__how-list">
+          <li>Выбери правду или действие.</li>
+          <li>Ответь честно или выполни задание.</li>
+          <li>С каждым раундом игра становится смелее.</li>
+        </ul>
+      </div>
+
+      <section className="truth-dare-setup__section game-page__section">
+        <h2 className="game-page__section-title">Количество участников</h2>
+        <div className="game-page__chip-row">
           {Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => MIN_PLAYERS + i).map((n) => (
             <button
               key={n}
               type="button"
-              className={`btn truth-dare-setup__count-btn ${count === n ? 'is-active' : ''}`}
+              className={`game-page__chip ${count === n ? 'is-active' : ''}`}
               onClick={() => updateCount(n)}
             >
               {n}
@@ -129,14 +131,14 @@ function TruthDareSetup() {
         </div>
       </section>
 
-      <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Количество ходов</h2>
-        <div className="truth-dare-setup__steps-row">
+      <section className="truth-dare-setup__section game-page__section">
+        <h2 className="game-page__section-title">Количество ходов</h2>
+        <div className="game-page__chip-row">
           {STEP_OPTIONS.map((n) => (
             <button
               key={n}
               type="button"
-              className={`btn truth-dare-setup__step-btn ${steps === n ? 'is-active' : ''}`}
+              className={`game-page__chip game-page__chip--wide ${steps === n ? 'is-active' : ''}`}
               onClick={() => { hapticSelection(); setSteps(n) }}
             >
               {n}
@@ -145,18 +147,20 @@ function TruthDareSetup() {
         </div>
       </section>
 
-      <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Категории <span className="truth-dare-setup__section-hint">(выберите одну или несколько)</span></h2>
+      <section className="truth-dare-setup__section game-page__section">
+        <h2 className="game-page__section-title">
+          Категории <span className="truth-dare-setup__section-hint">(выберите одну или несколько)</span>
+        </h2>
         <div className="truth-dare-setup__categories">
           {TAGS.map((tag) => (
             <button
               key={tag}
               type="button"
-              className={`truth-dare-setup__category-card card ${tags.includes(tag) ? 'truth-dare-setup__category-card--active' : ''}`}
+              className={`truth-dare-setup__category-card game-page__panel game-page__panel--glow-a game-page__category-card ${tags.includes(tag) ? 'is-active' : ''}`}
               onClick={() => toggleTag(tag)}
             >
               <span className="truth-dare-setup__category-emoji" aria-hidden>{TAG_EMOJIS[tag]}</span>
-              <span className="truth-dare-setup__category-title">
+              <span className="truth-dare-setup__category-title game-page__category-title">
                 <span className="truth-dare-setup__category-main">{TAG_LABELS[tag].main}</span>
                 <span className="truth-dare-setup__category-sub">{TAG_LABELS[tag].sub}</span>
               </span>
@@ -165,14 +169,14 @@ function TruthDareSetup() {
         </div>
       </section>
 
-      <section className="truth-dare-setup__section">
-        <h2 className="truth-dare-setup__section-title">Введите имена участников</h2>
+      <section className="truth-dare-setup__section game-page__section">
+        <h2 className="game-page__section-title">Введите имена участников</h2>
         <div className="truth-dare-setup__names">
           {names.slice(0, count).map((name, i) => (
             <input
               key={i}
               type="text"
-              className="truth-dare-setup__input card"
+              className="game-page__input"
               placeholder={`Игрок ${i + 1}`}
               value={name}
               onChange={(e) => {
@@ -185,10 +189,10 @@ function TruthDareSetup() {
         </div>
       </section>
 
-      <div className="truth-dare-setup__actions">
+      <div className="game-page__actions">
         <button
           type="button"
-          className="btn btn--primary truth-dare-setup__start"
+          className="game-page__cta"
           onClick={handleStart}
           disabled={count < MIN_PLAYERS}
         >

@@ -20,7 +20,40 @@ export const PREMIUM_PLAN = {
 export const FREE_LIMIT_PER_DECK = 15
 
 /** Игры, доступные для входа без подписки. */
-export const FREE_GAMES = ['card', 'truth-dare'] as const
+export const FREE_GAMES = [
+  'card',
+  'truth-dare',
+  'mafia',
+  'alias',
+  // ВРЕМЕННО для просмотра/теста (вернуть premium — убрать строки ниже):
+  'activity',
+  'sabotage',
+  'quiz',
+  'who-is-who',
+  'phrase-translator',
+  'freebie-trash',
+  'russia-travel',
+] as const
+
+/** Комиксы, доступные без подписки (отдельно от FREE_GAMES). */
+// ВРЕМЕННО: все серии бесплатны. Вернуть premium — оставить только 'series-1'.
+export const FREE_COMICS = ['series-1', 'series-2', 'series-3', 'series-4', 'series-5', 'series-6', 'series-7', 'series-8', 'series-9', 'series-10'] as const
+
+/**
+ * Откат premium (было до временного снятия 2026-06-15):
+ * FREE_GAMES = ['card', 'truth-dare', 'mafia', 'alias'] as const
+ *
+ * Игры, которые снова станут premium после отката:
+ * - activity   (Активитус)
+ * - sabotage   (Саботаж)
+ * - quiz       (Битва умов)
+ * - who-is-who (Кто тут кто?)
+ * - phrase-translator (Переводчик фраз)
+ * - freebie-trash (Фигня за бесплатно)
+ * - russia-travel (Где мы?)
+ *
+ * Уже бесплатные (не трогать при откате): card, truth-dare, mafia, alias
+ */
 
 /** Бесплатные колоды карточной игры (по 15 вопросов). */
 export const FREE_DECKS = [

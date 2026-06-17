@@ -4,6 +4,7 @@ import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
 import { haptic } from '../utils/telegram'
 import { hapticSelection, hapticImpact } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './SabotageResult.css'
 
 const REVEAL_DELAY_MS = 1200
@@ -37,19 +38,13 @@ function SabotageResult() {
   }
 
   return (
-    <div className="sabotage-result">
-      <div className="sabotage-result__top">
-        <HomeButton />
-        <button
-          type="button"
-          className="btn btn--ghost home-btn sabotage-result__back"
-          onClick={() => navigate('/sabotage')}
-        >
-          ← Назад
-        </button>
+    <div className="game-page sabotage-result game-page--enter">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={() => navigate('/sabotage')} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <div className={`sabotage-result__card card ${showReveal ? 'sabotage-result__card--reveal' : ''}`}>
+      <div className={`sabotage-result__card game-page__panel game-page__panel--glow-b ${showReveal ? 'sabotage-result__card--reveal' : ''}`}>
         {!showReveal ? (
           <div className="sabotage-result__wait">
             <span className="sabotage-result__wait-emoji" aria-hidden>😏</span>
@@ -74,14 +69,14 @@ function SabotageResult() {
         <div className="sabotage-result__actions">
           <button
             type="button"
-            className="btn btn--primary sabotage-result__btn"
+            className="game-page__cta"
             onClick={handlePlayAgain}
           >
             Сыграть ещё раз
           </button>
           <button
             type="button"
-            className="btn btn--ghost sabotage-result__btn"
+            className="game-page__btn game-page__btn--secondary"
             onClick={handleBackToGames}
           >
             В меню игр

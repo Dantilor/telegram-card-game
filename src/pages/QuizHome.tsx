@@ -6,6 +6,8 @@ import { getQuestionsByTags } from '../games/quiz/data/questions'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
+import GamesPageHeader from '../components/GamesPageHeader'
 import './QuizHome.css'
 
 const QUESTION_COUNTS = [5, 10, 20] as const
@@ -129,9 +131,10 @@ function QuizHome() {
   }
 
   return (
-    <div className="quiz-home" onPointerDown={handleTapOutside}>
-      <div className="quiz-home__top">
+    <div className="game-page quiz-home game-page--enter" onPointerDown={handleTapOutside}>
+      <div className="game-page__top">
         <HomeButton
+          className="game-page__nav-btn"
           onBeforeNavigate={() => {
             if (hasData) {
               setShowExitConfirm('home')
@@ -141,31 +144,31 @@ function QuizHome() {
             return false
           }}
         />
-        <button type="button" className="btn btn--ghost home-btn quiz-home__back" onClick={handleBackClick}>
-          ← Назад
-        </button>
+        <BackButton onClick={handleBackClick} className="game-page__nav-btn game-page__back" />
       </div>
-      <header className="quiz-home__header">
-        <h1 className="quiz-home__title">Битва умов</h1>
-        <p className="quiz-home__tagline">Ставка сделана. Ответишь правильно?</p>
-        <div className="quiz-home__how card">
-          <h3 className="quiz-home__how-title">Как играть?</h3>
-          <ul className="quiz-home__how-list">
-            <li>Отвечай на вопросы выбранной темы.</li>
-            <li>За верный ответ — баллы.</li>
-            <li>Побеждает тот, кто набрал больше.</li>
-          </ul>
-        </div>
-      </header>
 
-      <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Количество участников</h2>
-        <div className="quiz-home__options">
+      <GamesPageHeader
+        title="Битва умов"
+        tagline="Ставка сделана. Ответишь правильно?"
+      />
+
+      <div className="quiz-home__how game-page__panel game-page__panel--glow-b">
+        <h3 className="quiz-home__how-title">Как играть?</h3>
+        <ul className="quiz-home__how-list">
+          <li>Отвечай на вопросы выбранной темы.</li>
+          <li>За верный ответ — баллы.</li>
+          <li>Побеждает тот, кто набрал больше.</li>
+        </ul>
+      </div>
+
+      <section className="quiz-home__section game-page__section">
+        <h2 className="game-page__section-title">Количество участников</h2>
+        <div className="game-page__chip-row">
           {PARTICIPANT_COUNT_OPTIONS.map((count) => (
             <button
               key={count}
               type="button"
-              className={`btn btn--ghost quiz-home__option-btn ${participantCount === count ? 'quiz-home__option-btn--active' : ''}`}
+              className={`game-page__chip ${participantCount === count ? 'is-active' : ''}`}
               onClick={() => handleParticipantCount(count)}
             >
               {count}
@@ -174,14 +177,14 @@ function QuizHome() {
         </div>
       </section>
 
-      <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Количество вопросов</h2>
-        <div className="quiz-home__options">
+      <section className="quiz-home__section game-page__section">
+        <h2 className="game-page__section-title">Количество вопросов</h2>
+        <div className="game-page__chip-row">
           {QUESTION_COUNTS.map((n) => (
             <button
               key={n}
               type="button"
-              className={`btn btn--ghost quiz-home__option-btn ${questionCount === n ? 'quiz-home__option-btn--active' : ''}`}
+              className={`game-page__chip ${questionCount === n ? 'is-active' : ''}`}
               onClick={() => { hapticSelection(); setQuestionCount(n) }}
             >
               {n}
@@ -190,14 +193,14 @@ function QuizHome() {
         </div>
       </section>
 
-      <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Время на задание</h2>
-        <div className="quiz-home__options">
+      <section className="quiz-home__section game-page__section">
+        <h2 className="game-page__section-title">Время на задание</h2>
+        <div className="game-page__chip-row">
           {TIME_PER_QUESTION_OPTIONS.map((sec) => (
             <button
               key={sec}
               type="button"
-              className={`btn btn--ghost quiz-home__option-btn ${timePerQuestion === sec ? 'quiz-home__option-btn--active' : ''}`}
+              className={`game-page__chip game-page__chip--wide ${timePerQuestion === sec ? 'is-active' : ''}`}
               onClick={() => { hapticSelection(); setTimePerQuestion(sec) }}
             >
               {sec} сек
@@ -206,8 +209,10 @@ function QuizHome() {
         </div>
       </section>
 
-      <section className="quiz-home__section">
-        <h2 className="quiz-home__section-title">Категории <span className="quiz-home__section-hint">(выберите одну или несколько)</span></h2>
+      <section className="quiz-home__section game-page__section">
+        <h2 className="game-page__section-title">
+          Категории <span className="quiz-home__section-hint">(выберите одну или несколько)</span>
+        </h2>
         {tags.length === 0 && (
           <p className="quiz-home__category-hint" role="status">Выберите минимум одну категорию</p>
         )}
@@ -216,24 +221,24 @@ function QuizHome() {
             <button
               key={tag}
               type="button"
-              className={`quiz-home__category-card card ${tags.includes(tag) ? 'quiz-home__category-card--active' : ''}`}
+              className={`quiz-home__category-card game-page__panel game-page__panel--glow-a game-page__category-card ${tags.includes(tag) ? 'is-active' : ''}`}
               onClick={() => toggleTag(tag)}
             >
               <span className="quiz-home__category-emoji" aria-hidden>{TAG_EMOJIS[tag]}</span>
-              <span className="quiz-home__category-title">{TAG_LABELS[tag]}</span>
+              <span className="quiz-home__category-title game-page__category-title">{TAG_LABELS[tag]}</span>
             </button>
           ))}
         </div>
       </section>
 
-      <section className="quiz-home__section quiz-home__section--participants">
-        <h2 className="quiz-home__participants-title">Введите имена участников</h2>
+      <section className="quiz-home__section quiz-home__section--participants game-page__section">
+        <h2 className="game-page__section-title">Введите имена участников</h2>
         <div className="quiz-home__participants-list">
           {Array.from({ length: participantCount }, (_, i) => (
             <input
               key={i}
               type="text"
-              className="quiz-home__name-input card"
+              className="game-page__input"
               placeholder={`Игрок ${i + 1}`}
               value={names[i] ?? ''}
               onChange={(e) => handleName(i, e.target.value)}
@@ -254,13 +259,13 @@ function QuizHome() {
         <p className="quiz-home__error">{tagError}</p>
       )}
 
-      <div className="quiz-home__actions">
+      <div className="game-page__actions">
         {validationHint != null && (
-          <p className="quiz-home__hint-text" role="status">{validationHint}</p>
+          <p className="game-page__hint" role="status">{validationHint}</p>
         )}
         <button
           type="button"
-          className="btn btn--primary quiz-home__start"
+          className="game-page__cta"
           disabled={!canStart}
           onClick={handleStart}
         >
@@ -270,19 +275,19 @@ function QuizHome() {
 
       {showExitConfirm != null && (
         <div
-          className="quiz-home__modal-overlay"
+          className="game-page__modal-overlay"
           onClick={() => handleExitConfirm(false)}
         >
-          <div className="quiz-home__modal card" onClick={(e) => e.stopPropagation()}>
-            <p className="quiz-home__modal-text">Выйти из игры?</p>
-            <p className="quiz-home__modal-hint">
+          <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
+            <p className="game-page__modal-text">Выйти из игры?</p>
+            <p className="game-page__modal-hint">
               Если выйти, все настройки будут сброшены.
             </p>
-            <div className="quiz-home__modal-buttons">
-              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+            <div className="game-page__modal-buttons">
+              <button type="button" className="game-page__btn game-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
                 Остаться
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+              <button type="button" className="game-page__cta" onClick={() => handleExitConfirm(true)}>
                 Выйти
               </button>
             </div>

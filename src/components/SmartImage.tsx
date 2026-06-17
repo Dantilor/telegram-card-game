@@ -40,7 +40,10 @@ export default function SmartImage({ src, alt, className, priority, webpSrc, asp
   )
 
   return (
-    <div className={`smart-image ${className ?? ''}`.trim()} style={{ aspectRatio }}>
+    <div
+      className={`smart-image ${className ?? ''}`.trim()}
+      style={aspectRatio ? { aspectRatio } : undefined}
+    >
       {!loaded && <div className="smart-image__skeleton" aria-hidden />}
       {webpSrc ? (
         <picture className="smart-image__picture">

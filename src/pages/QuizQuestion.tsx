@@ -5,6 +5,7 @@ import { hapticSelection, hapticImpact } from '../utils/haptics'
 import { haptic } from '../utils/telegram'
 import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './QuizQuestion.css'
 
 const CLUTCH_SEC = 3
@@ -93,15 +94,13 @@ function QuizQuestion() {
   const isClutch = state.timer.leftSec > 0 && state.timer.leftSec <= CLUTCH_SEC
 
   return (
-    <div className="quiz-question">
-      <div className="quiz-question__top">
-        <button type="button" className="btn btn--ghost quiz-question__back" onClick={handleBack}>
-          ←
-        </button>
-        <HomeButton onBeforeNavigate={handleHomeClick} />
+    <div className="game-page quiz-question">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" onBeforeNavigate={handleHomeClick} />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <div className="quiz-question__turn-banner card" role="status">
+      <div className="quiz-question__turn-banner game-page__panel game-page__panel--glow-a" role="status">
         <span className="quiz-question__turn-label">Вопрос к участнику</span>
         <span className="quiz-question__turn-name">{currentPlayer.name}</span>
       </div>
@@ -117,13 +116,13 @@ function QuizQuestion() {
 
       <div className={`quiz-question__timer ${isClutch ? 'quiz-question__timer--clutch' : ''}`}>
         <div
-          className="quiz-question__timer-bar"
+          className={`quiz-question__timer-bar ${isClutch ? 'quiz-question__timer-bar--pulse' : ''}`}
           style={{ width: `${state.timer.totalSec > 0 ? (state.timer.leftSec / state.timer.totalSec) * 100 : 0}%` }}
         />
         <span className="quiz-question__timer-text">{state.timer.leftSec} сек</span>
       </div>
 
-      <div className="quiz-question__card card">
+      <div className="quiz-question__card game-page__panel game-page__panel--glow-b">
         <p className="quiz-question__text">{question.text}</p>
       </div>
 
@@ -132,7 +131,7 @@ function QuizQuestion() {
           <button
             key={idx}
             type="button"
-            className="btn card quiz-question__answer"
+            className="game-page__target quiz-question__answer"
             onClick={() => handleAnswer(idx)}
             disabled={!canAnswer}
           >
@@ -144,7 +143,7 @@ function QuizQuestion() {
       <div className="quiz-question__footer">
         <button
           type="button"
-          className="btn btn--ghost quiz-question__exit"
+          className="quiz-question__exit"
           onClick={handleBack}
         >
           Выйти из игры
@@ -152,17 +151,17 @@ function QuizQuestion() {
       </div>
 
       {showExitConfirm && (
-        <div className="quiz-question__modal-overlay" onClick={() => handleExitConfirm(false)}>
-          <div className="quiz-question__modal card" onClick={(e) => e.stopPropagation()}>
-            <p className="quiz-question__modal-text">Выйти из игры?</p>
-            <p className="quiz-question__modal-hint">
+        <div className="game-page__modal-overlay" onClick={() => handleExitConfirm(false)}>
+          <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
+            <p className="game-page__modal-text">Выйти из игры?</p>
+            <p className="game-page__modal-hint">
               Если выйти, весь прогресс будет сброшен.
             </p>
             <div className="quiz-question__modal-btns">
-              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+              <button type="button" className="game-page__btn game-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
                 Остаться
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+              <button type="button" className="game-page__cta" onClick={() => handleExitConfirm(true)}>
                 Выйти
               </button>
             </div>

@@ -28,6 +28,7 @@ import {
 import { useBack } from "../../hooks/useBack";
 import HomeButton from "../../components/HomeButton";
 import BackButton from "../../components/BackButton";
+import GamesPageHeader from "../../components/GamesPageHeader";
 import "./WhoIsWhoGame.css";
 
 const SELECTED_PACK_KEY = "who-is-who:selected-pack";
@@ -227,7 +228,7 @@ export default function WhoIsWhoGame() {
   ).length;
 
   return (
-    <div className="wiw-app">
+    <>
       {screen === "start" && (
         <SetupScreen
           playerCount={playerCount}
@@ -290,7 +291,7 @@ export default function WhoIsWhoGame() {
           onBack={goToSetup}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -304,6 +305,7 @@ function GamePage({
   onBeforeHomeNavigate,
   children,
   actions,
+  className,
 }: {
   title: string;
   tagline?: string;
@@ -312,31 +314,29 @@ function GamePage({
   onBeforeHomeNavigate?: () => boolean;
   children: ReactNode;
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="wiw-page">
-      <div className="wiw-page__top">
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
+    <div className={`game-page wiw-game game-page--enter${className ? ` ${className}` : ""}`}>
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" onBeforeNavigate={onBeforeHomeNavigate} />
         {!backDisabled && onBack && (
-          <BackButton onClick={onBack} className="wiw-page__back" />
+          <BackButton onClick={onBack} className="game-page__nav-btn game-page__back" />
         )}
       </div>
 
-      <header className="wiw-page__header">
-        <h1 className="wiw-page__title">{title}</h1>
-        {tagline && <p className="wiw-page__tagline">{tagline}</p>}
-      </header>
+      <GamesPageHeader title={title} tagline={tagline ?? ""} />
 
       {children}
 
-      {actions && <div className="wiw-page__actions">{actions}</div>}
+      {actions && <div className="game-page__actions">{actions}</div>}
     </div>
   );
 }
 
 function GameAboutCard() {
   return (
-    <div className="wiw-how card">
+    <div className="wiw-how game-page__panel game-page__panel--glow-b">
       <section className="wiw-how__block">
         <h3 className="wiw-how__title">Что это за игра?</h3>
         <p className="wiw-how__lead">
@@ -426,20 +426,20 @@ function SetupScreen({
           <div className="wiw-setup-actions">
             <button
               type="button"
-              className="btn btn--primary wiw-start-btn"
+              className="game-page__cta"
               disabled={!canStartNames}
               onClick={onReplayPack}
             >
               Пройти сезон заново
             </button>
-            <p className="wiw-setup-actions__hint">
+            <p className="wiw-setup-actions__hint game-page__hint">
               Или выберите другой сезон ниже
             </p>
           </div>
         ) : (
           <button
             type="button"
-            className="btn btn--primary wiw-start-btn"
+            className="game-page__cta"
             disabled={!canStartNames}
             onClick={onStartGame}
           >
@@ -456,8 +456,8 @@ function SetupScreen({
     >
       <GameAboutCard />
 
-      <section className="wiw-section">
-        <h2 className="wiw-section__title">
+      <section className="wiw-section game-page__section">
+        <h2 className="game-page__section-title">
           Сезоны
           <span className="wiw-section__title-accent">
             {" "}
@@ -466,7 +466,7 @@ function SetupScreen({
         </h2>
 
         {selectedPack.coverImage && (
-          <div className="wiw-pack-hero card">
+          <div className="wiw-pack-hero game-page__panel game-page__panel--glow-a">
             <img
               src={selectedPack.coverImage}
               alt=""
@@ -481,7 +481,7 @@ function SetupScreen({
         )}
 
         {packDone && (
-          <div className="wiw-pack-done-banner card" role="status">
+          <div className="wiw-pack-done-banner game-page__panel game-page__panel--glow-b" role="status">
             <span className="wiw-pack-done-banner__icon" aria-hidden>
               ✓
             </span>
@@ -567,14 +567,14 @@ function SetupScreen({
         </div>
       </section>
 
-      <section className="wiw-section">
-        <h2 className="wiw-section__title">Количество игроков</h2>
-        <div className="wiw-options" role="group" aria-label="Количество игроков">
+      <section className="wiw-section game-page__section">
+        <h2 className="game-page__section-title">Количество игроков</h2>
+        <div className="game-page__chip-row" role="group" aria-label="Количество игроков">
           {PLAYER_COUNT_OPTIONS.map((n) => (
             <button
               key={n}
               type="button"
-              className={`btn btn--ghost wiw-option-btn${playerCount === n ? " wiw-option-btn--active" : ""}`}
+              className={`game-page__chip${playerCount === n ? " is-active" : ""}`}
               aria-pressed={playerCount === n}
               onClick={() => onPlayerCount(n)}
             >
@@ -582,11 +582,11 @@ function SetupScreen({
             </button>
           ))}
         </div>
-        <p className="wiw-section__hint">Минимум {MIN_PLAYERS} человека</p>
+        <p className="game-page__hint">Минимум {MIN_PLAYERS} человека</p>
       </section>
 
-      <section className="wiw-section">
-        <h2 className="wiw-section__title">
+      <section className="wiw-section game-page__section">
+        <h2 className="game-page__section-title">
           Имена игроков ({filledNames}/{playerCount})
         </h2>
         <ul className="wiw-slots">
@@ -597,7 +597,7 @@ function SetupScreen({
               </label>
               <input
                 id={`player-${index}`}
-                className="wiw-input wiw-input--slot"
+                className="game-page__input wiw-input--slot"
                 type="text"
                 placeholder={`Имя игрока ${index + 1}`}
                 value={name}
@@ -648,7 +648,7 @@ function RoundScreen({
       actions={
         <button
           type="button"
-          className="btn btn--primary wiw-start-btn"
+          className="game-page__cta"
           disabled={!allAssigned}
           onClick={onShowResult}
         >
@@ -656,7 +656,7 @@ function RoundScreen({
         </button>
       }
     >
-      <div className="wiw-pack-run-progress card">
+      <div className="wiw-pack-run-progress game-page__panel game-page__panel--glow-a">
         <div className="wiw-pack-run-progress__head">
           <span>
             {pack.emoji} Сезон {pack.number}
@@ -673,13 +673,13 @@ function RoundScreen({
         </div>
       </div>
 
-      <div className="wiw-situation card">
+      <div className="wiw-situation game-page__panel game-page__panel--glow-b">
         <span className="wiw-situation__badge">Ситуация</span>
         <p className="wiw-situation__text">{situation.situation}</p>
       </div>
 
-      <section className="wiw-section">
-        <h2 className="wiw-section__title">Роли</h2>
+      <section className="wiw-section game-page__section">
+        <h2 className="game-page__section-title">Роли</h2>
         <ul className="wiw-roles">
           {activeRoles.map((role, index) => {
             const roleKey = String(index);
@@ -688,7 +688,7 @@ function RoundScreen({
             return (
               <li
                 key={roleKey}
-                className={`wiw-role card${assigned ? " wiw-role--done" : ""}`}
+                className={`wiw-role game-page__panel game-page__panel--glow-a${assigned ? " wiw-role--done" : ""}`}
               >
                 <div className="wiw-role__head">
                   <span className={`wiw-role__emoji wiw-role__emoji--${icon.variant}`}>
@@ -767,16 +767,16 @@ function ResultScreen({
       onBack={onBack}
       actions={
         <div className="wiw-result-actions">
-          <button type="button" className="btn btn--primary wiw-start-btn" onClick={onNext}>
+          <button type="button" className="game-page__cta" onClick={onNext}>
             {isLastInPack ? "Завершить сезон" : "Следующая ситуация"}
           </button>
-          <button type="button" className="btn btn--ghost wiw-start-btn" onClick={onChangePlayers}>
+          <button type="button" className="game-page__btn game-page__btn--secondary" onClick={onChangePlayers}>
             Меню игры
           </button>
         </div>
       }
     >
-      <div className="wiw-situation card wiw-situation--compact">
+      <div className="wiw-situation game-page__panel game-page__panel--glow-b wiw-situation--compact">
         <span className="wiw-situation__badge">Ситуация</span>
         <p className="wiw-situation__text">{situation.situation}</p>
       </div>
@@ -786,7 +786,7 @@ function ResultScreen({
           const player = playerById.get(assignments[String(index)]);
           const icon = getRoleIconStyle(index);
           return (
-            <li key={index} className="wiw-verdict__item card">
+            <li key={index} className="wiw-verdict__item game-page__panel game-page__panel--glow-a">
               <div className="wiw-verdict__role">
                 <span className={`wiw-role__emoji wiw-role__emoji--${icon.variant}`}>
                   {roleEmoji(icon.icon)}
@@ -799,7 +799,7 @@ function ResultScreen({
         })}
       </ul>
 
-      <p className="wiw-timer-hint card">
+      <p className="wiw-timer-hint game-page__panel game-page__panel--glow-b">
         ⏱️ Каждый выбранный игрок оправдывается за {JUSTIFY_SECONDS} секунд
       </p>
     </GamePage>
@@ -826,14 +826,14 @@ function SeasonCompleteScreen({
   onBack: () => void;
 }) {
   return (
-    <div className="wiw-page wiw-page--celebrate">
+    <div className="game-page wiw-game wiw-game--celebrate game-page--enter">
       <div className="wiw-celebrate__glow" aria-hidden />
-      <div className="wiw-page__top">
-        <HomeButton />
-        <BackButton onClick={onBack} className="wiw-page__back" />
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={onBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <div className="wiw-celebrate card">
+      <div className="wiw-celebrate game-page__panel game-page__panel--glow-b">
         <span className="wiw-celebrate__emoji" aria-hidden>
           {pack.emoji}
         </span>
@@ -853,16 +853,16 @@ function SeasonCompleteScreen({
         </p>
       </div>
 
-      <div className="wiw-page__actions wiw-celebrate__actions">
+      <div className="game-page__actions wiw-celebrate__actions">
         {nextPackNumber != null && (
-          <button type="button" className="btn btn--primary wiw-start-btn" onClick={onNextPack}>
+          <button type="button" className="game-page__cta" onClick={onNextPack}>
             Следующий сезон · {nextPackNumber}
           </button>
         )}
-        <button type="button" className="btn btn--secondary wiw-start-btn" onClick={onReplay}>
+        <button type="button" className="game-page__btn game-page__btn--secondary" onClick={onReplay}>
           Пройти этот сезон заново
         </button>
-        <button type="button" className="btn btn--ghost wiw-start-btn" onClick={onPickAnother}>
+        <button type="button" className="game-page__btn game-page__btn--secondary" onClick={onPickAnother}>
           Выбрать другой сезон
         </button>
       </div>

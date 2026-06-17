@@ -7,7 +7,7 @@
     <meta http-equiv="Expires" content="0" />
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#070814" />
+    <meta name="theme-color" content="#e8e6f5" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -33,11 +33,12 @@
         var colors = {
           'neon-dark': '#070814',
           'neon-light': '#e8e6f5',
-          'portal': '#061410',
           'sunset': '#1c1917',
           'minimal-calm': '#0f172a'
         };
-        var bg = (theme && colors[theme]) ? colors[theme] : '#070814';
+        if (!theme || !colors[theme]) theme = 'neon-light';
+        document.documentElement.dataset.theme = theme;
+        var bg = colors[theme];
         document.documentElement.style.backgroundColor = bg;
         document.body.style.backgroundColor = bg;
 

@@ -8,7 +8,7 @@ import type { GameState, Player, NightAction } from './types'
 import { getRolesForPlayers } from './roles'
 
 type MafiaAction =
-  | { type: 'START_GAME'; players: Player[] }
+  | { type: 'START_GAME'; players: Player[]; hostName: string }
   | { type: 'NEXT_ROLE_VIEW' }
   | { type: 'SET_NIGHT_MAFIA'; target: string | null }
   | { type: 'SET_NIGHT_DOCTOR'; target: string | null }
@@ -50,6 +50,8 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
       })
       return {
         players,
+        hostName: action.hostName.trim() || 'Ведущий',
+        roundNumber: 1,
         phase: 'roles',
         roleViewIndex: 0,
         nightAction: initialNightAction,
@@ -207,6 +209,7 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
         ...state,
         phase: 'night_intro',
         votingSummaryTargetId: null,
+        roundNumber: state.roundNumber + 1,
       }
     }
     case 'APPLY_VOTING':
@@ -214,6 +217,8 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
     case 'RESET':
       return {
         players: [],
+        hostName: '',
+        roundNumber: 0,
         phase: 'setup',
         roleViewIndex: 0,
         nightAction: initialNightAction,
@@ -231,6 +236,8 @@ export function mafiaReducer(state: GameState, action: MafiaAction): GameState {
 
 export const initialState: GameState = {
   players: [],
+  hostName: '',
+  roundNumber: 0,
   phase: 'setup',
   roleViewIndex: 0,
   nightAction: initialNightAction,

@@ -33,9 +33,9 @@ function QuizFinal() {
   }
 
   return (
-    <div className="quiz-final">
-      <div className="quiz-final__top">
-        <HomeButton onBeforeNavigate={handleHomeClick} />
+    <div className="game-page quiz-final game-page--enter">
+      <div className="game-page__top game-page__top--solo">
+        <HomeButton className="game-page__nav-btn" onBeforeNavigate={handleHomeClick} />
       </div>
 
       <header className="quiz-final__header">
@@ -49,11 +49,14 @@ function QuizFinal() {
         )}
       </header>
 
-      <div className="quiz-final__leaderboard card">
-        <h2 className="quiz-final__leader-title">Результаты</h2>
+      <section className="quiz-final__scores">
+        <h2 className="quiz-final__scores-title">Результаты</h2>
         <div className="quiz-final__scores-list">
           {sorted.map((p, i) => (
-            <div key={p.id} className={`quiz-final__row ${i === 0 ? 'quiz-final__row--winner' : ''}`}>
+            <div
+              key={p.id}
+              className={`quiz-final__row game-page__panel game-page__panel--glow-a ${i === 0 ? 'quiz-final__row--winner' : ''}`}
+            >
               <span className="quiz-final__rank">{i + 1}</span>
               <span className="quiz-final__name">{p.name}</span>
               <span className="quiz-final__correct">{p.correctCount} верно</span>
@@ -62,13 +65,13 @@ function QuizFinal() {
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       <div className="quiz-final__actions">
-        <button type="button" className="btn btn--primary quiz-final__btn" onClick={handlePlayAgain}>
+        <button type="button" className="game-page__cta" onClick={handlePlayAgain}>
           Играть ещё
         </button>
-        <button type="button" className="btn btn--ghost quiz-final__btn" onClick={handleBackToMenu}>
+        <button type="button" className="game-page__btn game-page__btn--secondary" onClick={handleBackToMenu}>
           Назад в меню
         </button>
       </div>

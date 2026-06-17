@@ -43,7 +43,7 @@ export function MafiaNightStepLayout({
           {stepTitle}
         </p>
       )}
-      <div className={`mafia-night-step__card card${cardClass}`}>
+      <div className={`mafia-night-step__card mafia-page__panel mafia-page__panel--glow-b${cardClass}`}>
         <div className="mafia-night-step__main">
           {(roleTitle != null && roleTitle !== '') && (
             <h2 className="mafia-night-step__role">{roleTitle}</h2>
@@ -67,7 +67,7 @@ export function MafiaNightStepLayout({
             <footer className="mafia-night-step__footer">
               <button
                 type="button"
-                className="btn btn--primary mafia-night-step__btn"
+                className="mafia-page__cta mafia-night-step__btn"
                 onClick={primaryButtonOnClick}
                 disabled={primaryButtonDisabled}
               >
@@ -84,7 +84,7 @@ export function MafiaNightStepLayout({
             )}
             <button
               type="button"
-              className="btn btn--primary mafia-night-step__btn"
+              className="mafia-page__cta mafia-night-step__btn"
               onClick={primaryButtonOnClick}
               disabled={primaryButtonDisabled}
             >

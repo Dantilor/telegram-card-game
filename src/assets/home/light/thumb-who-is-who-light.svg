@@ -1,0 +1,20 @@
+<svg width="1000" height="560" viewBox="0 0 1000 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1000" y2="560">
+      <stop stop-color="#EAF7FF"/><stop offset=".5" stop-color="#F3ECFF"/><stop offset="1" stop-color="#FFF0FA"/>
+    </linearGradient>
+    <linearGradient id="g" x1="0" y1="0" x2="1000" y2="560">
+      <stop stop-color="#53B8FF"/><stop offset=".54" stop-color="#8B5CFF"/><stop offset="1" stop-color="#FF65D8"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1000" height="560" rx="42" fill="url(#bg)"/>
+  <circle cx="500" cy="280" r="190" fill="url(#g)" opacity=".16" filter="url(#glow)"/>
+  <path d="M454 193c12-86 148-89 160-2 8 56-40 82-72 109-26 21-28 43-28 63" stroke="url(#g)" stroke-width="37" stroke-linecap="round" filter="url(#glow)"/>
+  <circle cx="517" cy="432" r="21" fill="url(#g)" filter="url(#glow)"/>
+  <path d="M95 464c35-118 104-190 196-190 52 0 96 23 129 64-54 21-88 61-108 126H95Z" fill="#27344D" opacity=".27"/>
+  <circle cx="293" cy="192" r="84" fill="#27344D" opacity=".23"/>
+  <path d="M585 464c35-118 104-190 196-190 92 0 164 72 198 190H585Z" fill="#3B2947" opacity=".25"/>
+  <circle cx="781" cy="192" r="84" fill="#3B2947" opacity=".21"/>
+  <path d="M248 164c-38 44-36 95 0 137M829 164c38 44 36 95 0 137" stroke="white" stroke-width="12" stroke-linecap="round" opacity=".45"/>
+</svg>

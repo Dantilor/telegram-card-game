@@ -11,11 +11,17 @@ import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import HeroGameCard from '../components/HeroGameCard'
 import GamesGrid from '../components/GamesGrid'
+import GamesPageHeader from '../components/GamesPageHeader'
+import CatalogTabs from '../components/CatalogTabs'
 import SmartImage from '../components/SmartImage'
+import { formatGameTags } from '../utils/gameTags'
 import './Games.css'
 
 const HERO_GAME_ID = 'card'
-const BOTTOM_HERO_GAME_ID = 'who-is-who'
+const BOTTOM_HERO_GAME_ID = 'russia-travel'
+const FEATURED_HERO_GAME_ID = 'who-is-who'
+
+const GRID_EXCLUDED_GAME_IDS = new Set([HERO_GAME_ID, BOTTOM_HERO_GAME_ID, FEATURED_HERO_GAME_ID])
 
 const READY_GAME_ROUTES: Record<string, string> = {
   alias: '/alias',
@@ -24,6 +30,8 @@ const READY_GAME_ROUTES: Record<string, string> = {
   quiz: '/quiz',
   'truth-dare': '/truth-dare',
   sabotage: '/sabotage',
+  'phrase-translator': '/phrase-translator',
+  'freebie-trash': '/freebie-trash',
 }
 
 function Games() {
@@ -32,7 +40,6 @@ function Games() {
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
-  // Предзагрузка чанков игр при открытии списка — чтобы при нажатии не было подвисания и сетки
   useEffect(() => {
     import('./AliasLayout')
     import('./ActivityLayout')
@@ -41,30 +48,47 @@ function Games() {
     import('./QuizLayout')
     import('./TruthDareLayout')
     import('./WhoIsWhoLayout')
+    import('./PhraseTranslator')
+    import('./FreebieTrashLayout')
+    import('./RussiaTravel')
   }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)
+  const featuredHeroGame = GAMES.find((g) => g.id === FEATURED_HERO_GAME_ID)
   const bottomHeroGame = GAMES.find((g) => g.id === BOTTOM_HERO_GAME_ID)
-  const otherGames = GAMES.filter(
-    (g) => g.id !== HERO_GAME_ID && g.id !== BOTTOM_HERO_GAME_ID
-  )
+  const otherGames = GAMES.filter((g) => !GRID_EXCLUDED_GAME_IDS.has(g.id))
 
   const renderGameCard = (game: (typeof GAMES)[0], i: number) => {
     const isReady = game.status === 'ready'
     const isLocked = isReady && isGameLocked(game.id, isPremium)
     const hasImage = 'image' in game && game.image
-    const cardClass = `games-grid__card card ${isReady ? 'games-grid__card--ready tile--active' : 'games-grid__card--stub'}${hasImage ? ' games-grid__card--image' : ''}`
+    const cardClass = `games-grid__card card ${isReady ? 'games-grid__card--ready tile--active' : 'games-grid__card--stub'}${hasImage ? ' games-grid__card--image' : ''} games-grid__card--glow-${i % 2 === 0 ? 'a' : 'b'}`
     const cardContent = (
       <>
         {hasImage ? (
           <div className="games-grid__card-image-wrap">
-            <SmartImage src={game.image!} alt="" className="games-grid__card-img" priority={i < 6} />
+            <SmartImage
+              src={game.image!}
+              alt=""
+              className="games-grid__card-img"
+              priority={i < 6}
+              aspectRatio=""
+              objectFit="cover"
+            />
+            {game.catalogBadge === 'new' && !isLocked ? (
+              <span className="games-card-badge games-card-badge--new">NEW</span>
+            ) : null}
+            {isLocked ? (
+              <span className="games-card-badge games-card-badge--premium">PREMIUM</span>
+            ) : null}
           </div>
         ) : (
           <span className="games-grid__emoji" aria-hidden>{game.emoji}</span>
         )}
-        <h2 className="games-grid__title">{game.title}</h2>
-        <p className="games-grid__desc">{game.description}</p>
+        <div className="games-grid__card-body">
+          <h2 className="games-grid__title">{game.title}</h2>
+          <p className="games-grid__desc">{formatGameTags(game.description)}</p>
+        </div>
       </>
     )
 
@@ -81,7 +105,6 @@ function Games() {
           }}
         >
           {cardContent}
-          <span className="badge badge--premium">Premium</span>
         </button>
       )
     }
@@ -111,7 +134,6 @@ function Games() {
         </Link>
       )
     }
-
     return (
       <button
         key={game.id}
@@ -132,13 +154,11 @@ function Games() {
   return (
     <div className="games-page">
       <div className="games-page__top">
-        <HomeButton />
-        <BackButton onClick={handleBack} className="games-page__back" />
+        <HomeButton className="games-page__nav-btn" />
+        <BackButton onClick={handleBack} className="games-page__nav-btn games-page__back" />
       </div>
-      <header className="games-page__header">
-        <h1 className="games-page__title">GameNight Host</h1>
-        <p className="games-page__tagline">Выбери игру</p>
-      </header>
+      <GamesPageHeader tagline="что запускаем сегодня?" />
+      <CatalogTabs active="games" />
       {heroGame && (
         <HeroGameCard
           game={heroGame}
@@ -146,16 +166,24 @@ function Games() {
           onPremiumOpen={() => setPremiumOverlayOpen(true)}
         />
       )}
-      <GamesGrid
-        games={otherGames}
-        renderCard={renderGameCard}
-      />
+      <GamesGrid games={otherGames} renderCard={renderGameCard} />
+      {featuredHeroGame && (
+        <HeroGameCard
+          game={featuredHeroGame}
+          isLocked={isGameLocked(featuredHeroGame.id, isPremium)}
+          onPremiumOpen={() => setPremiumOverlayOpen(true)}
+          to="/who-is-who"
+          badge="NEW"
+          badgeVariant="new"
+          position="bottom"
+        />
+      )}
       {bottomHeroGame && (
         <HeroGameCard
           game={bottomHeroGame}
           isLocked={isGameLocked(bottomHeroGame.id, isPremium)}
           onPremiumOpen={() => setPremiumOverlayOpen(true)}
-          to="/who-is-who"
+          to="/russia-travel"
           badge="NEW"
           badgeVariant="new"
           position="bottom"

@@ -1,0 +1,32 @@
+.mafia-host-line {
+  width: 100%;
+  max-width: min(28rem, 92vw);
+  margin: 0 auto 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--games-card-bg) 92%, var(--games-play-glow) 8%);
+  border: 1.5px solid color-mix(in srgb, var(--games-play-glow) 28%, transparent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.mafia-host-line__badge {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mafia-host-badge-text, var(--mafia-readable-accent));
+  background: var(--mafia-host-badge-bg, var(--mafia-badge-bg));
+  border-radius: 999px;
+}
+
+.mafia-host-line__text {
+  margin: 0;
+  font-size: clamp(0.92rem, 2.6vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mafia-readable-text);
+}

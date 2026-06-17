@@ -36,6 +36,8 @@ export type Phase =
 
 export type GameState = {
   players: Player[]
+  hostName: string
+  roundNumber: number
   phase: Phase
   roleViewIndex: number
   nightAction: NightAction

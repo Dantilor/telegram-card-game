@@ -6,6 +6,8 @@ import { ACTIVITY_CATEGORIES, type ActivityCategoryId } from '../games/activity/
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
+import GamesPageHeader from '../components/GamesPageHeader'
 import { ActivityTeamsSetup } from '../components/activity/ActivityTeamsSetup'
 import './ActivityHome.css'
 
@@ -126,9 +128,10 @@ function ActivityHome() {
   }
 
   return (
-    <div className="activity-home" onPointerDown={handleTapOutside}>
-      <div className="activity-home__top">
+    <div className="game-page activity-home game-page--enter" onPointerDown={handleTapOutside}>
+      <div className="game-page__top">
         <HomeButton
+          className="game-page__nav-btn"
           onBeforeNavigate={() => {
             if (dirty) {
               setShowExitConfirm('home')
@@ -137,36 +140,36 @@ function ActivityHome() {
             return false
           }}
         />
-        <button type="button" className="btn btn--ghost home-btn activity-home__back" onClick={handleBackClick}>
-          ← Назад
-        </button>
+        <BackButton onClick={handleBackClick} className="game-page__nav-btn game-page__back" />
       </div>
-      <header className="activity-home__header">
-        <h1 className="activity-home__title">Активитус</h1>
-        <p className="activity-home__tagline">Без пауз. Только импровизация.</p>
-        <div className="activity-home__rules-box">
-          <h3 className="activity-home__how-title">Как играть</h3>
-          <ul className="activity-home__how-list">
-            <li>Игрок получает слово и формат действия</li>
-            <li>Нужно показать, объяснить или нарисовать слово (в зависимости от формата)</li>
-            <li>Команда угадывает слово</li>
-            <li>За каждый верный ответ — 1 балл. Побеждает команда с наибольшим количеством баллов</li>
-          </ul>
-          <h3 className="activity-home__how-title activity-home__important-title">Важно</h3>
-          <ul className="activity-home__how-list">
-            <li>Подготовьте лист бумаги и ручку — в некоторых раундах нужно будет рисовать</li>
-          </ul>
-        </div>
-      </header>
 
-      <section className="activity-home__section">
-        <h2 className="activity-home__section-title">Количество команд</h2>
-        <div className="activity-home__options">
+      <GamesPageHeader
+        title="Активитус"
+        tagline="Без пауз. Только импровизация."
+      />
+
+      <div className="activity-home__how game-page__panel game-page__panel--glow-b">
+        <h3 className="activity-home__how-title">Как играть</h3>
+        <ul className="activity-home__how-list">
+          <li>Игрок получает слово и формат действия</li>
+          <li>Нужно показать, объяснить или нарисовать слово (в зависимости от формата)</li>
+          <li>Команда угадывает слово</li>
+          <li>За каждый верный ответ — 1 балл. Побеждает команда с наибольшим количеством баллов</li>
+        </ul>
+        <h3 className="activity-home__how-title activity-home__important-title">Важно</h3>
+        <ul className="activity-home__how-list">
+          <li>Подготовьте лист бумаги и ручку — в некоторых раундах нужно будет рисовать</li>
+        </ul>
+      </div>
+
+      <section className="activity-home__section game-page__section">
+        <h2 className="game-page__section-title">Количество команд</h2>
+        <div className="game-page__chip-row">
           {TEAM_COUNT_OPTIONS.map((count) => (
             <button
               key={count}
               type="button"
-              className={`btn btn--ghost activity-home__option-btn ${teamCount === count ? 'activity-home__option-btn--active' : ''}`}
+              className={`game-page__chip ${teamCount === count ? 'is-active' : ''}`}
               onClick={() => handleTeamCount(count)}
             >
               {count}
@@ -175,14 +178,14 @@ function ActivityHome() {
         </div>
       </section>
 
-      <section className="activity-home__section">
-        <h2 className="activity-home__section-title">Таймер раунда</h2>
-        <div className="activity-home__options">
+      <section className="activity-home__section game-page__section">
+        <h2 className="game-page__section-title">Таймер раунда</h2>
+        <div className="game-page__chip-row">
           {TIMER_OPTIONS.map((sec) => (
             <button
               key={sec}
               type="button"
-              className={`btn btn--ghost activity-home__option-btn ${state.timerSeconds === sec ? 'activity-home__option-btn--active' : ''}`}
+              className={`game-page__chip game-page__chip--wide ${state.timerSeconds === sec ? 'is-active' : ''}`}
               onClick={() => handleTimer(sec)}
             >
               {sec} сек
@@ -191,8 +194,10 @@ function ActivityHome() {
         </div>
       </section>
 
-      <section className="activity-home__section">
-        <h2 className="activity-home__section-title">Категории <span className="activity-home__section-hint">(выберите одну или несколько)</span></h2>
+      <section className="activity-home__section game-page__section">
+        <h2 className="game-page__section-title">
+          Категории <span className="activity-home__section-hint">(выберите одну или несколько)</span>
+        </h2>
         {state.categoryIds.length === 0 && (
           <p className="activity-home__category-hint" role="status">Выберите минимум одну категорию</p>
         )}
@@ -201,11 +206,11 @@ function ActivityHome() {
             <button
               key={cat.id}
               type="button"
-              className={`activity-home__category-card card ${state.categoryIds.includes(cat.id) ? 'activity-home__category-card--active' : ''}`}
+              className={`activity-home__category-card game-page__panel game-page__panel--glow-a game-page__category-card ${state.categoryIds.includes(cat.id) ? 'is-active' : ''}`}
               onClick={() => handleCategoryClick(cat.id)}
             >
               <span className="activity-home__category-emoji" aria-hidden>{cat.emoji}</span>
-              <span className="activity-home__category-title">{cat.title}</span>
+              <span className="activity-home__category-title game-page__category-title">{cat.title}</span>
             </button>
           ))}
         </div>
@@ -220,10 +225,10 @@ function ActivityHome() {
         />
       </section>
 
-      <div className="activity-home__actions">
+      <div className="game-page__actions">
         <button
           type="button"
-          className="btn btn--primary activity-home__start"
+          className="game-page__cta"
           disabled={!canStart}
           onClick={handleStartGame}
         >
@@ -233,19 +238,19 @@ function ActivityHome() {
 
       {showExitConfirm != null && (
         <div
-          className="activity-home__modal-overlay"
+          className="game-page__modal-overlay"
           onClick={() => handleExitConfirm(false)}
         >
-          <div className="activity-home__modal card" onClick={(e) => e.stopPropagation()}>
-            <p className="activity-home__modal-text">Выйти из игры?</p>
-            <p className="activity-home__modal-hint">
+          <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
+            <p className="game-page__modal-text">Выйти из игры?</p>
+            <p className="game-page__modal-hint">
               Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
             </p>
-            <div className="activity-home__modal-buttons">
-              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+            <div className="game-page__modal-buttons">
+              <button type="button" className="game-page__btn game-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
                 Остаться
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+              <button type="button" className="game-page__cta" onClick={() => handleExitConfirm(true)}>
                 Выйти
               </button>
             </div>

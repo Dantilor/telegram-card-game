@@ -6,10 +6,26 @@ import { getCurrentTeam, getCurrentTeamSlotIndex } from '../games/alias/types'
 import { haptic } from '../utils/telegram'
 import { hapticSelection, hapticSuccess } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './AliasPlay.css'
 
 const TICK_MS = 250
 const REDIRECT_STUCK_MS = 4000
+
+function AliasPlayTopNav({
+  onBack,
+  onBeforeHomeNavigate,
+}: {
+  onBack: () => void
+  onBeforeHomeNavigate?: () => boolean
+}) {
+  return (
+    <div className="alias-page__top">
+      <HomeButton className="alias-page__nav-btn" onBeforeNavigate={onBeforeHomeNavigate} />
+      <BackButton onClick={onBack} className="alias-page__nav-btn alias-page__back" />
+    </div>
+  )
+}
 
 /** Redirect to /alias when phase is setup; avoid navigate() during render (mobile WebView fix). */
 function AliasRedirectToHome({ onNavigate, onGoHome }: { onNavigate: () => void; onGoHome?: () => void }) {
@@ -42,13 +58,13 @@ function AliasRedirectToHome({ onNavigate, onGoHome }: { onNavigate: () => void;
 
   if (stuck) {
     return (
-      <div className="alias-play alias-play--stuck">
+      <div className="alias-page alias-play alias-play--stuck">
         <p className="alias-play__message">Переход не удался</p>
         <p className="alias-play__stuck-hint">Нажмите кнопку ниже</p>
         <div className="alias-play__stuck-actions">
           <button
             type="button"
-            className="btn btn--primary alias-play__stuck-btn"
+            className="alias-page__cta"
             onClick={() => {
               haptic('light')
               onNavigate()
@@ -58,7 +74,7 @@ function AliasRedirectToHome({ onNavigate, onGoHome }: { onNavigate: () => void;
           </button>
           <button
             type="button"
-            className="btn btn--ghost alias-play__stuck-btn"
+            className="alias-page__btn alias-page__btn--secondary"
             onClick={() => {
               haptic('light')
               goHome()
@@ -72,7 +88,7 @@ function AliasRedirectToHome({ onNavigate, onGoHome }: { onNavigate: () => void;
   }
 
   return (
-    <div className="alias-play">
+    <div className="alias-page alias-play">
       <p className="alias-play__message">Переход…</p>
     </div>
   )
@@ -87,16 +103,16 @@ function AliasExitModal({
 }) {
   return (
     <div className="alias-play__modal-overlay" onClick={onClose}>
-      <div className="alias-play__modal card" onClick={(e) => e.stopPropagation()}>
+      <div className="alias-play__modal alias-page__panel alias-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
         <p className="alias-play__modal-text">Выйти из игры?</p>
         <p className="alias-play__modal-hint">
           Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
         </p>
         <div className="alias-play__modal-btns">
-          <button type="button" className="btn btn--ghost" onClick={onClose}>
+          <button type="button" className="alias-page__btn alias-page__btn--secondary" onClick={onClose}>
             Остаться
           </button>
-          <button type="button" className="btn btn--primary" onClick={onConfirm}>
+          <button type="button" className="alias-page__cta" onClick={onConfirm}>
             Выйти
           </button>
         </div>
@@ -202,21 +218,20 @@ function TeamTurnReadyScreen({
       : '—'
 
   return (
-    <div className="alias-play">
-      <div className="alias-play__top">
-        <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
-          ← Назад
-        </button>
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
-      </div>
+    <div className="alias-page alias-play">
+      <AliasPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
       <header className="alias-play__turn-ready">
         <h1 className="alias-play__turn-title">Ход: {team?.name.trim() || '—'}</h1>
         <p className="alias-play__turn-host">Ведущий: {hostName}</p>
       </header>
+      <div className="alias-play__turn-card alias-page__panel alias-page__panel--glow-a">
+        <span className="alias-play__turn-badge">Готовы?</span>
+        <p className="alias-page__hint">Объясняй слова без однокоренных. Таймер стартует после нажатия.</p>
+      </div>
       <div className="alias-play__turn-actions">
         <button
           type="button"
-          className="btn btn--ghost alias-play__btn"
+          className="alias-page__btn alias-page__btn--secondary"
           onClick={() => {
             hapticSelection()
             dispatch({ type: 'NEXT_HOST' })
@@ -226,7 +241,7 @@ function TeamTurnReadyScreen({
         </button>
         <button
           type="button"
-          className="btn btn--primary alias-play__btn"
+          className="alias-page__cta"
           onClick={() => {
             haptic('medium')
             dispatch({ type: 'START_ROUND' })
@@ -286,20 +301,15 @@ function TeamInRoundScreen({
 
   if (!currentWord) {
     return (
-      <div className="alias-play">
+      <div className="alias-page alias-play">
         <p className="alias-play__message">Загрузка…</p>
       </div>
     )
   }
 
   return (
-    <div className="alias-play">
-      <div className="alias-play__top">
-        <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
-          ← Назад
-        </button>
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
-      </div>
+    <div className="alias-page alias-play">
+      <AliasPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
       <div className="alias-play__timer-wrap">
         <div
           className={`alias-play__timer-bar ${isLowTime ? 'alias-play__timer-bar--pulse' : ''}`}
@@ -314,13 +324,13 @@ function TeamInRoundScreen({
           </span>
         </div>
       )}
-      <div className="alias-play__word-card card">
+      <div className="alias-play__word-card alias-page__panel alias-page__panel--glow-b" key={currentWord}>
         <p className="alias-play__word">{currentWord}</p>
       </div>
       <div className="alias-play__actions">
         <button
           type="button"
-          className="btn btn--primary alias-play__btn alias-play__btn--guess"
+          className="alias-page__cta"
           onClick={() => {
             hapticSuccess()
             dispatch({ type: 'GUESSED' })
@@ -330,7 +340,7 @@ function TeamInRoundScreen({
         </button>
         <button
           type="button"
-          className="btn btn--ghost alias-play__btn"
+          className="alias-page__btn alias-page__btn--secondary"
           onClick={() => {
             haptic('light')
             dispatch({ type: 'SKIPPED' })
@@ -362,19 +372,14 @@ function FullRoundSummaryScreen({
   }))
 
   return (
-    <div className="alias-play alias-play--results alias-play--full-round">
-      <div className="alias-play__top">
-        <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
-          ← Назад
-        </button>
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
-      </div>
+    <div className="alias-page alias-play alias-play--results alias-play--full-round">
+      <AliasPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
       <header className="alias-play__results-header">
         <h1 className="alias-play__results-title">Итоги раунда</h1>
       </header>
       <div className="alias-play__full-round-scores">
         {teamsWithScores.map(({ name, score }, i) => (
-          <div key={i} className="alias-play__full-round-score-row card">
+          <div key={i} className="alias-play__full-round-score-row alias-page__panel alias-page__panel--glow-a">
             <span className="alias-play__full-round-team-name">{name}</span>
             <span className="alias-play__full-round-team-value">{score}</span>
           </div>
@@ -383,7 +388,7 @@ function FullRoundSummaryScreen({
       <div className="alias-play__full-round-actions">
         <button
           type="button"
-          className="btn btn--primary alias-play__btn"
+          className="alias-page__cta"
           onClick={() => {
             hapticSelection()
             dispatch({ type: 'PASS_TURN' })
@@ -393,7 +398,7 @@ function FullRoundSummaryScreen({
         </button>
         <button
           type="button"
-          className="btn btn--ghost alias-play__btn"
+          className="alias-page__btn alias-page__btn--secondary"
           onClick={onBack}
         >
           Выйти
@@ -418,17 +423,12 @@ function TeamRoundResultsScreen({
   const score = team ? (state.teamScores[getCurrentTeamSlotIndex(state)] ?? 0) : 0
 
   return (
-    <div className="alias-play alias-play--results">
-      <div className="alias-play__top">
-        <button type="button" className="btn btn--ghost alias-play__back" onClick={onBack}>
-          ← Назад
-        </button>
-        <HomeButton onBeforeNavigate={onBeforeHomeNavigate} />
-      </div>
+    <div className="alias-page alias-play alias-play--results">
+      <AliasPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
       <header className="alias-play__results-header">
         <h1 className="alias-play__results-title">Итоги раунда</h1>
       </header>
-      <div className="alias-play__results-stats card">
+      <div className="alias-play__results-stats alias-page__panel alias-page__panel--glow-a">
         <div className="alias-play__results-stat">
           <span className="alias-play__results-value">{state.guessed}</span>
           <span className="alias-play__results-label">Угадано</span>
@@ -438,13 +438,13 @@ function TeamRoundResultsScreen({
           <span className="alias-play__results-label">Пропущено</span>
         </div>
       </div>
-      <div className="alias-play__results-score card">
+      <div className="alias-play__results-score alias-page__panel alias-page__panel--glow-b">
         Очки команды «{team?.name.trim() ?? '—'}»: {score}
       </div>
       <div className="alias-play__results-actions">
         <button
           type="button"
-          className="btn btn--primary alias-play__btn"
+          className="alias-page__cta"
           onClick={() => {
             hapticSelection()
             dispatch({ type: 'PASS_TURN' })

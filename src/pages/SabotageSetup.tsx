@@ -5,6 +5,8 @@ import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
+import GamesPageHeader from '../components/GamesPageHeader'
 import './SabotageSetup.css'
 
 const MIN_PLAYERS = 3
@@ -53,19 +55,18 @@ function SabotageSetup() {
   const formatTimer = (sec: number) => `${Math.floor(sec / 60)} мин`
 
   return (
-    <div className="sabotage-setup">
-      <div className="sabotage-setup__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn sabotage-setup__back" onClick={handleBack}>
-          ← Назад
-        </button>
+    <div className="game-page sabotage-setup game-page--enter">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
-      <header className="sabotage-setup__header">
-        <h1 className="sabotage-setup__title">Саботаж</h1>
-        <p className="sabotage-setup__tagline">Один знает больше. Остальные — подозревают.</p>
-      </header>
 
-      <div className="sabotage-setup__how card">
+      <GamesPageHeader
+        title="Саботаж"
+        tagline="Один знает больше. Остальные — подозревают."
+      />
+
+      <div className="sabotage-setup__how game-page__panel game-page__panel--glow-b">
         <h3 className="sabotage-setup__how-title">Как играть</h3>
         <ul className="sabotage-setup__how-list">
           <li>Всем выдаётся одно задание</li>
@@ -75,14 +76,14 @@ function SabotageSetup() {
         </ul>
       </div>
 
-      <section className="sabotage-setup__section">
-        <h2 className="sabotage-setup__section-title">Количество участников</h2>
-        <div className="sabotage-setup__count-row">
+      <section className="sabotage-setup__section game-page__section">
+        <h2 className="game-page__section-title">Количество участников</h2>
+        <div className="game-page__chip-row">
           {Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => MIN_PLAYERS + i).map((n) => (
             <button
               key={n}
               type="button"
-              className={`btn btn--ghost sabotage-setup__count-btn ${count === n ? 'is-active' : ''}`}
+              className={`game-page__chip ${count === n ? 'is-active' : ''}`}
               onClick={() => updateCount(n)}
             >
               {n}
@@ -91,14 +92,14 @@ function SabotageSetup() {
         </div>
       </section>
 
-      <section className="sabotage-setup__section">
-        <h2 className="sabotage-setup__section-title">Время на задание</h2>
-        <div className="sabotage-setup__timer-row">
+      <section className="sabotage-setup__section game-page__section">
+        <h2 className="game-page__section-title">Время на задание</h2>
+        <div className="game-page__chip-row">
           {TIMER_OPTIONS.map((sec) => (
             <button
               key={sec}
               type="button"
-              className={`btn btn--ghost sabotage-setup__timer-btn ${taskDuration === sec ? 'is-active' : ''}`}
+              className={`game-page__chip game-page__chip--wide ${taskDuration === sec ? 'is-active' : ''}`}
               onClick={() => {
                 hapticSelection()
                 setTaskDuration(sec)
@@ -110,14 +111,14 @@ function SabotageSetup() {
         </div>
       </section>
 
-      <section className="sabotage-setup__section">
-        <h2 className="sabotage-setup__section-title">Введите имена участников</h2>
+      <section className="sabotage-setup__section game-page__section">
+        <h2 className="game-page__section-title">Введите имена участников</h2>
         <div className="sabotage-setup__names">
           {names.slice(0, count).map((name, i) => (
             <input
               key={i}
               type="text"
-              className="sabotage-setup__input card"
+              className="game-page__input"
               placeholder={`Игрок ${i + 1}`}
               value={name}
               onChange={(e) => updateName(i, e.target.value)}
@@ -126,10 +127,10 @@ function SabotageSetup() {
         </div>
       </section>
 
-      <div className="sabotage-setup__actions">
+      <div className="game-page__actions">
         <button
           type="button"
-          className="btn btn--primary sabotage-setup__start"
+          className="game-page__cta"
           onClick={handleStart}
           disabled={count < MIN_PLAYERS}
         >

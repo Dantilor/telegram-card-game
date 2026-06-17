@@ -17,7 +17,7 @@ let theme: ThemeId
 try {
   theme = initTheme()
 } catch {
-  theme = 'neon-dark'
+  theme = 'neon-light'
 }
 
 parseAndCacheFromHash()

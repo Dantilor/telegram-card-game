@@ -48,11 +48,11 @@ export function ActivityTeamsSetup({ teamCount, teams, dispatch, teamHint }: Pro
       )}
       <div className="activity-teams-setup__list">
         {visibleTeams.map((team, slotIndex) => (
-          <div key={slotIndex} className="activity-teams-setup__card card">
+          <div key={slotIndex} className="activity-teams-setup__card game-page__panel game-page__panel--glow-a">
             <label className="activity-teams-setup__label">Название команды</label>
             <input
               type="text"
-              className="activity-teams-setup__input"
+              className="activity-teams-setup__input game-page__input"
               placeholder={`Команда ${slotIndex + 1}`}
               value={team.name}
               onChange={(e) => handleTeamName(slotIndex, e.target.value)}
@@ -78,7 +78,7 @@ export function ActivityTeamsSetup({ teamCount, teams, dispatch, teamHint }: Pro
                     <span className="activity-teams-setup__player-name">{playerName}</span>
                     <button
                       type="button"
-                      className="btn btn--ghost activity-teams-setup__player-remove"
+                      className="activity-teams-setup__player-remove"
                       onClick={() => handleRemovePlayer(slotIndex, playerIndex)}
                       aria-label="Удалить"
                     >
@@ -93,7 +93,7 @@ export function ActivityTeamsSetup({ teamCount, teams, dispatch, teamHint }: Pro
                     playerInputRefs.current[slotIndex] = el
                   }}
                   type="text"
-                  className="activity-teams-setup__input activity-teams-setup__input--small"
+                  className="activity-teams-setup__input activity-teams-setup__input--small game-page__input"
                   placeholder="Имя игрока"
                   value={playerInputs[slotIndex] ?? ''}
                   onChange={(e) => {
@@ -116,7 +116,7 @@ export function ActivityTeamsSetup({ teamCount, teams, dispatch, teamHint }: Pro
                 />
                 <button
                   type="button"
-                  className="btn btn--secondary activity-teams-setup__add-btn"
+                  className="activity-teams-setup__add-btn"
                   onClick={() => handleAddPlayer(slotIndex)}
                 >
                   Добавить

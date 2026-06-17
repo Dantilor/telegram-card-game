@@ -4,6 +4,7 @@ import { useQuizGame } from '../games/quiz/QuizGameContext'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
 import './QuizMiniSummary.css'
 
 function QuizMiniSummary() {
@@ -41,12 +42,10 @@ function QuizMiniSummary() {
   }
 
   return (
-    <div className="quiz-mini-summary">
-      <div className="quiz-mini-summary__top">
-        <button type="button" className="btn btn--ghost home-btn quiz-mini-summary__back" onClick={handleBack}>
-          ←
-        </button>
-        <HomeButton onBeforeNavigate={handleHomeClick} />
+    <div className="game-page quiz-mini-summary">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" onBeforeNavigate={handleHomeClick} />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
       <h1 className="quiz-mini-summary__title">Мини-итог</h1>
@@ -55,7 +54,7 @@ function QuizMiniSummary() {
         <p className="quiz-mini-summary__leader-label">В лидерах: {leader.name}</p>
       )}
 
-      <div className="quiz-mini-summary__leaderboard card">
+      <div className="quiz-mini-summary__leaderboard game-page__panel game-page__panel--glow-a">
         {sorted.map((p, i) => (
           <div key={p.id} className={`quiz-mini-summary__row ${i === 0 ? 'quiz-mini-summary__row--leader' : ''}`}>
             <span className="quiz-mini-summary__rank">{i + 1}</span>
@@ -68,26 +67,26 @@ function QuizMiniSummary() {
       </div>
 
       <div className="quiz-mini-summary__actions">
-        <button type="button" className="btn btn--primary quiz-mini-summary__btn" onClick={handleContinue}>
+        <button type="button" className="game-page__cta" onClick={handleContinue}>
           Продолжить игру
         </button>
-        <button type="button" className="btn btn--ghost quiz-mini-summary__btn" onClick={handleBack}>
+        <button type="button" className="game-page__btn game-page__btn--secondary" onClick={handleBack}>
           Выйти из игры
         </button>
       </div>
 
       {showExitConfirm && (
-        <div className="quiz-mini-summary__modal-overlay" onClick={() => handleExitConfirm(false)}>
-          <div className="quiz-mini-summary__modal card" onClick={(e) => e.stopPropagation()}>
-            <p className="quiz-mini-summary__modal-text">Выйти из игры?</p>
-            <p className="quiz-mini-summary__modal-hint">
+        <div className="game-page__modal-overlay" onClick={() => handleExitConfirm(false)}>
+          <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
+            <p className="game-page__modal-text">Выйти из игры?</p>
+            <p className="game-page__modal-hint">
               Если выйти, весь прогресс будет сброшен.
             </p>
             <div className="quiz-mini-summary__modal-btns">
-              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+              <button type="button" className="game-page__btn game-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
                 Остаться
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+              <button type="button" className="game-page__cta" onClick={() => handleExitConfirm(true)}>
                 Выйти
               </button>
             </div>

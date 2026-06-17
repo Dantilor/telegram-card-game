@@ -13,6 +13,7 @@ type SabotageAction =
   | { type: 'NEXT_ROLE_VIEW' }
   | { type: 'SET_VOTE'; voterId: string; targetId: string }
   | { type: 'NEXT_VOTE_COLLECT' }
+  | { type: 'BACK_FROM_TASK' }
   | { type: 'RESET' }
 
 function sabotageReducer(state: SabotageState, action: SabotageAction): SabotageState {
@@ -88,6 +89,13 @@ function sabotageReducer(state: SabotageState, action: SabotageAction): Sabotage
       }
       return { ...state, voteCollectIndex: state.voteCollectIndex + 1 }
     }
+    case 'BACK_FROM_TASK':
+      if (state.phase !== 'task') return state
+      return {
+        ...state,
+        phase: 'role',
+        roleViewIndex: Math.max(0, state.players.length - 1),
+      }
     case 'RESET':
       return {
         players: [],

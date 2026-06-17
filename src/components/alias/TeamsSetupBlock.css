@@ -1,19 +1,16 @@
-.teams-setup {
-  margin-bottom: 1rem;
-}
-
 .teams-setup__title {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--muted);
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--alias-readable-accent);
 }
 
 .teams-setup__hint {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  color: var(--secondary);
-  line-height: 1.3;
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--alias-readable-accent);
 }
 
 .teams-setup__list {
@@ -23,85 +20,81 @@
 }
 
 .teams-setup__card {
-  padding: 0.65rem 0.85rem;
+  padding: 0.95rem 0.9rem;
 }
 
-.teams-setup__label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 0.25rem;
-}
-
-.teams-setup__input {
-  width: 100%;
-  padding: 0.4rem 0.5rem;
-  font-size: 0.9rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius, 8px);
-  background: var(--td-input-bg, rgba(0, 0, 0, 0.2));
-  color: var(--text);
-  margin-bottom: 0.5rem;
-  box-sizing: border-box;
-}
-
-.teams-setup__input::placeholder {
-  color: var(--muted);
-}
-
-.teams-setup__input--small {
-  margin-bottom: 0;
-  flex: 1;
-  min-width: 0;
-}
-
+.teams-setup__label,
 .teams-setup__players-label {
-  font-size: 0.75rem;
-  color: var(--muted);
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--alias-readable-muted);
+}
+
+.teams-setup__players {
+  margin-top: 0.85rem;
 }
 
 .teams-setup__player-list {
   list-style: none;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.65rem;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .teams-setup__player-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.25rem 0;
-  border-bottom: 1px solid var(--border);
-  gap: 0.4rem;
+  gap: 0.5rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.65rem;
+  background: var(--alias-chip-bg);
+  border: 1px solid var(--alias-chip-border);
 }
 
 .teams-setup__player-name {
-  font-size: 0.85rem;
-  color: var(--text);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--alias-readable-text);
 }
 
 .teams-setup__player-remove {
-  padding: 0.15rem 0.35rem;
-  font-size: 0.8rem;
   flex-shrink: 0;
+  min-width: 2rem !important;
+  min-height: 2rem !important;
+  padding: 0 !important;
+  font-size: 1.1rem !important;
+  line-height: 1;
+  border-radius: 999px !important;
+  color: var(--alias-readable-muted) !important;
+  background: transparent !important;
+  border: 1px solid var(--alias-chip-border) !important;
 }
 
 .teams-setup__add-row {
   display: flex;
-  gap: 0.4rem;
-  align-items: center;
-  margin-top: 0.35rem;
+  gap: 0.45rem;
+  align-items: stretch;
+}
+
+.teams-setup__input--small {
+  flex: 1;
+  min-width: 0;
 }
 
 .teams-setup__add-btn {
   flex-shrink: 0;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.85rem;
+  min-height: 2.75rem !important;
+  padding: 0 0.85rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: var(--alias-readable-text) !important;
+  background: var(--alias-chip-bg) !important;
+  border: 1.5px solid var(--alias-chip-border) !important;
+  border-radius: 0.85rem !important;
+  box-shadow: none !important;
 }

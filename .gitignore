@@ -29,3 +29,9 @@ preview-serve
 .env.local
 .env.production
 server/.env
+
+# Comic source assets (generated WebP lives in public/comics/)
+incoming/*.zip
+incoming/comics-source/
+incoming/comics-extra/
+incoming/.comics-tmp/

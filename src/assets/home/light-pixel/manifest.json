@@ -1,0 +1,261 @@
+{
+  "source": "ChatGPT Image 15 июн. 2026 г., 17_52_32.png",
+  "source_size": [
+    941,
+    1672
+  ],
+  "assets": {
+    "light_header_exact.png": {
+      "bbox": [
+        34,
+        24,
+        910,
+        160
+      ],
+      "size": [
+        876,
+        136
+      ]
+    },
+    "light_theme_toggle_exact.png": {
+      "bbox": [
+        36,
+        174,
+        905,
+        350
+      ],
+      "size": [
+        869,
+        176
+      ]
+    },
+    "light_hero_exact.png": {
+      "bbox": [
+        36,
+        368,
+        905,
+        866
+      ],
+      "size": [
+        869,
+        498
+      ]
+    },
+    "light_action_favorite_exact.png": {
+      "bbox": [
+        36,
+        890,
+        458,
+        1108
+      ],
+      "size": [
+        422,
+        218
+      ]
+    },
+    "light_action_profile_exact.png": {
+      "bbox": [
+        480,
+        890,
+        905,
+        1108
+      ],
+      "size": [
+        425,
+        218
+      ]
+    },
+    "light_premium_exact.png": {
+      "bbox": [
+        36,
+        1124,
+        905,
+        1285
+      ],
+      "size": [
+        869,
+        161
+      ]
+    },
+    "light_try_title_exact.png": {
+      "bbox": [
+        36,
+        1300,
+        520,
+        1350
+      ],
+      "size": [
+        484,
+        50
+      ]
+    },
+    "light_try_row_truth_exact.png": {
+      "bbox": [
+        36,
+        1355,
+        905,
+        1455
+      ],
+      "size": [
+        869,
+        100
+      ]
+    },
+    "light_try_row_who_exact.png": {
+      "bbox": [
+        36,
+        1462,
+        905,
+        1562
+      ],
+      "size": [
+        869,
+        100
+      ]
+    },
+    "light_try_row_brain_exact.png": {
+      "bbox": [
+        36,
+        1568,
+        905,
+        1668
+      ],
+      "size": [
+        869,
+        100
+      ]
+    },
+    "thumb_truth_exact.png": {
+      "bbox": [
+        52,
+        1368,
+        257,
+        1448
+      ],
+      "size": [
+        205,
+        80
+      ]
+    },
+    "thumb_who_exact.png": {
+      "bbox": [
+        52,
+        1475,
+        257,
+        1555
+      ],
+      "size": [
+        205,
+        80
+      ]
+    },
+    "thumb_brain_exact.png": {
+      "bbox": [
+        52,
+        1580,
+        257,
+        1661
+      ],
+      "size": [
+        205,
+        81
+      ]
+    },
+    "button_start_exact.png": {
+      "bbox": [
+        80,
+        710,
+        423,
+        816
+      ],
+      "size": [
+        343,
+        106
+      ]
+    },
+    "button_play_exact.png": {
+      "bbox": [
+        795,
+        1364,
+        879,
+        1448
+      ],
+      "size": [
+        84,
+        84
+      ]
+    },
+    "button_arrow_exact.png": {
+      "bbox": [
+        792,
+        1149,
+        892,
+        1249
+      ],
+      "size": [
+        100,
+        100
+      ]
+    },
+    "icon_avatar_exact.png": {
+      "bbox": [
+        38,
+        30,
+        148,
+        142
+      ],
+      "size": [
+        110,
+        112
+      ]
+    },
+    "icon_host_badge_exact.png": {
+      "bbox": [
+        175,
+        106,
+        320,
+        158
+      ],
+      "size": [
+        145,
+        52
+      ]
+    },
+    "icon_favorite_exact.png": {
+      "bbox": [
+        165,
+        912,
+        291,
+        1015
+      ],
+      "size": [
+        126,
+        103
+      ]
+    },
+    "icon_profile_exact.png": {
+      "bbox": [
+        615,
+        912,
+        735,
+        1015
+      ],
+      "size": [
+        120,
+        103
+      ]
+    },
+    "icon_diamond_exact.png": {
+      "bbox": [
+        70,
+        1142,
+        180,
+        1252
+      ],
+      "size": [
+        110,
+        110
+      ]
+    }
+  }
+}

@@ -16,6 +16,8 @@ import Home from './pages/Home'
 
 // Остальные — ленивая загрузка для быстрого старта
 const Games = lazy(() => import('./pages/Games'))
+const Comics = lazy(() => import('./pages/Comics'))
+const ComicReader = lazy(() => import('./pages/ComicReader'))
 const CardGameEntry = lazy(() => import('./pages/CardGameEntry'))
 const GameStub = lazy(() => import('./pages/GameStub'))
 const Decks = lazy(() => import('./pages/Decks'))
@@ -29,6 +31,10 @@ const SabotageLayout = lazy(() => import('./pages/SabotageLayout'))
 const QuizLayout = lazy(() => import('./pages/QuizLayout'))
 const TruthDareLayout = lazy(() => import('./pages/TruthDareLayout'))
 const WhoIsWhoLayout = lazy(() => import('./pages/WhoIsWhoLayout'))
+const PhraseTranslator = lazy(() => import('./pages/PhraseTranslator'))
+const FreebieTrashLayout = lazy(() => import('./pages/FreebieTrashLayout'))
+const RussiaTravel = lazy(() => import('./pages/RussiaTravel'))
+const RussiaTravelPlay = lazy(() => import('./pages/RussiaTravelPlay'))
 const CustomDeckEditor = lazy(() => import('./pages/CustomDeckEditor'))
 const AliasHome = lazy(() => import('./pages/AliasHome'))
 const AliasPlay = lazy(() => import('./pages/AliasPlay'))
@@ -119,6 +125,10 @@ function App() {
       () => import('./pages/QuizLayout'),
       () => import('./pages/TruthDareLayout'),
       () => import('./pages/WhoIsWhoLayout'),
+      () => import('./pages/PhraseTranslator'),
+      () => import('./pages/FreebieTrashLayout'),
+      () => import('./pages/RussiaTravel'),
+      () => import('./pages/RussiaTravelPlay'),
     ]
     const gameChunkTimers = gameChunks.map((fn, i) => setTimeout(fn, 400 + i * 80))
     return () => {
@@ -155,6 +165,8 @@ function App() {
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />
+        <Route path="/comics" element={<Comics />} />
+        <Route path="/comics/:seriesId" element={<ComicReader />} />
         <Route path="/card" element={<CardGameEntry />} />
         <Route path="/game/:gameId" element={<GameStub />} />
         <Route path="/decks" element={<Decks />} />
@@ -203,6 +215,10 @@ function App() {
           <Route path="result" element={<TruthDareResult />} />
         </Route>
         <Route path="/who-is-who" element={<WhoIsWhoLayout />} />
+        <Route path="/phrase-translator" element={<PhraseTranslator />} />
+        <Route path="/freebie-trash" element={<FreebieTrashLayout />} />
+        <Route path="/russia-travel" element={<RussiaTravel />} />
+        <Route path="/russia-travel/play/:deckId" element={<RussiaTravelPlay />} />
         <Route
           path="/play/:deckId"
           element={

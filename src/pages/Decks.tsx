@@ -9,9 +9,11 @@ import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
+import GamesPageHeader from '../components/GamesPageHeader'
 import PremiumOverlay from '../components/PremiumOverlay'
 import AdultConfirmModal from '../components/AdultConfirmModal'
-import './Decks.css'
+import './DeckSelectPage.css'
 
 const DECK_ICONS: Record<string, string> = {
   aboutUs: '💕',
@@ -76,6 +78,7 @@ function Decks() {
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [adultConfirmOpen, setAdultConfirmOpen] = useState(false)
   const [pendingDeckId, setPendingDeckId] = useState<string | null>(null)
+  const favoritesLocked = isFavoritesLocked(isPremium)
 
   const handleDeckClick = (deckId: string, e: React.MouseEvent) => {
     hapticSelection()
@@ -100,20 +103,19 @@ function Decks() {
   }
 
   return (
-    <div className="decks-page">
-      <div className="decks-page__top">
-        <HomeButton />
-        <button type="button" className="btn btn--ghost home-btn decks-page__back" onClick={handleBack}>
-          ← Назад
-        </button>
+    <div className="deck-select-page">
+      <div className="deck-select-page__top">
+        <HomeButton className="deck-select-page__nav-btn" />
+        <BackButton onClick={handleBack} className="deck-select-page__nav-btn deck-select-page__back" />
       </div>
-      <header className="decks-page__header">
-        <h1 className="decks-page__title">Card Game</h1>
-        <p className="decks-page__tagline">Выбери колоду и поехали</p>
-        {isFavoritesLocked(isPremium) ? (
+
+      <GamesPageHeader title="Card Game" tagline="Выбери колоду" />
+
+      <div className="deck-select-page__header-extra">
+        {favoritesLocked ? (
           <button
             type="button"
-            className="btn btn--ghost decks-page__my-link"
+            className="deck-select-page__favorites"
             onClick={() => {
               haptic('light')
               setPremiumOverlayOpen(true)
@@ -122,69 +124,69 @@ function Decks() {
             Моё избранное
           </button>
         ) : (
-          <Link to="/favorites" className="btn btn--ghost decks-page__my-link" onClick={() => haptic('light')}>
+          <Link to="/favorites" className="deck-select-page__favorites" onClick={() => haptic('light')}>
             Моё избранное
           </Link>
         )}
-      </header>
-      <ul className="decks-list">
+      </div>
+
+      <ul className="deck-select-page__list">
         {decks.map((deck, i) => {
           const indexEntry = getDeckFromIndex(deck.id)
           const modeId = (indexEntry?.modeId ?? 'party') as ModeId
           const locked = isDeckLocked(modeId, deck.id, isPremium)
+          const isAdult = isDeckAdult(deck.id)
 
-          if (locked) {
-            return (
-              <li
-                key={deck.id}
-                className={`deck-card card deck-card--locked ${deck.isPremium ? 'deck-card--premium' : ''}`}
-                style={{ animationDelay: `${i * 0.06}s` }}
-              >
+          const inner = (
+            <>
+              <span className="deck-select-page__chip" aria-hidden>{DECK_ICONS[deck.id] ?? '📇'}</span>
+              <div className="deck-select-page__card-body">
+                <h2 className="deck-select-page__card-title">{deck.title}</h2>
+                <p className="deck-select-page__card-desc">{deck.description}</p>
+              </div>
+              <div className="deck-select-page__card-meta">
+                <span className="deck-select-page__count">{deck.questionsCount}</span>
+                {(isAdult || locked) && (
+                  <div className="deck-select-page__badges">
+                    {isAdult && <span className="deck-select-page__badge deck-select-page__badge--adult">18+</span>}
+                    {locked && <span className="deck-select-page__badge deck-select-page__badge--premium">PREMIUM</span>}
+                  </div>
+                )}
+              </div>
+            </>
+          )
+
+          return (
+            <li
+              key={deck.id}
+              className={`deck-select-page__card deck-select-page__card--glow-${i % 2 === 0 ? 'a' : 'b'}`}
+              style={{ animationDelay: `${i * 0.05}s` }}
+            >
+              {locked ? (
                 <button
                   type="button"
-                  className="deck-card__link"
+                  className="deck-select-page__card-link"
                   onClick={() => {
                     hapticSelection()
                     setPremiumOverlayOpen(true)
                   }}
                 >
-                <span className="deck-card__chip" aria-hidden>{DECK_ICONS[deck.id] ?? '📇'}</span>
-                  <div className="deck-card__body">
-                    <div className="deck-card__header">
-                      <h2 className="deck-card__title">{deck.title}</h2>
-                    </div>
-                    <p className="deck-card__description">{deck.description}</p>
-                  </div>
-                  <span className="deck-card__pill font-mono">{deck.questionsCount}</span>
-                  <span className="badge badge--premium">Premium</span>
+                  {inner}
                 </button>
-              </li>
-            )
-          }
-          return (
-            <li
-              key={deck.id}
-              className={`deck-card card ${deck.isPremium ? 'deck-card--premium' : ''}`}
-              style={{ animationDelay: `${i * 0.06}s` }}
-            >
-              <Link
-                to={`/play/${deck.id}`}
-                className="deck-card__link"
-                onClick={(e) => handleDeckClick(deck.id, e)}
-              >
-                <span className="deck-card__chip" aria-hidden>{DECK_ICONS[deck.id] ?? '📇'}</span>
-                <div className="deck-card__body">
-                  <div className="deck-card__header">
-                    <h2 className="deck-card__title">{deck.title}</h2>
-                  </div>
-                  <p className="deck-card__description">{deck.description}</p>
-                </div>
-                <span className="deck-card__pill font-mono">{deck.questionsCount}</span>
-              </Link>
+              ) : (
+                <Link
+                  to={`/play/${deck.id}`}
+                  className="deck-select-page__card-link"
+                  onClick={(e) => handleDeckClick(deck.id, e)}
+                >
+                  {inner}
+                </Link>
+              )}
             </li>
           )
         })}
       </ul>
+
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       <AdultConfirmModal
         isOpen={adultConfirmOpen}

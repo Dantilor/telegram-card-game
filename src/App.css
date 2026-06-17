@@ -1,9 +1,13 @@
-/* Роуты занимают оставшееся место по вертикали */
+@import "./styles/responsive.css";
+
+/* Роуты: не сжимать контент — страница скроллится в .app */
 .app > * {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .app {
@@ -16,11 +20,29 @@
   padding-right: max(var(--pad), var(--safe-right));
   padding-bottom: max(var(--pad), var(--safe-bottom));
   padding-left: max(var(--pad), var(--safe-left));
-  min-height: 100vh;
+  height: 100%;
   min-height: var(--app-height);
   box-sizing: border-box;
   max-width: 100%;
   overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent;
+}
+
+.app::-webkit-scrollbar-thumb,
+.app::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent;
 }
 
 .app h1 {
@@ -29,6 +51,10 @@
 
 .app p {
   margin: 0;
+}
+
+html[data-theme="neon-dark"] .app:not(:has(.mafia-page)) p,
+html[data-theme="neon-light"] .app:not(:has(.mafia-page)) p {
   color: var(--text);
 }
 
@@ -159,10 +185,6 @@
   opacity: 0.2;
 }
 
-[data-theme="portal"] .badge-premium::after, [data-theme="portal"] .badge--pro::after, [data-theme="portal"] .badge--premium::after {
-  opacity: 0.35;
-}
-
 .badge--new {
   font-size: 0.65rem;
   font-weight: 700;
@@ -287,8 +309,8 @@
   box-shadow: 0 0 12px rgba(255, 77, 77, 0.35);
 }
 
-/* Кнопка «Назад» — размер как «Домой», шрифт — по умолчанию .btn */
-#root .btn.btn--ghost[class*="__back"] {
+/* Кнопка «Назад» — размер как «Домой»; на странице игр стиль задаёт Games.css */
+#root .btn.btn--ghost[class*="__back"]:not(.games-page__nav-btn):not(.profile-page__nav-btn):not(.card-entry-page__nav-btn):not(.deck-select-page__nav-btn):not(.play-page__nav-btn):not(.mafia-page__nav-btn):not(.alias-page__nav-btn):not(.game-page__nav-btn):not(.favorites-page__nav-btn) {
   display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;

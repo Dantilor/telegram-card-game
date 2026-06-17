@@ -5,6 +5,7 @@ import { haptic } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import '../styles/GamePageShell.css'
 import './PremiumPage.css'
 
 function PremiumPage() {
@@ -36,22 +37,22 @@ function PremiumPage() {
 
   if (isPremium) {
     return (
-      <div className="premium-page">
-        <div className="premium-page__top">
-          <HomeButton />
-          <BackButton onClick={handleBack} className="premium-page__back" />
+      <div className="game-page premium-page game-page--enter">
+        <div className="game-page__top">
+          <HomeButton className="game-page__nav-btn" />
+          <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
         </div>
         <header className="premium-page__header">
           <h1 className="premium-page__title">Premium-доступ</h1>
         </header>
-        <section className="premium-page__card premium-page__card--active">
+        <section className="premium-page__card premium-page__card--active game-page__panel game-page__panel--glow-b">
           <p className="premium-page__status">
             Premium активен до {activeUntil ? new Date(activeUntil).toLocaleDateString('ru-RU') : '—'}
           </p>
           <div className="premium-page__actions">
             <button
               type="button"
-              className="btn btn--ghost premium-page__btn"
+              className="game-page__btn game-page__btn--secondary"
               onClick={handleRestorePurchase}
               disabled={restoreLoading}
             >
@@ -67,10 +68,10 @@ function PremiumPage() {
   }
 
   return (
-    <div className="premium-page">
-      <div className="premium-page__top">
-        <HomeButton />
-        <BackButton onClick={handleBack} className="premium-page__back" />
+    <div className="game-page premium-page game-page--enter">
+      <div className="game-page__top">
+        <HomeButton className="game-page__nav-btn" />
+        <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
       <div className="premium-page__content">
         <PremiumOverlay

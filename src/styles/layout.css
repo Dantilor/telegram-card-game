@@ -1,0 +1,39 @@
+/* Shared layout — phone + desktop */
+:root {
+  --layout-phone-max: 29.375rem;
+  --layout-content-max: 42rem;
+  --layout-pad-x: clamp(0.875rem, 3.5vw, 1.25rem);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --layout-phone-max: 32rem;
+    --layout-content-max: 48rem;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --layout-phone-max: 36rem;
+    --layout-content-max: 52rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --layout-phone-max: 38rem;
+    --layout-content-max: 56rem;
+  }
+}
+
+/* Центрированная колонка для страниц */
+.page-shell {
+  width: 100%;
+  max-width: var(--layout-phone-max);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.page-shell--wide {
+  max-width: var(--layout-content-max);
+}

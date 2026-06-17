@@ -11,6 +11,9 @@ import aliasGame from './alias_game.png'
 import quizGame from './quiz_game.png'
 import truthDareGame from './truth_dare_game.png'
 import whoIsWhoGame from '../games/who-is-who/assets/who-is-who-card.png'
+import phraseTranslatorGame from './phrase_translator_game.png'
+import freebieTrashGame from './freebie_trash_game.png'
+import russiaTravelGame from './russia_travel_game.png'
 import fireplaceScene from './fireplace_scene.png'
 import adultMode from './adult_mode.png'
 import partyMode from './party_mode.png'
@@ -38,6 +41,9 @@ export const IMAGES: Record<string, ImageAsset> = {
   quiz: { png: quizGame },
   truthDare: { png: truthDareGame },
   whoIsWho: { png: whoIsWhoGame },
+  phraseTranslator: { png: phraseTranslatorGame },
+  freebieTrash: { png: freebieTrashGame },
+  russiaTravel: { png: russiaTravelGame },
   fireplaceScene: { png: fireplaceScene },
   adultMode: { png: adultMode },
   partyMode: { png: partyMode },
@@ -72,6 +78,9 @@ export const PRELOAD_CRITICAL_URLS: string[] = [
   IMAGES.quiz.png,
   IMAGES.truthDare.png,
   IMAGES.whoIsWho.png,
+  IMAGES.phraseTranslator.png,
+  IMAGES.freebieTrash.png,
+  IMAGES.russiaTravel.png,
   IMAGES.fireplaceScene.png,
   IMAGES.datesMode.png,
   IMAGES.partyMode.png,

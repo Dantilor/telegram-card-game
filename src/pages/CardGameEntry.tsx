@@ -6,8 +6,10 @@ import { usePremium } from '../contexts/PremiumContext'
 import { isModeLocked } from '../utils/access'
 import type { ModeId } from '../data/modes'
 import { hapticSelection } from '../utils/haptics'
+import { formatGameTags } from '../utils/gameTags'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
+import GamesPageHeader from '../components/GamesPageHeader'
 import PremiumOverlay from '../components/PremiumOverlay'
 import AdultConfirmModal from '../components/AdultConfirmModal'
 import SmartImage from '../components/SmartImage'
@@ -27,7 +29,6 @@ function CardGameEntry() {
       e.preventDefault()
       setPendingAdultMode(modeId)
       setAdultConfirmOpen(true)
-      return
     }
   }
 
@@ -47,80 +48,78 @@ function CardGameEntry() {
   return (
     <div className="card-entry-page">
       <div className="card-entry-page__top">
-        <HomeButton />
-        <BackButton onClick={handleBack} className="card-entry-page__back" />
+        <HomeButton className="card-entry-page__nav-btn" />
+        <BackButton onClick={handleBack} className="card-entry-page__nav-btn card-entry-page__back" />
       </div>
-      <header className="card-entry-page__header">
-        <h1 className="card-entry-page__title">GameNight Cards</h1>
-        <p className="card-entry-page__tagline">Выбери режим</p>
-      </header>
-      <div className="card-entry-page__modes">
+
+      <GamesPageHeader title="GameNight Cards" tagline="Выбери режим" />
+
+      <div className="card-entry-page__grid">
         {MODES.map((mode, idx) => {
           const locked = isModeLocked(mode.id as ModeId, isPremium)
-          const modeContent = (
+          const cardClass = `card-entry-page__card card-entry-page__card--glow-${idx % 2 === 0 ? 'a' : 'b'}`
+          const cardContent = (
             <>
-              {mode.image ? (
-                <>
-                  <div className="card-entry-page__mode-image-wrap">
-                    <SmartImage
-                      src={mode.image}
-                      alt=""
-                      className="card-entry-page__mode-img"
-                      objectFit="cover"
-                      priority={idx < 6}
-                    />
-                  </div>
-                  <div className="card-entry-page__mode-text">
-                    <span className="card-entry-page__mode-title">{mode.title}</span>
-                    {'description' in mode && mode.description && (
-                      <span className="card-entry-page__mode-desc">{mode.description}</span>
+              <div className="card-entry-page__card-image-wrap">
+                <SmartImage
+                  src={mode.image}
+                  alt=""
+                  className="card-entry-page__card-img"
+                  aspectRatio=""
+                  objectFit="cover"
+                  priority={idx < 4}
+                />
+                {(mode.id === 'adult' || locked) && (
+                  <div className="card-entry-page__card-badges">
+                    {mode.id === 'adult' && (
+                      <span className="card-entry-page__badge card-entry-page__badge--adult">18+</span>
+                    )}
+                    {locked && (
+                      <span className="card-entry-page__badge card-entry-page__badge--premium">PREMIUM</span>
                     )}
                   </div>
-                </>
-              ) : (
-                <>
-                  <span className="card-entry-page__emoji" aria-hidden>{mode.emoji}</span>
-                  <span className="card-entry-page__mode-title">{mode.title}</span>
-                </>
-              )}
+                )}
+              </div>
+              <div className="card-entry-page__card-body">
+                <h2 className="card-entry-page__card-title">{mode.title}</h2>
+                {'description' in mode && mode.description && (
+                  <p className="card-entry-page__card-desc">{formatGameTags(mode.description)}</p>
+                )}
+              </div>
             </>
           )
-          const hasBadges = mode.id === 'adult' || locked
-          const badges = hasBadges ? (
-            <div className="card-entry-page__badges">
-              {mode.id === 'adult' && <span className="badge badge--adult">18+</span>}
-              {locked && <span className="badge badge--premium">Premium</span>}
-            </div>
-          ) : null
+
           if (locked) {
             return (
               <button
                 key={mode.id}
                 type="button"
-                className={`card-entry-page__mode-card card tile--active card-entry-page__mode-card--locked ${mode.image ? 'card-entry-page__mode-card--image' : ''}`}
+                className={cardClass}
+                style={{ animationDelay: `${idx * 0.05}s` }}
                 onClick={() => {
                   hapticSelection()
                   setPremiumOverlayOpen(true)
                 }}
               >
-                {modeContent}
-                {badges}
+                {cardContent}
               </button>
             )
           }
+
           return (
             <Link
               key={mode.id}
               to={mode.id === 'adult' ? '#' : `/mode/${mode.id}`}
-              className={`card-entry-page__mode-card card tile--active ${mode.image ? 'card-entry-page__mode-card--image' : ''}`}
+              className={cardClass}
+              style={{ animationDelay: `${idx * 0.05}s` }}
               onClick={(e) => handleModeClick(mode.id, e)}
             >
-              {modeContent}
-              {badges}
+              {cardContent}
             </Link>
           )
         })}
       </div>
+
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       <AdultConfirmModal
         isOpen={adultConfirmOpen}

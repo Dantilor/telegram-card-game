@@ -24,25 +24,28 @@
   100% { background-position: -200% 0; }
 }
 
-.smart-image__img {
+.smart-image__picture {
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
+}
+
+.smart-image__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
   object-fit: cover;
   object-position: center;
   display: block;
-  vertical-align: middle;
   opacity: 0;
   transition: opacity 0.3s ease-out;
 }
 
 .smart-image__img--loaded {
   opacity: 1;
-}
-
-.smart-image__picture,
-.smart-image__img {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: block;
 }

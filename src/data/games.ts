@@ -10,6 +10,7 @@ export type Game = {
   description: string
   status: GameStatus
   image?: string
+  catalogBadge?: 'new' | 'hit'
 }
 
 export const GAMES: Game[] = [
@@ -84,6 +85,36 @@ export const GAMES: Game[] = [
     description: 'Ситуации • Роли\nОправдания',
     status: 'ready',
     image: IMAGES.whoIsWho.png,
+  },
+  {
+    id: 'phrase-translator',
+    title: 'Переводчик фраз',
+    emoji: '🗣️',
+    icon: 'message',
+    description: 'Расшифруй намеки\nСтранные фразы',
+    status: 'ready',
+    image: IMAGES.phraseTranslator.png,
+    catalogBadge: 'new',
+  },
+  {
+    id: 'freebie-trash',
+    title: 'Фигня за бесплатно',
+    emoji: '🎁',
+    icon: 'gift',
+    description: 'Абсурдные подарки\nСтранные условия',
+    status: 'ready',
+    image: IMAGES.freebieTrash.png,
+    catalogBadge: 'new',
+  },
+  {
+    id: 'russia-travel',
+    title: 'Где мы?',
+    emoji: '🧭',
+    icon: 'globe',
+    description: 'Города · Места · Факты',
+    status: 'ready',
+    image: IMAGES.russiaTravel.png,
+    catalogBadge: 'new',
   },
 ]
 

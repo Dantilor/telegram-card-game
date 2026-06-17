@@ -9,6 +9,7 @@ import plansRouter from './routes/plans.js'
 import yookassaRouter from './routes/yookassa.js'
 import apiRouter from './api.js'
 import eventsRouter from './routes/events.js'
+import publicStatsRouter from './routes/publicStats.js'
 import adminRouter from './routes/admin.js'
 import { bot } from './bot.js'
 
@@ -80,6 +81,7 @@ app.use('/api', plansRouter)
 app.use('/api', yookassaRouter) // YooKassa webhook: POST /api/yookassa/webhook
 app.use('/api', apiRouter)
 app.use('/api', eventsRouter)
+app.use('/api', publicStatsRouter)
 app.use('/api/admin', adminRouter)
 
 // HTTP server (webhook mode — no bot.launch/polling)

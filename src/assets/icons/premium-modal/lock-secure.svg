@@ -1,0 +1,29 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+  <linearGradient id="gnhPinkBlue" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FF3FD8"/>
+    <stop offset="0.52" stop-color="#8B4DFF"/>
+    <stop offset="1" stop-color="#3B82FF"/>
+  </linearGradient>
+  <radialGradient id="softFill" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(25 19) rotate(52) scale(42)">
+    <stop stop-color="#FFFFFF" stop-opacity="0.72"/>
+    <stop offset="0.38" stop-color="#FF6BE1" stop-opacity="0.62"/>
+    <stop offset="0.72" stop-color="#6A4DFF" stop-opacity="0.78"/>
+    <stop offset="1" stop-color="#29D8FF" stop-opacity="0.8"/>
+  </radialGradient>
+  <filter id="gnhGlow" x="-70%" y="-70%" width="240%" height="240%">
+    <feGaussianBlur stdDeviation="3.2" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.9  0 1 0 0 0.15  0 0 1 0 1  0 0 0 0.7 0" result="coloredBlur"/>
+    <feMerge>
+      <feMergeNode in="coloredBlur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+</defs>
+
+<rect x="16" y="28" width="32" height="26" rx="6" fill="rgba(255,255,255,.08)" stroke="url(#gnhPinkBlue)" stroke-width="3"/>
+<path d="M23 28v-6a9 9 0 0 1 18 0v6" stroke="url(#gnhPinkBlue)" stroke-width="3.4" stroke-linecap="round"/>
+<circle cx="32" cy="40" r="3.2" fill="url(#gnhPinkBlue)"/>
+<path d="M32 42.5v5" stroke="url(#gnhPinkBlue)" stroke-width="3" stroke-linecap="round"/>
+</svg>

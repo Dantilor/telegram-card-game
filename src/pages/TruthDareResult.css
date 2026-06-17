@@ -1,46 +1,27 @@
 .truth-dare-result {
-  padding: clamp(0.75rem, 3vw, 1rem);
-  padding-bottom: max(clamp(1rem, 4vw, 1.5rem), env(safe-area-inset-bottom));
-  min-height: var(--app-height, 100vh);
-}
-
-.truth-dare-result__top {
+  flex: 1 1 auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.truth-dare-result__back {
-  flex-shrink: 0;
-}
-
-.truth-dare-result__title {
-  margin: 0 0 1.5rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  text-align: center;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .truth-dare-result__titles,
 .truth-dare-result__table {
-  padding: 1rem;
+  padding: 1rem 1.05rem;
   margin-bottom: 1rem;
-}
-
-.truth-dare-result__section-title {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-  color: var(--muted);
 }
 
 .truth-dare-result__award {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin: 0 0 0.75rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
+}
+
+.truth-dare-result__award:last-child {
+  margin-bottom: 0;
 }
 
 .truth-dare-result__award-emoji {
@@ -48,25 +29,20 @@
 }
 
 .truth-dare-result__award-label {
-  font-weight: 600;
-  color: var(--neonPink);
+  font-weight: 700;
+  color: var(--game-shell-readable-accent);
 }
 
 .truth-dare-result__award-name {
-  color: var(--text);
-}
-
-.truth-dare-result__stat {
-  font-size: 0.85rem;
-  color: var(--muted);
+  color: var(--game-shell-readable-text);
 }
 
 .truth-dare-result__row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border);
+  padding: 0.55rem 0;
+  border-bottom: 1.5px solid var(--game-shell-chip-border);
 }
 
 .truth-dare-result__row:last-child {
@@ -75,16 +51,15 @@
 
 .truth-dare-result__name {
   flex: 1;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--game-shell-readable-text);
 }
 
-.truth-dare-result__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.truth-dare-result__stat {
+  font-size: 0.85rem;
+  color: var(--game-shell-readable-muted);
 }
 
-.truth-dare-result__btn {
-  width: 100%;
-  padding: 0.75rem 1rem;
+.game-page__actions .game-page__btn--secondary {
+  margin-top: 0.55rem;
 }

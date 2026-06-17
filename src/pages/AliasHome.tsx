@@ -7,6 +7,8 @@ import { useBack } from '../hooks/useBack'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
+import BackButton from '../components/BackButton'
+import GamesPageHeader from '../components/GamesPageHeader'
 import { TeamsSetupBlock } from '../components/alias/TeamsSetupBlock'
 import './AliasHome.css'
 
@@ -151,9 +153,10 @@ function AliasHome() {
   }
 
   return (
-    <div className="alias-home" onPointerDown={handleTapOutside}>
-      <div className="alias-home__top">
+    <div className="alias-page alias-home" onPointerDown={handleTapOutside}>
+      <div className="alias-page__top">
         <HomeButton
+          className="alias-page__nav-btn"
           onBeforeNavigate={() => {
             if (dirty) {
               setShowExitConfirm('home')
@@ -162,16 +165,15 @@ function AliasHome() {
             return false
           }}
         />
-        <button type="button" className="btn btn--ghost home-btn alias-home__back" onClick={handleBackClick}>
-          ← Назад
-        </button>
+        <BackButton onClick={handleBackClick} className="alias-page__nav-btn alias-page__back" />
       </div>
-      <header className="alias-home__header">
-        <h1 className="alias-home__title">Ассоциации</h1>
-        <p className="alias-home__tagline">Никаких однокоренных слов. Только логика.</p>
-      </header>
 
-      <div className="alias-home__how card">
+      <GamesPageHeader
+        title="Ассоциации"
+        tagline="Никаких однокоренных слов. Только логика."
+      />
+
+      <div className="alias-home__how alias-page__panel alias-page__panel--glow-b">
         <h3 className="alias-home__how-title">Как играть</h3>
         <ul className="alias-home__how-list">
           <li>Выберите категории и введите имена участников (команды по 2+ человека)</li>
@@ -180,14 +182,14 @@ function AliasHome() {
         </ul>
       </div>
 
-      <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Количество команд</h2>
-        <div className="alias-home__options">
+      <section className="alias-home__section alias-page__section">
+        <h2 className="alias-page__section-title">Количество команд</h2>
+        <div className="alias-page__chip-row">
           {TEAM_COUNT_OPTIONS.map((count) => (
             <button
               key={count}
               type="button"
-              className={`btn btn--ghost alias-home__option-btn ${teamCount === count ? 'alias-home__option-btn--active' : ''}`}
+              className={`alias-page__chip ${teamCount === count ? 'is-active' : ''}`}
               onClick={() => handleTeamCount(count)}
             >
               {count}
@@ -196,14 +198,14 @@ function AliasHome() {
         </div>
       </section>
 
-      <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Таймер раунда</h2>
-        <div className="alias-home__options">
+      <section className="alias-home__section alias-page__section">
+        <h2 className="alias-page__section-title">Таймер раунда</h2>
+        <div className="alias-page__chip-row">
           {TIMER_OPTIONS.map((sec) => (
             <button
               key={sec}
               type="button"
-              className={`btn btn--ghost alias-home__option-btn ${state.timerSeconds === sec ? 'alias-home__option-btn--active' : ''}`}
+              className={`alias-page__chip alias-page__chip--wide ${state.timerSeconds === sec ? 'is-active' : ''}`}
               onClick={() => handleTimer(sec)}
             >
               {sec} сек
@@ -212,8 +214,10 @@ function AliasHome() {
         </div>
       </section>
 
-      <section className="alias-home__section">
-        <h2 className="alias-home__section-title">Категории <span className="alias-home__section-hint">(выберите одну или несколько)</span></h2>
+      <section className="alias-home__section alias-page__section">
+        <h2 className="alias-page__section-title">
+          Категории <span className="alias-home__section-hint">(выберите одну или несколько)</span>
+        </h2>
         {state.categoryIds.length === 0 && (
           <p className="alias-home__category-hint" role="status">Выберите минимум одну категорию</p>
         )}
@@ -222,7 +226,7 @@ function AliasHome() {
             <button
               key={cat.id}
               type="button"
-              className={`alias-home__category-card card ${state.categoryIds.includes(cat.id) ? 'alias-home__category-card--active' : ''}`}
+              className={`alias-home__category-card alias-page__panel alias-page__panel--glow-a ${state.categoryIds.includes(cat.id) ? 'is-active' : ''}`}
               onClick={() => handleCategoryClick(cat.id, cat.paid, cat.adult)}
             >
               <span className="alias-home__category-emoji" aria-hidden>{cat.emoji}</span>
@@ -245,7 +249,7 @@ function AliasHome() {
       <div className="alias-home__actions">
         <button
           type="button"
-          className="btn btn--primary alias-home__start"
+          className="alias-page__cta"
           disabled={!canStart}
           onClick={handleStartGame}
         >
@@ -255,14 +259,14 @@ function AliasHome() {
 
       {showAdultConfirm && (
         <div className="alias-home__modal-overlay" onClick={() => handleAdultConfirm(false)}>
-          <div className="alias-home__modal card" onClick={(e) => e.stopPropagation()}>
+          <div className="alias-home__modal alias-page__panel alias-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
             <p className="alias-home__modal-text">Мне 18+</p>
             <p className="alias-home__modal-hint">Подтвердите возраст для доступа к категории</p>
             <div className="alias-home__modal-buttons">
-              <button type="button" className="btn btn--ghost" onClick={() => handleAdultConfirm(false)}>
+              <button type="button" className="alias-page__btn alias-page__btn--secondary" onClick={() => handleAdultConfirm(false)}>
                 Отмена
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleAdultConfirm(true)}>
+              <button type="button" className="alias-page__cta" onClick={() => handleAdultConfirm(true)}>
                 Да, мне 18+
               </button>
             </div>
@@ -275,16 +279,16 @@ function AliasHome() {
           className="alias-home__modal-overlay"
           onClick={() => handleExitConfirm(false)}
         >
-          <div className="alias-home__modal card" onClick={(e) => e.stopPropagation()}>
+          <div className="alias-home__modal alias-page__panel alias-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
             <p className="alias-home__modal-text">Выйти из игры?</p>
             <p className="alias-home__modal-hint">
               Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
             </p>
             <div className="alias-home__modal-buttons">
-              <button type="button" className="btn btn--ghost" onClick={() => handleExitConfirm(false)}>
+              <button type="button" className="alias-page__btn alias-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
                 Остаться
               </button>
-              <button type="button" className="btn btn--primary" onClick={() => handleExitConfirm(true)}>
+              <button type="button" className="alias-page__cta" onClick={() => handleExitConfirm(true)}>
                 Выйти
               </button>
             </div>

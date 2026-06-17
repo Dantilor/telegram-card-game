@@ -1,1 +1,0 @@
-import{r,H as s,j as a,O as t,J as e}from"./index-C19iDQpn.js";import{M as o}from"./MafiaPage-Wy76F14r.js";function m(){return r.useEffect(()=>{s(e)},[]),a.jsx(o,{children:a.jsx(t,{})})}export{m as default};

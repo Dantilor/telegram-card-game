@@ -7,6 +7,8 @@ import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
+import PremiumOverlay from '../components/PremiumOverlay'
+import { useGameStartGate } from '../hooks/useGameStartGate'
 import './SabotageSetup.css'
 
 const MIN_PLAYERS = 3
@@ -19,6 +21,8 @@ function SabotageSetup() {
   const [count, setCount] = useState(5)
   const [names, setNames] = useState<string[]>(() => Array(5).fill(''))
   const [taskDuration, setTaskDuration] = useState<number>(180)
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate('sabotage')
 
   const updateCount = (n: number) => {
     hapticSelection()
@@ -130,13 +134,15 @@ function SabotageSetup() {
       <div className="game-page__actions">
         <button
           type="button"
-          className="game-page__cta"
-          onClick={handleStart}
-          disabled={count < MIN_PLAYERS}
+          className={startCtaClassName}
+          disabled={!startLocked && count < MIN_PLAYERS}
+          onClick={() => gatedStart(handleStart)}
         >
           Начать раунд
         </button>
       </div>
+
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
     </div>
   )
 }

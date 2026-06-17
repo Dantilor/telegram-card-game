@@ -8,7 +8,6 @@ import '../pages/Games.css'
 type Props = {
   game: Game
   isLocked: boolean
-  onPremiumOpen: () => void
   to?: string
   badge?: string
   badgeVariant?: 'hit' | 'new'
@@ -18,7 +17,6 @@ type Props = {
 export default function HeroGameCard({
   game,
   isLocked,
-  onPremiumOpen,
   to = '/card',
   badge = 'ХИТ',
   badgeVariant = 'hit',
@@ -66,16 +64,13 @@ export default function HeroGameCard({
 
   if (isLocked) {
     return (
-      <button
-        type="button"
+      <Link
+        to={to}
         className={cardClass}
-        onClick={() => {
-          hapticSelection()
-          onPremiumOpen()
-        }}
+        onClick={() => hapticSelection()}
       >
         {cardContent}
-      </button>
+      </Link>
     )
   }
 

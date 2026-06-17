@@ -28,7 +28,7 @@ export const COMIC_SERIES: ComicSeries[] = [
     subtitle: 'Необитаемый вайб',
     description: 'Продолжение комикса GNH с новым вечерним вайбом.',
     pagesCount: 16,
-    access: 'premium',
+    access: 'free',
     isNew: false,
   },
   {
@@ -37,7 +37,7 @@ export const COMIC_SERIES: ComicSeries[] = [
     subtitle: 'Бункерный вайб',
     description: 'Новая серия комикса GNH с героями, спорными решениями и Хостиком.',
     pagesCount: 16,
-    access: 'premium',
+    access: 'free',
     isNew: true,
   },
   {

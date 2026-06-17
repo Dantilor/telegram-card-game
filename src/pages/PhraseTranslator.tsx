@@ -6,6 +6,8 @@ import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
 import GameExitConfirmModal from '../components/GameExitConfirmModal'
+import PremiumOverlay from '../components/PremiumOverlay'
+import { useGameStartGate } from '../hooks/useGameStartGate'
 import {
   accumulateVotesReceived,
   applyRoundScores,
@@ -82,6 +84,8 @@ export default function PhraseTranslator() {
   const [answerInput, setAnswerInput] = useState('')
   const [answerMode, setAnswerMode] = useState<AnswerMode>('write')
   const [showExitConfirm, setShowExitConfirm] = useState<'setup' | 'games' | 'home' | null>(null)
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate('phrase-translator')
 
   const hasSetupData =
     names.some((name) => name.trim() !== '') ||
@@ -439,9 +443,9 @@ export default function PhraseTranslator() {
           <div className="game-page__actions pt__setup-actions">
             <button
               type="button"
-              className="game-page__cta"
-              disabled={participantCount < MIN_PLAYERS}
-              onClick={handleStartGame}
+              className={startCtaClassName}
+              disabled={!startLocked && participantCount < MIN_PLAYERS}
+              onClick={() => gatedStart(handleStartGame)}
             >
               Начать перевод
             </button>
@@ -677,6 +681,8 @@ export default function PhraseTranslator() {
           onConfirm={() => handleExitConfirm(true)}
         />
       )}
+
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
     </div>
   )
 }

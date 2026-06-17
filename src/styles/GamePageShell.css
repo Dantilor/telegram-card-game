@@ -511,6 +511,28 @@ html:has(.game-page) #root {
   cursor: not-allowed;
 }
 
+.game-page__cta--premium-locked,
+.mafia-page__cta--premium-locked,
+.alias-page__cta--premium-locked {
+  opacity: 1;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--games-play-glow) 55%, #1a1a2e) 0%,
+    color-mix(in srgb, var(--games-play-glow) 75%, #2a2040) 100%
+  );
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--games-play-glow) 28%, transparent);
+}
+
+.game-page__cta--premium-locked::after,
+.mafia-page__cta--premium-locked::after,
+.alias-page__cta--premium-locked::after {
+  content: ' · Premium';
+  font-size: 0.82em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .game-page__cta:hover:not(:disabled) {
     box-shadow: var(--game-shell-cta-hover-shadow);

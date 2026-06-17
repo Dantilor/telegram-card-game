@@ -93,9 +93,10 @@ export function isGameLocked(gameId: string, hasPremium: boolean): boolean {
   return !(FREE_GAMES as readonly string[]).includes(gameId)
 }
 
-/** Избранное — временно доступно всем (без Premium). */
-export function isFavoritesLocked(_hasPremium: boolean): boolean {
-  return false
+/** Избранное доступно только с Premium. */
+export function isFavoritesLocked(hasPremium: boolean): boolean {
+  if (!PREMIUM_ENABLED || hasPremium) return false
+  return true
 }
 
 /** Темы — временно доступны всем (без Premium). */

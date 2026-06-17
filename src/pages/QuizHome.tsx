@@ -9,6 +9,8 @@ import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
 import GameExitConfirmModal from '../components/GameExitConfirmModal'
+import PremiumOverlay from '../components/PremiumOverlay'
+import { useGameStartGate } from '../hooks/useGameStartGate'
 import './QuizHome.css'
 
 const QUESTION_COUNTS = [5, 10, 20] as const
@@ -28,6 +30,8 @@ function QuizHome() {
   const [participantCount, setParticipantCount] = useState(2)
   const [names, setNames] = useState<string[]>(() => Array(8).fill(''))
   const startRequestedRef = useRef(false)
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate('quiz')
 
   useEffect(() => {
     if (state.phase === 'question' && location.pathname === '/quiz' && startRequestedRef.current) {
@@ -266,13 +270,15 @@ function QuizHome() {
         )}
         <button
           type="button"
-          className="game-page__cta"
-          disabled={!canStart}
-          onClick={handleStart}
+          className={startCtaClassName}
+          disabled={!startLocked && !canStart}
+          onClick={() => gatedStart(handleStart)}
         >
           Начать раунд
         </button>
       </div>
+
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
 
       {showExitConfirm != null && (
         <GameExitConfirmModal

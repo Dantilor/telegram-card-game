@@ -8,6 +8,7 @@ import {
   isRussiaTravelDeckLocked,
 } from '../data/russiaTravel'
 import { hapticSelection } from '../utils/haptics'
+import { isGameLocked } from '../utils/access'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
@@ -28,10 +29,11 @@ export default function RussiaTravel() {
   const handleBack = useBack('/games')
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const gameLocked = isGameLocked('russia-travel', isPremium)
 
-  const openDeck = (deckId: string, locked: boolean) => {
+  const openDeck = (deckId: string, deckLocked: boolean) => {
     hapticSelection()
-    if (locked) {
+    if (gameLocked || deckLocked) {
       setPremiumOverlayOpen(true)
       return
     }
@@ -67,7 +69,7 @@ export default function RussiaTravel() {
         </h2>
         <ul className="rt-page__decks">
           {RUSSIA_TRAVEL_DECKS.map((deck) => {
-            const locked = isRussiaTravelDeckLocked(deck, isPremium)
+            const locked = gameLocked || isRussiaTravelDeckLocked(deck, isPremium)
             const cardCount = getRussiaTravelCardCount(deck.id)
             const badgeLabel = deck.isPremium ? 'Premium' : 'Free'
 

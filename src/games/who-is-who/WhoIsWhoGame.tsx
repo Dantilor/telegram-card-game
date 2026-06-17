@@ -29,6 +29,8 @@ import { useBack } from "../../hooks/useBack";
 import HomeButton from "../../components/HomeButton";
 import BackButton from "../../components/BackButton";
 import GamesPageHeader from "../../components/GamesPageHeader";
+import PremiumOverlay from "../../components/PremiumOverlay";
+import { useGameStartGate } from "../../hooks/useGameStartGate";
 import "./WhoIsWhoGame.css";
 
 const SELECTED_PACK_KEY = "who-is-who:selected-pack";
@@ -75,6 +77,8 @@ export default function WhoIsWhoGame() {
   const [activePack, setActivePack] = useState<SituationPack | null>(null);
   const [situation, setSituation] = useState<Situation | null>(null);
   const [assignments, setAssignments] = useState<Assignments>({});
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate("who-is-who");
 
   const selectedPack = useMemo(
     () => getPackById(selectedPackId) ?? SITUATION_PACKS[0],
@@ -243,11 +247,14 @@ export default function WhoIsWhoGame() {
           onPlayerCount={handlePlayerCount}
           onPlayerName={handlePlayerName}
           onSelectPack={handleSelectPack}
-          onStartGame={() => handleStartGame(false)}
-          onReplayPack={() => handleStartGame(true)}
+          startLocked={startLocked}
+          startCtaClassName={startCtaClassName}
+          onStartGame={() => gatedStart(() => handleStartGame(false))}
+          onReplayPack={() => gatedStart(() => handleStartGame(true))}
           onBack={handleBackToGames}
         />
       )}
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
 
       {screen === "round" && situation && activePack && activeProgress && (
         <RoundScreen
@@ -389,6 +396,8 @@ interface SetupScreenProps {
   onPlayerCount: (count: PlayerCountOption) => void;
   onPlayerName: (index: number, value: string) => void;
   onSelectPack: (packId: string) => void;
+  startLocked: boolean;
+  startCtaClassName: string;
   onStartGame: () => void;
   onReplayPack: () => void;
   onBack: () => void;
@@ -407,6 +416,8 @@ function SetupScreen({
   onPlayerCount,
   onPlayerName,
   onSelectPack,
+  startLocked,
+  startCtaClassName,
   onStartGame,
   onReplayPack,
   onBack,
@@ -426,8 +437,8 @@ function SetupScreen({
           <div className="wiw-setup-actions">
             <button
               type="button"
-              className="game-page__cta"
-              disabled={!canStartNames}
+              className={startCtaClassName}
+              disabled={!startLocked && !canStartNames}
               onClick={onReplayPack}
             >
               Пройти сезон заново
@@ -439,8 +450,8 @@ function SetupScreen({
         ) : (
           <button
             type="button"
-            className="game-page__cta"
-            disabled={!canStartNames}
+            className={startCtaClassName}
+            disabled={!startLocked && !canStartNames}
             onClick={onStartGame}
           >
             {!canStartNames

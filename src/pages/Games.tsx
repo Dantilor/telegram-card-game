@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
 import { useBack } from '../hooks/useBack'
@@ -8,7 +8,6 @@ import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
-import PremiumOverlay from '../components/PremiumOverlay'
 import HeroGameCard from '../components/HeroGameCard'
 import GamesGrid from '../components/GamesGrid'
 import GamesPageHeader from '../components/GamesPageHeader'
@@ -30,15 +29,16 @@ const READY_GAME_ROUTES: Record<string, string> = {
   quiz: '/quiz',
   'truth-dare': '/truth-dare',
   sabotage: '/sabotage',
+  'who-is-who': '/who-is-who',
   'phrase-translator': '/phrase-translator',
   'freebie-trash': '/freebie-trash',
+  'russia-travel': '/russia-travel',
 }
 
 function Games() {
   const navigate = useNavigate()
   const handleBack = useBack('/')
   const { isPremium } = usePremium()
-  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
 
   useEffect(() => {
     import('./AliasLayout')
@@ -58,9 +58,15 @@ function Games() {
   const bottomHeroGame = GAMES.find((g) => g.id === BOTTOM_HERO_GAME_ID)
   const otherGames = GAMES.filter((g) => !GRID_EXCLUDED_GAME_IDS.has(g.id))
 
+  const getGameRoute = (game: (typeof GAMES)[0]) => {
+    if (game.id === 'card') return '/card'
+    return READY_GAME_ROUTES[game.id] ?? `/game/${game.id}`
+  }
+
   const renderGameCard = (game: (typeof GAMES)[0], i: number) => {
     const isReady = game.status === 'ready'
     const isLocked = isReady && isGameLocked(game.id, isPremium)
+    const route = getGameRoute(game)
     const hasImage = 'image' in game && game.image
     const cardClass = `games-grid__card card ${isReady ? 'games-grid__card--ready tile--active' : 'games-grid__card--stub'}${hasImage ? ' games-grid__card--image' : ''} games-grid__card--glow-${i % 2 === 0 ? 'a' : 'b'}`
     const cardContent = (
@@ -92,33 +98,16 @@ function Games() {
       </>
     )
 
-    if (isLocked) {
-      return (
-        <button
-          key={game.id}
-          type="button"
-          className={cardClass}
-          style={{ animationDelay: `${i * 0.05}s` }}
-          onClick={() => {
-            hapticSelection()
-            setPremiumOverlayOpen(true)
-          }}
-        >
-          {cardContent}
-        </button>
-      )
-    }
-
-    if (isReady && game.id === 'card') {
+    if (isReady) {
       return (
         <Link
           key={game.id}
-          to="/card"
+          to={route}
           className={cardClass}
           style={{ animationDelay: `${i * 0.05}s` }}
           onClick={() => {
             hapticSelection()
-            requestFullscreenOnUserGesture()
+            if (game.id === 'card') requestFullscreenOnUserGesture()
           }}
         >
           {cardContent}
@@ -126,14 +115,6 @@ function Games() {
       )
     }
 
-    const route = READY_GAME_ROUTES[game.id]
-    if (isReady && route) {
-      return (
-        <Link key={game.id} to={route} className={cardClass} style={{ animationDelay: `${i * 0.05}s` }} onClick={() => hapticSelection()}>
-          {cardContent}
-        </Link>
-      )
-    }
     return (
       <button
         key={game.id}
@@ -163,7 +144,6 @@ function Games() {
         <HeroGameCard
           game={heroGame}
           isLocked={isGameLocked(heroGame.id, isPremium)}
-          onPremiumOpen={() => setPremiumOverlayOpen(true)}
         />
       )}
       <GamesGrid games={otherGames} renderCard={renderGameCard} />
@@ -171,7 +151,6 @@ function Games() {
         <HeroGameCard
           game={featuredHeroGame}
           isLocked={isGameLocked(featuredHeroGame.id, isPremium)}
-          onPremiumOpen={() => setPremiumOverlayOpen(true)}
           to="/who-is-who"
           badge="NEW"
           badgeVariant="new"
@@ -182,14 +161,12 @@ function Games() {
         <HeroGameCard
           game={bottomHeroGame}
           isLocked={isGameLocked(bottomHeroGame.id, isPremium)}
-          onPremiumOpen={() => setPremiumOverlayOpen(true)}
           to="/russia-travel"
           badge="NEW"
           badgeVariant="new"
           position="bottom"
         />
       )}
-      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

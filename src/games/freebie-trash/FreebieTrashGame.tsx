@@ -11,6 +11,8 @@ import { hapticSelection } from '../../utils/haptics'
 import HomeButton from '../../components/HomeButton'
 import BackButton from '../../components/BackButton'
 import GamesPageHeader from '../../components/GamesPageHeader'
+import PremiumOverlay from '../../components/PremiumOverlay'
+import { useGameStartGate } from '../../hooks/useGameStartGate'
 import {
   drawNextCard,
   getCategoryProgress,
@@ -76,6 +78,8 @@ export default function FreebieTrashGame() {
   const [currentCard, setCurrentCard] = useState<FreebieCard | null>(null)
   const [selectedChoice, setSelectedChoice] = useState<FreebieChoice>(null)
   const [categoryComplete, setCategoryComplete] = useState(false)
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate('freebie-trash')
 
   const selectedCategory = useMemo(
     () => getFreebieCategoryById(selectedCategoryId) ?? FREEBIE_CATEGORIES[0],
@@ -225,9 +229,9 @@ export default function FreebieTrashGame() {
           <div className="game-page__actions">
             <button
               type="button"
-              className="game-page__cta"
-              disabled={categoryCards.length === 0}
-              onClick={startCategory}
+              className={startCtaClassName}
+              disabled={!startLocked && categoryCards.length === 0}
+              onClick={() => gatedStart(startCategory)}
             >
               {categoryProgress.completed
                 ? 'Пройти категорию заново'
@@ -319,6 +323,7 @@ export default function FreebieTrashGame() {
           </div>
         </div>
       )}
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
     </div>
   )
 }

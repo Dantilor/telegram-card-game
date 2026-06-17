@@ -11,6 +11,8 @@ import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
 import GameExitConfirmModal from '../components/GameExitConfirmModal'
+import PremiumOverlay from '../components/PremiumOverlay'
+import { useGameStartGate } from '../hooks/useGameStartGate'
 import { TeamsSetupBlock } from '../components/alias/TeamsSetupBlock'
 import './AliasHome.css'
 
@@ -22,6 +24,8 @@ function AliasHome() {
   const { state, dispatch } = useAliasStateContext()
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate('alias', 'alias-page__cta')
 
   const handleBack = useBack('/games')
 
@@ -243,13 +247,15 @@ function AliasHome() {
       <div className="alias-home__actions">
         <button
           type="button"
-          className="alias-page__cta"
-          disabled={!canStart}
-          onClick={handleStartGame}
+          className={startCtaClassName}
+          disabled={!startLocked && !canStart}
+          onClick={() => gatedStart(handleStartGame)}
         >
           Начать раунд
         </button>
       </div>
+
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
 
       {showAdultConfirm && (
         <div className="alias-home__modal-overlay" onClick={() => handleAdultConfirm(false)}>

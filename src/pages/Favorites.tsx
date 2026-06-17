@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLocalState } from '../hooks/useLocalState'
 import { useBack } from '../hooks/useBack'
 import { useTheme } from '../hooks/useTheme'
+import { usePremium } from '../contexts/PremiumContext'
+import { isFavoritesLocked } from '../utils/access'
 import { defaultUserState, type UserState } from '../data/types'
 import { getDeckFull } from '../data/decks'
 import { getDeckFromIndex } from '../data/decksIndex'
@@ -19,6 +21,7 @@ import iconChevronRight from '../assets/icons/gnh/chevron-right.svg'
 import iconLightChevron from '../assets/icons/gnh-light-pro/light-chevron-right-pro.svg'
 import iconSunsetChevron from '../assets/icons/gnh-sunset-pro/sunset-chevron-right-pro.svg'
 import iconCalmChevron from '../assets/icons/gnh-calm-pro/calm-chevron-right-pro.svg'
+import PremiumOverlay from '../components/PremiumOverlay'
 import './Favorites.css'
 
 const STAR_BY_THEME = {
@@ -66,8 +69,15 @@ function getDeckBadge(deckId: string, modeId: ModeId) {
 function Favorites() {
   const handleBack = useBack('/')
   const [theme] = useTheme()
+  const { isPremium } = usePremium()
+  const favoritesLocked = isFavoritesLocked(isPremium)
+  const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [state, setState] = useLocalState<UserState>('tcg_state', defaultUserState)
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    if (favoritesLocked) setPremiumOverlayOpen(true)
+  }, [favoritesLocked])
 
   const starIcon = STAR_BY_THEME[theme]
   const chevronIcon = CHEVRON_BY_THEME[theme]
@@ -229,6 +239,8 @@ function Favorites() {
           )}
         </>
       )}
+
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

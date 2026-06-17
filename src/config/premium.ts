@@ -22,22 +22,11 @@ export const FREE_LIMIT_PER_DECK = 15
 /** Игры, доступные для входа без подписки. */
 export const FREE_GAMES = [
   'card',
-  'truth-dare',
-  'mafia',
-  'alias',
-  // ВРЕМЕННО для просмотра/теста (вернуть premium — убрать строки ниже):
-  'activity',
-  'sabotage',
   'quiz',
-  'who-is-who',
-  'phrase-translator',
-  'freebie-trash',
-  'russia-travel',
 ] as const
 
 /** Комиксы, доступные без подписки (отдельно от FREE_GAMES). */
-// ВРЕМЕННО: все серии бесплатны. Вернуть premium — оставить только 'series-1'.
-export const FREE_COMICS = ['series-1', 'series-2', 'series-3', 'series-4', 'series-5', 'series-6', 'series-7', 'series-8', 'series-9', 'series-10'] as const
+export const FREE_COMICS = ['series-1', 'series-2', 'series-3'] as const
 
 /**
  * Откат premium (было до временного снятия 2026-06-15):

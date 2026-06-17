@@ -12,6 +12,8 @@ import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import MafiaPageNav from '../components/MafiaPageNav'
 import GamesPageHeader from '../components/GamesPageHeader'
+import PremiumOverlay from '../components/PremiumOverlay'
+import { useGameStartGate } from '../hooks/useGameStartGate'
 import { IMAGES } from '../assets/images'
 import './MafiaSetup.css'
 
@@ -31,6 +33,8 @@ function MafiaSetup() {
   const [count, setCount] = useState(initialForm.count)
   const [hostName, setHostName] = useState(initialForm.hostName)
   const [names, setNames] = useState<string[]>(initialForm.names)
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate('mafia', 'mafia-page__cta')
 
   useEffect(() => {
     saveMafiaSetupDraft({ playerCount: count, hostName, playerNames: names })
@@ -143,13 +147,15 @@ function MafiaSetup() {
       <div className="mafia-page__actions mafia-setup__actions">
         <button
           type="button"
-          className="mafia-page__cta"
-          onClick={handleStart}
-          disabled={count < MAFIA_MIN_PLAYERS}
+          className={startCtaClassName}
+          onClick={() => gatedStart(handleStart)}
+          disabled={!startLocked && count < MAFIA_MIN_PLAYERS}
         >
           Начать раунд
         </button>
       </div>
+
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
     </div>
   )
 }

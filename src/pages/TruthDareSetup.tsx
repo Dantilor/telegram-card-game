@@ -10,6 +10,8 @@ import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
 import AdultConfirmModal from '../components/AdultConfirmModal'
+import PremiumOverlay from '../components/PremiumOverlay'
+import { useGameStartGate } from '../hooks/useGameStartGate'
 import './TruthDareSetup.css'
 
 const MIN_PLAYERS = 2
@@ -25,6 +27,8 @@ function TruthDareSetup() {
   const [tags, setTags] = useState<string[]>([])
   const [adultConfirmOpen, setAdultConfirmOpen] = useState(false)
   const [pendingAdultTag, setPendingAdultTag] = useState<string | null>(null)
+  const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
+    useGameStartGate('truth-dare')
 
   useEffect(() => {
     const s = loadSettings()
@@ -192,13 +196,15 @@ function TruthDareSetup() {
       <div className="game-page__actions">
         <button
           type="button"
-          className="game-page__cta"
-          onClick={handleStart}
-          disabled={count < MIN_PLAYERS}
+          className={startCtaClassName}
+          onClick={() => gatedStart(handleStart)}
+          disabled={!startLocked && count < MIN_PLAYERS}
         >
           Начать раунд
         </button>
       </div>
+
+      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={closePremiumOverlay} />
 
       <AdultConfirmModal
         isOpen={adultConfirmOpen}

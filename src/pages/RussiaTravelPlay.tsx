@@ -19,6 +19,7 @@ import {
 } from '../games/russia-travel/progress'
 import { hapticSelection } from '../utils/haptics'
 import { haptic } from '../utils/telegram'
+import { isGameLocked } from '../utils/access'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
@@ -48,7 +49,8 @@ export default function RussiaTravelPlay() {
 
   const deck = useMemo(() => getRussiaTravelDeckById(deckId), [deckId])
   const cards = useMemo(() => getRussiaTravelCardsByDeck(deckId), [deckId])
-  const locked = deck ? isRussiaTravelDeckLocked(deck, isPremium) : true
+  const gameLocked = isGameLocked('russia-travel', isPremium)
+  const locked = gameLocked || (deck ? isRussiaTravelDeckLocked(deck, isPremium) : true)
 
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [progressMap, setProgressMap] = useState<DeckProgressMap>(() => loadDeckProgressMap())
@@ -72,7 +74,7 @@ export default function RussiaTravelPlay() {
   useEffect(() => {
     if (!deck || cards.length === 0) return
 
-    if (isRussiaTravelDeckLocked(deck, isPremium)) {
+    if (gameLocked || isRussiaTravelDeckLocked(deck, isPremium)) {
       setPremiumOverlayOpen(true)
       return
     }

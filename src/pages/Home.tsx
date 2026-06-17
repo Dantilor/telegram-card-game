@@ -4,7 +4,7 @@ import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
 import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
 import { usePremium } from '../contexts/PremiumContext'
-import { isFavoritesLocked, isGameLocked } from '../utils/access'
+import { isFavoritesLocked } from '../utils/access'
 import { apiGet } from '../lib/api'
 import { formatPlansFromPrice, type PlanOption } from '../utils/planLabel'
 import { useTheme } from '../hooks/useTheme'
@@ -92,14 +92,10 @@ function Home() {
     setPremiumOverlayOpen(true)
   }, [])
 
-  const handlePickClick = useCallback((gameId: string, to: string) => {
+  const handlePickClick = useCallback((to: string) => {
     haptic('light')
-    if (isGameLocked(gameId, isPremium)) {
-      setPremiumOverlayOpen(true)
-    } else {
-      navigate(to)
-    }
-  }, [isPremium, navigate])
+    navigate(to)
+  }, [navigate])
 
   const legacyPremiumBlock = (!isPremium || loading) ? (
     <section className="home-premium-cta">
@@ -214,12 +210,12 @@ function Home() {
         <section className="home-calm-picks" aria-labelledby="home-calm-picks-title">
           <h2 id="home-calm-picks-title" className="home-calm-picks__title">Попробуйте сегодня</h2>
           <ul className="home-calm-picks__list">
-            {HOME_PICKS.map(({ title, image, gameId, to }) => (
+            {HOME_PICKS.map(({ title, image, to }) => (
               <li key={title}>
                 <button
                   type="button"
                   className="home-calm-picks__row"
-                  onClick={() => handlePickClick(gameId, to)}
+                  onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
                     <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
@@ -316,12 +312,12 @@ function Home() {
         <section className="home-sunset-picks" aria-labelledby="home-sunset-picks-title">
           <h2 id="home-sunset-picks-title" className="home-sunset-picks__title">Попробуйте сегодня</h2>
           <ul className="home-sunset-picks__list">
-            {HOME_PICKS.map(({ title, image, gameId, to }) => (
+            {HOME_PICKS.map(({ title, image, to }) => (
               <li key={title}>
                 <button
                   type="button"
                   className="home-sunset-picks__row"
-                  onClick={() => handlePickClick(gameId, to)}
+                  onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
                     <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
@@ -418,12 +414,12 @@ function Home() {
         <section className="home-light-picks" aria-labelledby="home-light-picks-title">
           <h2 id="home-light-picks-title" className="home-light-picks__title">Попробуйте сегодня</h2>
           <ul className="home-light-picks__list">
-            {HOME_PICKS.map(({ title, image, gameId, to }) => (
+            {HOME_PICKS.map(({ title, image, to }) => (
               <li key={title}>
                 <button
                   type="button"
                   className="home-light-picks__row"
-                  onClick={() => handlePickClick(gameId, to)}
+                  onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
                     <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
@@ -520,12 +516,12 @@ function Home() {
         <section className="home-neon-picks" aria-labelledby="home-neon-picks-title">
           <h2 id="home-neon-picks-title" className="home-neon-picks__title">Попробуйте сегодня</h2>
           <ul className="home-neon-picks__list">
-            {HOME_PICKS.map(({ title, image, gameId, to }) => (
+            {HOME_PICKS.map(({ title, image, to }) => (
               <li key={title}>
                 <button
                   type="button"
                   className="home-neon-picks__row"
-                  onClick={() => handlePickClick(gameId, to)}
+                  onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
                     <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />

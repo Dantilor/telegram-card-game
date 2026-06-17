@@ -1,0 +1,1 @@
+import{j as t,O as o}from"./index-C19iDQpn.js";import{S as r}from"./SabotageGameContext-Em_PZSG9.js";/* empty css                      */function i(){return t.jsx(r,{children:t.jsx(o,{})})}export{i as default};

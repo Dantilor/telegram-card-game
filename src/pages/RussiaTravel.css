@@ -15,7 +15,7 @@
   --rt-cream: #f7f1e6;
   --rt-paper: linear-gradient(165deg, #1e2430 0%, #1a1828 42%, #221a2a 100%);
   --rt-paper-border: rgba(212, 168, 83, 0.22);
-  --rt-paper-shadow: 0 14px 36px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  --rt-paper-shadow: 0 20px 48px rgba(0, 0, 0, 0.26), 0 8px 20px rgba(0, 0, 0, 0.1);
   --rt-accent: #5a8fd4;
   --rt-accent-soft: rgba(90, 143, 212, 0.16);
   --rt-cta: linear-gradient(135deg, #3d5f8a 0%, #5a8fd4 45%, #8b5a7a 100%);
@@ -43,7 +43,7 @@
   --rt-cream: #faf6ee;
   --rt-paper: linear-gradient(168deg, #fffdf8 0%, #f8f0e4 48%, #f3ebe0 100%);
   --rt-paper-border: rgba(184, 134, 46, 0.28);
-  --rt-paper-shadow: 0 12px 28px rgba(90, 70, 50, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.85) inset;
+  --rt-paper-shadow: 0 18px 42px rgba(90, 70, 50, 0.09), 0 6px 18px rgba(90, 70, 50, 0.05);
   --rt-accent: #4a6f9c;
   --rt-accent-soft: rgba(74, 111, 156, 0.1);
   --rt-cta: linear-gradient(135deg, #5a7fa8 0%, #7a9cc4 45%, #c46b52 100%);
@@ -60,7 +60,7 @@
   --rt-ink-soft: #9a7b72;
   --rt-paper: linear-gradient(168deg, #fffaf6 0%, #fff0e8 50%, #fce8dc 100%);
   --rt-paper-border: rgba(200, 107, 82, 0.3);
-  --rt-paper-shadow: 0 12px 28px rgba(200, 120, 90, 0.14);
+  --rt-paper-shadow: 0 18px 40px rgba(200, 120, 90, 0.11), 0 6px 16px rgba(200, 120, 90, 0.06);
   --rt-accent: #c46b52;
   --rt-accent-soft: rgba(196, 107, 82, 0.12);
   --rt-cta: linear-gradient(135deg, #c46b52 0%, #e88a62 45%, #d4a853 100%);
@@ -74,7 +74,7 @@
   --rt-ink-soft: #8a9199;
   --rt-paper: linear-gradient(168deg, #faf9f6 0%, #f3f1ec 50%, #eceae4 100%);
   --rt-paper-border: rgba(120, 140, 130, 0.22);
-  --rt-paper-shadow: 0 12px 26px rgba(60, 70, 65, 0.08);
+  --rt-paper-shadow: 0 18px 38px rgba(60, 70, 65, 0.07), 0 6px 16px rgba(60, 70, 65, 0.04);
   --rt-accent: #5a7d72;
   --rt-accent-soft: rgba(90, 125, 114, 0.12);
   --rt-cta: linear-gradient(135deg, #5a7d72 0%, #7a9d92 45%, #8a6a5a 100%);
@@ -164,6 +164,13 @@
   box-shadow: var(--rt-paper-shadow);
 }
 
+.rt-page .game-page__panel,
+.rt-play .game-page__panel {
+  box-shadow:
+    0 16px 40px color-mix(in srgb, var(--rt-graphite, #1a1c22) 12%, transparent),
+    0 6px 16px color-mix(in srgb, var(--rt-graphite, #1a1c22) 6%, transparent);
+}
+
 .rt-page__hero.rt-travel-card,
 .rt-play__card.rt-postcard {
   overflow: visible;
@@ -178,11 +185,6 @@
   height: 2.5rem;
   background: linear-gradient(135deg, transparent 50%, color-mix(in srgb, var(--rt-gold) 12%, transparent) 50%);
   pointer-events: none;
-}
-
-.rt-page .games-page-header__title,
-.rt-play .games-page-header__title {
-  color: var(--rt-ink);
 }
 
 .rt-page .games-page-header__tagline,

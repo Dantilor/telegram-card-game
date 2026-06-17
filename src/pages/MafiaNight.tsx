@@ -30,14 +30,7 @@ function MafiaNight() {
   }, [state.players.length, navigate])
 
   if (!state.players.length) {
-    return (
-      <div className="mafia-page mafia-page--night mafia-night">
-        <MafiaPageNav />
-        <div className="mafia-night__intro mafia-page__panel mafia-page__panel--glow-a">
-          <p className="mafia-night__intro-text">Переход в меню…</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   const alive = state.players.filter((p) => p.alive)

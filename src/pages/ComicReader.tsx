@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getComicSeriesById } from '../data/comics'
+import { getComicSeriesById, COMIC_SERIES } from '../data/comics'
 import { getComicPageUrl } from '../lib/comicAssets'
 import { isComicLocked } from '../lib/comicAccess'
 import { usePremium } from '../contexts/PremiumContext'
@@ -80,10 +80,28 @@ function ComicReader() {
     setCurrentPageIndex((p) => p + 1)
   }, [series, locked, currentPageIndex])
 
+  const seriesIndex = COMIC_SERIES.findIndex((item) => item.id === seriesId)
+  const nextSeries = seriesIndex >= 0 && seriesIndex < COMIC_SERIES.length - 1
+    ? COMIC_SERIES[seriesIndex + 1]
+    : null
+
   const goGames = useCallback(() => {
     hapticSelection()
     navigate('/games')
   }, [navigate])
+
+  const goNextSeries = useCallback(() => {
+    if (!nextSeries) {
+      goGames()
+      return
+    }
+    hapticSelection()
+    if (isComicLocked(nextSeries.id, isPremium)) {
+      setPremiumOverlayOpen(true)
+      return
+    }
+    navigate(`/comics/${nextSeries.id}`)
+  }, [nextSeries, goGames, isPremium, navigate])
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0]
@@ -214,8 +232,8 @@ function ComicReader() {
             {isFirst ? 'К комиксам' : 'Назад'}
           </button>
           {isLast ? (
-            <button type="button" className="game-page__cta comic-reader__nav-btn" onClick={goGames}>
-              К играм
+            <button type="button" className="game-page__cta comic-reader__nav-btn" onClick={goNextSeries}>
+              {nextSeries ? 'Следующая серия' : 'К играм'}
             </button>
           ) : (
             <button type="button" className="game-page__cta comic-reader__nav-btn" onClick={goNext}>

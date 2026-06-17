@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAliasStateContext } from '../games/alias/AliasStateContext'
 import { saveAliasState, getInitialAliasState } from '../games/alias/state'
 import { ALIAS_CATEGORIES, type AliasCategoryId } from '../games/alias/data/words'
@@ -9,6 +10,7 @@ import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
+import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import { TeamsSetupBlock } from '../components/alias/TeamsSetupBlock'
 import './AliasHome.css'
 
@@ -17,21 +19,11 @@ const TIMER_OPTIONS = [30, 45, 60] as const
 
 function AliasHome() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { state, dispatch } = useAliasStateContext()
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
-  const startRequestedRef = useRef(false)
 
   const handleBack = useBack('/games')
-
-  // Навигация на /alias/play только после коммита state (устраняет гонку и нестабильный старт)
-  useEffect(() => {
-    if (state.phase === 'turn_ready' && location.pathname === '/alias' && startRequestedRef.current) {
-      startRequestedRef.current = false
-      navigate('/alias/play', { replace: true })
-    }
-  }, [state.phase, location.pathname, navigate])
 
   const teamCount = state.teamCount
   const teams = state.teams
@@ -119,8 +111,10 @@ function AliasHome() {
   const handleStartGame = () => {
     if (!canStart) return
     haptic('medium')
-    startRequestedRef.current = true
-    dispatch({ type: 'START_GAME' })
+    flushSync(() => {
+      dispatch({ type: 'START_GAME' })
+    })
+    navigate('/alias/play', { replace: true })
   }
 
   const handleBackClick = () => {
@@ -275,25 +269,11 @@ function AliasHome() {
       )}
 
       {showExitConfirm != null && (
-        <div
-          className="alias-home__modal-overlay"
-          onClick={() => handleExitConfirm(false)}
-        >
-          <div className="alias-home__modal alias-page__panel alias-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
-            <p className="alias-home__modal-text">Выйти из игры?</p>
-            <p className="alias-home__modal-hint">
-              Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
-            </p>
-            <div className="alias-home__modal-buttons">
-              <button type="button" className="alias-page__btn alias-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
-                Остаться
-              </button>
-              <button type="button" className="alias-page__cta" onClick={() => handleExitConfirm(true)}>
-                Выйти
-              </button>
-            </div>
-          </div>
-        </div>
+        <GameExitConfirmModal
+          hint="Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки)."
+          onCancel={() => handleExitConfirm(false)}
+          onConfirm={() => handleExitConfirm(true)}
+        />
       )}
     </div>
   )

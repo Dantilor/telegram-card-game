@@ -27,18 +27,11 @@ function getInitials(firstName?: string, lastName?: string): string {
   return (first + last).toUpperCase() || 'GN'
 }
 
-function getTelegramDisplayName(user: NonNullable<ReturnType<typeof getTgUser>>): string {
-  const first = user.first_name?.trim() ?? ''
-  const last = user.last_name?.trim() ?? ''
-  return [first, last].filter(Boolean).join(' ')
-}
-
 function HomeWelcomeTop() {
   const [theme] = useTheme()
   const [usersCount, setUsersCount] = useState(FALLBACK_USERS_COUNT)
   const user = getTgUser()
   const crownIcon = CROWN_BY_THEME[theme]
-  const displayName = user ? getTelegramDisplayName(user) : ''
   const formattedCount = formatUsersCount(usersCount)
 
   useEffect(() => {
@@ -57,15 +50,7 @@ function HomeWelcomeTop() {
     }
   }, [])
 
-  const greeting = displayName ? (
-    <>
-      Привет,{' '}
-      <span className="home-welcome-top__name">{displayName}</span>
-      <span className="home-welcome-top__wave" aria-hidden>!</span>
-    </>
-  ) : (
-    'Привет!'
-  )
+  const greeting = 'Привет!'
 
   return (
     <header className="home-welcome-top">

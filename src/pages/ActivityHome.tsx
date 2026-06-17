@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { flushSync } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { useActivityStateContext } from '../games/activity/ActivityStateContext'
 import { saveActivityState, getInitialActivityState } from '../games/activity/state'
 import { ACTIVITY_CATEGORIES, type ActivityCategoryId } from '../games/activity/data/activityWords'
@@ -8,6 +9,7 @@ import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
+import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import { ActivityTeamsSetup } from '../components/activity/ActivityTeamsSetup'
 import './ActivityHome.css'
 
@@ -16,23 +18,13 @@ const TIMER_OPTIONS = [30, 45, 60] as const
 
 function ActivityHome() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { state, dispatch } = useActivityStateContext()
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
-  const startRequestedRef = useRef(false)
 
   const goToGames = () => {
     haptic('light')
     navigate('/games')
   }
-
-  useEffect(() => {
-    if (state.phase === 'turn_ready' && location.pathname === '/activity' && startRequestedRef.current) {
-      startRequestedRef.current = false
-      saveActivityState(state)
-      navigate('/activity/play', { replace: true })
-    }
-  }, [state.phase, location.pathname, navigate, state])
 
   const teamCount = state.teamCount
   const teams = state.teams
@@ -89,8 +81,10 @@ function ActivityHome() {
   const handleStartGame = () => {
     if (!canStart) return
     haptic('medium')
-    startRequestedRef.current = true
-    dispatch({ type: 'START_GAME' })
+    flushSync(() => {
+      dispatch({ type: 'START_GAME' })
+    })
+    navigate('/activity/play', { replace: true })
   }
 
   const handleBackClick = () => {
@@ -237,25 +231,11 @@ function ActivityHome() {
       </div>
 
       {showExitConfirm != null && (
-        <div
-          className="game-page__modal-overlay"
-          onClick={() => handleExitConfirm(false)}
-        >
-          <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
-            <p className="game-page__modal-text">Выйти из игры?</p>
-            <p className="game-page__modal-hint">
-              Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
-            </p>
-            <div className="game-page__modal-buttons">
-              <button type="button" className="game-page__btn game-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
-                Остаться
-              </button>
-              <button type="button" className="game-page__cta" onClick={() => handleExitConfirm(true)}>
-                Выйти
-              </button>
-            </div>
-          </div>
-        </div>
+        <GameExitConfirmModal
+          hint="Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки)."
+          onCancel={() => handleExitConfirm(false)}
+          onConfirm={() => handleExitConfirm(true)}
+        />
       )}
     </div>
   )

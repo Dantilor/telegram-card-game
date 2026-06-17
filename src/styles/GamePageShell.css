@@ -591,8 +591,7 @@ html:has(.game-page) #root {
   color: var(--game-shell-readable-accent);
 }
 
-.app .game-page .game-page__screen-title,
-.app .game-page .games-page-header__title {
+.app .game-page .game-page__screen-title {
   color: var(--game-shell-readable-text);
 }
 
@@ -676,17 +675,97 @@ html:has(.game-page) #root {
   color: var(--game-shell-readable-accent);
 }
 
-/* Shared modal overlay */
+/* Shared modal overlay — portaled to body */
 .game-page__modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.25rem;
+  padding: max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
+  background: transparent;
+  isolation: isolate;
+  --games-card-bg: rgba(10, 16, 34, 0.88);
+  --games-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+  --games-card-border-b: linear-gradient(135deg, #5ecbff 0%, #8b4dff 55%, #ff8fd8 100%);
+  --games-play-glow: #8b4dff;
+  --game-shell-cta-bg: linear-gradient(135deg, #ff3fd8 0%, #8b4dff 52%, #3b82ff 100%);
+  --game-shell-cta-shadow: 0 10px 28px rgba(139, 77, 255, 0.38);
+  --game-shell-cta-hover-shadow: 0 14px 36px rgba(255, 63, 216, 0.42);
+  --game-shell-chip-bg: rgba(139, 77, 255, 0.14);
+  --game-shell-chip-border: rgba(180, 90, 255, 0.28);
+  --game-shell-readable-text: #f5f7ff;
+  --game-shell-readable-muted: #c8d2e8;
+}
+
+.game-page__modal-overlay::before {
+  content: "";
+  position: fixed;
+  top: -32px;
+  right: -32px;
+  bottom: -32px;
+  left: -32px;
+  z-index: -1;
+  pointer-events: none;
   background: rgba(0, 0, 0, 0.62);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme="neon-light"] .game-page__modal-overlay {
+  --games-card-bg: #fff;
+  --games-card-shadow: 0 10px 28px rgba(47, 42, 91, 0.08);
+  --games-card-border-b: linear-gradient(135deg, #8ec8ff 0%, #b8a0ff 55%, #ffc8e8 100%);
+  --games-play-glow: #8e63ff;
+  --game-shell-cta-bg: linear-gradient(135deg, #ff65d8 0%, #8e63ff 52%, #55b7ff 100%);
+  --game-shell-cta-shadow: 0 10px 28px rgba(142, 99, 255, 0.28);
+  --game-shell-cta-hover-shadow: 0 14px 36px rgba(142, 99, 255, 0.34);
+  --game-shell-chip-bg: rgba(142, 99, 255, 0.1);
+  --game-shell-chip-border: rgba(142, 99, 255, 0.2);
+  --game-shell-readable-text: #181426;
+  --game-shell-readable-muted: #2e3138;
+}
+
+[data-theme="neon-light"] .game-page__modal-overlay::before {
+  background: rgba(18, 14, 28, 0.4);
+}
+
+[data-theme="sunset"] .game-page__modal-overlay {
+  --games-card-bg: #fff;
+  --games-card-shadow: 0 10px 28px rgba(255, 150, 120, 0.1);
+  --games-card-border-b: linear-gradient(135deg, #ffb347 0%, #ff9a8b 55%, #ff6b6b 100%);
+  --games-play-glow: #ff9a8b;
+  --game-shell-cta-bg: linear-gradient(135deg, #ff9a8b 0%, #ff7a5c 52%, #ff6a88 100%);
+  --game-shell-cta-shadow: 0 10px 28px rgba(255, 154, 139, 0.32);
+  --game-shell-cta-hover-shadow: 0 14px 36px rgba(255, 154, 139, 0.38);
+  --game-shell-chip-bg: rgba(255, 154, 139, 0.12);
+  --game-shell-chip-border: rgba(255, 154, 139, 0.24);
+  --game-shell-readable-text: #1f1410;
+  --game-shell-readable-muted: #3d281f;
+}
+
+[data-theme="minimal-calm"] .game-page__modal-overlay {
+  --games-card-bg: #fff;
+  --games-card-shadow: 0 10px 28px rgba(120, 130, 125, 0.08);
+  --games-card-border-b: linear-gradient(135deg, #8ba896 0%, #b5cfc4 55%, #6d9485 100%);
+  --games-play-glow: #8ba896;
+  --game-shell-cta-bg: linear-gradient(135deg, #8ba896 0%, #5f7f74 52%, #6d9485 100%);
+  --game-shell-cta-shadow: 0 10px 28px rgba(95, 127, 116, 0.28);
+  --game-shell-cta-hover-shadow: 0 14px 36px rgba(95, 127, 116, 0.34);
+  --game-shell-chip-bg: rgba(139, 168, 150, 0.12);
+  --game-shell-chip-border: rgba(139, 168, 150, 0.22);
+  --game-shell-readable-text: #232931;
+  --game-shell-readable-muted: #252e35;
+}
+
+.game-page__modal-overlay .game-page__modal-text {
+  color: var(--game-shell-readable-text);
+}
+
+.game-page__modal-overlay .game-page__modal-hint {
+  color: var(--game-shell-readable-muted);
 }
 
 .game-page__modal {
@@ -719,6 +798,35 @@ html:has(.game-page) #root {
   flex: 1;
   min-height: 2.75rem;
   font-size: 0.92rem;
+}
+
+/* In-session phase swap — content only, shell stays mounted */
+.game-page__phase,
+.alias-play__phase {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .game-page__phase--enter,
+  .alias-play__phase--enter {
+    animation: game-phase-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes game-phase-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .game-page__actions {

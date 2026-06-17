@@ -1,14 +1,17 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSabotageGame } from '../games/sabotage/SabotageGameContext'
 import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
+import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import './SabotageVote.css'
 
 function SabotageVote() {
   const navigate = useNavigate()
   const { state, dispatch } = useSabotageGame()
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
 
   if (!state.players.length) {
     navigate('/sabotage')
@@ -23,10 +26,25 @@ function SabotageVote() {
   const currentVoter = state.players[state.voteCollectIndex]
   const targets = state.players.filter((p) => p.id !== currentVoter?.id)
 
-  const handleBack = () => {
-    haptic('light')
+  const resetAndExit = () => {
     dispatch({ type: 'RESET' })
     navigate('/sabotage')
+  }
+
+  const handleBack = () => {
+    haptic('light')
+    setShowExitConfirm(true)
+  }
+
+  const handleHomeBeforeNavigate = () => {
+    setShowExitConfirm(true)
+    return true
+  }
+
+  const handleExitConfirm = (confirmed: boolean) => {
+    setShowExitConfirm(false)
+    if (!confirmed) return
+    resetAndExit()
   }
 
   const handleVote = (targetId: string) => {
@@ -42,9 +60,9 @@ function SabotageVote() {
   }
 
   return (
-    <div className="game-page sabotage-vote sabotage-flow">
+    <div className="game-page sabotage-vote sabotage-flow game-page--enter">
       <div className="game-page__top">
-        <HomeButton className="game-page__nav-btn" />
+        <HomeButton className="game-page__nav-btn" onBeforeNavigate={handleHomeBeforeNavigate} />
         <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
@@ -69,6 +87,14 @@ function SabotageVote() {
       <p className="game-page__progress">
         {state.voteCollectIndex + 1} / {state.players.length}
       </p>
+
+      {showExitConfirm && (
+        <GameExitConfirmModal
+          hint="Если выйти, весь прогресс будет сброшен (роли, задание, голосование)."
+          onCancel={() => handleExitConfirm(false)}
+          onConfirm={() => handleExitConfirm(true)}
+        />
+      )}
     </div>
   )
 }

@@ -7,8 +7,8 @@ import { applyTelegramColorsRetry } from '../lib/telegramTheme'
 import './ThemeToggle.css'
 
 const OPTIONS: { id: ThemeId; label: string }[] = [
-  { id: 'neon-light', label: 'Light' },
   { id: 'neon-dark', label: 'Neon' },
+  { id: 'neon-light', label: 'Light' },
   { id: 'sunset', label: 'Sunset' },
   { id: 'minimal-calm', label: 'Calm' },
 ]
@@ -42,6 +42,7 @@ function ThemeToggle({ onPremiumRequired }: ThemeToggleProps) {
           <button
             key={id}
             type="button"
+            data-theme-id={id}
             className={`theme-toggle__btn ${theme === id ? 'theme-toggle__btn--active' : ''} ${locked ? 'theme-toggle__btn--locked' : ''}`}
             onClick={() => handleThemeClick(id)}
             aria-pressed={theme === id}

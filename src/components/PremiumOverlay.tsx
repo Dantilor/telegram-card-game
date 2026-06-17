@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { haptic } from '../utils/telegram'
 import type { DocumentType } from '../data/documents'
 import DocumentModal from './DocumentModal'
@@ -452,7 +453,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     )
   }
 
-  return (
+  return createPortal(
     <div
       className="premium-overlay"
       role="dialog"
@@ -466,6 +467,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         onClose={() => setDocumentModalType(null)}
         documentType={documentModalType ?? 'privacy'}
       />
-    </div>
+    </div>,
+    document.body
   )
 }

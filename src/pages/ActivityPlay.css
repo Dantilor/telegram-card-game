@@ -1,4 +1,5 @@
-.activity-play {
+.activity-play,
+.activity-play--session {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;

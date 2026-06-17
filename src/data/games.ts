@@ -98,7 +98,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'freebie-trash',
-    title: 'Фигня за бесплатно',
+    title: 'Фигня но бесплатно',
     emoji: '🎁',
     icon: 'gift',
     description: 'Абсурдные подарки\nСтранные условия',

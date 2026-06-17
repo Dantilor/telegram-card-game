@@ -241,9 +241,8 @@ html:has(.mafia-page) #root {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .mafia-setup.mafia-page,
-  .mafia-result.mafia-page {
-    animation: mafia-page-enter 0.35s ease-out;
+  .mafia-page {
+    animation: mafia-page-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 

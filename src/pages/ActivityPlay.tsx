@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useActivityStateContext } from '../games/activity/ActivityStateContext'
 import { saveActivityState, getInitialActivityState } from '../games/activity/state'
@@ -9,6 +9,7 @@ import { hapticSelection, hapticSuccess } from '../utils/haptics'
 import { trackEvent } from '../lib/analytics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
+import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import './ActivityPlay.css'
 
 const TICK_MS = 250
@@ -36,22 +37,11 @@ function ActivityExitModal({
   onConfirm: () => void
 }) {
   return (
-    <div className="game-page__modal-overlay" onClick={onClose}>
-      <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
-        <p className="game-page__modal-text">Выйти из игры?</p>
-        <p className="game-page__modal-hint">
-          Если выйти, весь прогресс будет сброшен.
-        </p>
-        <div className="activity-play__modal-btns">
-          <button type="button" className="game-page__btn game-page__btn--secondary" onClick={onClose}>
-            Остаться
-          </button>
-          <button type="button" className="game-page__cta" onClick={onConfirm}>
-            Выйти
-          </button>
-        </div>
-      </div>
-    </div>
+    <GameExitConfirmModal
+      hint="Если выйти, весь прогресс будет сброшен."
+      onCancel={onClose}
+      onConfirm={onConfirm}
+    />
   )
 }
 
@@ -64,11 +54,7 @@ function ActivityRedirectToHome({ onNavigate }: { onNavigate: () => void }) {
     onNavigate()
   }, [onNavigate])
 
-  return (
-    <div className="game-page activity-play">
-      <p className="activity-play__message">Переход…</p>
-    </div>
-  )
+  return null
 }
 
 function ActivityPlay() {
@@ -104,67 +90,53 @@ function ActivityPlay() {
     }
   }
 
+  let phaseContent: ReactNode = null
+
+  if (state.phase === 'turn_ready') {
+    phaseContent = <TeamTurnReadyScreen state={state} dispatch={dispatch} />
+  } else if (state.phase === 'in_round') {
+    phaseContent = <TeamInRoundScreen state={state} dispatch={dispatch} onBack={onBack} />
+  } else if (state.phase === 'round_results') {
+    phaseContent = <TeamRoundResultsScreen state={state} dispatch={dispatch} />
+  } else if (state.phase === 'game_over') {
+    phaseContent = <ActivityRedirectToHome onNavigate={() => navigate('/activity/result', { replace: true })} />
+  } else if (state.phase !== 'setup') {
+    phaseContent = <ActivityRedirectToHome onNavigate={() => navigate('/activity', { replace: true })} />
+  }
+
+  if (state.phase === 'setup') {
+    return <ActivityRedirectToHome onNavigate={() => navigate('/activity', { replace: true })} />
+  }
+
   return (
-    <>
-      {state.phase === 'setup' && (
-        <ActivityRedirectToHome onNavigate={() => navigate('/activity', { replace: true })} />
-      )}
-      {state.phase === 'turn_ready' && (
-        <TeamTurnReadyScreen
-          state={state}
-          dispatch={dispatch}
-          onBack={onBack}
-          onBeforeHomeNavigate={onBeforeHomeNavigate}
-        />
-      )}
-      {state.phase === 'in_round' && (
-        <TeamInRoundScreen
-          state={state}
-          dispatch={dispatch}
-          onBack={onBack}
-          onBeforeHomeNavigate={onBeforeHomeNavigate}
-        />
-      )}
-      {state.phase === 'round_results' && (
-        <TeamRoundResultsScreen
-          state={state}
-          dispatch={dispatch}
-          onBack={onBack}
-          onBeforeHomeNavigate={onBeforeHomeNavigate}
-        />
-      )}
-      {state.phase === 'game_over' && (
-        <ActivityRedirectToHome onNavigate={() => navigate('/activity/result', { replace: true })} />
-      )}
+    <div className="game-page activity-play activity-play--session game-page--enter">
+      <ActivityPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
+      <div key={state.phase} className="game-page__phase game-page__phase--enter">
+        {phaseContent}
+      </div>
       {showExitConfirm != null && (
         <ActivityExitModal
           onClose={() => handleExitConfirm(false)}
           onConfirm={() => handleExitConfirm(true)}
         />
       )}
-    </>
+    </div>
   )
 }
 
 function TeamTurnReadyScreen({
   state,
   dispatch,
-  onBack,
-  onBeforeHomeNavigate,
 }: {
   state: import('../games/activity/types').ActivityState
   dispatch: (a: import('../games/activity/reducer').ActivityAction) => void
-  onBack: () => void
-  onBeforeHomeNavigate?: () => boolean
 }) {
   const team = getCurrentTeam(state)
   const teamIndex = state.currentTeamIndex + 1
   const totalTeams = state.activeTeamSlots.length
 
   return (
-    <div className="game-page activity-play">
-      <ActivityPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
-
+    <>
       <div className="activity-play__score-bar">
         <span className="activity-play__score-item">Раунд: {state.roundNumber}</span>
         <span className="activity-play__score-item">Команда: {teamIndex}/{totalTeams}</span>
@@ -194,7 +166,7 @@ function TeamTurnReadyScreen({
           Начать раунд
         </button>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -202,12 +174,10 @@ function TeamInRoundScreen({
   state,
   dispatch,
   onBack,
-  onBeforeHomeNavigate,
 }: {
   state: import('../games/activity/types').ActivityState
   dispatch: (a: import('../games/activity/reducer').ActivityAction) => void
   onBack: () => void
-  onBeforeHomeNavigate?: () => boolean
 }) {
   const [secondsLeft, setSecondsLeft] = useState(() => {
     if (state.roundEndsAt == null) return state.timerSeconds
@@ -257,9 +227,7 @@ function TeamInRoundScreen({
   }
 
   return (
-    <div className="game-page activity-play">
-      <ActivityPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
-
+    <>
       <div className="activity-play__score-bar">
         <span className="activity-play__score-item activity-play__score-item--highlight">
           Счёт: {currentScore}
@@ -308,20 +276,16 @@ function TeamInRoundScreen({
           Выйти из игры
         </button>
       </div>
-    </div>
+    </>
   )
 }
 
 function TeamRoundResultsScreen({
   state,
   dispatch,
-  onBack,
-  onBeforeHomeNavigate,
 }: {
   state: import('../games/activity/types').ActivityState
   dispatch: (a: import('../games/activity/reducer').ActivityAction) => void
-  onBack: () => void
-  onBeforeHomeNavigate?: () => boolean
 }) {
   const team = getCurrentTeam(state)
   const slotIdx = getCurrentTeamSlotIndex(state)
@@ -335,9 +299,7 @@ function TeamRoundResultsScreen({
   }
 
   return (
-    <div className="game-page activity-play activity-play--results">
-      <ActivityPlayTopNav onBack={onBack} onBeforeHomeNavigate={onBeforeHomeNavigate} />
-
+    <div className="activity-play--results">
       <header className="activity-play__results-header">
         <h1 className="activity-play__results-title">Время вышло!</h1>
         <p className="activity-play__results-team">{team?.name.trim() || '—'}</p>

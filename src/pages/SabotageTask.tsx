@@ -56,7 +56,7 @@ function SabotageTask() {
   const isLastTen = secondsLeft > 0 && secondsLeft <= 10
 
   return (
-    <div className="game-page sabotage-task sabotage-flow">
+    <div className="game-page sabotage-task sabotage-flow game-page--enter">
       <div className="game-page__top">
         <HomeButton className="game-page__nav-btn" />
         <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />

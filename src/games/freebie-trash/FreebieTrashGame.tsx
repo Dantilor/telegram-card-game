@@ -178,7 +178,7 @@ export default function FreebieTrashGame() {
       {screen === 'categories' && (
         <div className="ft">
           <GamesPageHeader
-            title="Фигня за бесплатно"
+            title="Фигня но бесплатно"
             tagline="Берёшь странный подарок судьбы — или нет?"
           />
 

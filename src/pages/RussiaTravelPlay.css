@@ -30,7 +30,7 @@
   height: 8px;
   border-radius: 50%;
   background: var(--rt-terracotta, #c46b52);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rt-terracotta, #c46b52) 25%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--rt-terracotta, #c46b52) 18%, transparent);
 }
 
 .rt-play__progress-bar {
@@ -202,7 +202,7 @@
 .rt-play__choice.is-active {
   border-color: color-mix(in srgb, var(--rt-gold, #d4a853) 55%, transparent);
   background: color-mix(in srgb, var(--rt-gold, #d4a853) 14%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--rt-gold, #d4a853) 20%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--rt-gold, #d4a853) 16%, transparent);
 }
 
 .rt-play__options {

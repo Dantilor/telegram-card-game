@@ -203,7 +203,7 @@ function Home() {
             </span>
             <span className="home-calm-quick__text">
               <span className="home-calm-quick__label">Профиль</span>
-              <span className="home-calm-quick__sub">Настройки и статистика</span>
+              <span className="home-calm-quick__sub">Настройки</span>
             </span>
             <img src={iconCalmChevronRight} alt="" className="home-calm-quick__chev-img" decoding="async" />
           </Link>
@@ -305,7 +305,7 @@ function Home() {
             </span>
             <span className="home-sunset-quick__text">
               <span className="home-sunset-quick__label">Профиль</span>
-              <span className="home-sunset-quick__sub">Настройки и статистика</span>
+              <span className="home-sunset-quick__sub">Настройки</span>
             </span>
             <img src={iconSunsetChevronRight} alt="" className="home-sunset-quick__chev-img" decoding="async" />
           </Link>
@@ -407,7 +407,7 @@ function Home() {
             </span>
             <span className="home-light-quick__text">
               <span className="home-light-quick__label">Профиль</span>
-              <span className="home-light-quick__sub">Настройки и статистика</span>
+              <span className="home-light-quick__sub">Настройки</span>
             </span>
             <img src={iconLightChevronRight} alt="" className="home-light-quick__chev-img" decoding="async" />
           </Link>
@@ -509,7 +509,7 @@ function Home() {
             </span>
             <span className="home-neon-quick__text">
               <span className="home-neon-quick__label">Профиль</span>
-              <span className="home-neon-quick__sub">Настройки и статистика</span>
+              <span className="home-neon-quick__sub">Настройки</span>
             </span>
             <img src={iconChevronRight} alt="" className="home-neon-quick__chev-img" decoding="async" />
           </Link>

@@ -120,14 +120,15 @@
 }
 
 .quiz-question__card {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 8rem;
-  margin-bottom: 1rem;
-  padding: 1.35rem 1.1rem;
+  min-height: 6rem;
+  max-height: min(36vh, 12rem);
+  margin-bottom: 0.75rem;
+  padding: 1.15rem 1.1rem;
   text-align: center;
 }
 
@@ -157,21 +158,28 @@
 }
 
 .quiz-question__answers {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
   min-height: 0;
-  margin-bottom: 1rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0;
+  padding-bottom: 0.35rem;
 }
 
 .quiz-question__answer {
   text-align: left;
   min-height: 3rem;
+  flex-shrink: 0;
 }
 
 .quiz-question__footer {
-  margin-top: auto;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding-top: 0.45rem;
+  padding-bottom: max(0.15rem, var(--safe-bottom));
   text-align: center;
 }
 

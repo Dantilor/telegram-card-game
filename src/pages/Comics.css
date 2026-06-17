@@ -108,12 +108,16 @@ html:has(.comics-page) #root {
 }
 
 .comics-grid__card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   text-align: left;
 }
 
 .comics-grid__body.games-grid__card-body {
   position: relative;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.14rem;
   padding: 0.68rem 0.75rem 0.82rem;
@@ -232,7 +236,7 @@ html:has(.comics-page) #root {
   justify-content: center;
   align-self: stretch;
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: auto;
   padding: 0.42rem 0.65rem;
   min-height: 1.9rem;
   box-sizing: border-box;

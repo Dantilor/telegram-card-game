@@ -49,7 +49,7 @@ export const FREE_COMICS = ['series-1', 'series-2', 'series-3', 'series-4', 'ser
  * - quiz       (Битва умов)
  * - who-is-who (Кто тут кто?)
  * - phrase-translator (Переводчик фраз)
- * - freebie-trash (Фигня за бесплатно)
+ * - freebie-trash (Фигня но бесплатно)
  * - russia-travel (Где мы?)
  *
  * Уже бесплатные (не трогать при откате): card, truth-dare, mafia, alias

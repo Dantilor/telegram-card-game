@@ -6,8 +6,8 @@ import { haptic } from '../utils/telegram'
 import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
+import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import './AliasResult.css'
-import './AliasHome.css'
 
 type ResultState = { guessed: number; skipped: number } | null
 
@@ -97,28 +97,11 @@ function AliasResult() {
       </div>
 
       {showExitConfirm && (
-        <div
-          className="alias-home__modal-overlay"
-          onClick={() => handleExitConfirm(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="alias-result-exit-title"
-        >
-          <div className="alias-home__modal alias-page__panel alias-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
-            <p id="alias-result-exit-title" className="alias-home__modal-text">Выйти из игры?</p>
-            <p className="alias-home__modal-hint">
-              Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки).
-            </p>
-            <div className="alias-result__modal-buttons">
-              <button type="button" className="alias-page__btn alias-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
-                Остаться
-              </button>
-              <button type="button" className="alias-page__cta" onClick={() => handleExitConfirm(true)}>
-                Выйти
-              </button>
-            </div>
-          </div>
-        </div>
+        <GameExitConfirmModal
+          hint="Если выйти, весь прогресс будет сброшен (команды, счёт, раунд, выбранные настройки)."
+          onCancel={() => handleExitConfirm(false)}
+          onConfirm={() => handleExitConfirm(true)}
+        />
       )}
     </div>
   )

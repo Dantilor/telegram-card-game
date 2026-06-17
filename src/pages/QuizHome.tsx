@@ -8,6 +8,7 @@ import { hapticSelection } from '../utils/haptics'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
+import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import './QuizHome.css'
 
 const QUESTION_COUNTS = [5, 10, 20] as const
@@ -274,25 +275,11 @@ function QuizHome() {
       </div>
 
       {showExitConfirm != null && (
-        <div
-          className="game-page__modal-overlay"
-          onClick={() => handleExitConfirm(false)}
-        >
-          <div className="game-page__modal game-page__panel game-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
-            <p className="game-page__modal-text">Выйти из игры?</p>
-            <p className="game-page__modal-hint">
-              Если выйти, все настройки будут сброшены.
-            </p>
-            <div className="game-page__modal-buttons">
-              <button type="button" className="game-page__btn game-page__btn--secondary" onClick={() => handleExitConfirm(false)}>
-                Остаться
-              </button>
-              <button type="button" className="game-page__cta" onClick={() => handleExitConfirm(true)}>
-                Выйти
-              </button>
-            </div>
-          </div>
-        </div>
+        <GameExitConfirmModal
+          hint="Если выйти, все настройки будут сброшены."
+          onCancel={() => handleExitConfirm(false)}
+          onConfirm={() => handleExitConfirm(true)}
+        />
       )}
     </div>
   )

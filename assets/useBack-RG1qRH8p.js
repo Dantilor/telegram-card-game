@@ -1,0 +1,1 @@
+import{u as a,T as i,r as n,e as o}from"./index-DRUR0HfF.js";function u(t){const e=a(),s=typeof window<"u"&&!!i();return n.useCallback(()=>{o("light"),s||window.history.length<=1?e(t):e(-1)},[e,t,s])}export{u};

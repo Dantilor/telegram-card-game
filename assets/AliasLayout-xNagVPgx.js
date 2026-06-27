@@ -1,1 +1,0 @@
-import{j as r,O as t}from"./index-DPfx5zxQ.js";import{A as o}from"./AliasStateContext-PVpwlGTl.js";/* empty css                      */function e(){return r.jsx(o,{children:r.jsx(t,{})})}export{e as default};

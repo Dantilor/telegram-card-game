@@ -19,6 +19,7 @@ function QuizQuestion() {
 
   const question = state.questionQueue[state.currentQuestionIndex]
   const currentPlayer = state.players[state.currentPlayerIndex]
+  const turnKey = `${state.currentQuestionIndex}-${state.currentPlayerIndex}`
 
   const startRef = useRef(state.questionStartTime || Date.now())
 
@@ -28,44 +29,60 @@ function QuizQuestion() {
 
   useEffect(() => {
     startRef.current = state.questionStartTime || Date.now()
-  }, [state.currentQuestionIndex, state.currentPlayerIndex])
+  }, [state.currentQuestionIndex, state.currentPlayerIndex, state.questionStartTime])
 
   useEffect(() => {
-    if (state.phase !== 'question' || !question) return
-    
-    if (state.currentMultiplier === null) {
-      dispatch({ type: 'SELECT_BET', multiplier: 1 })
-    }
-    
+    if (state.phase !== 'question' || !question || !currentPlayer) return
+
+    const playerId = currentPlayer.id
+    const totalSec = state.timer.totalSec
+    const pauseBonusSeconds = state.uiFlags.pauseBonusSeconds ?? 0
+
     timerRef.current = setInterval(() => {
-      const totalSec = state.timer.totalSec
       const elapsed = Math.floor((Date.now() - startRef.current) / 1000)
-      const bonus = state.uiFlags.pauseBonusSeconds ?? 0
-      const left = Math.max(0, totalSec + bonus - elapsed)
-      dispatch({ type: 'TIMER_TICK', leftSec: left })
+      const left = Math.max(0, totalSec + pauseBonusSeconds - elapsed)
+      dispatch({ type: 'TIMER_TICK', leftSec: left, playerId })
       if (left <= CLUTCH_SEC && left > 0) {
         hapticImpact('medium')
       }
       if (left <= 0) {
         if (timerRef.current) clearInterval(timerRef.current)
-        dispatch({ type: 'TIMER_TIMEOUT' })
+        timerRef.current = null
+        dispatch({ type: 'TIMER_TIMEOUT', playerId })
       }
     }, 250)
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
       timerRef.current = null
     }
-  }, [state.phase, state.currentQuestionIndex, state.currentPlayerIndex, state.timer.totalSec, state.uiFlags.pauseBonusSeconds, state.currentMultiplier, dispatch])
+  }, [
+    state.phase,
+    state.currentQuestionIndex,
+    state.currentPlayerIndex,
+    state.timer.totalSec,
+    state.uiFlags.pauseBonusSeconds,
+    currentPlayer?.id,
+    dispatch,
+    question,
+  ])
 
   useEffect(() => {
     if (state.phase === 'result') navigate('/quiz/result')
   }, [state.phase, navigate])
 
+  const clearQuestionTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = null
+  }
+
   const handleAnswer = (idx: number) => {
-    if (state.round[currentPlayer?.id ?? '']) return
+    if (!currentPlayer) return
+    if (state.round[currentPlayer.id]) return
+    clearQuestionTimer()
     hapticSelection()
-    const timeMs = Date.now() - state.questionStartTime
-    dispatch({ type: 'ANSWER', playerId: currentPlayer!.id, answerIndex: idx, timeMs })
+    const timeMs = Date.now() - startRef.current
+    dispatch({ type: 'ANSWER', playerId: currentPlayer.id, answerIndex: idx, timeMs })
   }
 
   const handleBack = () => {
@@ -127,7 +144,7 @@ function QuizQuestion() {
         <p className="quiz-question__text">{question.text}</p>
       </div>
 
-      <div className="quiz-question__answers">
+      <div key={turnKey} className="quiz-question__answers">
         {question.answers.map((ans, idx) => (
           <button
             key={idx}

@@ -17,8 +17,8 @@ type QuizAction =
   | { type: 'USE_PAUSE' }
   | { type: 'USE_INSURANCE' }
   | { type: 'ANSWER'; playerId: string; answerIndex: number; timeMs: number }
-  | { type: 'TIMER_TICK'; leftSec: number }
-  | { type: 'TIMER_TIMEOUT' }
+  | { type: 'TIMER_TICK'; leftSec: number; playerId: string }
+  | { type: 'TIMER_TIMEOUT'; playerId: string }
   | { type: 'NEXT_QUESTION' }
   | { type: 'REVENGE' }
   | { type: 'CONTINUE_5' }
@@ -60,6 +60,14 @@ const DEFAULT_TIME_SEC = 60
 
 function createTimer(sec: number) {
   return { totalSec: sec, leftSec: sec, running: false }
+}
+
+function createDefaultUiFlags(): GameState['uiFlags'] {
+  return { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 }
+}
+
+function isActiveTurnPlayer(state: GameState, playerId: string): boolean {
+  return state.players[state.currentPlayerIndex]?.id === playerId
 }
 
 function quizReducer(state: GameState, action: QuizAction): GameState {
@@ -180,6 +188,8 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
       if (state.mode === 'room') {
         const cur = state.questionQueue[state.currentQuestionIndex]
         if (!cur) return state
+        if (!isActiveTurnPlayer(state, action.playerId)) return state
+        if (state.round[action.playerId]) return state
         const mult = state.currentMultiplier ?? 1
         const player = state.players.find((p) => p.id === action.playerId)
         if (!player) return state
@@ -228,14 +238,16 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
           timer: allAnswered ? { ...state.timer, running: false } : createTimer(state.timePerQuestionSec ?? DEFAULT_TIME_SEC),
           phase: allAnswered ? 'result' : 'question',
           currentPlayerIndex: allAnswered ? state.currentPlayerIndex : nextIdx,
-          currentMultiplier: allAnswered ? state.currentMultiplier : null,
-          uiFlags: allAnswered ? state.uiFlags : { fiftyFiftyHiddenIndices: [], pauseBonusSeconds: 0 },
+          currentMultiplier: allAnswered ? state.currentMultiplier : 1,
+          uiFlags: allAnswered ? state.uiFlags : createDefaultUiFlags(),
           questionStartTime: allAnswered ? state.questionStartTime : Date.now(),
         }
       }
       // Solo branch
       const cur = state.questionQueue[state.currentQuestionIndex]
       if (!cur) return state
+      if (!isActiveTurnPlayer(state, action.playerId)) return state
+      if (state.round[action.playerId]) return state
       const mult = state.currentMultiplier ?? 1
       const player = state.players.find((p) => p.id === action.playerId)
       if (!player) return state
@@ -280,13 +292,17 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         phase: 'result',
       }
     }
-    case 'TIMER_TICK':
+    case 'TIMER_TICK': {
+      if (!isActiveTurnPlayer(state, action.playerId)) return state
       return { ...state, timer: { ...state.timer, leftSec: action.leftSec } }
+    }
     case 'TIMER_TIMEOUT': {
       const cur = state.questionQueue[state.currentQuestionIndex]
       if (!cur) return state
+      if (!isActiveTurnPlayer(state, action.playerId)) return state
+      if (state.round[action.playerId]) return state
       const mult = state.currentMultiplier ?? 1
-      const currentPlayer = state.players[state.currentPlayerIndex]
+      const currentPlayer = state.players.find((p) => p.id === action.playerId)
       if (!currentPlayer) return state
       const insurance = state.uiFlags.insuranceArmedByPlayerId === currentPlayer.id
       const { lost } = calculatePoints(cur, mult, false, { insurance })
@@ -332,8 +348,8 @@ function quizReducer(state: GameState, action: QuizAction): GameState {
         timer: allAnswered ? { ...state.timer, running: false } : createTimer(state.timePerQuestionSec ?? DEFAULT_TIME_SEC),
         phase: allAnswered ? 'result' : 'question',
         currentPlayerIndex: allAnswered ? state.currentPlayerIndex : nextIdx,
-        currentMultiplier: allAnswered ? state.currentMultiplier : null,
-        uiFlags: allAnswered ? state.uiFlags : { fiftyFiftyHiddenIndices: [] },
+        currentMultiplier: allAnswered ? state.currentMultiplier : 1,
+        uiFlags: allAnswered ? state.uiFlags : createDefaultUiFlags(),
         questionStartTime: allAnswered ? state.questionStartTime : Date.now(),
       }
     }

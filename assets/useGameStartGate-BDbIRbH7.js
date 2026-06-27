@@ -1,1 +1,0 @@
-import{a as n,r,h as l,i as p}from"./index-CobUHtmC.js";function O(s,t="game-page__cta"){const{isPremium:m}=n(),[o,a]=r.useState(!1),e=p(s,m),u=r.useCallback(c=>{if(l(),e){a(!0);return}c()},[e]),i=e?"".concat(t," ").concat(t,"--premium-locked"):t;return{startLocked:e,premiumOverlayOpen:o,closePremiumOverlay:()=>a(!1),gatedStart:u,startCtaClassName:i}}export{O as u};

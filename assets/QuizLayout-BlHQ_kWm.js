@@ -1,1 +1,0 @@
-import{j as r,O as t}from"./index-CobUHtmC.js";import{Q as o}from"./QuizGameContext-sM4J6B5x.js";/* empty css                      */function u(){return r.jsx(o,{children:r.jsx(t,{})})}export{u as default};

@@ -1,1 +1,0 @@
-import{j as t,O as o}from"./index-CobUHtmC.js";import{S as r}from"./SabotageGameContext-BAwsn_EO.js";/* empty css                      */function i(){return t.jsx(r,{children:t.jsx(o,{})})}export{i as default};

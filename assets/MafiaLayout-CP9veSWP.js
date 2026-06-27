@@ -1,1 +1,0 @@
-import{r,H as s,j as a,O as t,J as e}from"./index-CobUHtmC.js";import{M as o}from"./MafiaPage-BIW_81r5.js";function m(){return r.useEffect(()=>{s(e)},[]),a.jsx(o,{children:a.jsx(t,{})})}export{m as default};

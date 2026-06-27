@@ -14,6 +14,7 @@
   padding: 1rem 1.25rem;
   margin-bottom: 0.85rem;
   text-align: center;
+  flex-shrink: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -47,6 +48,7 @@
   font-weight: 700;
   line-height: 1.2;
   color: var(--game-shell-readable-text);
+  transition: opacity 0.2s ease;
 }
 
 .quiz-question__score-bar {

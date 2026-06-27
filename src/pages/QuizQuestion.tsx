@@ -141,9 +141,9 @@ function QuizQuestion() {
       </div>
 
       <div
-        key={turnKey}
         className="quiz-question__turn-banner game-page__panel game-page__panel--glow-a"
         role="status"
+        aria-live="polite"
       >
         <span className="quiz-question__turn-label">Вопрос к участнику</span>
         <span className="quiz-question__turn-name">{currentPlayer.name}</span>
@@ -152,9 +152,6 @@ function QuizQuestion() {
       <div className="quiz-question__score-bar">
         <span className="quiz-question__score-item">
           Вопрос {state.currentQuestionIndex + 1} / {state.totalQuestions}
-        </span>
-        <span className="quiz-question__score-item quiz-question__score-item--highlight">
-          {currentPlayer.name}
         </span>
       </div>
 

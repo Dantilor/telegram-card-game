@@ -18,7 +18,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .quiz-question__turn-banner {
-    animation: quiz-turn-banner-in 0.4s ease-out;
+    animation: quiz-turn-banner-in 0.28s ease-out;
   }
 }
 
@@ -91,7 +91,8 @@
   inset: 0 auto 0 0;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--games-play-glow), color-mix(in srgb, var(--games-sparkle, var(--games-play-glow)) 80%, white));
-  transition: width 0.25s linear;
+  transition: width 0.3s linear;
+  will-change: width;
 }
 
 .quiz-question__timer-bar--pulse {
@@ -134,7 +135,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .quiz-question__card {
-    animation: quiz-card-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: none;
   }
 }
 
@@ -173,6 +174,34 @@
   text-align: left;
   min-height: 3rem;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quiz-question__answer:focus,
+.quiz-question__answer:focus-visible {
+  outline: none;
+}
+
+.quiz-question__answer:active:not(:disabled) {
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .quiz-question__answer:hover:not(:disabled) {
+    border-color: var(--game-shell-input-focus-border);
+  }
+}
+
+@media (hover: none) {
+  .quiz-question__answer:hover:not(:disabled),
+  .quiz-question__answer:focus:not(:disabled) {
+    border-color: var(--game-shell-input-border);
+    box-shadow: none;
+    background: var(--game-shell-input-bg);
+    transform: none;
+  }
 }
 
 .quiz-question__footer {

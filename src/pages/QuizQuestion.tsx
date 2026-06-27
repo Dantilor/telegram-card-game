@@ -10,11 +10,20 @@ import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import './QuizQuestion.css'
 
 const CLUTCH_SEC = 3
+const TIMER_TICK_MS = 250
+
+function blurActiveElement() {
+  const active = document.activeElement
+  if (active instanceof HTMLElement) {
+    active.blur()
+  }
+}
 
 function QuizQuestion() {
   const navigate = useNavigate()
   const { state, dispatch } = useQuizGame()
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const clutchHapticRef = useRef(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
 
   const question = state.questionQueue[state.currentQuestionIndex]
@@ -22,6 +31,7 @@ function QuizQuestion() {
   const turnKey = `${state.currentQuestionIndex}-${state.currentPlayerIndex}`
 
   const startRef = useRef(state.questionStartTime || Date.now())
+  const [leftSec, setLeftSec] = useState(state.timer.leftSec)
 
   useEffect(() => {
     trackEvent('start_game', { gameId: 'quiz' })
@@ -29,7 +39,11 @@ function QuizQuestion() {
 
   useEffect(() => {
     startRef.current = state.questionStartTime || Date.now()
-  }, [state.currentQuestionIndex, state.currentPlayerIndex, state.questionStartTime])
+    const bonus = state.uiFlags.pauseBonusSeconds ?? 0
+    setLeftSec(state.timer.totalSec + bonus)
+    clutchHapticRef.current = false
+    blurActiveElement()
+  }, [turnKey, state.questionStartTime, state.timer.totalSec, state.uiFlags.pauseBonusSeconds])
 
   useEffect(() => {
     if (state.phase !== 'question' || !question || !currentPlayer) return
@@ -40,17 +54,20 @@ function QuizQuestion() {
 
     timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startRef.current) / 1000)
-      const left = Math.max(0, totalSec + pauseBonusSeconds - elapsed)
-      dispatch({ type: 'TIMER_TICK', leftSec: left, playerId })
-      if (left <= CLUTCH_SEC && left > 0) {
+      const nextLeft = Math.max(0, totalSec + pauseBonusSeconds - elapsed)
+      setLeftSec(nextLeft)
+
+      if (nextLeft <= CLUTCH_SEC && nextLeft > 0 && !clutchHapticRef.current) {
+        clutchHapticRef.current = true
         hapticImpact('medium')
       }
-      if (left <= 0) {
+
+      if (nextLeft <= 0) {
         if (timerRef.current) clearInterval(timerRef.current)
         timerRef.current = null
         dispatch({ type: 'TIMER_TIMEOUT', playerId })
       }
-    }, 250)
+    }, TIMER_TICK_MS)
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
@@ -79,8 +96,11 @@ function QuizQuestion() {
   const handleAnswer = (idx: number) => {
     if (!currentPlayer) return
     if (state.round[currentPlayer.id]) return
+
     clearQuestionTimer()
     hapticSelection()
+    blurActiveElement()
+
     const timeMs = Date.now() - startRef.current
     dispatch({ type: 'ANSWER', playerId: currentPlayer.id, answerIndex: idx, timeMs })
   }
@@ -109,7 +129,9 @@ function QuizQuestion() {
 
   const hasAnswered = !!state.round[currentPlayer.id]
   const canAnswer = !hasAnswered
-  const isClutch = state.timer.leftSec > 0 && state.timer.leftSec <= CLUTCH_SEC
+  const isClutch = leftSec > 0 && leftSec <= CLUTCH_SEC
+  const timerProgress =
+    state.timer.totalSec > 0 ? (leftSec / state.timer.totalSec) * 100 : 0
 
   return (
     <div className="game-page quiz-question">
@@ -118,7 +140,11 @@ function QuizQuestion() {
         <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
 
-      <div className="quiz-question__turn-banner game-page__panel game-page__panel--glow-a" role="status">
+      <div
+        key={turnKey}
+        className="quiz-question__turn-banner game-page__panel game-page__panel--glow-a"
+        role="status"
+      >
         <span className="quiz-question__turn-label">Вопрос к участнику</span>
         <span className="quiz-question__turn-name">{currentPlayer.name}</span>
       </div>
@@ -135,9 +161,9 @@ function QuizQuestion() {
       <div className={`quiz-question__timer ${isClutch ? 'quiz-question__timer--clutch' : ''}`}>
         <div
           className={`quiz-question__timer-bar ${isClutch ? 'quiz-question__timer-bar--pulse' : ''}`}
-          style={{ width: `${state.timer.totalSec > 0 ? (state.timer.leftSec / state.timer.totalSec) * 100 : 0}%` }}
+          style={{ width: `${timerProgress}%` }}
         />
-        <span className="quiz-question__timer-text">{state.timer.leftSec} сек</span>
+        <span className="quiz-question__timer-text">{leftSec} сек</span>
       </div>
 
       <div className="quiz-question__card game-page__panel game-page__panel--glow-b">
@@ -147,7 +173,7 @@ function QuizQuestion() {
       <div key={turnKey} className="quiz-question__answers">
         {question.answers.map((ans, idx) => (
           <button
-            key={idx}
+            key={`${turnKey}-${idx}`}
             type="button"
             className="game-page__target quiz-question__answer"
             onClick={() => handleAnswer(idx)}

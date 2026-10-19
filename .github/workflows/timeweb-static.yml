@@ -1,0 +1,36 @@
+name: Build Timeweb static frontend
+on:
+  push:
+    branches: [build/timeweb-static]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: timeweb-static
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build -- --base=/
+        env:
+          VITE_API_URL: https://dantilor-telegram-card-game-3706.twc1.net
+      - name: Check output
+        run: |
+          test -s dist/index.html
+          test -d dist/assets
+          printf '{"source_commit":"%s","api_url":"https://dantilor-telegram-card-game-3706.twc1.net","base":"/"}\n' "$GITHUB_SHA" > dist/deployment-info.json
+      - name: Publish static files
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: timeweb-static
+          publish_dir: ./dist
+          enable_jekyll: false

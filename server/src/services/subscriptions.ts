@@ -32,6 +32,7 @@ export async function savePaymentIfNew(payment: {
 }): Promise<boolean> {
   const tgCharge = payment.telegramPaymentChargeId ?? null
   const provCharge = payment.providerPaymentChargeId ?? null
+  const currency = payment.currency ?? (payment.provider === 'stars' ? 'XTR' : 'RUB')
 
   if (tgCharge || provCharge) {
     const check = await query<{ n: number }>(
@@ -48,7 +49,7 @@ export async function savePaymentIfNew(payment: {
        WHERE telegram_id = $1 AND currency = $2 AND plan_id = $3
          AND total_amount = $4 AND created_at > NOW() - INTERVAL '5 minutes'
        LIMIT 1`,
-      [payment.telegramId, payment.currency ?? (payment.provider === 'stars' ? 'XTR' : 'RUB'), payment.planId, payment.amount]
+      [payment.telegramId, currency, payment.planId, payment.amount]
     )
     if (check.rows.length > 0) return false
   }
@@ -62,7 +63,7 @@ export async function savePaymentIfNew(payment: {
         payment.telegramId,
         payment.planId,
         payment.amount,
-        payment.currency ?? (payment.provider === 'stars' ? 'XTR' : 'RUB'),
+        currency,
         tgCharge,
         provCharge,
       ]

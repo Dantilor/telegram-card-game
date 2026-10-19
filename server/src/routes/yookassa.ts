@@ -387,104 +387,98 @@ async function grantPremiumByPaymentId(
   }
 }
 
+// YooKassa does not send our custom Bearer secret. Authenticate the payment
+// with the shop's API credentials, never with fields from the notification.
 async function handleWebhook(req: Request, res: Response) {
-  console.log('[YooKassa] webhook received', {
-    event: req.body?.event,
-    paymentId: req.body?.object?.id,
-    status: req.body?.object?.status,
-  })
-
-  const secret = String(process.env.YOOKASSA_WEBHOOK_SECRET ?? '').trim()
-
-  if (secret) {
-    const authRaw = String(req.headers['authorization'] ?? '').trim()
-    const auth =
-      authRaw.toLowerCase().startsWith('bearer ') ? authRaw.slice(7).trim() : authRaw
-
-    const authPreview =
-      authRaw.length > 0
-        ? `${authRaw.length} chars, starts: ${authRaw.slice(0, 6)}...`
-        : 'absent'
-    console.log('[YooKassa] webhook authorization', authPreview)
-
-    if (auth !== secret) {
-      console.warn('[YooKassa] webhook: invalid secret')
-      res.status(200).json({ ok: true })
-      return
-    }
-  } else {
-    console.log('[YooKassa] webhook secret empty — skipping validation')
-  }
-
-  const body = req.body as {
-    type?: string
-    event?: string
-    object?: {
-      id?: string
-      status?: string
-      metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string; userId?: string }
-    }
-  }
-  const eventType = body.event ?? body.type
-  const obj = body.object
-  if (!obj) {
+  const event = req.body?.event
+  if (!['payment.succeeded', 'payment.canceled', 'payment.waiting_for_capture'].includes(event)) {
     res.status(200).json({ ok: true })
     return
   }
-
-  const paymentId = obj.id
-  const metadata = obj.metadata ?? {}
-  const statusMap: Record<string, string> = {
-    'payment.succeeded': 'succeeded',
-    'payment.canceled': 'canceled',
-    'payment.waiting_for_capture': 'waiting_for_capture',
-    'payment.failed': 'failed',
+  const paymentId = req.body?.object?.id
+  if (typeof paymentId !== 'string' || !/^[a-zA-Z0-9-]{1,128}$/.test(paymentId)) {
+    res.status(400).json({ ok: false, error: 'Invalid payment id' })
+    return
   }
-  const newStatus = eventType ? statusMap[eventType] : obj.status ? statusMap[`payment.${obj.status}`] ?? obj.status : null
-  const isPaymentSucceeded = eventType === 'payment.succeeded' || (!eventType && obj.status === 'succeeded')
+  const shopId = process.env.YOOKASSA_SHOP_ID
+  const secretKey = process.env.YOOKASSA_SECRET_KEY
+  if (!shopId || !secretKey) {
+    res.status(503).json({ ok: false, error: 'Payment not configured' })
+    return
+  }
 
-  const run = async () => {
-    try {
-      const pid = typeof paymentId === 'string' ? paymentId.trim() : ''
-      if (!pid) return
-
-      // Не payment.succeeded — просто обновляем статус и выходим
-      if (!isPaymentSucceeded) {
-        if (newStatus) {
-          await query(
-            `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
-            [newStatus, pid]
-          ).catch(() => {})
-        }
-        return
-      }
-
-      // payment.succeeded — выдаём premium (grantPremiumByPaymentId помечает payments succeeded)
-      const result = await grantPremiumByPaymentId(pid, { metadata })
-
-      if (result.granted) {
-        console.log(
-          `[YooKassa] webhook: premium granted paymentId=${pid} telegramId=${result.telegramId} planId=${result.planId} until=${result.activeUntil.toISOString()}`
-        )
-        return
-      }
-
-      if (result.alreadyDone) {
-        console.log('[YooKassa] webhook: already processed paymentId=', pid)
-        return
-      }
-
-      console.error('[YooKassa] webhook: failed to grant premium', {
-        paymentId: pid,
-        reason: result.reason ?? 'unknown',
-      })
-    } catch (e) {
-      logPgError('[YooKassa] webhook error', e)
+  try {
+    const provider = await fetch(`https://api.yookassa.ru/v3/payments/${encodeURIComponent(paymentId)}`, {
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${shopId}:${secretKey}`).toString('base64'),
+      },
+      signal: AbortSignal.timeout(8000),
+    })
+    if (provider.status === 404) {
+      res.status(200).json({ ok: true })
+      return
     }
-  }
+    if (!provider.ok) throw new Error(`YooKassa verification HTTP ${provider.status}`)
+    const payment = await provider.json() as {
+      id?: string
+      status?: string
+      paid?: boolean
+      amount?: { value?: string; currency?: string }
+      metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string; userId?: string }
+    }
+    if (payment.id !== paymentId || !['succeeded', 'canceled', 'waiting_for_capture'].includes(payment.status ?? '')) {
+      res.status(200).json({ ok: true })
+      return
+    }
 
-  setImmediate(run)
-  res.status(200).json({ ok: true })
+    // A notification may arrive just before createPayment stores its row.
+    // Return a retryable response instead of acknowledging and losing it.
+    const local = await query<{
+      telegram_id: string | number; plan_id: string; total_amount: string | number; currency: string
+    }>(
+      `SELECT telegram_id, plan_id, total_amount, currency FROM payments
+       WHERE provider_payment_charge_id = $1 LIMIT 1`,
+      [paymentId]
+    )
+    const row = local.rows[0]
+    if (!row) throw new Error('Local payment not recorded yet')
+    const amount = payment.amount?.value
+    const validAmount = typeof amount === 'string' && /^\d+\.\d{2}$/.test(amount)
+    const amountMatches = validAmount && Number.isFinite(Number(row.total_amount)) &&
+      Math.round(Number(amount) * 100) === Math.round(Number(row.total_amount) * 100)
+    const meta = payment.metadata ?? {}
+    const metaUser = normalizeTelegramId(meta.telegram_id ?? meta.telegramId ?? meta.userId)
+    const metaPlan = meta.plan_id ?? meta.planId
+    if (!amountMatches || payment.amount?.currency !== row.currency || row.currency !== 'RUB' ||
+        (metaUser && metaUser !== normalizeTelegramId(row.telegram_id)) ||
+        (metaPlan && metaPlan !== row.plan_id)) {
+      console.error('[YooKassa] webhook payment mismatch', { paymentId })
+      res.status(200).json({ ok: true })
+      return
+    }
+
+    if (payment.status === 'succeeded') {
+      if (payment.paid !== true) {
+        res.status(200).json({ ok: true })
+        return
+      }
+      const result = await grantPremiumByPaymentId(paymentId)
+      if (!result.granted && !result.alreadyDone) throw new Error(result.reason ?? 'Premium grant failed')
+      console.log('[YooKassa] verified webhook processed', { paymentId, alreadyDone: !result.granted })
+    } else {
+      // A delayed cancellation must not downgrade an already granted payment.
+      await query(
+        `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2
+         AND premium_granted_at IS NULL AND status <> 'succeeded'`,
+        [payment.status, paymentId]
+      )
+    }
+    // Acknowledge only after verification and database processing succeed.
+    res.status(200).json({ ok: true })
+  } catch (e) {
+    logPgError('[YooKassa] verified webhook error', e)
+    res.status(503).json({ ok: false, error: 'Payment processing temporarily unavailable' })
+  }
 }
 
 async function handleConfirm(req: Request, res: Response) {

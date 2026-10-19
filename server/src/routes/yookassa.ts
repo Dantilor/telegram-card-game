@@ -265,13 +265,15 @@ async function ensurePaymentRowForGrant(
     `INSERT INTO payments (
        telegram_id,
        plan_id,
-       provider,
+       currency,
+       total_amount,
        provider_payment_charge_id,
-       status,
-       currency
+       status
      )
-     VALUES ($1::bigint, $2, 'yookassa', $3, 'pending', 'RUB')
-     ON CONFLICT (provider, provider_payment_charge_id) DO NOTHING`,
+     SELECT $1::bigint, plan_id, 'RUB', price_rub, $3, 'pending'
+     FROM plans
+     WHERE plan_id = $2
+     ON CONFLICT DO NOTHING`,
     [telegramId, planId, paymentId]
   )
 }

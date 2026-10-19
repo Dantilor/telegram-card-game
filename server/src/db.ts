@@ -1,7 +1,22 @@
 import pg, { Pool } from 'pg'
+import { rootCertificates } from 'node:tls'
+import { timewebDatabaseCa } from './timeweb-ca.js'
 
-const connectionString = process.env.DATABASE_URL
-const ssl = { rejectUnauthorized: false as const }
+// Keep transport options in this module: pg connection-string SSL parameters
+// otherwise replace the entire ssl object, including its trusted CA bundle.
+const databaseUrl = process.env.DATABASE_URL
+const parsedDatabaseUrl = databaseUrl ? new URL(databaseUrl) : undefined
+for (const key of ['sslmode', 'sslcert', 'sslkey', 'sslrootcert']) {
+  parsedDatabaseUrl?.searchParams.delete(key)
+}
+const connectionString = parsedDatabaseUrl?.toString()
+const ssl = {
+  rejectUnauthorized: true as const,
+  minVersion: 'TLSv1.2' as const,
+  ca: [...rootCertificates, timewebDatabaseCa],
+  // For a private IP, explicitly verify the provider's certificate DNS name.
+  servername: process.env.DATABASE_TLS_SERVERNAME?.trim() || undefined,
+}
 
 if (connectionString) {
   try {

@@ -10,39 +10,39 @@ export type ReceiptContact = {
   stored: string
 }
 
+function validReceiptEmail(email: string): boolean {
+  const placeholder = /@gamenight\.local$/i.test(email)
+  const shape = email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  return shape && !placeholder
+}
+
+/** New YooKassa orders send the receipt by email. A phone is not a substitute. */
 export function parseReceiptContact(emailRaw: unknown, phoneRaw: unknown): ReceiptContact {
   const email = typeof emailRaw === 'string' ? emailRaw.trim() : ''
   const phone = typeof phoneRaw === 'string' ? phoneRaw.trim() : ''
-  if (!email && !phone) {
+  if (phone) {
     throw new LegalError(
-      'receipt_contact_required',
+      'receipt_contact_invalid',
       400,
-      'Для электронного чека укажите действительный email или телефон покупателя.'
+      'Для чека нужен email покупателя. Телефон для этого чека не принимается.'
     )
   }
-  let validEmail: string | undefined
-  let validPhone: string | undefined
-  if (email) {
-    const placeholder = /@gamenight\.local$/i.test(email)
-    const shape = email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    if (!shape || placeholder) {
-      throw new LegalError(
-        'receipt_contact_invalid',
-        400,
-        'Для чека нужен действительный email или телефон покупателя. Технический адрес не подставляется.'
-      )
-    }
-    validEmail = email
+  if (!email) {
+    throw new LegalError('receipt_contact_required', 400, 'Для чека укажите email покупателя.')
   }
-  if (phone) {
-    const compact = phone.replace(/[\s()-]/g, '')
-    if (!/^\+?[0-9]{10,15}$/.test(compact)) {
-      throw new LegalError('receipt_contact_invalid', 400, 'Телефон для чека указан некорректно.')
-    }
-    validPhone = compact.replace(/^\+/, '')
+  if (!validReceiptEmail(email)) {
+    throw new LegalError(
+      'receipt_contact_invalid',
+      400,
+      'Для чека нужен действительный email покупателя. Технический адрес не подставляется.'
+    )
   }
-  if (validEmail) return { kind: 'email', email: validEmail, phone: validPhone, stored: validEmail }
-  return { kind: 'phone', phone: validPhone, stored: validPhone as string }
+  return { kind: 'email', email, stored: email }
+}
+
+export function customerForNewYookassaReceipt(emailRaw: unknown, phoneRaw: unknown): { email: string } {
+  const contact = parseReceiptContact(emailRaw, phoneRaw)
+  return { email: contact.email as string }
 }
 
 type EvidenceRow = {

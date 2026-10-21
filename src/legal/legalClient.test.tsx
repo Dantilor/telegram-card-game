@@ -171,7 +171,20 @@ describe('premium purchase', () => {
       post,
     })).rejects.toMatchObject({ code: 'receipt_contact_invalid' })
     expect(post).not.toHaveBeenCalled()
-    expect(classifyReceipt('buyer@example.com')).toEqual({ email: 'buyer@example.com' })
+    expect(classifyReceipt('  buyer@example.com  ')).toEqual({ email: 'buyer@example.com' })
+    expect(classifyReceipt('')).toEqual({ error: 'Для чека укажите email.' })
+    expect(classifyReceipt('not-an-email')).toMatchObject({ error: expect.stringContaining('email') })
+  })
+
+  it('does not start an order when the receipt is a phone', async () => {
+    const post = vi.fn()
+    await expect(submitNewPremiumOrder({
+      document,
+      plan: { id: 'premium_1m', title: '1 месяц', priceRub: 259, durationDays: 30 },
+      receiptRaw: '+7 (999) 123-45-67',
+      post,
+    })).rejects.toMatchObject({ code: 'receipt_contact_invalid' })
+    expect(post).not.toHaveBeenCalled()
   })
 
   it('does not create a payment when offer acceptance is not stored', async () => {
@@ -196,17 +209,24 @@ describe('premium purchase', () => {
     const result = await submitNewPremiumOrder({
       document,
       plan: { id: 'premium_3m', title: '3 месяца', priceRub: 399, durationDays: 90 },
-      receiptRaw: '+7 (999) 123-45-67',
+      receiptRaw: '  buyer@example.com  ',
       post,
     })
     expect(result.confirmationUrl).toMatch(/^https:\/\//)
-    const payment = buildPaymentBody('premium_3m', 15, { phone: '79991234567' })
-    expect(payment).toEqual({ planId: 'premium_3m', offerAcceptanceId: 15, phone: '79991234567' })
+    const payment = buildPaymentBody('premium_3m', 15, { email: 'buyer@example.com' })
+    expect(payment).toEqual({ planId: 'premium_3m', offerAcceptanceId: 15, email: 'buyer@example.com' })
+    expect(payment).not.toHaveProperty('phone')
     expect(payment).not.toHaveProperty('marketing')
     expect(payment).not.toHaveProperty('analytics')
+    expect(post.mock.calls[1][1]).toEqual(payment)
     const overlay = readFileSync(join(root, 'components/PremiumOverlay.tsx'), 'utf8')
+    expect(overlay).toContain('Email для чека')
+    expect(overlay).toContain('type="email"')
+    expect(overlay).toContain('ЮKassa отправит чек на эту почту.')
+    expect(overlay).not.toContain('+79990000000')
     const restore = overlay.slice(overlay.indexOf('const handleRestorePurchase'), overlay.indexOf('const handleBackdropClick'))
     expect(restore).not.toContain('offerAcceptance')
+    expect(restore).not.toContain('receipt')
     expect(restore).not.toContain('marketing')
     expect(restore).toContain('refresh()')
   })

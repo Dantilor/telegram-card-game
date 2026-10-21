@@ -247,8 +247,9 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       setError('Отметьте принятие действующей оферты. Заказ не создан.')
       return
     }
-    if (!receipt.trim()) {
-      setError('Для электронного чека укажите email или телефон.')
+    const receiptEmail = receipt.trim()
+    if (!receiptEmail) {
+      setError('Для чека укажите email.')
       return
     }
 
@@ -263,7 +264,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           priceRub: plan.priceRub,
           durationDays: plan.durationDays,
         },
-        receiptRaw: receipt,
+        receiptRaw: receiptEmail,
         post: (path, body) => legal.postLegal(path, body),
       })
       const url = res.confirmationUrl
@@ -311,7 +312,8 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
 
   if (!isOpen && !asPage) return null
 
-  const receiptCheck = receipt.trim() ? classifyReceipt(receipt) : null
+  const receiptEmail = receipt.trim()
+  const receiptCheck = receiptEmail ? classifyReceipt(receiptEmail) : null
   const receiptError = receiptCheck && 'error' in receiptCheck ? receiptCheck.error : null
   const canStartPayment = Boolean(selectedPlan && offerDocument && offerChecked && receiptCheck && !receiptError && !offerError)
   const buyLabel = selectedPlan
@@ -464,18 +466,19 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             </span>
           </label>
           <label className="premium-offer__field">
-            <span>Email или телефон для чека</span>
+            <span>Email для чека</span>
             <input
+              type="email"
               value={receipt}
-              placeholder="name@example.com или +79990000000"
+              placeholder="name@example.com"
               autoComplete="email"
-              inputMode="text"
+              inputMode="email"
               aria-invalid={receiptError ? true : undefined}
               onChange={(event) => setReceipt(event.target.value)}
             />
           </label>
           {receiptError && <p className="premium-offer__error" role="alert">{receiptError}</p>}
-          <p className="premium-offer__hint">Контакт нужен только для чека и не включает рекламу или аналитику.</p>
+          <p className="premium-offer__hint">ЮKassa отправит чек на эту почту.</p>
         </div>
 
         <button

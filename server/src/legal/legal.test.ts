@@ -10,7 +10,8 @@ import test from 'node:test'
 import express from 'express'
 import { PGlite } from '@electric-sql/pglite'
 import { assessAnalyticsEvent, handleAnalyticsEvent } from './analytics.js'
-import { assertCheckout, parseReceiptContact } from './checkout.js'
+import { assertCheckout, customerForNewYookassaReceipt, parseReceiptContact } from './checkout.js'
+import { LegalError } from './errors.js'
 import { STATEMENTS, DOCUMENT_CATALOG, type DocumentId } from './constants.js'
 import { deleteExpiredAnalytics } from './cleanup.js'
 import {
@@ -23,7 +24,6 @@ import {
 } from './consents.js'
 import { activateDocuments, deactivateDocuments, importDocuments, readActiveDocument, readStoredVersion } from './documents.js'
 import { renderDocumentHtml, renderUnavailableHtml } from './html.js'
-import { LegalError } from './errors.js'
 import { sha256Utf8 } from './hash.js'
 import { enqueueMarketing, deliverMarketingQueueItem } from './marketing.js'
 import { loadLegalPackage } from './packageFile.js'
@@ -161,7 +161,45 @@ test('invalid initData is not stored as an anonymous event', async () => {
 test('placeholder receipt contact is rejected', () => {
   assert.throws(() => parseReceiptContact('100@gamenight.local', null), /Технический адрес/)
   assert.throws(() => parseReceiptContact('', ''), /укажите/i)
-  assert.equal(parseReceiptContact('buyer@example.com', null).stored, 'buyer@example.com')
+  assert.equal(parseReceiptContact('  buyer@example.com  ', '   ').stored, 'buyer@example.com')
+  assert.equal(parseReceiptContact('  buyer@example.com  ', '   ').kind, 'email')
+})
+
+test('new yookassa receipt is email only and a phone does not reach the provider', async () => {
+  let providerCalls = 0
+  const provider = async (customer: { email: string }) => {
+    providerCalls += 1
+    assert.equal(Object.hasOwn(customer, 'phone'), false)
+    return customer
+  }
+  const created = await provider(customerForNewYookassaReceipt('  buyer@example.com  ', '   '))
+  assert.deepEqual(created, { email: 'buyer@example.com' })
+  for (const input of [
+    ['buyer@example.com', '+79991234567'],
+    [null, '79991234567'],
+    ['   ', null],
+    ['not-an-email', null],
+  ] as const) {
+    await assert.rejects(
+      async () => {
+        await provider(customerForNewYookassaReceipt(input[0], input[1]))
+      },
+      (error: unknown) => {
+        assert.ok(error instanceof LegalError)
+        assert.equal(error.status, 400)
+        return true
+      }
+    )
+  }
+  assert.equal(providerCalls, 1)
+  const route = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../routes/yookassa.ts'), 'utf8')
+  const guard = route.indexOf('customerForNewYookassaReceipt(req.body')
+  const providerCall = route.indexOf('https://api.yookassa.ru/v3/payments')
+  const paymentInsert = route.indexOf('query(INSERT_CHECKOUT_PAYMENT_SQL')
+  assert.ok(guard !== -1 && providerCall !== -1 && paymentInsert !== -1)
+  assert.ok(guard < providerCall && providerCall < paymentInsert)
+  assert.equal(route.includes('customer.phone'), false)
+  assert.equal(route.includes('customerPhone'), false)
 })
 
 test('html escapes document text and does not invent a policy', () => {

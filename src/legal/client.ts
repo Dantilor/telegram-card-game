@@ -97,22 +97,15 @@ export function safeLegalMessage(status: number, body: string): string {
   return fallback
 }
 
-export function classifyReceipt(raw: string): { email?: string; phone?: string } | { error: string } {
+export function classifyReceipt(raw: string): { email: string } | { error: string } {
   const value = raw.trim()
-  if (!value) return { error: 'Для электронного чека укажите email или телефон.' }
-  if (value.includes('@')) {
-    const placeholder = /@gamenight\.local$/i.test(value)
-    const shape = value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-    if (!shape || placeholder) {
-      return { error: 'Для чека нужен действительный email или телефон. Технический адрес не подходит.' }
-    }
-    return { email: value }
+  if (!value) return { error: 'Для чека укажите email.' }
+  const placeholder = /@gamenight\.local$/i.test(value)
+  const shape = value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  if (!shape || placeholder) {
+    return { error: 'Для чека нужен действительный email. Телефон для этого чека не принимается.' }
   }
-  const compact = value.replace(/[\s()-]/g, '')
-  if (!/^\+?[0-9]{10,15}$/.test(compact)) {
-    return { error: 'Телефон для чека указан некорректно.' }
-  }
-  return { phone: compact }
+  return { email: value }
 }
 
 export function publicDocumentPath(documentId: string, version?: string): string {
@@ -234,13 +227,12 @@ export function buildOfferBody(
 export function buildPaymentBody(
   planId: string,
   evidenceId: number,
-  receipt: { email?: string; phone?: string }
+  receipt: { email: string }
 ): Record<string, unknown> {
   return {
     planId,
     offerAcceptanceId: evidenceId,
-    ...(receipt.email ? { email: receipt.email } : {}),
-    ...(receipt.phone ? { phone: receipt.phone } : {}),
+    email: receipt.email,
   }
 }
 

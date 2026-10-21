@@ -10,7 +10,7 @@ import {
 } from '../services/subscriptions.js'
 import { getActivePlanById, getPlanDurationDays, planReceiptDescription } from '../services/plans.js'
 import { normalizeTelegramId, resolvePlanIdForGrant, resolveTelegramIdForGrant } from '../utils/telegramId.js'
-import { assertCheckout } from '../legal/checkout.js'
+import { assertCheckout, customerForNewYookassaReceipt } from '../legal/checkout.js'
 import { LegalError, legalErrorBody } from '../legal/errors.js'
 import {
   CLAIM_PREMIUM_GRANT_SQL,
@@ -58,21 +58,17 @@ router.use((req, _res, next) => {
  * Сумма в receipt.items должна совпадать с amount платежа.
  */
 function buildReceipt(params: {
-  customerEmail?: string
-  customerPhone?: string
+  customerEmail: string
   planTitle: string
   planId: string
   durationDays: number
   priceRub: number
-}): { customer: { email?: string; phone?: string }; items: Array<Record<string, unknown>> } {
+}): { customer: { email: string }; items: Array<Record<string, unknown>> } {
   const amountValue = `${params.priceRub}.00`
   const description = planReceiptDescription(params.durationDays)
-  const customer: { email?: string; phone?: string } = {}
-  if (params.customerEmail) customer.email = params.customerEmail
-  if (params.customerPhone) customer.phone = params.customerPhone
 
   return {
-    customer,
+    customer: { email: params.customerEmail },
     items: [
       {
         description,
@@ -109,6 +105,7 @@ async function handleCreatePayment(req: Request, res: Response) {
   }
 
   try {
+    const receiptCustomer = customerForNewYookassaReceipt(req.body?.email, req.body?.phone)
     const plan = await getActivePlanById(planId.trim())
     if (!plan) {
       res.status(400).json({ ok: false, error: 'Plan not found or inactive' })
@@ -131,8 +128,8 @@ async function handleCreatePayment(req: Request, res: Response) {
           durationDays: plan.duration_days,
         },
         offerAcceptanceId: req.body?.offerAcceptanceId,
-        email: req.body?.email,
-        phone: req.body?.phone,
+        email: receiptCustomer.email,
+        phone: null,
       }
     )
 
@@ -142,8 +139,7 @@ async function handleCreatePayment(req: Request, res: Response) {
     const amount = `${plan.price_rub}.00`
 
     const receipt = buildReceipt({
-      customerEmail: checkout.contact.email,
-      customerPhone: checkout.contact.phone,
+      customerEmail: receiptCustomer.email,
       planTitle: plan.title,
       planId: plan.plan_id,
       durationDays: plan.duration_days,

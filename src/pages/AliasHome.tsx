@@ -12,6 +12,7 @@ import BackButton from '../components/BackButton'
 import GamesPageHeader from '../components/GamesPageHeader'
 import GameExitConfirmModal from '../components/GameExitConfirmModal'
 import PremiumOverlay from '../components/PremiumOverlay'
+import DocumentModal from '../components/DocumentModal'
 import { useGameStartGate } from '../hooks/useGameStartGate'
 import { TeamsSetupBlock } from '../components/alias/TeamsSetupBlock'
 import './AliasHome.css'
@@ -23,6 +24,7 @@ function AliasHome() {
   const navigate = useNavigate()
   const { state, dispatch } = useAliasStateContext()
   const [showAdultConfirm, setShowAdultConfirm] = useState<AliasCategoryId | null>(null)
+  const [adultPolicyOpen, setAdultPolicyOpen] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState<'back' | 'home' | null>(null)
   const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
     useGameStartGate('alias', 'alias-page__cta')
@@ -261,7 +263,10 @@ function AliasHome() {
         <div className="alias-home__modal-overlay" onClick={() => handleAdultConfirm(false)}>
           <div className="alias-home__modal alias-page__panel alias-page__panel--glow-b" onClick={(e) => e.stopPropagation()}>
             <p className="alias-home__modal-text">Мне 18+</p>
-            <p className="alias-home__modal-hint">Подтвердите возраст для доступа к категории</p>
+            <p className="alias-home__modal-hint">Подтвердите возраст для доступа к этой категории</p>
+            <button type="button" className="alias-home__modal-policy" onClick={() => { haptic('light'); setAdultPolicyOpen(true) }}>
+              Политика доступа к категориям 18+
+            </button>
             <div className="alias-home__modal-buttons">
               <button type="button" className="alias-page__btn alias-page__btn--secondary" onClick={() => handleAdultConfirm(false)}>
                 Отмена
@@ -273,6 +278,8 @@ function AliasHome() {
           </div>
         </div>
       )}
+
+      <DocumentModal isOpen={adultPolicyOpen} onClose={() => setAdultPolicyOpen(false)} documentType="adultPolicy" />
 
       {showExitConfirm != null && (
         <GameExitConfirmModal

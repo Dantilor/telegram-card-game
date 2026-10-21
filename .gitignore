@@ -30,6 +30,9 @@ preview-serve
 .env.production
 server/.env
 
+/_private_legal_import/
+/GNH_Legal_Cursor_2026-10-20.zip
+
 # Comic source assets (generated WebP lives in public/comics/)
 incoming/*.zip
 incoming/comics-source/

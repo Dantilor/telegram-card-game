@@ -8,8 +8,6 @@ const STORAGE_KEY = 'tcg_state'
 function syncPremiumFromBackend(): void {
   const init = getInitData()
   if (!init.initDataRaw) return
-  const base = import.meta.env.VITE_API_BASE ?? ''
-  if (typeof window !== 'undefined' && !base && /github\.io/i.test(window.location.hostname)) return
 
   getMe()
     .then((data) => {

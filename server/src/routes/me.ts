@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
-import { ensureUser, getLatestActiveUntil } from '../services/subscriptions.js'
+import { getLatestActiveUntil } from '../services/subscriptions.js'
 
 function toInitDataString(v: unknown): string {
   if (typeof v === 'string') return v
@@ -34,7 +34,6 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 
   try {
-    await ensureUser(telegramId)
     const activeUntilDate = await getLatestActiveUntil(telegramId)
     const now = new Date()
     const premium = activeUntilDate != null && activeUntilDate > now

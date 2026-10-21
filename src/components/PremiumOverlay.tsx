@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { haptic } from '../utils/telegram'
-import type { DocumentType } from '../data/documents'
-import DocumentModal from './DocumentModal'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
+import { useLegal } from '../legal/LegalProvider'
+import { classifyReceipt, fetchPublicDocument, LegalClientError, submitNewPremiumOrder, userFacingLoadError } from '../legal/client'
+import type { PublicDocument } from '../legal/types'
 import { trackEvent } from '../lib/analytics'
-import { apiPost, apiGet } from '../lib/api'
+import { apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import { useTheme } from '../hooks/useTheme'
 import {
@@ -102,22 +103,52 @@ type Props = {
 
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }: Props) {
   const { refresh } = usePremium()
+  const legal = useLegal()
   const [theme] = useTheme()
   const gem = GEMS_BY_THEME[theme]
-  const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
+  const [offerDocument, setOfferDocument] = useState<PublicDocument | null>(null)
+  const [offerError, setOfferError] = useState<string | null>(null)
+  const [offerChecked, setOfferChecked] = useState(false)
+  const [receipt, setReceipt] = useState('')
   const [plans, setPlans] = useState<PlanOption[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState<string>(DEFAULT_PLAN_ID)
   const [plansLoading, setPlansLoading] = useState(true)
+  const [plansError, setPlansError] = useState<string | null>(null)
+  const [plansAttempt, setPlansAttempt] = useState(0)
   const [loading, setLoading] = useState(false)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [restoreToast, setRestoreToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [offerAttempt, setOfferAttempt] = useState(0)
   const pollAbortRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    setOfferChecked(false)
+    setReceipt('')
+    let cancelled = false
+    fetchPublicDocument('offer', undefined, import.meta.env)
+      .then((document) => {
+        if (!cancelled) {
+          setOfferDocument(document)
+          setOfferError(null)
+        }
+      })
+      .catch((reason: unknown) => {
+        if (cancelled) return
+        setOfferDocument(null)
+        setOfferError(userFacingLoadError(reason))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, offerAttempt])
 
   useEffect(() => {
     if (isOpen) {
       setPlansLoading(true)
+      setPlansError(null)
       apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
         .then((res) => {
           if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
@@ -128,10 +159,13 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             setPlans([])
           }
         })
-        .catch(() => setPlans([]))
+        .catch((reason: unknown) => {
+          setPlans([])
+          setPlansError(userFacingLoadError(reason))
+        })
         .finally(() => setPlansLoading(false))
     }
-  }, [isOpen])
+  }, [isOpen, plansAttempt])
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId) ?? plans[0] ?? null
 
@@ -203,19 +237,35 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       return
     }
 
-    const pid = selectedPlan?.id
-    if (!pid) {
+    const plan = selectedPlan
+    if (!plan) {
       setError('Нет доступных тарифов')
+      return
+    }
+
+    if (!offerChecked || !offerDocument) {
+      setError('Отметьте принятие действующей оферты. Заказ не создан.')
+      return
+    }
+    if (!receipt.trim()) {
+      setError('Для электронного чека укажите email или телефон.')
       return
     }
 
     setError(null)
     setLoading(true)
     try {
-      const res = await apiPost<{ ok?: boolean; confirmationUrl?: string }>(
-        '/api/payments/yookassa/create',
-        { planId: pid }
-      )
+      const res = await submitNewPremiumOrder({
+        document: offerDocument,
+        plan: {
+          id: plan.id,
+          title: plan.title,
+          priceRub: plan.priceRub,
+          durationDays: plan.durationDays,
+        },
+        receiptRaw: receipt,
+        post: (path, body) => legal.postLegal(path, body),
+      })
       const url = res.confirmationUrl
       if (!url) {
         setError('Не удалось создать платёж')
@@ -242,16 +292,17 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         }, 1500)
       })
     } catch (e) {
-      const err = e as Error & { status?: number }
-      if (import.meta.env.DEV) console.warn('[PremiumOverlay] YooKassa error:', err.message)
-      if (err.status === 401) {
-        setError('Откройте приложение внутри Telegram для оплаты')
-      } else if (err.status === 502) {
-        setError('Платёжный сервис сейчас недоступен. Попробуйте ещё раз чуть позже.')
-      } else if (err.status === 503) {
-        setError('Оплата временно недоступна. Попробуйте позже.')
+      if (e instanceof LegalClientError && e.code === 'version_mismatch') {
+        setOfferChecked(false)
+        setOfferAttempt((value) => value + 1)
+      }
+      if (e instanceof LegalClientError) {
+        setError(userFacingLoadError(e))
       } else {
-        setError('Не удалось создать платёж. Попробуйте ещё раз.')
+        const err = e as Error & { status?: number }
+        if (err.status === 401) setError('Откройте приложение внутри Telegram для оплаты')
+        else if (err.status === 502) setError('Платёжный сервис сейчас недоступен. Попробуйте ещё раз чуть позже.')
+        else setError('Не удалось создать платёж. Принятие оферты не подтверждено.')
       }
     } finally {
       setLoading(false)
@@ -260,6 +311,9 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
 
   if (!isOpen && !asPage) return null
 
+  const receiptCheck = receipt.trim() ? classifyReceipt(receipt) : null
+  const receiptError = receiptCheck && 'error' in receiptCheck ? receiptCheck.error : null
+  const canStartPayment = Boolean(selectedPlan && offerDocument && offerChecked && receiptCheck && !receiptError && !offerError)
   const buyLabel = selectedPlan
     ? `Открыть Premium · ${formatPlanPriceLabel(selectedPlan)}`
     : 'Открыть Premium'
@@ -333,7 +387,10 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           ) : plans.length === 0 ? (
             <div className="premium-overlay__plans-empty">
               <img src={iconClock} alt="" className="premium-overlay__plans-empty-icon" decoding="async" aria-hidden />
-              <p className="premium-overlay__plans-loading">Тарифы временно недоступны</p>
+              <p className="premium-overlay__plans-loading">{plansError ?? 'Тарифы временно недоступны'}</p>
+              <button type="button" className="premium-overlay__legal-link" onClick={() => setPlansAttempt((value) => value + 1)}>
+                Повторить загрузку
+              </button>
             </div>
           ) : (
             <div className="premium-overlay__plans-list" role="radiogroup" aria-label="Тариф Premium">
@@ -376,11 +433,57 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           )}
         </div>
 
+        <div className="premium-offer">
+          {selectedPlan && (
+            <p className="premium-offer__summary">
+              {selectedPlan.title}: {selectedPlan.priceRub} ₽, {formatPlanPeriod(selectedPlan.durationDays)}. Автопродления нет.
+            </p>
+          )}
+          <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); legal.openDocument('offer') }}>
+            Открыть публичную оферту
+          </button>
+          {offerError && (
+            <p className="premium-offer__error">
+              {offerError}{' '}
+              <button type="button" className="premium-overlay__legal-link" onClick={() => setOfferAttempt((value) => value + 1)}>
+                Повторить загрузку
+              </button>
+            </p>
+          )}
+          <label className="legal-choice__check">
+            <input
+              type="checkbox"
+              checked={offerChecked}
+              disabled={!offerDocument || offerDocument.confirmation.available !== true || offerDocument.confirmation.mode !== 'statement'}
+              onChange={(event) => setOfferChecked(event.target.checked)}
+            />
+            <span>
+              {offerDocument?.confirmation.available === true && offerDocument.confirmation.mode === 'statement'
+                ? offerDocument.confirmation.statement
+                : 'Текст оферты ещё не загружен'}
+            </span>
+          </label>
+          <label className="premium-offer__field">
+            <span>Email или телефон для чека</span>
+            <input
+              value={receipt}
+              placeholder="name@example.com или +79990000000"
+              autoComplete="email"
+              inputMode="text"
+              aria-invalid={receiptError ? true : undefined}
+              onChange={(event) => setReceipt(event.target.value)}
+            />
+          </label>
+          {receiptError && <p className="premium-offer__error" role="alert">{receiptError}</p>}
+          <p className="premium-offer__hint">Контакт нужен только для чека и не включает рекламу или аналитику.</p>
+        </div>
+
         <button
           type="button"
           className="premium-overlay__btn premium-overlay__btn--buy"
           onClick={handleBuyPremium}
-          disabled={loading || plansLoading || !selectedPlan}
+          disabled={loading || plansLoading || !canStartPayment}
+          aria-disabled={loading || plansLoading || !canStartPayment}
         >
           <img src={gem} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--gem" decoding="async" aria-hidden />
           <span className="premium-overlay__btn-label">
@@ -405,23 +508,13 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             <span>Вы можете продолжить играть бесплатно или оформить Premium-подписку</span>
           </p>
           <p className="premium-overlay__legal">
-            Оплачивая Premium, вы соглашаетесь с{' '}
-            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('terms') }}>
-              Условиями использования
+            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); legal.openDocument('privacy') }}>
+              Политика конфиденциальности
             </button>
-            ,{' '}
-            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('privacy') }}>
-              Политикой конфиденциальности
+            {' · '}
+            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); legal.openDocument('agreement') }}>
+              Пользовательское соглашение
             </button>
-            ,{' '}
-            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('premium') }}>
-              Условиями Premium
-            </button>
-            {' '}и{' '}
-            <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); setDocumentModalType('adultPolicy') }}>
-              Политикой доступа к категориям 18+
-            </button>
-            .
           </p>
         </div>
 
@@ -444,11 +537,6 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     return (
       <>
         {cardContent}
-        <DocumentModal
-          isOpen={documentModalType !== null}
-          onClose={() => setDocumentModalType(null)}
-          documentType={documentModalType ?? 'privacy'}
-        />
       </>
     )
   }
@@ -462,11 +550,6 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       onClick={handleBackdropClick}
     >
       {cardContent}
-      <DocumentModal
-        isOpen={documentModalType !== null}
-        onClose={() => setDocumentModalType(null)}
-        documentType={documentModalType ?? 'privacy'}
-      />
     </div>,
     document.body
   )

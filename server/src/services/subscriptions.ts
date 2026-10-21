@@ -1,4 +1,16 @@
 import { query } from '../db.js'
+import type { Queryable } from '../legal/types.js'
+import { INSERT_STARS_PAYMENT_SQL } from '../payments/premiumGrantSql.js'
+
+function database(db?: Queryable): Queryable {
+  if (db) return db
+  return {
+    query: async <T>(sql: string, params?: unknown[]) => {
+      const result = await query(sql, params)
+      return { rows: result.rows as T[] }
+    },
+  }
+}
 
 const DAYS_6_MONTHS = 180
 
@@ -19,7 +31,7 @@ export function logPgError(prefix: string, e: unknown): void {
 
 /**
  * Try to save payment; returns false if duplicate (skip subscription update).
- * Uses INSERT; on UNIQUE conflict (provider, charge_id) returns false.
+ * Charge ids use the existing partial unique indexes. The amount is stored in total_amount.
  */
 export async function savePaymentIfNew(payment: {
   telegramId: number
@@ -32,41 +44,41 @@ export async function savePaymentIfNew(payment: {
 }): Promise<boolean> {
   const tgCharge = payment.telegramPaymentChargeId ?? null
   const provCharge = payment.providerPaymentChargeId ?? null
+  if (payment.currency == null || payment.currency.trim() === '') {
+    throw new Error('Payment currency is required')
+  }
+  if (!Number.isInteger(payment.amount) || payment.amount < 0) {
+    throw new Error('Payment amount is not a whole number')
+  }
 
   if (tgCharge || provCharge) {
     const check = await query<{ n: number }>(
-      `SELECT 1 FROM payments WHERE provider = $1
-        AND ((telegram_payment_charge_id = $2 AND $2 IS NOT NULL)
-             OR (provider_payment_charge_id = $3 AND $3 IS NOT NULL))
+      `SELECT 1 FROM payments
+        WHERE ($1::text IS NOT NULL AND telegram_payment_charge_id = $1)
+           OR ($2::text IS NOT NULL AND provider_payment_charge_id = $2)
        LIMIT 1`,
-      [payment.provider, tgCharge, provCharge]
+      [tgCharge, provCharge]
     )
     if (check.rows.length > 0) return false
   } else {
     const check = await query<{ n: number }>(
       `SELECT 1 FROM payments
-       WHERE telegram_id = $1 AND provider = $2 AND plan_id = $3
-         AND amount = $4 AND created_at > NOW() - INTERVAL '5 minutes'
+       WHERE telegram_id = $1 AND plan_id = $2
+         AND total_amount = $3 AND currency = $4
+         AND created_at > NOW() - INTERVAL '5 minutes'
        LIMIT 1`,
-      [payment.telegramId, payment.provider, payment.planId, payment.amount]
+      [payment.telegramId, payment.planId, payment.amount, payment.currency]
     )
     if (check.rows.length > 0) return false
   }
 
   try {
     await query(
-      `INSERT INTO payments (telegram_id, provider, plan_id, amount, currency,
-       telegram_payment_charge_id, provider_payment_charge_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        payment.telegramId,
-        payment.provider,
-        payment.planId,
-        payment.amount,
-        payment.currency ?? null,
-        tgCharge,
-        provCharge,
-      ]
+      `INSERT INTO payments (
+         telegram_id, plan_id, currency, total_amount, status,
+         telegram_payment_charge_id, provider_payment_charge_id
+       ) VALUES ($1, $2, $3, $4, 'paid', $5, $6)`,
+      [payment.telegramId, payment.planId, payment.currency, payment.amount, tgCharge, provCharge]
     )
   } catch (e) {
     if (e && typeof e === 'object' && 'code' in e && (e as { code?: string }).code === '23505') {
@@ -77,8 +89,8 @@ export async function savePaymentIfNew(payment: {
   return true
 }
 
-export async function ensureUser(telegramId: string | number): Promise<void> {
-  await query(
+export async function ensureUser(telegramId: string | number, db?: Queryable): Promise<void> {
+  await database(db).query(
     'INSERT INTO users (telegram_id) VALUES ($1::bigint) ON CONFLICT (telegram_id) DO NOTHING',
     [String(telegramId)]
   )
@@ -140,10 +152,11 @@ export function addDays(date: Date, days: number): Date {
 export async function extendPremiumActiveUntil(
   telegramId: string | number,
   planId: string,
-  durationDays: number
+  durationDays: number,
+  db?: Queryable
 ): Promise<Date> {
   try {
-    const res = await query<{ active_until: Date }>(
+    const res = await database(db).query<{ active_until: Date }>(
       `INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
        VALUES ($1::bigint, $2, now() + ($3::int || ' days')::interval, now())
        ON CONFLICT (telegram_id) DO UPDATE SET
@@ -183,27 +196,26 @@ export async function insertStarsPaymentIfNew(payment: {
   telegramPaymentChargeId: string
   providerPaymentChargeId: string | null
 }): Promise<number | null> {
-  const res = await query<{ id: number }>(
-    `INSERT INTO payments (
-       telegram_id,
-       provider,
-       plan_id,
-       amount,
-       currency,
-       telegram_payment_charge_id,
-       provider_payment_charge_id
-     )
-     VALUES ($1, 'stars', 'premium', $2, $3, $4, $5)
-     ON CONFLICT (provider, telegram_payment_charge_id) DO NOTHING
-     RETURNING id`,
-    [
+  if (payment.currency == null || payment.currency.trim() === '') {
+    throw new Error('Stars payment currency is required')
+  }
+  if (!Number.isInteger(payment.amount) || payment.amount < 0) {
+    throw new Error('Stars payment amount is not a whole number')
+  }
+  try {
+    const res = await query<{ id: number }>(INSERT_STARS_PAYMENT_SQL, [
       payment.telegramId,
-      payment.amount,
       payment.currency,
+      payment.amount,
       payment.telegramPaymentChargeId,
       payment.providerPaymentChargeId,
-    ]
-  )
-  const row = res.rows[0]
-  return row ? row.id : null
+    ])
+    const row = res.rows[0]
+    return row ? Number(row.id) : null
+  } catch (e) {
+    if (e && typeof e === 'object' && 'code' in e && (e as { code?: string }).code === '23505') {
+      return null
+    }
+    throw e
+  }
 }

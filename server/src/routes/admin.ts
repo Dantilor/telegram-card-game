@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express'
 import { query } from '../db.js'
+import { INSERT_ADMIN_GRANT_PAYMENT_SQL } from '../payments/premiumGrantSql.js'
 import { bot } from '../bot.js'
+import { runConsentedBroadcast, type MarketingMessage } from '../legal/marketing.js'
+import { db, withTransaction } from '../legal/runtime.js'
 
 const expectedToken = (process.env.ADMIN_TOKEN ?? '') as string
 
@@ -42,6 +45,25 @@ function parseTelegramId(v: unknown): number | null {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function currentBot(): NonNullable<typeof bot> {
+  if (!bot) throw new Error('Bot is not initialized')
+  return bot
+}
+
+async function sendConsentedMarketing(input: {
+  message: MarketingMessage
+  limit: number
+  offset: number
+  createdAfter: string | null
+  onlyTelegramId: number | null
+  send: (telegramId: number) => Promise<void>
+}) {
+  return runConsentedBroadcast(
+    { query: db, withTransaction },
+    { channel: 'telegram', ...input }
+  )
 }
 
 type BroadcastReplyMarkup = {
@@ -109,15 +131,7 @@ router.post('/grant', async (req: Request, res: Response) => {
     )
 
     const providerPaymentChargeId = `admin-grant-${telegramId}-${Date.now()}`
-    await query(
-      `INSERT INTO payments (
-         telegram_id, provider, plan_id, amount, currency,
-         telegram_payment_charge_id, provider_payment_charge_id
-       )
-       VALUES ($1, 'admin', 'premium', NULL, NULL, NULL, $2)
-       ON CONFLICT (provider, provider_payment_charge_id) DO NOTHING`,
-      [telegramId, providerPaymentChargeId]
-    )
+    await query(INSERT_ADMIN_GRANT_PAYMENT_SQL, [telegramId, providerPaymentChargeId])
 
     res.status(200).json({
       ok: true,
@@ -213,7 +227,24 @@ router.post('/broadcast-test', async (req: Request, res: Response) => {
       return
     }
 
-    await bot.telegram.sendMessage(telegramId, text, buttonParsed.sendOptions)
+    const result = await sendConsentedMarketing({
+      message: { kind: 'text', text, replyMarkup: buttonParsed.sendOptions.reply_markup },
+      limit: 1,
+      offset: 0,
+      createdAfter: null,
+      onlyTelegramId: telegramId,
+      send: async (id) => {
+        await currentBot().telegram.sendMessage(id, text, buttonParsed.sendOptions)
+      },
+    })
+    if (result.sentCount !== 1) {
+      if (result.failures.length > 0) {
+        res.status(500).json({ ok: false, error: result.failures[0]?.error ?? 'send failed' })
+        return
+      }
+      res.status(403).json({ ok: false, error: 'marketing_consent_required' })
+      return
+    }
 
     res.status(200).json({ ok: true, telegramId })
   } catch (e) {
@@ -252,43 +283,27 @@ router.post('/broadcast', async (req: Request, res: Response) => {
     let offset = Number.isFinite(rawOffset) ? rawOffset : 0
     if (offset < 0) offset = 0
 
-    const result = await query<{ telegram_id: number }>(
-      `SELECT telegram_id
-       FROM users
-       ORDER BY created_at ASC, telegram_id ASC
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
-    )
-
-    const rows = result.rows
-    const totalSelected = rows.length
-
-    let sentCount = 0
-    let failedCount = 0
-    const failures: Array<{ telegramId: number; error: string }> = []
-
-    for (const row of rows) {
-      const telegramId = row.telegram_id
-      try {
-        await bot.telegram.sendMessage(telegramId, rawText, buttonParsed.sendOptions)
-        sentCount += 1
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e)
-        console.warn('[admin] broadcast error for telegramId=', telegramId, message)
-        failedCount += 1
-        failures.push({ telegramId, error: message })
-      }
-      await sleep(50)
-    }
+    const result = await sendConsentedMarketing({
+      message: { kind: 'text', text: rawText, replyMarkup: buttonParsed.sendOptions.reply_markup },
+      limit,
+      offset,
+      createdAfter: null,
+      onlyTelegramId: null,
+      send: async (telegramId) => {
+        await currentBot().telegram.sendMessage(telegramId, rawText, buttonParsed.sendOptions)
+        await sleep(50)
+      },
+    })
 
     res.status(200).json({
       ok: true,
       limit,
       offset,
-      totalSelected,
-      sentCount,
-      failedCount,
-      failures,
+      totalSelected: result.totalSelected,
+      sentCount: result.sentCount,
+      failedCount: result.failedCount,
+      skippedCount: result.skippedCount,
+      failures: result.failures,
     })
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
@@ -328,13 +343,35 @@ router.post('/broadcast-photo-test', async (req: Request, res: Response) => {
       return
     }
 
-    await bot.telegram.sendPhoto(telegramId, photo, {
-      caption,
-      parse_mode: 'HTML',
-      ...(buttonParsed.sendOptions.reply_markup
-        ? { reply_markup: buttonParsed.sendOptions.reply_markup }
-        : {}),
+    const result = await sendConsentedMarketing({
+      message: {
+        kind: 'photo',
+        photo,
+        caption,
+        replyMarkup: buttonParsed.sendOptions.reply_markup,
+      },
+      limit: 1,
+      offset: 0,
+      createdAfter: null,
+      onlyTelegramId: telegramId,
+      send: async (id) => {
+        await currentBot().telegram.sendPhoto(id, photo, {
+          caption,
+          parse_mode: 'HTML',
+          ...(buttonParsed.sendOptions.reply_markup
+            ? { reply_markup: buttonParsed.sendOptions.reply_markup }
+            : {}),
+        })
+      },
     })
+    if (result.sentCount !== 1) {
+      if (result.failures.length > 0) {
+        res.status(500).json({ ok: false, error: result.failures[0]?.error ?? 'send failed' })
+        return
+      }
+      res.status(403).json({ ok: false, error: 'marketing_consent_required' })
+      return
+    }
     res.status(200).json({ ok: true, telegramId })
   } catch (e) {
     console.error('[admin] broadcast-photo-test error:', e)
@@ -372,47 +409,38 @@ router.post('/broadcast-photo', async (req: Request, res: Response) => {
     const limit = Math.max(1, Math.min(100, Number.isFinite(rawLimit) ? Math.trunc(rawLimit) : 10))
     const offset = Math.max(0, Number.isFinite(rawOffset) ? Math.trunc(rawOffset) : 0)
 
-    const usersRes = await query<{ telegram_id: number }>(
-      `SELECT telegram_id
-       FROM users
-       ORDER BY created_at ASC, telegram_id ASC
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
-    )
-
-    let sentCount = 0
-    let failedCount = 0
-    const failures: Array<{ telegramId: number; error: string }> = []
-
-    for (const row of usersRes.rows) {
-      const telegramId = row.telegram_id
-      try {
-        await bot.telegram.sendPhoto(telegramId, photo, {
+    const result = await sendConsentedMarketing({
+      message: {
+        kind: 'photo',
+        photo,
+        caption,
+        replyMarkup: buttonParsed.sendOptions.reply_markup,
+      },
+      limit,
+      offset,
+      createdAfter: null,
+      onlyTelegramId: null,
+      send: async (telegramId) => {
+        await currentBot().telegram.sendPhoto(telegramId, photo, {
           caption,
           parse_mode: 'HTML',
           ...(buttonParsed.sendOptions.reply_markup
             ? { reply_markup: buttonParsed.sendOptions.reply_markup }
             : {}),
         })
-        sentCount += 1
-      } catch (e) {
-        failedCount += 1
-        failures.push({
-          telegramId,
-          error: e instanceof Error ? e.message : String(e),
-        })
-      }
-      await sleep(50)
-    }
+        await sleep(50)
+      },
+    })
 
     res.status(200).json({
       ok: true,
       limit,
       offset,
-      totalSelected: usersRes.rows.length,
-      sentCount,
-      failedCount,
-      failures,
+      totalSelected: result.totalSelected,
+      sentCount: result.sentCount,
+      failedCount: result.failedCount,
+      skippedCount: result.skippedCount,
+      failures: result.failures,
     })
   } catch (e) {
     console.error('[admin] broadcast-photo error:', e)
@@ -457,49 +485,39 @@ router.post('/broadcast-photo-since', async (req: Request, res: Response) => {
     const limit = Math.max(1, Math.min(100, Number.isFinite(rawLimit) ? Math.trunc(rawLimit) : 10))
     const offset = Math.max(0, Number.isFinite(rawOffset) ? Math.trunc(rawOffset) : 0)
 
-    const usersRes = await query<{ telegram_id: number }>(
-      `SELECT telegram_id
-       FROM users
-       WHERE created_at > $1
-       ORDER BY created_at ASC, telegram_id ASC
-       LIMIT $2 OFFSET $3`,
-      [createdAfter, limit, offset]
-    )
-
-    let sentCount = 0
-    let failedCount = 0
-    const failures: Array<{ telegramId: number; error: string }> = []
-
-    for (const row of usersRes.rows) {
-      const telegramId = row.telegram_id
-      try {
-        await bot.telegram.sendPhoto(telegramId, photo, {
+    const result = await sendConsentedMarketing({
+      message: {
+        kind: 'photo',
+        photo,
+        caption,
+        replyMarkup: buttonParsed.sendOptions.reply_markup,
+      },
+      limit,
+      offset,
+      createdAfter,
+      onlyTelegramId: null,
+      send: async (telegramId) => {
+        await currentBot().telegram.sendPhoto(telegramId, photo, {
           caption,
           parse_mode: 'HTML',
           ...(buttonParsed.sendOptions.reply_markup
             ? { reply_markup: buttonParsed.sendOptions.reply_markup }
             : {}),
         })
-        sentCount += 1
-      } catch (e) {
-        failedCount += 1
-        failures.push({
-          telegramId,
-          error: e instanceof Error ? e.message : String(e),
-        })
-      }
-      await sleep(50)
-    }
+        await sleep(50)
+      },
+    })
 
     res.status(200).json({
       ok: true,
       createdAfter,
       limit,
       offset,
-      totalSelected: usersRes.rows.length,
-      sentCount,
-      failedCount,
-      failures,
+      totalSelected: result.totalSelected,
+      sentCount: result.sentCount,
+      failedCount: result.failedCount,
+      skippedCount: result.skippedCount,
+      failures: result.failures,
     })
   } catch (e) {
     console.error('[admin] broadcast-photo-since error:', e)

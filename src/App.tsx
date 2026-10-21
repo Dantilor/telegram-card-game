@@ -1,9 +1,10 @@
 import { useEffect, lazy, Suspense, useState, type ReactNode } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { trackEvent } from './lib/analytics'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
+import { LegalProvider } from './legal/LegalProvider'
+import { FirstUseSheet } from './components/LegalChoices'
 import { readyAndExpand } from './utils/telegram'
 import { getMe } from './api/subscription'
 import { preloadImages } from './utils/preloadImages'
@@ -65,9 +66,7 @@ const TruthDareVote = lazy(() => import('./pages/TruthDareVote'))
 const TruthDareResult = lazy(() => import('./pages/TruthDareResult'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PremiumPage = lazy(() => import('./pages/PremiumPage'))
-const LegalPrivacy = lazy(() => import('./pages/LegalPrivacy'))
-const LegalTerms = lazy(() => import('./pages/LegalTerms'))
-const LegalPremium = lazy(() => import('./pages/LegalPremium'))
+const LegalDocumentPage = lazy(() => import('./pages/LegalDocumentPage'))
 
 function DelayedFallback({ delayMs, children }: { delayMs: number; children: ReactNode }) {
   const [show, setShow] = useState(false)
@@ -102,8 +101,7 @@ function App() {
         // no-op
       }
     }, 1800)
-    trackEvent('app_open')
-    // Prefetch профиля: getMe() с кэшем в subscription — usePremiumStatus не сделает повторный запрос
+    // app_open отправляется только после уже действующего серверного согласия на аналитику.
     const t0 = setTimeout(() => {
       getMe().catch(() => {})
     }, 150)
@@ -148,6 +146,7 @@ function App() {
 
   return (
     <PremiumProvider>
+      <LegalProvider>
       <div className={`app${isReady ? ' is-ready' : ''}`}>
         <Suspense
           fallback={
@@ -229,12 +228,16 @@ function App() {
         />
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
-        <Route path="/legal/privacy" element={<LegalPrivacy />} />
-        <Route path="/legal/terms" element={<LegalTerms />} />
-        <Route path="/legal/premium" element={<LegalPremium />} />
+        <Route path="/legal/documents/:documentId/versions/:version" element={<LegalDocumentPage />} />
+        <Route path="/legal/documents/:documentId" element={<LegalDocumentPage />} />
+        <Route path="/legal/privacy" element={<LegalDocumentPage documentId="privacy" />} />
+        <Route path="/legal/terms" element={<LegalDocumentPage documentId="agreement" />} />
+        <Route path="/legal/premium" element={<LegalDocumentPage documentId="offer" />} />
         </Routes>
         </Suspense>
       </div>
+      <FirstUseSheet />
+      </LegalProvider>
     </PremiumProvider>
   )
 }

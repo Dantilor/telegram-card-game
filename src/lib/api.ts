@@ -1,34 +1,15 @@
-/**
- * Unified API client for backend on Render.
- */
-
+import { resolveApiBase } from './apiBase'
 import { getInitData } from './telegram'
 
-const BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  'https://telegram-card-game.onrender.com'
-).replace(/\/$/, '')
-
-const API_TIMEOUT_MS = 7000 // Не зависать при cold start Render, но не держать UI 15+ секунд
+const API_TIMEOUT_MS = 7000
 const isDev = import.meta.env.DEV
 
-/** Runtime check: предупреждение если API URL пустой или не https в проде */
-function checkBaseUrl(): void {
-  if (!isDev) return
-  if (!BASE_URL || BASE_URL.length < 5) {
-    console.warn('[TCG] VITE_API_URL пустой, используется fallback. Проверьте .env')
-  } else if (!BASE_URL.startsWith('https://') && !BASE_URL.startsWith('http://localhost')) {
-    console.warn('[TCG] API URL должен быть https в проде. Текущий:', BASE_URL)
-  }
-}
-
-checkBaseUrl()
-
 export function getBaseUrl(): string {
-  return BASE_URL
+  return resolveApiBase(import.meta.env)
 }
 
 async function request<T>(path: string, options: RequestInit & { method?: string; body?: string } = {}): Promise<T> {
+  const baseUrl = getBaseUrl()
   const initData = getInitData()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -40,7 +21,7 @@ async function request<T>(path: string, options: RequestInit & { method?: string
     headers['x-telegram-init-data'] = initData
   }
 
-  const url = path.startsWith('http') ? path : `${BASE_URL}${path}`
+  const url = path.startsWith('http') ? path : `${baseUrl}${path}`
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
 

@@ -121,10 +121,28 @@
 }
 
 .alias-home__modal-hint {
-  margin: 0 0 1rem;
+  margin: 0 0 0.7rem;
   font-size: 0.88rem;
   line-height: 1.45;
   color: var(--alias-readable-muted);
+}
+
+.alias-home__modal-policy {
+  display: block;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0.2rem;
+  border: none;
+  background: transparent;
+  color: var(--alias-readable-text);
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  overflow-wrap: break-word;
+  cursor: pointer;
 }
 
 .alias-home__modal-buttons {

@@ -489,8 +489,8 @@
 
 /* --- Тарифы --- */
 .premium-overlay__plans {
-  margin: 1.75rem 0 1.25rem;
-  padding: 1.5rem 0.5rem 0.35rem;
+  margin: 0.85rem 0 0.85rem;
+  padding: 0.75rem 0.5rem 0.2rem;
   border-top: 1px solid var(--po-divider);
 }
 
@@ -504,6 +504,7 @@
 .premium-overlay__plans-empty {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.65rem;
   padding: 0.85rem 0.9rem;
   border-radius: 14px;
@@ -906,8 +907,10 @@
 }
 
 .premium-overlay__btn:disabled {
-  opacity: 0.55;
+  opacity: 0.42;
   cursor: not-allowed;
+  filter: grayscale(0.9);
+  box-shadow: none;
 }
 
 .premium-overlay__btn:not(:disabled):active {

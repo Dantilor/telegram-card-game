@@ -1,8 +1,4 @@
-const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_BASE ||
-  'https://telegram-card-game.onrender.com'
-).replace(/\/$/, '')
+import { resolveApiBase } from '../lib/apiBase'
 
 function getInitData(): string {
   return (typeof window !== 'undefined' && (window as Window & { Telegram?: { WebApp?: { initData?: string } } })?.Telegram?.WebApp?.initData) || ''
@@ -14,7 +10,7 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
   headers.set('Content-Type', 'application/json')
   if (initData) headers.set('x-telegram-init-data', initData)
 
-  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`
+  const url = path.startsWith('http') ? path : `${resolveApiBase(import.meta.env)}${path}`
   const res = await fetch(url, {
     ...options,
     headers,
@@ -31,5 +27,5 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
 }
 
 export function getApiBaseUrl(): string {
-  return API_BASE_URL
+  return resolveApiBase(import.meta.env)
 }

@@ -1,4 +1,15 @@
 import { query } from '../db.js'
+import type { Queryable } from '../legal/types.js'
+
+function database(db?: Queryable): Queryable {
+  if (db) return db
+  return {
+    query: async <T>(sql: string, params?: unknown[]) => {
+      const result = await query(sql, params)
+      return { rows: result.rows as T[] }
+    },
+  }
+}
 
 export const LIFETIME_PLAN_ID = 'premium_lifetime'
 export const LIFETIME_DURATION_DAYS = 36500
@@ -23,8 +34,8 @@ export function planReceiptDescription(durationDays: number): string {
   return `Подписка GameNight Host Premium (${months} мес.)`
 }
 
-export async function getActivePlanById(planId: string): Promise<PlanRow | null> {
-  const res = await query<PlanRow>(
+export async function getActivePlanById(planId: string, db?: Queryable): Promise<PlanRow | null> {
+  const res = await database(db).query<PlanRow>(
     `SELECT plan_id, title, price_rub, duration_days
      FROM plans
      WHERE plan_id = $1 AND is_active = true
@@ -34,7 +45,7 @@ export async function getActivePlanById(planId: string): Promise<PlanRow | null>
   return res.rows[0] ?? null
 }
 
-export async function getPlanDurationDays(planId: string): Promise<number | null> {
-  const plan = await getActivePlanById(planId)
+export async function getPlanDurationDays(planId: string, db?: Queryable): Promise<number | null> {
+  const plan = await getActivePlanById(planId, db)
   return plan?.duration_days ?? null
 }

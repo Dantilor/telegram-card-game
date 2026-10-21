@@ -5,9 +5,9 @@
 import { getTelegramWebApp } from './telegram'
 
 export const LEGAL_PATHS = {
-  privacy: '/legal/privacy',
-  terms: '/legal/terms',
-  premium: '/legal/premium',
+  privacy: '/legal/documents/privacy',
+  terms: '/legal/documents/agreement',
+  premium: '/legal/documents/offer',
 } as const
 
 export function getLegalUrl(path: keyof typeof LEGAL_PATHS): string {

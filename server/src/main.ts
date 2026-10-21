@@ -11,6 +11,10 @@ import apiRouter from './api.js'
 import eventsRouter from './routes/events.js'
 import publicStatsRouter from './routes/publicStats.js'
 import adminRouter from './routes/admin.js'
+import { createLegalHtmlRouter, createLegalRouter } from './routes/legal.js'
+import { db, withTransaction } from './legal/runtime.js'
+import { verifyInitData } from './telegram/verifyInitData.js'
+import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
 
 const port = Number(process.env.PORT || 3001)
@@ -83,6 +87,26 @@ app.use('/api', apiRouter)
 app.use('/api', eventsRouter)
 app.use('/api', publicStatsRouter)
 app.use('/api/admin', adminRouter)
+app.use(
+  '/api/legal',
+  createLegalRouter({
+    query: db,
+    withTransaction,
+    verifyInitData,
+    getBotToken: () => process.env.TELEGRAM_BOT_TOKEN ?? process.env.BOT_TOKEN ?? '',
+    getPlan: async (planId) => {
+      const plan = await getActivePlanById(planId)
+      if (!plan) return null
+      return {
+        planId: plan.plan_id,
+        title: plan.title,
+        priceRub: plan.price_rub,
+        durationDays: plan.duration_days,
+      }
+    },
+  })
+)
+app.use('/legal', createLegalHtmlRouter({ query: db }))
 
 // HTTP server (webhook mode — no bot.launch/polling)
 app.listen(port, '0.0.0.0', () => {

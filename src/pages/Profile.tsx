@@ -2,22 +2,17 @@ import { useState, useCallback, useRef } from 'react'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
-import type { DocumentType } from '../data/documents'
+import { PROFILE_DOCUMENTS } from '../legal/catalog'
+import { ConsentsPanel } from '../components/LegalChoices'
+import { useLegal } from '../legal/LegalProvider'
 import { haptic, getTgUser, getInitData } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
-import DocumentModal from '../components/DocumentModal'
 import './Profile.css'
 
 const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
 
-const DOCUMENT_LINKS: { type: DocumentType; label: string; icon: string }[] = [
-  { type: 'privacy', label: 'Политика конфиденциальности', icon: '🛡️' },
-  { type: 'terms', label: 'Условия использования', icon: '📄' },
-  { type: 'premium', label: 'Условия Premium', icon: '💎' },
-  { type: 'adultPolicy', label: 'Политика доступа к категориям 18+', icon: '🔞' },
-]
 
 const PREMIUM_PERKS = ['8 игр', 'Избранное', '18+ режимы', 'Без автосписаний']
 
@@ -33,8 +28,8 @@ function Profile() {
   const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
   const initData = getInitData()
   const userId = initData.userId ?? initData.user?.id
+  const legal = useLegal()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
-  const [documentModalType, setDocumentModalType] = useState<DocumentType | null>(null)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -200,21 +195,31 @@ function Profile() {
           )}
         </section>
 
+        <div className="profile-aside">
         <section className="profile-menu">
           <h2 className="profile-menu__title">Документы</h2>
           <div className="profile-menu__panel">
-            {DOCUMENT_LINKS.map(({ type, label, icon }) => (
+            {PROFILE_DOCUMENTS.map((item) => (
               <button
-                key={type}
+                key={item.id}
                 type="button"
                 className="profile-menu__row"
-                onClick={() => { haptic('light'); setDocumentModalType(type) }}
+                onClick={() => { haptic('light'); legal.openDocument(item.id) }}
               >
-                <span className="profile-menu__icon" aria-hidden>{icon}</span>
-                <span className="profile-menu__label">{label}</span>
+                <span className="profile-menu__icon" aria-hidden>📄</span>
+                <span className="profile-menu__label">
+                  <span className="profile-menu__label-main">{item.label}</span>
+                </span>
                 <span className="profile-menu__chev" aria-hidden>›</span>
               </button>
             ))}
+          </div>
+        </section>
+
+        <section className="profile-menu">
+          <h2 className="profile-menu__title">Согласия и рассылки</h2>
+          <div className="profile-menu__panel">
+            <ConsentsPanel />
           </div>
         </section>
 
@@ -235,6 +240,7 @@ function Profile() {
             </button>
           </div>
         </section>
+        </div>
 
         {import.meta.env.DEV && userId != null && (
           <p className="profile-dev-id">id {userId}</p>
@@ -242,11 +248,6 @@ function Profile() {
       </div>
 
       <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
-      <DocumentModal
-        isOpen={documentModalType !== null}
-        onClose={() => setDocumentModalType(null)}
-        documentType={documentModalType ?? 'privacy'}
-      />
     </div>
   )
 }

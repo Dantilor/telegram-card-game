@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import DocumentModal from './DocumentModal'
 import { haptic } from '../utils/telegram'
 import './AdultConfirmModal.css'
 
@@ -9,6 +11,7 @@ type Props = {
 }
 
 export default function AdultConfirmModal({ isOpen, onConfirm, onCancel }: Props) {
+  const [policyOpen, setPolicyOpen] = useState(false)
   if (!isOpen) return null
 
   const handleConfirm = () => {
@@ -33,7 +36,17 @@ export default function AdultConfirmModal({ isOpen, onConfirm, onCancel }: Props
         <p id="adult-confirm-title" className="adult-confirm__text">
           Мне 18+
         </p>
-        <p className="adult-confirm__hint">Подтвердите возраст для доступа к контенту</p>
+        <p className="adult-confirm__hint">Подтвердите возраст для доступа к этой категории</p>
+        <button
+          type="button"
+          className="adult-confirm__policy"
+          onClick={() => {
+            haptic('light')
+            setPolicyOpen(true)
+          }}
+        >
+          Политика доступа к категориям 18+
+        </button>
         <div className="adult-confirm__buttons">
           <button type="button" className="adult-confirm__btn adult-confirm__btn--secondary" onClick={handleCancel}>
             Отмена
@@ -43,6 +56,7 @@ export default function AdultConfirmModal({ isOpen, onConfirm, onCancel }: Props
           </button>
         </div>
       </div>
+      <DocumentModal isOpen={policyOpen} onClose={() => setPolicyOpen(false)} documentType="adultPolicy" />
     </div>,
     document.body
   )

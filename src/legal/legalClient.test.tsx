@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -241,14 +241,19 @@ describe('document rendering and source boundaries', () => {
     expect(html).not.toContain('<script>')
   })
 
-  it('does not embed the private legal package or the retired short policies', () => {
-    const packagePath = join(process.cwd(), '_private_legal_import', 'documents.json')
+  // This package is intentionally private and gitignored; a clean checkout has none.
+  const packagePath = join(process.cwd(), '_private_legal_import', 'documents.json')
+  it.skipIf(!existsSync(packagePath))('does not embed the private legal package', () => {
     const packaged = JSON.parse(readFileSync(packagePath, 'utf8')) as { documents: Array<{ sha256: string; body_markdown: string }> }
     const sources = walk(root).map((path) => readFileSync(path, 'utf8')).join('\n')
     for (const document of packaged.documents) {
       expect(sources).not.toContain(document.sha256)
       expect(sources).not.toContain(document.body_markdown.slice(0, 120))
     }
+  })
+
+  it('does not embed retired short policies', () => {
+    const sources = walk(root).map((path) => readFileSync(path, 'utf8')).join('\n')
     expect(sources).not.toContain('Мы заботимся о вашей конфиденциальности и обрабатываем только те данные')
     expect(sources).not.toContain('Используя приложение, вы принимаете эти условия.')
   })

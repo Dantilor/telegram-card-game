@@ -1,29 +1,42 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 type TelegramBack = {
+  isVisible?: boolean
   show?: () => void
   hide?: () => void
   onClick?: (cb: () => void) => void
   offClick?: (cb: () => void) => void
 }
 
-function telegramBack(): TelegramBack | null {
-  const webApp = window.Telegram?.WebApp as { BackButton?: TelegramBack } | undefined
-  return webApp?.BackButton ?? null
-}
+const layers: Array<{ token: symbol; close: () => void }> = []
+let back: TelegramBack | null = null
+let wasVisible = false
+const closeTop = () => layers[layers.length - 1]?.close()
 
-/** Closes the current legal layer with Telegram's BackButton when it exists. */
+/** One native handler: closing a document must not also dismiss its parent sheet. */
 export function useTelegramBack(active: boolean, onClose: () => void): void {
+  const close = useRef(onClose)
+  close.current = onClose
   useEffect(() => {
     if (!active) return
-    const back = telegramBack()
-    if (!back?.show || !back.onClick) return
-    const handler = () => onClose()
-    back.onClick(handler)
-    back.show()
-    return () => {
-      back.offClick?.(handler)
-      back.hide?.()
+    const control = (window.Telegram?.WebApp as { BackButton?: TelegramBack } | undefined)?.BackButton
+    if (!control?.show || !control.onClick) return
+    const token = Symbol('legal-layer')
+    if (layers.length === 0) {
+      back = control
+      wasVisible = Boolean(control.isVisible)
+      back.onClick?.(closeTop)
     }
-  }, [active, onClose])
+    layers.push({ token, close: () => close.current() })
+    control.show()
+    return () => {
+      const index = layers.findIndex((layer) => layer.token === token)
+      if (index >= 0) layers.splice(index, 1)
+      if (layers.length === 0) {
+        back?.offClick?.(closeTop)
+        if (!wasVisible) back?.hide?.()
+        back = null
+      }
+    }
+  }, [active])
 }

@@ -15,8 +15,6 @@ const CROWN_BY_THEME = {
   'minimal-calm': iconCalmHostCrown,
 } as const
 
-const FALLBACK_USERS_COUNT = 6000
-
 function formatUsersCount(count: number): string {
   return new Intl.NumberFormat('ru-RU').format(count)
 }
@@ -29,21 +27,21 @@ function getInitials(firstName?: string, lastName?: string): string {
 
 function HomeWelcomeTop() {
   const [theme] = useTheme()
-  const [usersCount, setUsersCount] = useState(FALLBACK_USERS_COUNT)
+  const [usersCount, setUsersCount] = useState<number | null>(null)
   const user = getTgUser()
   const crownIcon = CROWN_BY_THEME[theme]
-  const formattedCount = formatUsersCount(usersCount)
+  const formattedCount = usersCount === null ? '—' : formatUsersCount(usersCount)
 
   useEffect(() => {
     let cancelled = false
     apiGet<{ usersCount: number }>('/api/public-stats')
       .then((data) => {
-        if (!cancelled && typeof data.usersCount === 'number' && Number.isFinite(data.usersCount)) {
+        if (!cancelled && Number.isSafeInteger(data.usersCount) && data.usersCount >= 0) {
           setUsersCount(data.usersCount)
         }
       })
       .catch(() => {
-        /* fallback stays */
+        /* An unavailable count must not be replaced by an invented number. */
       })
     return () => {
       cancelled = true
@@ -86,7 +84,7 @@ function HomeWelcomeTop() {
             </span>
           </div>
         </div>
-        <div className="home-welcome-top__stats-block" aria-label={`${formattedCount} игроков выбирают GNH`}>
+        <div className="home-welcome-top__stats-block" aria-label={usersCount === null ? 'Количество игроков пока недоступно' : `${formattedCount} игроков выбирают GNH`}>
           <span className="home-welcome-top__stats-value">{formattedCount}</span>
           <span className="home-welcome-top__stats-caption">игроков выбирают GNH</span>
         </div>

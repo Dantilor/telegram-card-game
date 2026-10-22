@@ -1,12 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { LegalDocumentModal } from '../components/LegalDocumentView'
-import {
-  allowAnalyticsTransport,
-  blockAnalyticsTransport,
-  shouldSendInitialAppOpen,
-} from './analyticsGate'
-import { analyticsActiveFromRecords, LegalClientError, legalApiBase } from './client'
-import { trackEvent } from '../lib/analytics'
+import { blockAnalyticsTransport } from './analyticsGate'
+import { LegalClientError, legalApiBase } from './client'
+import { preloadDocuments } from './documentCache'
+import { PROFILE_DOCUMENTS } from './catalog'
 import { getInitData } from '../lib/telegram'
 import type { OwnLegalRecords } from './types'
 
@@ -73,9 +70,10 @@ export function LegalProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<LegalContextValue['status']>('loading')
   const [error, setError] = useState<string | null>(null)
   const [viewer, setViewer] = useState<Viewer | null>(null)
-  const initialResolution = useRef(true)
 
   const refreshRecords = useCallback(async () => {
+    // Collection is disabled in this product flow, including older grants.
+    blockAnalyticsTransport()
     if (!getInitData()) {
       blockAnalyticsTransport()
       setRecords(null)
@@ -85,30 +83,23 @@ export function LegalProvider({ children }: { children: ReactNode }) {
     }
     try {
       const data = (await requestLegal('/api/legal/me', 'GET')) as OwnLegalRecords
-      const active = analyticsActiveFromRecords(data)
-      const analyticsConsent = data.consents?.find(
-        (consent) => consent.documentId === 'analytics' && (consent.channel == null || consent.channel === '')
-      )
-      if (active) allowAnalyticsTransport(analyticsConsent?.validUntil ?? null)
-      else blockAnalyticsTransport()
-      if (shouldSendInitialAppOpen(active, initialResolution.current)) {
-        trackEvent('app_open')
-      }
-      initialResolution.current = false
       setRecords(data)
       setStatus('ready')
       setError(null)
     } catch (reason) {
       blockAnalyticsTransport()
-      initialResolution.current = false
       setStatus('error')
       setError(reason instanceof LegalClientError ? reason.message : 'Не удалось проверить согласия.')
     }
   }, [])
 
   useEffect(() => {
+    preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id))
     void refreshRecords()
   }, [refreshRecords])
+
+  const openDocument = useCallback((id: string, version?: string) => setViewer({ id, version }), [])
+  const closeDocument = useCallback(() => setViewer(null), [])
 
   const value = useMemo<LegalContextValue>(
     () => ({
@@ -116,10 +107,10 @@ export function LegalProvider({ children }: { children: ReactNode }) {
       status,
       error,
       refreshRecords,
-      openDocument: (id, version) => setViewer({ id, version }),
+      openDocument,
       postLegal: (path, body) => requestLegal(path, 'POST', body),
     }),
-    [records, status, error, refreshRecords]
+    [records, status, error, refreshRecords, openDocument]
   )
 
   return (
@@ -127,9 +118,10 @@ export function LegalProvider({ children }: { children: ReactNode }) {
       {children}
       {viewer && (
         <LegalDocumentModal
+          key={`${viewer.id}:${viewer.version ?? 'active'}`}
           documentId={viewer.id}
           version={viewer.version}
-          onClose={() => setViewer(null)}
+          onClose={closeDocument}
         />
       )}
     </LegalContext.Provider>

@@ -258,6 +258,8 @@ export async function submitNewPremiumOrder(input: {
     }
     evidenceId = parsed
   } catch (error) {
+    // Let the checkout refresh the document and require a new explicit check.
+    if (error instanceof LegalClientError && error.code === 'version_mismatch') throw error
     if (error instanceof LegalClientError && error.code === 'offer_not_stored') throw error
     const message = error instanceof LegalClientError ? error.message : 'Принятие оферты не сохранено.'
     throw new LegalClientError('offer_not_stored', error instanceof LegalClientError ? error.status : 0, `${message} Платёж не создан.`)

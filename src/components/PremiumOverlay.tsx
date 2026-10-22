@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom'
 import { haptic } from '../utils/telegram'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
 import { useLegal } from '../legal/LegalProvider'
-import { classifyReceipt, fetchPublicDocument, LegalClientError, submitNewPremiumOrder, userFacingLoadError } from '../legal/client'
+import { classifyReceipt, LegalClientError, submitNewPremiumOrder, userFacingLoadError } from '../legal/client'
 import type { PublicDocument } from '../legal/types'
+import { cachedDocument, invalidateDocument, loadDocument } from '../legal/documentCache'
 import { trackEvent } from '../lib/analytics'
 import { apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
@@ -106,7 +107,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const legal = useLegal()
   const [theme] = useTheme()
   const gem = GEMS_BY_THEME[theme]
-  const [offerDocument, setOfferDocument] = useState<PublicDocument | null>(null)
+  const [offerDocument, setOfferDocument] = useState<PublicDocument | null>(() => cachedDocument('offer'))
   const [offerError, setOfferError] = useState<string | null>(null)
   const [offerChecked, setOfferChecked] = useState(false)
   const [receipt, setReceipt] = useState('')
@@ -128,7 +129,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     setOfferChecked(false)
     setReceipt('')
     let cancelled = false
-    fetchPublicDocument('offer', undefined, import.meta.env)
+    loadDocument('offer')
       .then((document) => {
         if (!cancelled) {
           setOfferDocument(document)
@@ -295,6 +296,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     } catch (e) {
       if (e instanceof LegalClientError && e.code === 'version_mismatch') {
         setOfferChecked(false)
+        invalidateDocument('offer')
         setOfferAttempt((value) => value + 1)
       }
       if (e instanceof LegalClientError) {
@@ -447,7 +449,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           {offerError && (
             <p className="premium-offer__error">
               {offerError}{' '}
-              <button type="button" className="premium-overlay__legal-link" onClick={() => setOfferAttempt((value) => value + 1)}>
+              <button type="button" className="premium-overlay__legal-link" onClick={() => { invalidateDocument('offer'); setOfferAttempt((value) => value + 1) }}>
                 Повторить загрузку
               </button>
             </p>

@@ -216,12 +216,7 @@ function Profile() {
           </div>
         </section>
 
-        <section className="profile-menu">
-          <h2 className="profile-menu__title">Согласия и рассылки</h2>
-          <div className="profile-menu__panel">
-            <ConsentsPanel />
-          </div>
-        </section>
+        <ConsentsPanel />
 
         <section className="profile-menu profile-menu--support">
           <h2 className="profile-menu__title">Поддержка</h2>

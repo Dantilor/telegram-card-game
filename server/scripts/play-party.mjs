@@ -448,6 +448,7 @@ async function playInfected(initData) {
   assert(created.status === 201, `infected create ${created.status} ${JSON.stringify(created.json)}`)
   if (created.status !== 201) return
   const host = created.json.session
+  assert(/^\d{6}$/.test(host.code), `infected code is not six digits: ${host.code}`)
   const seats = [host]
   for (const name of ['Рита', 'Олег', 'Кира']) {
     const joined = await call('POST', '/api/games/infected', { body: { mode: 'join', code: host.code, name } })
@@ -461,7 +462,7 @@ async function playInfected(initData) {
   })
   const started = await action(host, 'start')
   assert(started.status === 200 && started.json?.room?.phase === 'briefing', `infected start ${started.status} ${started.json?.error}`)
-  assert(started.json?.room?.taskTarget === 3, `infected target ${started.json?.room?.taskTarget}`)
+  assert(started.json?.room?.taskTarget === 4, `infected target ${started.json?.room?.taskTarget}`)
   assert(started.json?.room?.crewScore === 0, 'infected crew score was not separate')
   for (const seat of seats) {
     const ready = await action(seat, 'ready')
@@ -469,40 +470,72 @@ async function playInfected(initData) {
   }
   const operations = await call('GET', '/api/games/infected', { headers: auth(host) })
   assert(operations.json?.room?.phase === 'operations', `infected operations ${operations.json?.room?.phase}`)
-  const task = await action(seats[1], 'task')
-  assert(task.status === 200 && task.json?.room?.tasksDone === 1 && task.json?.room?.taskTarget === 3, 'infected task counter')
-  const healthy = seats.map(async (seat) => {
-    const view = await call('GET', '/api/games/infected', { headers: auth(seat) })
+  const views = await Promise.all(seats.map((seat) => call('GET', '/api/games/infected', { headers: auth(seat) })))
+  for (const view of views) {
     assert(view.json?.players?.every((player) => player.finalRole === undefined), 'infected leaked final roles')
     if (view.json?.me?.infectionStatus !== 'active') {
       assert((view.json?.me?.teammates ?? []).length === 0, 'healthy player saw infected teammates')
     }
-  })
-  await Promise.all(healthy)
+  }
+  const organism = seats[views.findIndex((view) => view.json?.me?.infectionStatus === 'active')]
+  const crewSeat = seats.find((seat) => seat !== organism)
+  const refused = await action(crewSeat, 'task', { sabotage: true })
+  assert(refused.status === 400, `crew could sabotage a protocol ${refused.status}`)
+
+  const task = await action(crewSeat, 'task')
+  assert(task.status === 200 && task.json?.room?.tasksDone === 1 && task.json?.room?.taskTarget === 4, 'infected task counter')
+  const early = await action(host, 'council')
+  assert(early.status === 400 && /Ждём/.test(early.json?.error ?? ''), `council opened before all protocols ${early.status}`)
+
+  const sabotage = await action(organism, 'task', { sabotage: true })
+  assert(sabotage.status === 200 && sabotage.json?.room?.tasksDone === 2, `sabotage was visible or refused ${sabotage.status}`)
+  for (const seat of seats) {
+    if (seat === organism || seat === crewSeat) continue
+    const done = await action(seat, 'task')
+    assert(done.status === 200, `infected task ${done.status} ${done.json?.error}`)
+  }
   const council = await action(host, 'council')
   assert(council.status === 200 && council.json?.room?.phase === 'council', `infected council ${council.status} ${council.json?.error}`)
-  assert(council.json?.room?.crewScore === 0, 'early council counted a failed cycle')
-  assert(council.json?.room?.infectionLevel > operations.json.room.infectionLevel, 'early council had no penalty')
+  assert(council.json?.room?.crewScore === 0, 'sabotaged cycle counted for the crew')
+  assert(/сбоев — 1/.test(council.json?.room?.event?.text ?? ''), `council did not report the sabotage: ${council.json?.room?.event?.text}`)
+  assert(council.json?.room?.infectionLevel > operations.json.room.infectionLevel, 'sabotaged cycle had no penalty')
+
+  const firstVote = await action(seats[0], 'vote', { targetId: seats[1].playerId })
+  assert(firstVote.status === 200, `infected vote ${firstVote.status} ${firstVote.json?.error}`)
+  const earlyResolve = await action(host, 'resolve')
+  assert(earlyResolve.status === 400 && /Ждём/.test(earlyResolve.json?.error ?? ''), `resolve before all votes ${earlyResolve.status}`)
   for (const [index, seat] of seats.entries()) {
+    if (index === 0) continue
     const target = seats[(index + 1) % seats.length]
     const vote = await action(seat, 'vote', { targetId: target.playerId })
     assert(vote.status === 200, `infected vote ${vote.status} ${vote.json?.error}`)
   }
   let state = await action(host, 'resolve')
   assert(state.status === 200, `infected resolve ${state.status} ${state.json?.error}`)
+  let hostQuarantined = false
   for (let guard = 0; guard < 24 && state.json?.room?.phase !== 'ended'; guard += 1) {
     if (state.json?.room?.phase === 'result') state = await action(host, 'next')
-    else if (state.json?.room?.phase === 'operations') state = await action(host, 'council')
-    else if (state.json?.room?.phase === 'council') {
-      for (const [index, seat] of seats.entries()) {
+    else if (state.json?.room?.phase === 'operations') {
+      for (const seat of seats) {
         if (state.json?.players?.find((player) => player.id === seat.playerId)?.quarantined) continue
-        const target = seats.find((candidate) => candidate.playerId !== seat.playerId)
-        await action(seat, 'vote', { targetId: target.playerId })
+        await action(seat, 'task')
+      }
+      state = await action(host, 'council')
+    } else if (state.json?.room?.phase === 'council') {
+      const open = (seat) => !state.json?.players?.find((player) => player.id === seat.playerId)?.quarantined
+      for (const seat of seats) {
+        if (!open(seat)) continue
+        // Everyone points at the host so the quarantined-host path is played.
+        const target = seat !== host && open(host) ? host : seats.find((candidate) => candidate !== seat && open(candidate))
+        const vote = await action(seat, 'vote', { targetId: target.playerId })
+        assert(vote.status === 200, `infected loop vote ${vote.status} ${vote.json?.error}`)
       }
       state = await action(host, 'resolve')
     } else break
     assert(state.status === 200, `infected loop ${state.status} ${state.json?.error ?? state.json?.room?.phase}`)
+    if (state.json?.me?.quarantined) hostQuarantined = true
   }
+  assert(hostQuarantined, 'the host was never quarantined, so that path went unplayed')
   const refresh = await call('GET', '/api/games/infected', { headers: auth(seats[1]) })
   assert(refresh.json?.room?.phase === 'ended' && refresh.json?.room?.winner, `infected finish ${refresh.json?.room?.phase}`)
   assert(refresh.json?.players?.every((player) => player.finalRole === 'crew' || player.finalRole === 'infected'), 'infected finale hid roles')

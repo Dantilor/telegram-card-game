@@ -5,7 +5,6 @@ import {
   Check,
   ChevronRight,
   CircleHelp,
-  Clock3,
   Copy,
   Eye,
   EyeOff,
@@ -248,7 +247,7 @@ function Countdown({ endsAt }: { endsAt: number | null }) {
     return () => clearInterval(interval);
   }, [endsAt]);
   if (!endsAt) return null;
-  return <span className="timer" title="Ориентир. Фазу закрывает ведущий."><Clock3 />{Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}<small>ориентир</small></span>;
+  return <span className="timer">{Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}</span>;
 }
 
 function Instruction({ tone = "cyan", icon, title, children }: { tone?: string; icon: ReactNode; title: string; children: ReactNode }) {
@@ -343,11 +342,11 @@ function RoomHeader({ state, sound, setSound, leave }: { state: State; sound: bo
       <div className="game-page dv-nav"><div className="game-page__top"><HomeButton className="game-page__nav-btn" /><BackButton className="game-page__nav-btn" onClick={handleBack} /></div></div>
       <div className="room-header-row">
       <button className="icon-button" aria-label="Выйти из комнаты" onClick={() => setExitOpen(true)}><LogOut /></button>
-      {exitOpen && <div className="dv-dialog" role="dialog" aria-modal="true"><div className="exit-dialog"><h2>Выйти из комнаты?</h2><p>Партия продолжится. По этой же ссылке вы сможете вернуться на своём телефоне.</p><div className="dv-dialog__actions"><button type="button" onClick={() => setExitOpen(false)}>Остаться</button><button type="button" onClick={leave}>Выйти</button></div></div></div>}
       <button className="room-code" onClick={() => void copyCode()}><span>КОМНАТА</span><strong>{state.room.code}</strong><Copy /></button>
       <SoundToggle sound={sound} setSound={setSound} compact />
       </div>
     </header>
+    {exitOpen && <div className="dv-dialog" role="dialog" aria-modal="true"><div className="exit-dialog"><h2>Выйти из комнаты?</h2><p>Партия продолжится. По этой же ссылке вы сможете вернуться на своём телефоне.</p><div className="dv-dialog__actions"><button type="button" onClick={() => setExitOpen(false)}>Остаться</button><button type="button" onClick={leave}>Выйти</button></div></div></div>}
     <section className="phase-card">
       <div><small>{state.room.phase === "lobby" ? "АРХИВ ЗАКРЫТ" : `ДЕЛО № ${state.room.case.number} · ${state.room.case.name}`}</small><h1>{PHASE_TITLES[state.room.phase]}</h1></div>
       <Countdown endsAt={state.room.phaseEndsAt} />

@@ -224,3 +224,85 @@ html[data-theme] .app .infected-game p { color: #d5e4ea; }
   height: 16px;
   flex: 0 0 auto;
 }
+
+/* Inputs stay readable in every GNH theme (the global input colour follows the light themes). */
+.app .infected-game .game-input,
+.app .infected-game .game-select {
+  border: 1px solid #6fe9ff55 !important;
+  background: #0c1d29 !important;
+  color: #f3fbff !important;
+  -webkit-text-fill-color: #f3fbff;
+  caret-color: #55e8ff;
+}
+.app .infected-game .game-input::placeholder {
+  color: #8fb3c1 !important;
+  -webkit-text-fill-color: #8fb3c1;
+  opacity: 1;
+}
+.app .infected-game .field-label { color: #c4dde6; }
+
+.app > .infected-game.inf-portal,
+.infected-game.inf-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-height: 0;
+}
+
+/* Header and dialogs sit below the Telegram controls. */
+.app .infected-game .home-layout {
+  padding-top: calc(var(--tg-header-offset, 3.5rem) + 10px);
+}
+.app .infected-game .room-header {
+  margin-top: 0;
+  padding-top: calc(var(--tg-header-offset, 3.5rem) + 8px);
+  background: #03070df7;
+}
+.infected-game .inf-dialog {
+  padding: calc(var(--tg-header-offset, 3.5rem) + 12px) 14px max(18px, env(safe-area-inset-bottom));
+}
+.infected-game .inf-dialog .rules-dialog > .eyebrow,
+.infected-game .inf-dialog .rules-dialog > h2 {
+  padding-right: 52px;
+}
+.app .infected-game .inf-dialog-close {
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+}
+.infected-game .rule-row { grid-template-columns: 34px minmax(0, 1fr); }
+.infected-game .win-grid { grid-template-columns: 1fr; }
+
+/* Icons keep their size inside buttons. */
+.app .infected-game svg {
+  max-width: none;
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.app .infected-game .hero-mark svg { width: 35px; height: 35px; }
+.app .infected-game .identity-orbit svg,
+.app .infected-game .ending-symbol svg { width: 42px; height: 42px; }
+.app .infected-game .bio-loader svg { width: 36px; height: 36px; }
+.app .infected-game .quarantined-card > svg { width: 38px; height: 38px; }
+.app .infected-game :is(.primary-action, .secondary-action, .danger-action, .dark-action, .council-action, .task-action) {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.infected-game .step-card { padding: 16px 18px; border-color: #55e8ff40; }
+.infected-game .step-card h2 { margin: 4px 0 4px; font-size: 18px; }
+.infected-game .step-card > p:last-child { margin: 0; color: #b9d0d9; font-size: 14px; line-height: 1.5; }
+.infected-game .task-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.infected-game .task-choice .dark-action { margin-top: 0; }
+.infected-game .exit-dialog p:not(.eyebrow) { color: #b9d0d9; line-height: 1.5; }
+.infected-game .exit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.infected-game .exit-actions .secondary-action { margin-top: 0; }
+.infected-game .resume-action { margin-bottom: 4px; }
+.infected-game .mini-brand span { font-size: 13px; }

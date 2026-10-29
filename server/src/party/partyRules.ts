@@ -67,6 +67,24 @@ export function splitSupportCast<T>(shuffled: readonly T[], witnessCount: number
   return { witnesses: shuffled.slice(0, witnessCount), hidden }
 }
 
+/** Players still on the station who have not finished the step the phase needs. */
+export function infectedWaitingFor<T extends { name: string; quarantined: boolean }>(
+  players: readonly T[],
+  done: (player: T) => boolean,
+): string[] {
+  return players.filter((player) => !player.quarantined && !done(player)).map((player) => player.name)
+}
+
+/** A cycle counts for the crew only when every protocol was done honestly. */
+export function infectedCycleOutcome(activeCount: number, honestCount: number) {
+  const sabotaged = Math.max(0, activeCount - honestCount)
+  return { success: activeCount > 0 && sabotaged === 0, sabotaged }
+}
+
+export function numericRoomCode(randomInt: (max: number) => number): string {
+  return String(100000 + randomInt(900000))
+}
+
 export function erasedGuessOptions(input: {
   witnessTitles: readonly string[]
   hiddenTitle: string

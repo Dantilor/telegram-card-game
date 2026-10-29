@@ -1,9 +1,10 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import { Router, json, type Request } from "express";
 import type { Pool, PoolClient } from "pg";
 import { pool } from "../db.js";
 import { verifyInitData } from "../telegram/verifyInitData.js";
 import { getUserPremiumWithDb } from "../premiumStore.js";
+import { infectedCycleOutcome, infectedWaitingFor, numericRoomCode } from "../party/partyRules.js";
 
 type Db = Pool | PoolClient;
 type InfectionStatus = "healthy" | "latent" | "active";
@@ -57,7 +58,6 @@ const JOBS = [
 ] as const;
 const SYSTEM_KEYS: SystemKey[] = ["power", "lab", "comms", "life"];
 const INITIAL_SYSTEMS: Systems = { power: 100, lab: 100, comms: 100, life: 100 };
-const ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const gameError = (message: string) => Object.assign(new Error(message), { expected: true });
 const cleanName = (value: unknown) => String(value ?? "")
@@ -84,8 +84,11 @@ function event(kind: string, title: string, text: string, extra: Record<string, 
 }
 
 function roomCode() {
-  const bytes = randomBytes(6);
-  return Array.from(bytes, byte => ROOM_CODE_CHARS[byte % ROOM_CODE_CHARS.length]).join("");
+  return numericRoomCode(max => randomInt(max));
+}
+
+function waitingText(names: string[]) {
+  return names.length > 3 ? `${names.slice(0, 3).join(", ")} и ещё ${names.length - 3}` : names.join(", ");
 }
 
 function sessionToken() {
@@ -158,6 +161,7 @@ async function stateFor(db: Db, playerId: string, token: string) {
   if (!room) return null;
   const players = await roomPlayers(db, room.id);
   const visibleInfection = me.infection_status === "active" ? "active" : "healthy";
+  const onStation = players.filter(player => !player.quarantined);
 
   return {
     room: {
@@ -165,8 +169,9 @@ async function stateFor(db: Db, playerId: string, token: string) {
       phase: room.phase,
       round: room.round,
       maxRounds: room.max_rounds,
-      tasksDone: room.tasks_done,
-      taskTarget: room.task_target,
+      // Pressed protocols, not honest ones: a secret sabotage stays hidden until the council.
+      tasksDone: onStation.filter(player => player.task_done_round === room.round).length,
+      taskTarget: onStation.length,
       crewScore: room.crew_score,
       infectionLevel: room.infection_level,
       systems: systemsOf(room),
@@ -319,7 +324,7 @@ async function start(db: Db, room: RoomRow, actor: PlayerRow) {
        version = version + 1, updated_at = now()
      WHERE id = $5`,
     [
-      Math.max(1, Math.ceil(players.length * 0.7)),
+      players.length,
       infected * 8,
       JSON.stringify(INITIAL_SYSTEMS),
       JSON.stringify(event("briefing", "Личности назначены", "Не показывайте экран. Изучите личную карточку и подтвердите готовность.")),
@@ -350,21 +355,27 @@ async function ready(db: Db, room: RoomRow, actor: PlayerRow) {
   );
 }
 
-async function task(db: Db, room: RoomRow, actor: PlayerRow) {
+async function task(db: Db, room: RoomRow, actor: PlayerRow, payload: Record<string, unknown>) {
   if (room.phase !== "operations") throw gameError("Протоколы сейчас недоступны.");
   if (actor.quarantined) throw gameError("Вы в карантине.");
+  const sabotage = payload.sabotage === true;
+  if (sabotage && actor.infection_status !== "active") throw gameError("Сорвать протокол может только организм.");
   const result = await db.query(
     `UPDATE infected_players
-     SET task_done_round = $1, private_notice = 'Личный протокол принят системой.'
+     SET task_done_round = $1, private_notice = $3
      WHERE id = $2 AND task_done_round < $1`,
-    [room.round, actor.id],
+    [
+      room.round,
+      actor.id,
+      sabotage ? "Протокол тайно сорван. Для остальных он выглядит выполненным." : "Личный протокол принят системой.",
+    ],
   );
-  if (result.rowCount) {
-    await db.query(
-      "UPDATE infected_rooms SET tasks_done = tasks_done + 1, version = version + 1, updated_at = now() WHERE id = $1",
-      [room.id],
-    );
-  }
+  if (!result.rowCount) throw gameError("Протокол этого цикла уже отправлен.");
+  await db.query(
+    `UPDATE infected_rooms SET tasks_done = tasks_done + $2,
+       version = version + 1, updated_at = now() WHERE id = $1`,
+    [room.id, sabotage ? 0 : 1],
+  );
 }
 
 async function dark(db: Db, room: RoomRow, actor: PlayerRow, payload: Record<string, unknown>) {
@@ -519,8 +530,11 @@ async function special(db: Db, room: RoomRow, actor: PlayerRow, payload: Record<
 async function council(db: Db, room: RoomRow, actor: PlayerRow) {
   if (!actor.is_host || room.phase !== "operations") throw gameError("Только начальник может открыть совет.");
   const players = await roomPlayers(db, room.id, true);
+  const waiting = infectedWaitingFor(players, player => player.task_done_round === room.round);
+  if (waiting.length) throw gameError(`Совет откроется, когда все выполнят протокол. Ждём: ${waitingText(waiting)}.`);
   const infected = players.filter(player => !player.quarantined && player.infection_status !== "healthy").length;
-  const success = room.tasks_done >= room.task_target;
+  const onStation = players.filter(player => !player.quarantined).length;
+  const { success, sabotaged } = infectedCycleOutcome(onStation, room.tasks_done);
   const systems = systemsOf(room);
   let infectionLevel = Math.min(100, room.infection_level + infected * 2);
   let crewScore = room.crew_score;
@@ -546,7 +560,7 @@ async function council(db: Db, room: RoomRow, actor: PlayerRow) {
     : event(
       success ? "success" : "failure",
       "Общий совет",
-      `${success ? "Коллективный протокол выполнен." : "Протокол сорван."} ${room.round < 2 ? "Первый совет только фиксирует подозрение. В карантин пока никого не отправляют." : "Обсудите подозрения и выберите кандидата на карантин."}`,
+      `${success ? "Все протоколы выполнены честно — цикл засчитан экипажу." : `Протокол сорван изнутри: сбоев — ${sabotaged}. Кто-то из экипажа работает на организм.`} ${room.round < 2 ? "Первый совет только фиксирует подозрение. В карантин пока никого не отправляют." : "Обсудите подозрения и выберите кандидата на карантин."}`,
     );
 
   await db.query(
@@ -588,6 +602,8 @@ function winnerFor(room: RoomRow, players: PlayerRow[]) {
 async function resolveCouncil(db: Db, room: RoomRow, actor: PlayerRow) {
   if (!actor.is_host || room.phase !== "council") throw gameError("Только начальник подводит итог.");
   const players = await roomPlayers(db, room.id, true);
+  const notVoted = infectedWaitingFor(players, player => Boolean(player.vote_target_id));
+  if (notVoted.length) throw gameError(`Итог откроется после всех голосов. Ждём: ${waitingText(notVoted)}.`);
   const counts = new Map<string, number>();
   players.forEach(player => {
     if (!player.quarantined && player.vote_target_id) {
@@ -656,7 +672,7 @@ async function nextCycle(db: Db, room: RoomRow, actor: PlayerRow) {
        version = version + 1, updated_at = now() WHERE id = $4`,
     [
       nextRound,
-      Math.max(1, Math.ceil(activeCount * 0.7)),
+      activeCount,
       JSON.stringify(event("operations", `Цикл ${nextRound} из ${room.max_rounds}`, "Новые протоколы загружены. Некоторые симптомы проявляются не сразу.")),
       room.id,
     ],
@@ -672,7 +688,7 @@ async function performAction(
 ) {
   if (name === "start" || name === "restart") return start(db, room, actor);
   if (name === "ready") return ready(db, room, actor);
-  if (name === "task") return task(db, room, actor);
+  if (name === "task") return task(db, room, actor, payload);
   if (name === "dark") return dark(db, room, actor, payload);
   if (name === "special") return special(db, room, actor, payload);
   if (name === "council") return council(db, room, actor);
@@ -778,7 +794,7 @@ export function createInfectedGameRouter(pool: Pool) {
         const name = cleanName(body.name);
         const code = String(body.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
         if (name.length < 2) throw gameError("Введите имя — минимум 2 символа.");
-        if (code.length !== 6) throw gameError("Код станции состоит из 6 символов.");
+        if (code.length !== 6) throw gameError("Код станции — 6 цифр.");
         return response.status(201).json({ session: await joinRoom(pool, code, name) });
       }
 

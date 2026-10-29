@@ -149,8 +149,9 @@ html[data-theme] .app .mafia-shadows .game-title > strong { color: var(--red); }
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
-  padding: 12px 14px 10px;
+  gap: 10px;
+  padding: calc(var(--tg-header-offset, 3.5rem) + 8px) 14px 10px;
+  background: #070914f7;
 }
 .mafia-shadows .room-header-row {
   display: grid;
@@ -168,18 +169,15 @@ html[data-theme] .app .mafia-shadows .game-title > strong { color: var(--red); }
   background: transparent;
 }
 .mafia-shadows .timer {
-  height: auto;
-  min-height: 32px;
-  flex-direction: column;
-  gap: 0;
-  padding: 3px 8px;
-}
-.mafia-shadows .timer small {
-  font-size: 9px;
-  font-weight: 700;
+  width: fit-content;
+  min-width: 0;
+  height: 32px;
+  min-height: 0;
+  padding: 0 10px;
+  flex-direction: row;
+  border-radius: 10px;
+  font-size: 0.95rem;
   letter-spacing: 0.04em;
-  line-height: 1;
-  opacity: 0.8;
 }
 .mafia-shadows .host-bar {
   position: fixed;
@@ -224,5 +222,61 @@ html[data-theme] .app .mafia-shadows .game-title > strong { color: var(--red); }
   }
   .mafia-shadows .panel > .primary {
     margin-bottom: 8px;
+  }
+}
+
+.app .mafia-shadows svg {
+  max-width: none;
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: middle;
+}
+.app .mafia-shadows .primary,
+.app .mafia-shadows .remembered,
+.app .mafia-shadows .hide,
+.app .mafia-shadows .share-card button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1.2;
+}
+.app .mafia-shadows .primary svg,
+.app .mafia-shadows .remembered svg,
+.app .mafia-shadows .hide svg,
+.app .mafia-shadows .share-card button svg,
+.app .mafia-shadows .icon-button svg,
+.app .mafia-shadows .instruction-icon svg,
+.app .mafia-shadows .room-code svg,
+.app .mafia-shadows .player svg,
+.app .mafia-shadows .section-head svg,
+.app .mafia-shadows .flow svg {
+  width: 18px;
+  height: 18px;
+}
+.app .mafia-shadows .role-icon svg {
+  width: 32px;
+  height: 32px;
+}
+.app .mafia-shadows .landing-inner {
+  padding-top: calc(var(--tg-header-offset, 3.5rem) + 10px);
+}
+@media (max-width: 520px) {
+  .mafia-shadows .phase {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px 14px 12px;
+  }
+  .mafia-shadows .phase h1 {
+    font-size: 1.65rem;
+  }
+  .mafia-shadows .progress {
+    width: 100%;
+  }
+  .mafia-shadows .content {
+    gap: 16px;
   }
 }

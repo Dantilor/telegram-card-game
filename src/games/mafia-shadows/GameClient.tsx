@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  Check, ChevronRight, Clock3, Copy, Crosshair, Crown, Eye, EyeOff, HeartPulse, LogOut, Moon,
+  Check, ChevronRight, Copy, Crosshair, Crown, Eye, EyeOff, HeartPulse, LogOut, Moon,
   Search, Share2, ShieldCheck, Sparkles, User, Users, Volume2, VolumeX,
 } from 'lucide-react'
 import { useBack } from '../../hooks/useBack'
@@ -180,7 +180,7 @@ function Countdown({ endsAt }: { endsAt: number | null }) {
     return () => window.clearInterval(id)
   }, [endsAt])
   if (!endsAt) return null
-  return <span className="timer" title="Ориентир. Фазу закрывает ведущий."><Clock3 size={15} />{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}<small>ориентир</small></span>
+  return <span className="timer">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</span>
 }
 function Players({ players, selected, choose, disabled = [] }: { players: Player[]; selected?: string | null; choose?: (id: string) => void; disabled?: string[] }) {
   return <div className="players">{players.map((player) => {

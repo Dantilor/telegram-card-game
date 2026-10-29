@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes } from "react";
+import { useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity, Biohazard, Check, ChevronRight, Clock3, Copy, Crown, EyeOff,
-  FlaskConical, HeartPulse, HelpCircle, Loader2, LockKeyhole, LogIn,
+  FlaskConical, HeartPulse, HelpCircle, Loader2, LockKeyhole, LogIn, LogOut, X,
   Microscope, Plus, Radio, RefreshCw, RotateCcw, ScanLine, Shield,
   ShieldCheck, Smartphone, Snowflake, TriangleAlert, UserRoundX, Users,
   Volume2, VolumeX, Wifi, Wrench, Zap,
@@ -47,6 +48,7 @@ type Session = { playerId: string; token: string; code: string };
 type Props = { game: Game; busy: boolean; act: (name: string, payload?: Record<string, unknown>) => Promise<void> };
 
 const SESSION = "gnh_infected_session";
+const LAST_SESSION = "gnh_infected_last_session";
 const SOUND = "gnh_infected_sound";
 const jobs: Record<string, { title: string; dept: string; bio: string; access: string }> = {
   medic: { title: "Полевой медик", dept: "Медблок", bio: "Ищите биологические отклонения и следите за экипажем.", access: "Закрытый анализ одного игрока" },
@@ -77,19 +79,25 @@ const systemMeta: Record<keyof Systems, { title: string; icon: typeof Zap }> = {
   comms: { title: "Связь", icon: Radio }, life: { title: "Жизнеобеспечение", icon: HeartPulse },
 };
 
+// Panels use backdrop-filter, which traps position: fixed; dialogs must render outside them.
+function Overlay({ children }: { children: ReactNode }) {
+  const host = typeof document !== "undefined" ? document.querySelector(".app") ?? document.body : null;
+  return host ? createPortal(<div className="infected-game inf-portal">{children}</div>, host) : null;
+}
 function Rules({ text = false }: { text?: boolean }) {
   const [open, setOpen] = useState(false);
   return <>
     <Button className={text ? "rules-button" : "icon-button"} aria-label="Правила" onClick={() => setOpen(true)}><HelpCircle />{text && "Как играть"}</Button>
-    {open && <div className="inf-dialog" role="dialog" aria-modal="true"><div className="rules-dialog"><button type="button" className="icon-button inf-dialog-close" aria-label="Закрыть" onClick={() => setOpen(false)}>×</button><p className="eyebrow">ПРОТОКОЛ K-17</p><h2>Как выжить на станции</h2><p>У каждого свой телефон и только один экран — свой.</p>
+    {open && <Overlay><div className="inf-dialog" role="dialog" aria-modal="true" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }}><div className="rules-dialog"><button type="button" className="icon-button inf-dialog-close" aria-label="Закрыть" onClick={() => setOpen(false)}><X /></button><p className="eyebrow">ПРОТОКОЛ K-17</p><h2>Как выжить на станции</h2><p>У каждого свой телефон и только один экран — свой.</p>
       <div className="rules-list">
         <Rule n="01" title="Получите личность">Экипаж видит профессию и спецдоступ. Заражённые получают маскировку и тёмный канал.</Rule>
-        <Rule n="02" title="Выполняйте протоколы">Экипаж закрывает общие задания. Организм притворяется, ломает системы, подменяет анализы и обращает людей.</Rule>
-        <Rule n="03" title="Не верьте приборам вслепую">Обращённый сначала считает себя здоровым. Лабораторные результаты могут оказаться ложными.</Rule>
-        <Rule n="04" title="Сначала подозрение, потом шлюз">Первый совет только называет подозреваемого. В карантин отправляют со второго цикла. Роль открывается в финале.</Rule>
+        <Rule n="02" title="Каждый выполняет протокол">В каждом цикле все на станции нажимают свой протокол. Совет откроется только после всех. Спецдоступ и тёмный канал — по желанию.</Rule>
+        <Rule n="03" title="Организм может сорвать протокол">Заражённый тайно срывает свой протокол — для всех он выглядит выполненным. На совете станция покажет число сбоев, но не имена.</Rule>
+        <Rule n="04" title="Не верьте приборам вслепую">Обращённый сначала считает себя здоровым. Лабораторные результаты могут оказаться ложными.</Rule>
+        <Rule n="05" title="Совет и карантин">Все на станции голосуют. Первый совет только называет подозреваемого, карантин — со второго цикла. Игрок в карантине молча наблюдает. Если это начальник, он продолжает переключать этапы.</Rule>
       </div>
-      <div className="win-grid"><div><ShieldCheck /><strong>Экипаж</strong><span>3 протокола, все угрозы в карантине со 2-го цикла, или перевес к 4-му циклу</span></div><div><Biohazard /><strong>Организм</strong><span>заражённых не меньше, чем здоровых, мёртвая система, или перевес к 4-му циклу</span></div></div>
-    </div></div>}
+      <div className="win-grid"><div><ShieldCheck /><strong>Экипаж</strong><span>3 чистых цикла, все заражённые в карантине со 2-го цикла, или 2 чистых цикла и перевес к концу 4-го</span></div><div><Biohazard /><strong>Организм</strong><span>заражённых не меньше, чем здоровых, система на нуле, заражение 100% или конец 4-го цикла без перевеса экипажа</span></div></div>
+    </div></div></Overlay>}
   </>;
 }
 function Rule({ n, title, children }: { n: string; title: string; children: string }) { return <div className="rule-row"><span>{n}</span><div><strong>{title}</strong><p>{children}</p></div></div>; }
@@ -97,14 +105,23 @@ function Loader() { return <div className="loading-screen"><div className="bio-l
 
 function Header({ game, sound, setSound, exit }: { game: Game; sound: boolean; setSound: () => void; exit: () => void }) {
   const handleBack = useBack("/games");
+  const [confirm, setConfirm] = useState(false);
   return <header className="room-header">
     <div className="game-page inf-nav"><div className="game-page__top"><HomeButton className="game-page__nav-btn" /><BackButton className="game-page__nav-btn" onClick={handleBack} /></div></div>
     <div className="room-header-row">
-      <button className="mini-brand" onClick={exit} aria-label="Главный экран"><Biohazard /><span>K-17</span></button>
+      <button className="mini-brand" onClick={() => setConfirm(true)} aria-label="Выйти со станции"><LogOut /><span>Выйти</span></button>
       <div className="room-header-center"><span>СТАНЦИЯ</span><strong>{game.room.code}</strong></div>
       <div className="header-actions"><button className="header-icon" onClick={setSound} aria-label="Звук">{sound ? <Volume2 /> : <VolumeX />}</button><Rules /></div>
     </div>
+    {confirm && <Overlay><div className="inf-dialog" role="dialog" aria-modal="true"><div className="rules-dialog exit-dialog"><p className="eyebrow">ВЫХОД СО СТАНЦИИ</p><h2>Точно выйти?</h2><p>Партия продолжится без вас{game.me.isHost ? ", а вести этапы может только начальник — остальные будут ждать" : ""}. Вернуться можно с этого телефона: на экране входа появится кнопка «Вернуться на станцию {game.room.code}».</p><div className="exit-actions"><Button className="secondary-action" onClick={() => setConfirm(false)}>Остаться</Button><Button className="danger-action" onClick={() => { setConfirm(false); exit(); }}>Выйти</Button></div></div></div></Overlay>}
   </header>;
+}
+function waitingNames(players: Player[], done: (player: Player) => boolean) {
+  const names = players.filter(p => !p.quarantined && !done(p)).map(p => p.name);
+  return names.length > 4 ? `${names.slice(0, 4).join(", ")} и ещё ${names.length - 4}` : names.join(", ");
+}
+function Step({ title, children }: { title: string; children: string }) {
+  return <section className="step-card panel"><p className="eyebrow">ЧТО ДЕЛАТЬ СЕЙЧАС</p><h2>{title}</h2><p>{children}</p></section>;
 }
 function PhaseBar({ game }: { game: Game }) {
   const names: Record<Phase, string> = { lobby: "Сбор экипажа", briefing: "Личный допуск", operations: "Рабочий цикл", council: "Общий совет", result: game.room.round < 2 && !game.room.event.quarantinedId ? "Первый совет" : "Карантин", ended: "Протокол завершён" };
@@ -125,7 +142,7 @@ function SystemSelect({ value, change }: { value: string; change: (v: string) =>
 }
 
 function Lobby({ game, busy, act, share }: Props & { share: () => void }) {
-  return <div className="screen-stack"><PhaseBar game={game} />
+  return <div className="screen-stack"><PhaseBar game={game} /><Step title={game.me.isHost ? "Соберите экипаж" : "Ждите старта"}>{game.me.isHost ? "Отправьте код друзьям. Когда подключатся 4–12 человек, начните смену." : "Вы на станции. Начальник запустит смену, когда все подключатся."}</Step>
     <section className="lobby-code panel"><p className="eyebrow">КОД ДОСТУПА</p><button className="code-display" onClick={share}>{game.room.code}<Copy /></button><p>Откройте игру на остальных телефонах и введите этот код.</p></section>
     <section className="panel roster-panel"><div className="section-heading"><div><span>ЭКИПАЖ</span><h2>{game.players.length} из 12 подключены</h2></div><Users /></div><div className="roster-list">{game.players.map((p, i) => <div className="roster-row" key={p.id}><span className="avatar-code">{String(i + 1).padStart(2, "0")}</span><strong>{p.name}</strong>{p.isHost ? <span className="host-badge"><Crown /> начальник</span> : <span className="connected-badge"><Wifi /> в сети</span>}</div>)}</div></section>
     {game.me.isHost ? <div className="host-launch"><Button className="primary-action" disabled={busy || game.players.length < 4} onClick={() => act("start")}>{busy ? <Loader2 className="animate-spin" /> : <LockKeyhole />}Запечатать станцию и начать</Button><p>Нужно от 4 до 12 игроков. Партия идёт около 25–40 минут.</p></div> : <Wait title="Ожидаем начальника смены" text="Роль появится автоматически." />}
@@ -135,7 +152,7 @@ function Wait({ title, text }: { title: string; text: string }) { return <div cl
 
 function Briefing({ game, busy, act }: Props) {
   const bad = game.me.infectionStatus === "active", job = jobs[game.me.job] ?? jobs.crew, left = game.players.filter(p => !p.ready).length;
-  return <div className="screen-stack"><PhaseBar game={game} /><div className="privacy-warning"><EyeOff />Не показывайте этот экран другим</div>
+  return <div className="screen-stack"><PhaseBar game={game} /><Step title="Прочитайте карточку тайно">Запомните роль и нажмите «Готов». Смена начнётся сама, когда подтвердят все.</Step><div className="privacy-warning"><EyeOff />Не показывайте этот экран другим</div>
     <section className={`identity-card ${bad ? "infected" : "crew"}`}><div className="identity-orbit">{bad ? <Biohazard /> : <Shield />}</div><p className="eyebrow">ВАШ СТАТУС</p><h1>{bad ? "ЗАРАЖЁННЫЙ" : job.title}</h1><p className="identity-department">{bad ? `Прикрытие: ${job.title}` : job.dept}</p><div className="identity-copy">{bad ? <><p>Организм уже контролирует вас. Ведите себя как обычный член экипажа, выполняйте задания для маскировки и используйте тёмный канал.</p><div className="secret-objective"><Biohazard /><span><strong>Цель:</strong> заразить половину станции или разрушить системы.</span></div>{game.me.teammates.length > 0 && <p className="teammates">Другие заражённые: {game.me.teammates.map(p => p.name).join(", ")}</p>}</> : <><p>{job.bio}</p><div className="secret-objective crew-objective"><ShieldCheck /><span><strong>Спецдоступ:</strong> {job.access}.</span></div><p className="uncertainty-note">Прибор считает вас здоровым. Но ранняя стадия заражения не определяется.</p></>}</div></section>
     {!game.me.ready ? <Button className="primary-action" disabled={busy} onClick={() => act("ready")}>{busy ? <Loader2 className="animate-spin" /> : <Check />}Я всё понял — готов</Button> : <Wait title="Ваш допуск подтверждён" text={`Осталось подтвердить: ${left}`} />}
   </div>;
@@ -143,7 +160,10 @@ function Briefing({ game, busy, act }: Props) {
 
 function Task({ game, busy, act }: Props) {
   const pool = tasks[game.me.job] ?? tasks.default, item = pool[(game.room.round - 1) % pool.length];
-  return <section className={`task-card panel ${game.me.taskDone ? "complete" : ""}`}><div className="task-topline"><span><ScanLine />ЛИЧНЫЙ ПРОТОКОЛ</span><strong>{game.me.taskDone ? "ВЫПОЛНЕНО" : `K17-${game.room.round}${game.me.id.slice(0, 2).toUpperCase()}`}</strong></div><h2>{item[0]}</h2><p>{item[1]}</p><Button className="task-action" disabled={busy || game.me.taskDone || game.me.quarantined} onClick={() => act("task")}>{game.me.taskDone ? <Check /> : busy ? <Loader2 className="animate-spin" /> : <ScanLine />}{game.me.taskDone ? "Протокол принят" : "Выполнить проверку"}</Button></section>;
+  const organism = game.me.infectionStatus === "active";
+  return <section className={`task-card panel ${game.me.taskDone ? "complete" : ""}`}><div className="task-topline"><span><ScanLine />ОБЯЗАТЕЛЬНЫЙ ПРОТОКОЛ</span><strong>{game.me.taskDone ? "ОТПРАВЛЕНО" : `K17-${game.room.round}${game.me.id.slice(0, 2).toUpperCase()}`}</strong></div><h2>{item[0]}</h2><p>{item[1]}</p>
+    {game.me.taskDone ? <Button className="task-action" disabled><Check />Протокол отправлен</Button> : organism ? <><p className="private-notice">Вы организм. Выполните честно, чтобы не выдать себя, или тайно сорвите — для всех кнопка выглядит одинаково.</p><div className="task-choice"><Button className="task-action" disabled={busy} onClick={() => act("task")}>{busy ? <Loader2 className="animate-spin" /> : <ScanLine />}Выполнить</Button><Button className="dark-action" disabled={busy} onClick={() => act("task", { sabotage: true })}><Biohazard />Тайно сорвать</Button></div></> : <Button className="task-action" disabled={busy} onClick={() => act("task")}>{busy ? <Loader2 className="animate-spin" /> : <ScanLine />}Выполнить проверку</Button>}
+  </section>;
 }
 function Dark({ game, busy, act }: Props) {
   const [mode, setMode] = useState("infect"), [target, setTarget] = useState(""), [system, setSystem] = useState("");
@@ -168,25 +188,35 @@ function Special({ game, busy, act }: Props) {
 }
 function Operations({ game, busy, act }: Props) {
   const progress = game.room.taskTarget ? Math.min(100, game.room.tasksDone / game.room.taskTarget * 100) : 0;
-  return <div className="screen-stack"><PhaseBar game={game} />{game.me.quarantined && <section className="quarantined-card"><UserRoundX /><div><p className="eyebrow">ДОСТУП ЗАБЛОКИРОВАН</p><h2>Вы в карантине</h2><p>Наблюдайте молча. Действия и голосование недоступны.</p></div></section>}<Event game={game} /><SystemsPanel game={game} />
-    <section className="team-progress panel"><div><span>ЗАДАНИЕ ЭТОГО ЦИКЛА</span><strong>{game.room.tasksDone}/{game.room.taskTarget}</strong></div><Progress value={progress} className="team-progress-bar" /><p>Чтобы этот цикл засчитался, нужно закрыть {game.room.taskTarget} личных протоколов.</p></section>
-    <section className="team-progress panel"><div><span>УСПЕШНЫЕ ЦИКЛЫ</span><strong>{game.room.crewScore}/3</strong></div><p>Экипаж побеждает после трёх успешных циклов. Это отдельный счёт, не число заданий текущего круга.</p></section>
-    <Task game={game} busy={busy} act={act} />{game.me.infectionStatus === "active" ? <Dark game={game} busy={busy} act={act} /> : <Special game={game} busy={busy} act={act} />}
-    {game.me.isHost && !game.me.quarantined && <section className="host-control panel"><div><Crown /><span><strong>Управление сменой</strong>{game.room.tasksDone >= game.room.taskTarget ? "Протокол цикла собран. Совет засчитает успех экипажу." : `Собрано ${game.room.tasksDone} из ${game.room.taskTarget}. Ранний совет можно открыть, но цикл не засчитается: заражение вырастет, а одна система потеряет 16%.`}</span></div><Button className="council-action" disabled={busy} onClick={() => act("council")}>Созвать общий совет<ChevronRight /></Button></section>}
+  const allDone = game.room.taskTarget > 0 && game.room.tasksDone >= game.room.taskTarget;
+  const waiting = waitingNames(game.players, p => p.taskDone);
+  const step = game.me.quarantined
+    ? (game.me.isHost ? "Вы в карантине, но продолжаете вести смену. Дождитесь протоколов остальных и откройте совет." : "Вы в карантине. Наблюдайте молча — действовать и голосовать нельзя.")
+    : game.me.taskDone
+      ? (allDone ? (game.me.isHost ? "Все протоколы отправлены. Откройте общий совет." : "Все протоколы отправлены. Ждём, когда начальник откроет совет.") : `Ваш протокол отправлен. Ждём: ${waiting}.`)
+      : "Нажмите свой обязательный протокол ниже. Спецдоступ — по желанию. Совет откроется, когда протокол отправят все.";
+  return <div className="screen-stack"><PhaseBar game={game} /><Step title={game.me.quarantined ? "Карантин" : game.me.taskDone ? "Ожидание экипажа" : "Выполните протокол"}>{step}</Step>
+    {game.me.quarantined && <section className="quarantined-card"><UserRoundX /><div><p className="eyebrow">ДОСТУП ЗАБЛОКИРОВАН</p><h2>Вы в карантине</h2><p>{game.me.isHost ? "Ваша роль скрыта до финала. Кнопки начальника остаются у вас." : "Ваша роль скрыта до финала. Остальные продолжают без вас."}</p></div></section>}
+    <section className="team-progress panel"><div><span>ПРОТОКОЛЫ ЦИКЛА</span><strong>{game.room.tasksDone}/{game.room.taskTarget}</strong></div><Progress value={progress} className="team-progress-bar" /><p>{allDone ? "Все на станции отправили протокол." : `Ждём: ${waiting}.`} Срыв станет известен только на совете.</p></section>
+    {!game.me.quarantined && <><Task game={game} busy={busy} act={act} />{game.me.infectionStatus === "active" ? <Dark game={game} busy={busy} act={act} /> : <Special game={game} busy={busy} act={act} />}</>}
+    {game.me.isHost && <section className="host-control panel"><div><Crown /><span><strong>Управление сменой</strong>{allDone ? "Все протоколы отправлены — можно открывать совет." : `Совет откроется после всех протоколов. Ждём: ${waiting}.`}</span></div><Button className="council-action" disabled={busy || !allDone} onClick={() => act("council")}>Созвать общий совет<ChevronRight /></Button></section>}
+    <Event game={game} /><SystemsPanel game={game} />
+    <section className="team-progress panel"><div><span>ЧИСТЫЕ ЦИКЛЫ ЭКИПАЖА</span><strong>{game.room.crewScore}/3</strong></div><p>Цикл чистый, если ни один протокол не сорван. Три чистых цикла — победа экипажа.</p></section>
   </div>;
 }
 function Council({ game, busy, act }: Props) {
   const [choice, setChoice] = useState(""), eligible = game.players.filter(p => !p.quarantined).length, voted = game.players.filter(p => !p.quarantined && p.voted).length, observation = game.room.round < 2;
-  return <div className="screen-stack"><PhaseBar game={game} /><Event game={game} /><section className="discussion-timer panel"><div className="discussion-orbit"><Users /></div><div><p className="eyebrow">ЗА СТОЛОМ</p><h2>Говорите вслух. Экраны — только для голосования.</h2><p>{observation ? "Первый цикл: назовите подозреваемого. Шлюз пока не закрывается." : "Сравните рассказы, задания, аварии и анализы."}</p></div></section>
+  const allVoted = eligible > 0 && voted >= eligible, waiting = waitingNames(game.players, p => p.voted);
+  return <div className="screen-stack"><PhaseBar game={game} /><Step title={game.me.quarantined ? "Наблюдайте" : game.me.voteSubmitted ? "Голос отправлен" : "Обсудите и проголосуйте"}>{game.me.quarantined ? (game.me.isHost ? "Вы в карантине и не голосуете, но подводите итог, когда проголосуют все." : "Игроки в карантине не голосуют.") : game.me.voteSubmitted ? (allVoted ? "Все проголосовали. Ждём итог от начальника." : `Ждём голоса: ${waiting}.`) : "Обсудите вслух, затем выберите игрока ниже. Итог откроется после всех голосов."}</Step><Event game={game} /><section className="discussion-timer panel"><div className="discussion-orbit"><Users /></div><div><p className="eyebrow">ЗА СТОЛОМ</p><h2>Говорите вслух. Экраны — только для голосования.</h2><p>{observation ? "Первый цикл: назовите подозреваемого. Шлюз пока не закрывается." : "Сравните рассказы, задания, аварии и анализы."}</p></div></section>
     <section className="vote-panel panel"><div className="section-heading"><div><span>{observation ? "ПОДОЗРЕНИЕ" : "КАРАНТИННОЕ ГОЛОСОВАНИЕ"}</span><h2>{observation ? "Кого подозреваете?" : "Кому вы не доверяете?"}</h2></div><span className="vote-count">{voted}/{eligible}</span></div>
       {game.me.quarantined ? <p className="muted-copy">Игроки в карантине не голосуют.</p> : game.me.voteSubmitted ? <div className="vote-locked"><LockKeyhole /><div><strong>Голос зашифрован</strong><p>Выбор нельзя изменить.</p></div></div> : <><div className="vote-options">{game.players.filter(p => !p.quarantined && p.id !== game.me.id).map(p => <button type="button" className={`vote-option ${choice === p.id ? "active" : ""}`} key={p.id} onClick={() => setChoice(p.id)}><span className="vote-avatar">{p.name[0].toUpperCase()}</span><strong>{p.name}</strong>{p.isHost && <Crown />}</button>)}</div><Button className={observation ? "secondary-action" : "danger-action"} disabled={busy || !choice} onClick={() => act("vote", { targetId: choice })}>{busy ? <Loader2 className="animate-spin" /> : observation ? <EyeOff /> : <UserRoundX />}{observation ? "Назвать подозреваемого" : "Отправить в карантин"}</Button></>}
-    </section>{game.me.isHost && <section className="host-control panel"><div><Crown /><span><strong>Голосов: {voted} из {eligible}</strong>{voted ? "Можно дождаться остальных или закрыть сейчас." : "Кнопка откроется после первого голоса."}</span></div><Button className="council-action" disabled={busy || !voted} onClick={() => act("resolve")}>Подвести итог<ChevronRight /></Button></section>}
+    </section>{game.me.isHost && <section className="host-control panel"><div><Crown /><span><strong>Голосов: {voted} из {eligible}</strong>{allVoted ? "Все проголосовали — подведите итог." : `Итог откроется после всех голосов. Ждём: ${waiting}.`}</span></div><Button className="council-action" disabled={busy || !allVoted} onClick={() => act("resolve")}>Подвести итог<ChevronRight /></Button></section>}
   </div>;
 }
 function Result({ game, busy, act }: Props) {
   const target = game.players.find(p => p.id === game.room.event.quarantinedId);
   const observation = game.room.round < 2 && !target;
-  return <div className="screen-stack"><PhaseBar game={game} /><section className="result-card panel"><div className="sealed-door"><span />{observation ? <EyeOff /> : <UserRoundX />}</div><p className="eyebrow">{observation ? "ПЕРВЫЙ СОВЕТ" : "КАРАНТИННЫЙ ШЛЮЗ"}</p><h1>{target?.name ?? (observation ? "Шлюз открыт" : "Никто не изолирован")}</h1><p>{game.room.event.text}</p>{!observation && <div className="classified-line"><EyeOff />БИОСТАТУС ЗАСЕКРЕЧЕН ДО ФИНАЛА</div>}</section><SystemsPanel game={game} />{game.me.isHost ? <Button className="primary-action" disabled={busy} onClick={() => act("next")}>{busy ? <Loader2 className="animate-spin" /> : <RefreshCw />}Запустить следующий цикл</Button> : <Wait title="Ожидаем следующий цикл" text="Экран обновится автоматически." />}</div>;
+  return <div className="screen-stack"><PhaseBar game={game} /><Step title={game.me.isHost ? "Запустите следующий цикл" : "Ждём следующий цикл"}>{game.me.isHost ? "Прочитайте итог вслух и нажмите кнопку внизу. Начнётся новый цикл протоколов." : "Начальник запустит новый цикл. Экран обновится сам."}</Step><section className="result-card panel"><div className="sealed-door"><span />{observation ? <EyeOff /> : <UserRoundX />}</div><p className="eyebrow">{observation ? "ПЕРВЫЙ СОВЕТ" : "КАРАНТИННЫЙ ШЛЮЗ"}</p><h1>{target?.name ?? (observation ? "Шлюз открыт" : "Никто не изолирован")}</h1><p>{game.room.event.text}</p>{!observation && <div className="classified-line"><EyeOff />БИОСТАТУС ЗАСЕКРЕЧЕН ДО ФИНАЛА</div>}</section><SystemsPanel game={game} />{game.me.isHost ? <Button className="primary-action" disabled={busy} onClick={() => act("next")}>{busy ? <Loader2 className="animate-spin" /> : <RefreshCw />}Запустить следующий цикл</Button> : <Wait title="Ожидаем следующий цикл" text="Экран обновится автоматически." />}</div>;
 }
 function End({ game, busy, act }: Props) {
   const crew = game.room.winner === "crew";
@@ -196,15 +226,16 @@ function End({ game, busy, act }: Props) {
   </div>;
 }
 
-function Home({ name, setName, code, setCode, mode, setMode, busy, enter, sound, setSound, premiumOpen, setPremiumOpen }: { name: string; setName: (v: string) => void; code: string; setCode: (v: string) => void; mode: "create" | "join"; setMode: (v: "create" | "join") => void; busy: boolean; enter: () => void; sound: boolean; setSound: () => void; premiumOpen: boolean; setPremiumOpen: (value: boolean) => void }) {
+function Home({ name, setName, code, setCode, mode, setMode, busy, enter, sound, setSound, premiumOpen, setPremiumOpen, lastSession, resume }: { name: string; setName: (v: string) => void; code: string; setCode: (v: string) => void; mode: "create" | "join"; setMode: (v: "create" | "join") => void; busy: boolean; enter: () => void; sound: boolean; setSound: () => void; premiumOpen: boolean; setPremiumOpen: (value: boolean) => void; lastSession: Session | null; resume: () => void }) {
   const handleBack = useBack("/games");
   const { isPremium } = usePremium();
   return <div className="home-layout">
     <div className="game-page inf-nav"><div className="game-page__top"><HomeButton className="game-page__nav-btn" /><BackButton className="game-page__nav-btn" onClick={handleBack} /></div></div>
     <section className="home-story"><div className="station-tag"><span />СТАНЦИЯ K-17 // СИГНАЛ ПОТЕРЯН</div><div className="hero-mark"><Biohazard /></div><p className="hero-kicker">СОЦИАЛЬНАЯ ИГРА НА НЕДОВЕРИЕ</p><h1>ЗАРАЖЁННЫЕ</h1><p className="hero-copy">Неизвестный организм уже внутри станции. Возможно — внутри тебя.</p><div className="meta-row"><span><Users />4–12 игроков</span><span><Clock3 />25–40 минут</span><span><Smartphone />каждый со своего телефона</span></div></section>
+    {lastSession && <Button className="primary-action resume-action" onClick={resume}><RefreshCw />Вернуться на станцию {lastSession.code}</Button>}
     <section className="entry-panel panel"><div className="entry-topline"><div><p className="eyebrow">ПРОТОКОЛ ПОДКЛЮЧЕНИЯ</p><h2>{mode === "create" ? "Открыть новую станцию" : "Войти в смену"}</h2></div><button className="header-icon" onClick={setSound} aria-label="Звук">{sound ? <Volume2 /> : <VolumeX />}</button></div><div className="entry-tabs"><button className={mode === "create" ? "active" : ""} onClick={() => setMode("create")}><Plus />Создать</button><button className={mode === "join" ? "active" : ""} onClick={() => setMode("join")}><LogIn />Войти по коду</button></div>
       <label className="field-label" htmlFor="name">Ваше имя</label><Input id="name" className="game-input" value={name} maxLength={20} placeholder="Как к вам обращаться?" onChange={e => setName(e.target.value)} />
-      {mode === "join" && <label className="field-label" htmlFor="room-code">Код станции<Input id="room-code" className="game-input" value={code} maxLength={6} autoCapitalize="characters" placeholder="K17A2B" onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))} /></label>}
+      {mode === "join" && <><label className="field-label" htmlFor="room-code">Код станции</label><Input id="room-code" className="game-input" value={code} maxLength={6} inputMode="numeric" autoComplete="one-time-code" placeholder="6 цифр, например 482915" onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} /></>}
       <Button className="primary-action entry-action" disabled={busy || (mode === "join" && (name.trim().length < 2 || code.length !== 6)) || (mode === "create" && isPremium && name.trim().length < 2)} onClick={() => { if (mode === "create" && !isPremium) { setPremiumOpen(true); return; } enter(); }}>{busy ? <Loader2 className="animate-spin" /> : mode === "create" ? <Plus /> : <LogIn />}{mode === "create" ? (isPremium ? "Создать станцию" : "Создать станцию · Premium") : "Подключиться"}</Button><div className="entry-footer"><Rules text /></div>
     </section>
     <PremiumOverlay isOpen={premiumOpen} onClose={() => setPremiumOpen(false)} />
@@ -214,7 +245,7 @@ function Home({ name, setName, code, setCode, mode, setMode, busy, enter, sound,
 export default function GameClient() {
   const [session, setSession] = useState<Session | null>(null), [game, setGame] = useState<Game | null>(null), [hydrated, setHydrated] = useState(false), [busy, setBusy] = useState(false), [offline, setOffline] = useState(false);
   const [name, setName] = useState(""), [joinCode, setJoinCode] = useState(""), [mode, setMode] = useState<"create" | "join">("create"), [sound, setSoundState] = useState(true);
-  const [premiumOpen, setPremiumOpen] = useState(false), [notice, setNotice] = useState("");
+  const [premiumOpen, setPremiumOpen] = useState(false), [notice, setNotice] = useState(""), [lastSession, setLastSession] = useState<Session | null>(null);
   const audio = useRef<AudioContext | null>(null), lastPhase = useRef(""), oscillators = useRef<OscillatorNode[]>([]), soundRef = useRef(sound);
   soundRef.current = sound;
   const cue = useCallback((kind: "tap" | "ok" | "alarm", force = false) => {
@@ -253,18 +284,19 @@ export default function GameClient() {
   const vibrate = (p: number | number[] = 25) => { if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(p); };
   const setSound = () => { const value = !sound; setSoundState(value); localStorage.setItem(SOUND, value ? "1" : "0"); if (value) cue("ok", true); };
   useEffect(() => { pushToast = (message) => { setNotice(message); window.setTimeout(() => setNotice(""), 2800); }; }, []);
-  useEffect(() => { try { const saved = localStorage.getItem(SESSION); if (saved) setSession(JSON.parse(saved)); setSoundState(localStorage.getItem(SOUND) !== "0"); const query = location.hash.includes("?") ? location.hash.slice(location.hash.indexOf("?") + 1) : ""; const room = new URLSearchParams(query).get("room") ?? ""; if (/^[A-Z0-9]{6}$/i.test(room)) { setJoinCode(room.toUpperCase()); setMode("join"); } const tg = window.Telegram?.WebApp; tg?.ready?.(); tg?.expand?.(); } finally { setHydrated(true); } }, []);
-  const refresh = useCallback(async () => { if (!session) return; try { const r = await fetch(`${API}?playerId=${encodeURIComponent(session.playerId)}&token=${encodeURIComponent(session.token)}`, { cache: "no-store", headers: initHeaders() }); const data = await r.json() as Game & { error?: string }; if (!r.ok) throw new Error(data.error); setGame(data); setOffline(false); } catch { setOffline(true); } }, [session]);
+  useEffect(() => { try { const saved = localStorage.getItem(SESSION); if (saved) setSession(JSON.parse(saved)); const last = localStorage.getItem(LAST_SESSION); if (last) setLastSession(JSON.parse(last)); setSoundState(localStorage.getItem(SOUND) !== "0"); const query = location.hash.includes("?") ? location.hash.slice(location.hash.indexOf("?") + 1) : ""; const room = new URLSearchParams(query).get("room") ?? ""; if (/^\d{6}$/.test(room)) { setJoinCode(room); setMode("join"); } const tg = window.Telegram?.WebApp; tg?.ready?.(); tg?.expand?.(); } catch { localStorage.removeItem(LAST_SESSION); } finally { setHydrated(true); } }, []);
+  const refresh = useCallback(async () => { if (!session) return; try { const r = await fetch(`${API}?playerId=${encodeURIComponent(session.playerId)}&token=${encodeURIComponent(session.token)}`, { cache: "no-store", headers: initHeaders() }); const data = await r.json() as Game & { error?: string }; if (r.status === 404) { localStorage.removeItem(SESSION); localStorage.removeItem(LAST_SESSION); setSession(null); setLastSession(null); setGame(null); toast.error("Станция закрыта. Создайте новую или войдите по коду."); return; } if (!r.ok) throw new Error(data.error); setGame(data); setOffline(false); } catch { setOffline(true); } }, [session]);
   useEffect(() => { if (!session) return; void refresh(); const id = window.setInterval(() => void refresh(), 2200); return () => clearInterval(id); }, [refresh, session]);
   useEffect(() => { if (!game) return; const key = `${game.room.phase}-${game.room.round}`; if (lastPhase.current === key) return; document.querySelector(".app")?.scrollTo({ top: 0, behavior: "auto" }); if (lastPhase.current) { cue(game.room.phase === "council" || game.room.winner === "infected" ? "alarm" : "ok"); vibrate(game.room.phase === "council" ? [50, 40, 80] : 30); } lastPhase.current = key; }, [cue, game]);
-  const enter = async () => { setBusy(true); cue("tap"); try { const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json", ...initHeaders() }, body: JSON.stringify({ mode, name, code: joinCode }) }); const data = await r.json() as { session?: Session; error?: string }; if (!r.ok || !data.session) throw new Error(data.error ?? "Не удалось подключиться"); localStorage.setItem(SESSION, JSON.stringify(data.session)); setSession(data.session); setGame(null); trackEvent(mode === "create" ? "infected_create" : "infected_join", { gameId: "infected" }); cue("ok"); vibrate(); } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось подключиться"); cue("alarm"); } finally { setBusy(false); } };
+  const enter = async () => { setBusy(true); cue("tap"); try { const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json", ...initHeaders() }, body: JSON.stringify({ mode, name, code: joinCode }) }); const data = await r.json() as { session?: Session; error?: string }; if (!r.ok || !data.session) throw new Error(data.error ?? "Не удалось подключиться"); localStorage.setItem(SESSION, JSON.stringify(data.session)); localStorage.removeItem(LAST_SESSION); setLastSession(null); setSession(data.session); setGame(null); trackEvent(mode === "create" ? "infected_create" : "infected_join", { gameId: "infected" }); cue("ok"); vibrate(); } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось подключиться"); cue("alarm"); } finally { setBusy(false); } };
   const act = useCallback(async (action: string, payload: Record<string, unknown> = {}) => { if (!session) return; setBusy(true); cue(action === "vote" || action === "council" ? "alarm" : "tap"); try { const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json", ...initHeaders() }, body: JSON.stringify({ mode: "action", playerId: session.playerId, token: session.token, action, payload }) }); const data = await r.json() as Game & { error?: string }; if (!r.ok) throw new Error(data.error ?? "Команда не выполнена"); setGame(data); setOffline(false); if (action === "start") trackEvent("infected_start", { gameId: "infected" }); vibrate(action === "dark" ? [30, 35, 60] : 25); } catch (e) { toast.error(e instanceof Error ? e.message : "Команда не выполнена"); cue("alarm"); } finally { setBusy(false); } }, [cue, session]);
-  const exit = () => { localStorage.removeItem(SESSION); setSession(null); setGame(null); setOffline(false); lastPhase.current = ""; };
+  const exit = () => { if (session) { localStorage.setItem(LAST_SESSION, JSON.stringify(session)); setLastSession(session); } localStorage.removeItem(SESSION); setSession(null); setGame(null); setOffline(false); lastPhase.current = ""; };
+  const resume = () => { if (!lastSession) return; localStorage.setItem(SESSION, JSON.stringify(lastSession)); localStorage.removeItem(LAST_SESSION); setSession(lastSession); setLastSession(null); setGame(null); };
   const share = async () => { if (!game) return; const url = `${location.origin}${location.pathname}#/infected?room=${game.room.code}`; const text = `Станция K-17. Код входа: ${game.room.code}`; try { if (navigator.share) await navigator.share({ title: "Заражённые", text, url }); else await navigator.clipboard.writeText(`${text}\n${url}`); toast.success("Код готов к отправке"); } catch { try { await navigator.clipboard.writeText(game.room.code); toast.success("Код скопирован"); } catch { toast.info(text); } } };
   if (!hydrated) return <Loader />;
   let screen = null;
   if (game) { const p = { game, busy, act }; screen = game.room.phase === "lobby" ? <Lobby {...p} share={share} /> : game.room.phase === "briefing" ? <Briefing {...p} /> : game.room.phase === "operations" ? <Operations {...p} /> : game.room.phase === "council" ? <Council {...p} /> : game.room.phase === "result" ? <Result {...p} /> : <End {...p} />; }
   return <main className={`game-shell ${session ? "in-game" : "at-home"}`} onPointerDown={() => { void audio.current?.resume(); }}><div className="station-art" /><div className="station-vignette" /><div className="scanlines" />{notice && <div className="inf-toast" role="status">{notice}</div>}
-    {!session ? <Home name={name} setName={setName} code={joinCode} setCode={setJoinCode} mode={mode} setMode={setMode} busy={busy} enter={() => void enter()} sound={sound} setSound={setSound} premiumOpen={premiumOpen} setPremiumOpen={setPremiumOpen} /> : !game ? <div className="game-stage loading-stage"><Loader />{offline && <div className="connection-error"><TriangleAlert /><p>Не удаётся связаться со станцией.</p><Button onClick={() => void refresh()}><RefreshCw />Повторить</Button><button onClick={exit}>Выйти из комнаты</button></div>}</div> : <div className="game-stage"><Header game={game} sound={sound} setSound={setSound} exit={exit} />{offline && <div className="offline-pill"><TriangleAlert />Связь нестабильна — восстанавливаем</div>}{screen}</div>}
+    {!session ? <Home name={name} setName={setName} code={joinCode} setCode={setJoinCode} mode={mode} setMode={setMode} busy={busy} enter={() => void enter()} sound={sound} setSound={setSound} premiumOpen={premiumOpen} setPremiumOpen={setPremiumOpen} lastSession={lastSession} resume={resume} /> : !game ? <div className="game-stage loading-stage"><Loader />{offline && <div className="connection-error"><TriangleAlert /><p>Не удаётся связаться со станцией.</p><Button onClick={() => void refresh()}><RefreshCw />Повторить</Button><button onClick={exit}>Выйти из комнаты</button></div>}</div> : <div className="game-stage"><Header game={game} sound={sound} setSound={setSound} exit={exit} />{offline && <div className="offline-pill"><TriangleAlert />Связь нестабильна — восстанавливаем</div>}{screen}</div>}
   </main>;
 }

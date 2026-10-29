@@ -2,6 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   erasedGuessOptions,
+  infectedCycleOutcome,
+  infectedWaitingFor,
+  numericRoomCode,
   mafiaWinner,
   maniacTieWinner,
   missingNightActors,
@@ -63,6 +66,27 @@ test('erased identity is not a witness, including a four-player table', () => {
   const full = splitSupportCast(identities, 4)
   assert.equal(full.witnesses.includes(full.hidden), false)
   assert.throws(() => splitSupportCast(identities, 5))
+})
+
+test('infected council waits for every player outside quarantine', () => {
+  const players = [
+    { name: 'Хост', quarantined: true, done: false },
+    { name: 'Рита', quarantined: false, done: true },
+    { name: 'Олег', quarantined: false, done: false },
+  ]
+  assert.deepEqual(infectedWaitingFor(players, (player) => player.done), ['Олег'])
+  assert.deepEqual(infectedWaitingFor(players.slice(0, 2), (player) => player.done), [])
+})
+
+test('one secret sabotage fails the infected cycle', () => {
+  assert.deepEqual(infectedCycleOutcome(4, 4), { success: true, sabotaged: 0 })
+  assert.deepEqual(infectedCycleOutcome(4, 3), { success: false, sabotaged: 1 })
+})
+
+test('infected room code is six digits', () => {
+  assert.equal(numericRoomCode(() => 0), '100000')
+  assert.equal(numericRoomCode(() => 899999), '999999')
+  assert.match(numericRoomCode((max) => Math.floor(Math.random() * max)), /^\d{6}$/)
 })
 
 test('erased guess list hides the answer among the witness and decoys', () => {

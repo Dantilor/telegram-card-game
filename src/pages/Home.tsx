@@ -43,9 +43,9 @@ const APP_FEATURES = [
 ]
 
 const HOME_PICKS = [
-  { title: 'Фигня но бесплатно', image: IMAGES.freebieTrash.png, gameId: 'freebie-trash', to: '/freebie-trash' },
-  { title: 'Переводчик фраз', image: IMAGES.phraseTranslator.png, gameId: 'phrase-translator', to: '/phrase-translator' },
-  { title: 'Где мы?', image: IMAGES.russiaTravel.png, gameId: 'russia-travel', to: '/russia-travel' },
+  { title: 'Мафия: Тени города', image: IMAGES.mafiaShadows.png, gameId: 'mafia-shadows', to: '/mafia-shadows' },
+  { title: 'Двойники', image: IMAGES.doubles.png, gameId: 'doubles', to: '/doubles' },
+  { title: 'Заражённые', image: IMAGES.infected.png, gameId: 'infected', to: '/infected' },
 ] as const
 
 function HomePlayIcon({ size = 'picks' }: { size?: 'picks' | 'cta' }) {

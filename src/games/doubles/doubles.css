@@ -2243,7 +2243,7 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
   width: min(100%, 480px);
   min-height: 100dvh;
   margin: 0 auto;
-  padding: max(12px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+  padding: calc(var(--tg-header-offset, 3.5rem) + 10px) 16px max(18px, env(safe-area-inset-bottom));
   gap: 0;
 }
 .doubles .dv-nav.game-page {
@@ -2286,7 +2286,9 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
   height: auto;
   min-height: 0;
   grid-template-columns: none;
-  gap: 8px;
+  gap: 10px;
+  padding-top: calc(var(--tg-header-offset, 3.5rem) + 8px);
+  background: #080b1bf7;
 }
 .doubles .room-header-row {
   display: grid;
@@ -2304,17 +2306,14 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
   background: transparent;
 }
 .doubles .timer {
-  height: auto;
-  flex-direction: column;
-  gap: 0;
-  padding: 3px 8px;
-}
-.doubles .timer small {
-  font-size: 9px;
-  font-weight: 700;
+  width: fit-content;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  flex-direction: row;
+  border-radius: 10px;
+  font-size: 0.95rem;
   letter-spacing: 0.04em;
-  line-height: 1;
-  opacity: 0.8;
 }
 .doubles .host-bar {
   position: fixed;
@@ -2343,4 +2342,88 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
   bottom: 0;
   z-index: 2;
   background: #12182c;
+}
+
+/* Phone: keep icons square, buttons aligned, and the header below Telegram. */
+.app .doubles svg {
+  max-width: none;
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: middle;
+}
+.app .doubles .primary-button,
+.app .doubles .share-card button,
+.app .doubles .remembered,
+.app .doubles .hide-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1.2;
+}
+.app .doubles .primary-button svg,
+.app .doubles .share-card button svg,
+.app .doubles .remembered svg,
+.app .doubles .hide-card svg,
+.app .doubles .icon-button svg,
+.app .doubles .instruction-icon svg,
+.app .doubles .room-code svg,
+.app .doubles .identity-options button svg,
+.app .doubles .section-head svg,
+.app .doubles .ready-mark svg,
+.app .doubles .secret-note > svg,
+.app .doubles .secret-mission > svg,
+.app .doubles .evidence-question svg,
+.app .doubles .micro-rule svg,
+.app .doubles .self-summary-icon svg,
+.app .doubles .candidate-grid button > i svg {
+  width: 18px;
+  height: 18px;
+}
+.app .doubles .identity-mark svg,
+.app .doubles .closed-seal svg,
+.app .doubles .evidence-stamp svg,
+.app .doubles .result-hero > div svg {
+  width: 32px;
+  height: 32px;
+}
+.app .doubles .boot > svg {
+  width: 48px;
+  height: 48px;
+}
+@media (max-width: 520px) {
+  .doubles .game-content {
+    gap: 16px;
+    padding-top: 16px;
+  }
+  .doubles .phase-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .doubles .phase-card h1 {
+    font-size: 1.65rem;
+  }
+  .doubles .phase-progress {
+    width: 100%;
+  }
+  .doubles .evidence-card > h2 {
+    font-size: 1.55rem;
+  }
+  .doubles .evidence-stamp {
+    width: 46px;
+    height: 46px;
+  }
+  .doubles .result-hero {
+    padding: 22px 16px;
+  }
+  .doubles .result-hero h1 {
+    font-size: 2rem;
+  }
+  .doubles .identity-options {
+    max-height: none;
+  }
 }

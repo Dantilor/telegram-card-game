@@ -87,7 +87,7 @@
 .infected-game .inf-toast {
   position: fixed;
   z-index: 80;
-  top: max(12px, env(safe-area-inset-top));
+  top: calc(var(--app-inset-top) + 4px);
   left: 50%;
   transform: translateX(-50%);
   max-width: min(92vw, 420px);
@@ -255,15 +255,15 @@ html[data-theme] .app .infected-game p { color: #d5e4ea; }
 
 /* Header and dialogs sit below the Telegram controls. */
 .app .infected-game .home-layout {
-  padding-top: calc(var(--tg-header-offset, 3.5rem) + 10px);
+  padding-top: calc(var(--app-inset-top) + 6px);
 }
 .app .infected-game .room-header {
   margin-top: 0;
-  padding-top: calc(var(--tg-header-offset, 3.5rem) + 8px);
+  padding-top: calc(var(--app-inset-top) + 4px);
   background: #03070df7;
 }
 .infected-game .inf-dialog {
-  padding: calc(var(--tg-header-offset, 3.5rem) + 12px) 14px max(18px, env(safe-area-inset-bottom));
+  padding: calc(var(--app-inset-top) + 8px) 14px max(18px, env(safe-area-inset-bottom));
 }
 .infected-game .inf-dialog .rules-dialog > .eyebrow,
 .infected-game .inf-dialog .rules-dialog > h2 {

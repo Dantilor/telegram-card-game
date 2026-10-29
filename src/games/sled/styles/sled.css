@@ -4278,7 +4278,7 @@ html[data-theme="neon-light"] .app:not(:has(.mafia-page)) .sled-root.game-shell 
   max-width: none;
   min-height: 0;
   margin: 0;
-  padding: max(0.75rem, var(--safe-top)) 1rem 0.35rem;
+  padding: calc(var(--app-inset-top) + 4px) 1rem 0.35rem;
   background: transparent;
 }
 

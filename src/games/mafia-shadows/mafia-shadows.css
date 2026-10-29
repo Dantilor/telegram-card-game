@@ -71,7 +71,7 @@
 .mafia-shadows .ms-toast {
   position: fixed;
   z-index: 80;
-  top: max(12px, env(safe-area-inset-top));
+  top: calc(var(--app-inset-top) + 4px);
   left: 50%;
   transform: translateX(-50%);
   max-width: min(92vw, 420px);
@@ -150,7 +150,7 @@ html[data-theme] .app .mafia-shadows .game-title > strong { color: var(--red); }
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  padding: calc(var(--tg-header-offset, 3.5rem) + 8px) 14px 10px;
+  padding: calc(var(--app-inset-top) + 4px) 14px 10px;
   background: #070914f7;
 }
 .mafia-shadows .room-header-row {
@@ -260,7 +260,7 @@ html[data-theme] .app .mafia-shadows .game-title > strong { color: var(--red); }
   height: 32px;
 }
 .app .mafia-shadows .landing-inner {
-  padding-top: calc(var(--tg-header-offset, 3.5rem) + 10px);
+  padding-top: calc(var(--app-inset-top) + 6px);
 }
 @media (max-width: 520px) {
   .mafia-shadows .phase {

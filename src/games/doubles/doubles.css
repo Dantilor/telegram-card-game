@@ -2200,7 +2200,7 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
 .doubles .dv-toast {
   position: fixed;
   z-index: 80;
-  top: max(12px, env(safe-area-inset-top));
+  top: calc(var(--app-inset-top) + 4px);
   left: 50%;
   transform: translateX(-50%);
   max-width: min(92vw, 420px);
@@ -2243,7 +2243,7 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
   width: min(100%, 480px);
   min-height: 100dvh;
   margin: 0 auto;
-  padding: calc(var(--tg-header-offset, 3.5rem) + 10px) 16px max(18px, env(safe-area-inset-bottom));
+  padding: calc(var(--app-inset-top) + 6px) 16px max(18px, env(safe-area-inset-bottom));
   gap: 0;
 }
 .doubles .dv-nav.game-page {
@@ -2287,7 +2287,7 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
   min-height: 0;
   grid-template-columns: none;
   gap: 10px;
-  padding-top: calc(var(--tg-header-offset, 3.5rem) + 8px);
+  padding-top: calc(var(--app-inset-top) + 4px);
   background: #080b1bf7;
 }
 .doubles .room-header-row {

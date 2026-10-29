@@ -33,6 +33,10 @@ const READY_GAME_ROUTES: Record<string, string> = {
   'phrase-translator': '/phrase-translator',
   'freebie-trash': '/freebie-trash',
   'russia-travel': '/russia-travel',
+  sled: '/sled',
+  'mafia-shadows': '/mafia-shadows',
+  doubles: '/doubles',
+  infected: '/infected',
 }
 
 function Games() {
@@ -51,6 +55,10 @@ function Games() {
     import('./PhraseTranslator')
     import('./FreebieTrashLayout')
     import('./RussiaTravel')
+    import('./SledLayout')
+    import('./MafiaShadowsLayout')
+    import('./DoublesLayout')
+    import('./InfectedLayout')
   }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)

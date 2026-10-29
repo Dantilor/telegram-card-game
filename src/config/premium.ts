@@ -23,6 +23,11 @@ export const FREE_LIMIT_PER_DECK = 15
 export const FREE_GAMES = [
   'card',
   'quiz',
+  // Каталог открыт, чтобы гость мог войти по коду. Комнату создаёт только ведущий с Premium.
+  'sled',
+  'mafia-shadows',
+  'doubles',
+  'infected',
 ] as const
 
 /** Комиксы, доступные без подписки (отдельно от FREE_GAMES). */

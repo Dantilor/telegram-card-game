@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsx --test src/legal/legal.test.ts"
+    "test": "tsx --test src/legal/legal.test.ts src/party/partyRules.test.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

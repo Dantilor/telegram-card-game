@@ -14,6 +14,10 @@ import whoIsWhoGame from '../games/who-is-who/assets/who-is-who-card.png'
 import phraseTranslatorGame from './phrase_translator_game.png'
 import freebieTrashGame from './freebie_trash_game.png'
 import russiaTravelGame from './russia_travel_game.png'
+import sledCover from './sled_cover.jpg'
+import mafiaShadowsHero from './mafia_shadows_hero.png'
+import doublesKeyart from './dvoiniki_keyart.webp'
+import infectedCover from './infected_cover.png'
 import fireplaceScene from './fireplace_scene.png'
 import adultMode from './adult_mode.png'
 import partyMode from './party_mode.png'
@@ -44,6 +48,10 @@ export const IMAGES: Record<string, ImageAsset> = {
   phraseTranslator: { png: phraseTranslatorGame },
   freebieTrash: { png: freebieTrashGame },
   russiaTravel: { png: russiaTravelGame },
+  sled: { png: sledCover },
+  mafiaShadows: { png: mafiaShadowsHero },
+  doubles: { png: doublesKeyart },
+  infected: { png: infectedCover },
   fireplaceScene: { png: fireplaceScene },
   adultMode: { png: adultMode },
   partyMode: { png: partyMode },
@@ -81,6 +89,10 @@ export const PRELOAD_CRITICAL_URLS: string[] = [
   IMAGES.phraseTranslator.png,
   IMAGES.freebieTrash.png,
   IMAGES.russiaTravel.png,
+  IMAGES.sled.png,
+  IMAGES.mafiaShadows.png,
+  IMAGES.doubles.png,
+  IMAGES.infected.png,
   IMAGES.fireplaceScene.png,
   IMAGES.datesMode.png,
   IMAGES.partyMode.png,

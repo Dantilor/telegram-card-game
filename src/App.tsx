@@ -36,6 +36,10 @@ const PhraseTranslator = lazy(() => import('./pages/PhraseTranslator'))
 const FreebieTrashLayout = lazy(() => import('./pages/FreebieTrashLayout'))
 const RussiaTravel = lazy(() => import('./pages/RussiaTravel'))
 const RussiaTravelPlay = lazy(() => import('./pages/RussiaTravelPlay'))
+const SledLayout = lazy(() => import('./pages/SledLayout'))
+const MafiaShadowsLayout = lazy(() => import('./pages/MafiaShadowsLayout'))
+const DoublesLayout = lazy(() => import('./pages/DoublesLayout'))
+const InfectedLayout = lazy(() => import('./pages/InfectedLayout'))
 const CustomDeckEditor = lazy(() => import('./pages/CustomDeckEditor'))
 const AliasHome = lazy(() => import('./pages/AliasHome'))
 const AliasPlay = lazy(() => import('./pages/AliasPlay'))
@@ -127,6 +131,10 @@ function App() {
       () => import('./pages/FreebieTrashLayout'),
       () => import('./pages/RussiaTravel'),
       () => import('./pages/RussiaTravelPlay'),
+      () => import('./pages/SledLayout'),
+      () => import('./pages/MafiaShadowsLayout'),
+      () => import('./pages/DoublesLayout'),
+      () => import('./pages/InfectedLayout'),
     ]
     const gameChunkTimers = gameChunks.map((fn, i) => setTimeout(fn, 400 + i * 80))
     return () => {
@@ -218,6 +226,10 @@ function App() {
         <Route path="/freebie-trash" element={<FreebieTrashLayout />} />
         <Route path="/russia-travel" element={<RussiaTravel />} />
         <Route path="/russia-travel/play/:deckId" element={<RussiaTravelPlay />} />
+        <Route path="/sled" element={<SledLayout />} />
+        <Route path="/mafia-shadows" element={<MafiaShadowsLayout />} />
+        <Route path="/doubles" element={<DoublesLayout />} />
+        <Route path="/infected" element={<InfectedLayout />} />
         <Route
           path="/play/:deckId"
           element={

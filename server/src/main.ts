@@ -11,6 +11,10 @@ import apiRouter from './api.js'
 import eventsRouter from './routes/events.js'
 import publicStatsRouter from './routes/publicStats.js'
 import adminRouter from './routes/admin.js'
+import sledRoomsRouter from './routes/sledRooms.js'
+import mafiaShadowsRouter from './routes/mafiaShadows.js'
+import doublesRouter from './routes/doubles.js'
+import infectedRouter from './routes/infected.js'
 import { createLegalHtmlRouter, createLegalRouter } from './routes/legal.js'
 import { db, withTransaction } from './legal/runtime.js'
 import { verifyInitData } from './telegram/verifyInitData.js'
@@ -87,6 +91,10 @@ app.use('/api', apiRouter)
 app.use('/api', eventsRouter)
 app.use('/api', publicStatsRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/sled', sledRoomsRouter)
+app.use('/api/games/mafia-shadows', mafiaShadowsRouter)
+app.use('/api/games/doubles', doublesRouter)
+app.use('/api/games/infected', infectedRouter)
 app.use(
   '/api/legal',
   createLegalRouter({

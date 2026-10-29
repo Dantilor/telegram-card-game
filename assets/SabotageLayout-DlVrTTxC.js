@@ -1,1 +1,0 @@
-import{j as t,O as o}from"./index-xjGZ4PBN.js";import{S as r}from"./SabotageGameContext-BGDwwZ2V.js";/* empty css                      */function i(){return t.jsx(r,{children:t.jsx(o,{})})}export{i as default};

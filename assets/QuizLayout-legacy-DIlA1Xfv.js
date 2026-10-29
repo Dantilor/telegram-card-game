@@ -1,0 +1,1 @@
+System.register(["./index-legacy-DIefwGmb.js","./QuizGameContext-legacy-40yofyoU.js","./GamePageShell-legacy-BmOGXbHQ.js"],function(e,t){"use strict";var n,s,r;return{setters:[e=>{n=e.j,s=e.O},e=>{r=e.Q},null],execute:function(){e("default",function(){return n.jsx(r,{children:n.jsx(s,{})})})}}});

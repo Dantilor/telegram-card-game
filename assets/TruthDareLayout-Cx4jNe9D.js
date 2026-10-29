@@ -1,0 +1,1 @@
+import{j as r,O as t}from"./index-I1cjAkjq.js";import{T as o}from"./TruthDareContext-Dyw68IJR.js";/* empty css                      */function u(){return r.jsx(o,{children:r.jsx(t,{})})}export{u as default};

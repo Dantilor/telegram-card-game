@@ -1,0 +1,1 @@
+import{u as a,V as i,r as n,e as o}from"./index-Dp8q8WaU.js";function u(t){const e=a(),s=typeof window<"u"&&!!i();return n.useCallback(()=>{o("light"),s||window.history.length<=1?e(t):e(-1)},[e,t,s])}export{u};

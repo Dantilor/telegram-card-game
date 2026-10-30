@@ -280,6 +280,8 @@ html[data-theme] .app .infected-game p { color: #d5e4ea; }
   margin: 0 0 12px;
   padding: calc(var(--app-inset-top) + 4px) 0 10px;
   background: #03070df7;
+  box-shadow: 0 0 0 100vmax #03070df7;
+  clip-path: inset(0 -100vmax);
 }
 .app .infected-game .inf-nav.game-page {
   flex: 0 0 auto;
@@ -303,6 +305,12 @@ html[data-theme] .app .infected-game p { color: #d5e4ea; }
   z-index: 2;
 }
 .infected-game .rule-row { grid-template-columns: 34px minmax(0, 1fr); }
+.app .infected-game .identity-card h1 {
+  font-size: clamp(26px, 8.4vw, 48px);
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
 .infected-game .win-grid { grid-template-columns: 1fr; }
 
 /* Icons keep their size inside buttons. */

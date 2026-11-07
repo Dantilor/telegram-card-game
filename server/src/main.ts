@@ -15,17 +15,20 @@ import sledRoomsRouter from './routes/sledRooms.js'
 import mafiaShadowsRouter from './routes/mafiaShadows.js'
 import doublesRouter from './routes/doubles.js'
 import infectedRouter from './routes/infected.js'
+import webAuthRouter from './routes/webAuth.js'
 import { createLegalHtmlRouter, createLegalRouter } from './routes/legal.js'
 import { db, withTransaction } from './legal/runtime.js'
 import { verifyInitData } from './telegram/verifyInitData.js'
 import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
+import { webPublicOrigin } from './auth/config.js'
 
 const port = Number(process.env.PORT || 3001)
 const corsOriginRaw = process.env.CORS_ORIGIN || 'http://localhost:5173'
 const corsOrigins = corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean)
 const localhostOrigins = ['http://localhost:4173', 'http://localhost:5173', 'http://127.0.0.1:4173', 'http://127.0.0.1:5173']
-const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins])]
+const webOrigin = webPublicOrigin()
+const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins, ...(webOrigin ? [webOrigin] : [])])]
 
 const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3k2lQp').replace(/\/+$/, '')
 
@@ -43,6 +46,9 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) return cb(null, true)
     cb(null, false)
   },
+  // Same-origin reverse proxy (WEB-DOMAIN/api) does not need credentialed CORS.
+  // When WEB and API are temporarily on different origins during local/dev, cookies need this.
+  credentials: true,
 }))
 app.use(express.json({ limit: '2mb' }))
 
@@ -83,6 +89,7 @@ app.post(BOT_WEBHOOK_PATH, async (req, res) => {
 
 // API base = /api — все роуты доступны как /api/...
 app.use('/api', authRouter)
+app.use('/api', webAuthRouter)
 app.use('/api', premiumRouter)
 app.use('/api', meRouter)
 app.use('/api', plansRouter)

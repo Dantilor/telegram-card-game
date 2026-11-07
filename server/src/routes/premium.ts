@@ -1,45 +1,31 @@
 import { Router, Request, Response } from 'express'
-import { verifyInitData } from '../telegram/verifyInitData.js'
 import { query } from '../db.js'
+import { resolveAuth } from '../auth/resolveAuth.js'
 
 const QUERY_TIMEOUT_MS = 8000
 const isDev = process.env.NODE_ENV !== 'production'
 
-function getInitDataFromRequest(req: Request): string | null {
-  const auth = req.headers.authorization
-  if (auth?.startsWith('Bearer ')) {
-    return auth.slice(7).trim() || null
-  }
-  const header = req.headers['x-telegram-init-data']
-  if (typeof header === 'string' && header.trim()) return header.trim()
-  const q = req.query.initData
-  if (typeof q === 'string' && q.trim()) return q.trim()
-  return null
-}
-
-function safeResponse(res: Response, isPremium: boolean, activeUntil: string | null) {
-  res.status(200).json({ isPremium, activeUntil })
+function safeResponse(
+  res: Response,
+  isPremium: boolean,
+  activeUntil: string | null,
+  extra?: Record<string, unknown>
+) {
+  res.status(200).json({ isPremium, activeUntil, ...extra })
 }
 
 const router = Router()
 
 router.get('/premium-status', async (req: Request, res: Response) => {
-  const initData = getInitDataFromRequest(req)
-  if (!initData) {
-    if (isDev) console.log('[TCG] /premium-status: no initData')
-    safeResponse(res, false, null)
-    return
-  }
-
-  const botToken = process.env.TELEGRAM_BOT_TOKEN
-  if (!botToken) {
-    if (isDev) console.warn('[TCG] /premium-status: TELEGRAM_BOT_TOKEN not set')
+  const auth = await resolveAuth(req)
+  if (!auth) {
+    if (isDev) console.log('[TCG] /premium-status: no auth')
     safeResponse(res, false, null)
     return
   }
 
   try {
-    const { telegram_id } = verifyInitData(initData, botToken)
+    const telegram_id = auth.telegramId
 
     const queryPromise = query<{ active_until: Date }>(
       `SELECT active_until FROM subscriptions
@@ -58,7 +44,7 @@ router.get('/premium-status', async (req: Request, res: Response) => {
     const isPremium = !!sub && new Date(sub.active_until) > now
     const activeUntil = sub ? sub.active_until.toISOString() : null
 
-    safeResponse(res, isPremium, activeUntil)
+    safeResponse(res, isPremium, activeUntil, { authSource: auth.source })
   } catch (e: unknown) {
     if (isDev) {
       const err = e instanceof Error ? e.message : String(e)

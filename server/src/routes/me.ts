@@ -1,37 +1,17 @@
 import { Router, Request, Response } from 'express'
-import { verifyInitData } from '../telegram/verifyInitData.js'
 import { getLatestActiveUntil } from '../services/subscriptions.js'
-
-function toInitDataString(v: unknown): string {
-  if (typeof v === 'string') return v
-  if (Array.isArray(v)) return v.join('')
-  return ''
-}
-
-function getInitDataFromRequest(req: Request): string | null {
-  const raw = req.headers['x-telegram-init-data'] ?? req.body?.initData ?? req.query?.initData
-  const s = toInitDataString(raw)
-  return s?.trim() || null
-}
+import { resolveAuth } from '../auth/resolveAuth.js'
 
 const router = Router()
 
 router.get('/me', async (req: Request, res: Response) => {
-  const initData = getInitDataFromRequest(req)
-  if (!initData) {
-    res.status(401).json({ error: 'initData required' })
+  const auth = await resolveAuth(req)
+  if (!auth) {
+    res.status(401).json({ error: 'Unauthorized', code: 'unauthorized' })
     return
   }
 
-  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? process.env.BOT_TOKEN ?? ''
-  let telegramId: number
-  try {
-    const parsed = verifyInitData(initData, botToken)
-    telegramId = parsed.telegram_id
-  } catch {
-    res.status(401).json({ error: 'Unauthorized' })
-    return
-  }
+  const telegramId = auth.telegramId
 
   try {
     const activeUntilDate = await getLatestActiveUntil(telegramId)
@@ -45,6 +25,7 @@ router.get('/me', async (req: Request, res: Response) => {
       premium,
       premiumUntil: activeUntil,
       activeUntil,
+      authSource: auth.source,
     })
   } catch (e) {
     console.error('[API] /api/me DB error:', e)

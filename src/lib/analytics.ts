@@ -6,6 +6,8 @@
 import { canSendAnalytics } from '../legal/analyticsGate'
 import { legalApiBase } from '../legal/client'
 import { getInitData } from './telegram'
+import { isWebShell } from '../config/shell'
+import { csrfHeadersForMutation } from './csrf'
 
 const ALLOWED_PROPS: Record<string, string[]> = {
   app_open: [],
@@ -68,14 +70,18 @@ export function trackEvent(name: string, props?: Record<string, unknown>): void 
   const eventProps = allowedProps(eventName, sanitizeProps(props))
   const body = JSON.stringify(eventProps ? { name: eventName, props: eventProps } : { name: eventName })
   const initData = getInitData()
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (initData) headers['x-telegram-init-data'] = initData
+  const web = isWebShell()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...csrfHeadersForMutation('POST'),
+  }
+  if (!web && initData) headers['x-telegram-init-data'] = initData
 
   fetch(`${base}/api/events`, {
     method: 'POST',
     headers,
     body,
-    credentials: 'omit',
+    credentials: web ? 'include' : 'omit',
   }).catch(() => {
     // fire-and-forget: ignore errors
   })

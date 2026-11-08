@@ -3,6 +3,7 @@ import { getInitData } from '../lib/telegram'
 import { getMe, ApiAuthError } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 import { devLog, devWarn } from '../utils/devLog'
+import { isWebShell } from '../config/shell'
 
 const CACHE_KEY = 'tcg_premium_status'
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
@@ -118,7 +119,7 @@ export function usePremiumStatus(): {
   const fetchStatus = useCallback(async (bypassCache = false): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
     const initData = getInitData()
 
-    if (!initData) {
+    if (!initData && !isWebShell()) {
       devLog('[TCG] Premium: no initData (open in Telegram)')
       doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false, serverError503: false })
       return null

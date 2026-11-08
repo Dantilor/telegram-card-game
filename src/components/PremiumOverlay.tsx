@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { haptic } from '../utils/telegram'
 import { getTelegramWebApp, getInitData } from '../lib/telegram'
+import { isWebShell } from '../config/shell'
 import { useLegal } from '../legal/LegalProvider'
 import { classifyReceipt, LegalClientError, submitNewPremiumOrder, userFacingLoadError } from '../legal/client'
 import type { PublicDocument } from '../legal/types'
@@ -234,7 +235,11 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
 
     const initData = getInitData()
     if (!initData) {
-      setError('Откройте приложение внутри Telegram для оплаты')
+      setError(
+        isWebShell()
+          ? 'Оплата Premium в WEB подключается на следующем этапе. Статус Premium уже читается из вашей сессии.'
+          : 'Откройте приложение внутри Telegram для оплаты'
+      )
       return
     }
 

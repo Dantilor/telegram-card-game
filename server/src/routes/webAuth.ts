@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express'
+import { z } from 'zod'
 import { ensureUser } from '../services/subscriptions.js'
 import { webPublicOrigin, sessionTtlMs } from '../auth/config.js'
 import {
@@ -10,7 +11,12 @@ import {
 import { requireWebSession, type AuthedRequest } from '../auth/middleware.js'
 import { resolveAuth } from '../auth/resolveAuth.js'
 import { completeTelegramOidcLogin, startTelegramOidcLogin } from '../auth/telegramOidc.js'
-import { createWebSession, revokeSessionByToken, verifyCsrf, findActiveSessionByToken } from '../auth/webSession.js'
+import {
+  createWebSession,
+  revokeSessionByToken,
+  verifyCsrf,
+  findActiveSessionByToken,
+} from '../auth/webSession.js'
 
 const router = Router()
 
@@ -30,6 +36,11 @@ function errorPayload(e: unknown): { status: number; body: Record<string, unknow
 function safeReturnPath(returnTo: string | null | undefined): string {
   if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) return '/'
   return returnTo
+}
+
+function devLoginEnabled(): boolean {
+  if (process.env.NODE_ENV === 'production') return false
+  return process.env.WEB_DEV_LOGIN_ENABLED === '1' || process.env.WEB_DEV_LOGIN_ENABLED === 'true'
 }
 
 /**
@@ -70,6 +81,11 @@ router.get('/web/auth/telegram/callback', async (req: Request, res: Response) =>
     const state = typeof req.query.state === 'string' ? req.query.state : ''
     const oidcError = typeof req.query.error === 'string' ? req.query.error : ''
     if (oidcError) {
+      const origin = webPublicOrigin()
+      if (origin) {
+        res.redirect(302, `${origin}/login?error=${encodeURIComponent(oidcError)}`)
+        return
+      }
       res.status(401).json({ error: 'Unauthorized', code: 'oidc_denied', message: oidcError })
       return
     }
@@ -79,6 +95,11 @@ router.get('/web/auth/telegram/callback', async (req: Request, res: Response) =>
 
     const session = await createWebSession(completed.telegramId, {
       userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+      profile: {
+        displayName: completed.profile.name ?? null,
+        username: completed.profile.preferredUsername ?? null,
+        pictureUrl: completed.profile.picture ?? null,
+      },
     })
     const maxAgeSec = Math.floor(sessionTtlMs() / 1000)
     setSessionCookies(res, {
@@ -100,6 +121,61 @@ router.get('/web/auth/telegram/callback', async (req: Request, res: Response) =>
       source: 'web_session',
       returnTo: path,
       profile: completed.profile,
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    const origin = webPublicOrigin()
+    if (origin && status === 401) {
+      res.redirect(302, `${origin}/login?error=${encodeURIComponent(String(body.code ?? 'auth_error'))}`)
+      return
+    }
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * Local/dev only: create a WEB session without Telegram OIDC.
+ * Disabled in production. Requires WEB_DEV_LOGIN_ENABLED=1 and WEB_DEV_LOGIN_SECRET.
+ */
+router.post('/web/auth/dev-login', async (req: Request, res: Response) => {
+  if (!devLoginEnabled()) {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
+  const secret = process.env.WEB_DEV_LOGIN_SECRET ?? ''
+  const parsed = z
+    .object({
+      telegramId: z.number().int().positive(),
+      secret: z.string().min(8),
+      displayName: z.string().max(120).optional(),
+      username: z.string().max(64).optional(),
+    })
+    .safeParse(req.body)
+  if (!parsed.success || !secret || parsed.data.secret !== secret) {
+    res.status(401).json({ error: 'Unauthorized', code: 'dev_login_denied' })
+    return
+  }
+
+  try {
+    await ensureUser(parsed.data.telegramId)
+    const session = await createWebSession(parsed.data.telegramId, {
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+      profile: {
+        displayName: parsed.data.displayName ?? 'Dev Host',
+        username: parsed.data.username ?? null,
+        pictureUrl: null,
+      },
+    })
+    setSessionCookies(res, {
+      sessionToken: session.sessionToken,
+      csrfToken: session.csrfToken,
+      maxAgeSec: Math.floor(sessionTtlMs() / 1000),
+    })
+    res.status(200).json({
+      ok: true,
+      telegramId: parsed.data.telegramId,
+      source: 'web_session',
+      dev: true,
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -138,20 +214,26 @@ router.post('/web/auth/logout', async (req: Request, res: Response) => {
 })
 
 /**
- * Test / foundation endpoint: WEB session only.
+ * WEB session profile endpoint.
  * GET /api/web/session/me
  */
 router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  const cookies = readCookies(req)
+  const sessionToken = cookies[SESSION_COOKIE]
+  const session = sessionToken ? await findActiveSessionByToken(sessionToken) : null
   res.status(200).json({
     ok: true,
     telegramId: req.auth!.telegramId,
     source: req.auth!.source,
     sessionId: req.auth!.sessionId,
+    displayName: session?.display_name ?? null,
+    username: session?.username ?? null,
+    pictureUrl: session?.picture_url ?? null,
   })
 })
 
 /**
- * Dual-auth probe for Stage 2A (initData OR WEB session).
+ * Dual-auth probe (initData OR WEB session).
  * GET /api/web/auth/whoami
  */
 router.get('/web/auth/whoami', async (req: Request, res: Response) => {

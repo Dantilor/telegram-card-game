@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { getTgUser } from '../utils/telegram'
 import { useTheme } from '../hooks/useTheme'
 import { apiGet } from '../lib/api'
+import { isWebShell } from '../config/shell'
+import { useWebSession } from '../shell/WebSessionContext'
 import iconHostCrown from '../assets/icons/gnh/host-crown.svg'
 import iconLightHostCrown from '../assets/icons/gnh-light-pro/light-host-crown-pro.svg'
 import iconSunsetHostCrown from '../assets/icons/gnh-sunset-pro/sunset-host-crown-pro.svg'
@@ -28,7 +30,18 @@ function getInitials(firstName?: string, lastName?: string): string {
 function HomeWelcomeTop() {
   const [theme] = useTheme()
   const [usersCount, setUsersCount] = useState<number | null>(null)
-  const user = getTgUser()
+  const tgUser = getTgUser()
+  const webSession = useWebSession()
+  const user = isWebShell()
+    ? webSession.session
+      ? {
+          first_name: webSession.session.displayName?.split(/\s+/)[0] || 'Host',
+          last_name: webSession.session.displayName?.split(/\s+/).slice(1).join(' ') || undefined,
+          username: webSession.session.username ?? undefined,
+          photo_url: webSession.session.pictureUrl ?? undefined,
+        }
+      : null
+    : tgUser
   const crownIcon = CROWN_BY_THEME[theme]
   const formattedCount = usersCount === null ? '—' : formatUsersCount(usersCount)
 

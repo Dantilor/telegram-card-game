@@ -9,6 +9,9 @@ export type WebSessionRecord = {
   expires_at: Date
   revoked_at: Date | null
   csrf_hash: string
+  display_name?: string | null
+  username?: string | null
+  picture_url?: string | null
 }
 
 type Db = {
@@ -41,18 +44,40 @@ export type CreatedWebSession = {
 
 export async function createWebSession(
   telegramId: number,
-  opts?: { userAgent?: string | null; db?: Queryable }
+  opts?: {
+    userAgent?: string | null
+    db?: Queryable
+    profile?: { displayName?: string | null; username?: string | null; pictureUrl?: string | null }
+  }
 ): Promise<CreatedWebSession> {
   const sessionToken = randomToken(32)
   const csrfToken = randomToken(32)
   const expiresAt = new Date(Date.now() + sessionTtlMs())
   const uaHash = opts?.userAgent ? sha256Hex(opts.userAgent.slice(0, 512)) : null
+  const displayName = opts?.profile?.displayName?.trim() || null
+  const username = opts?.profile?.username?.trim() || null
+  const pictureUrl = opts?.profile?.pictureUrl?.trim() || null
 
+  const tokenHash = sha256Hex(sessionToken)
   await db(opts?.db).query(
     `INSERT INTO web_sessions (token_hash, csrf_hash, telegram_id, expires_at, user_agent_hash)
      VALUES ($1, $2, $3::bigint, $4, $5)`,
-    [sha256Hex(sessionToken), sha256Hex(csrfToken), telegramId, expiresAt.toISOString(), uaHash]
+    [tokenHash, sha256Hex(csrfToken), telegramId, expiresAt.toISOString(), uaHash]
   )
+
+  // Optional profile snapshot (migration 013). Ignore if columns are not applied yet.
+  if (displayName || username || pictureUrl) {
+    try {
+      await db(opts?.db).query(
+        `UPDATE web_sessions
+         SET display_name = $2, username = $3, picture_url = $4
+         WHERE token_hash = $1`,
+        [tokenHash, displayName, username, pictureUrl]
+      )
+    } catch {
+      // Schema without 013 — session still valid without display fields.
+    }
+  }
 
   return { sessionToken, csrfToken, expiresAt, telegramId }
 }
@@ -63,19 +88,37 @@ export async function findActiveSessionByToken(
 ): Promise<WebSessionRecord | null> {
   if (!sessionToken?.trim()) return null
   const tokenHash = sha256Hex(sessionToken.trim())
-  const result = await db(customDb).query<WebSessionRecord>(
-    `SELECT id, telegram_id, expires_at, revoked_at, csrf_hash
-     FROM web_sessions
-     WHERE token_hash = $1
-     LIMIT 1`,
-    [tokenHash]
-  )
-  const row = result.rows[0]
-  if (!row) return null
-  if (row.revoked_at) return null
-  const expiresAt = new Date(row.expires_at)
-  if (!(expiresAt.getTime() > Date.now())) return null
-  return row
+  try {
+    const result = await db(customDb).query<WebSessionRecord>(
+      `SELECT id, telegram_id, expires_at, revoked_at, csrf_hash,
+              display_name, username, picture_url
+       FROM web_sessions
+       WHERE token_hash = $1
+       LIMIT 1`,
+      [tokenHash]
+    )
+    const row = result.rows[0]
+    if (!row) return null
+    if (row.revoked_at) return null
+    const expiresAt = new Date(row.expires_at)
+    if (!(expiresAt.getTime() > Date.now())) return null
+    return row
+  } catch {
+    // Fallback when migration 013 profile columns are absent.
+    const result = await db(customDb).query<WebSessionRecord>(
+      `SELECT id, telegram_id, expires_at, revoked_at, csrf_hash
+       FROM web_sessions
+       WHERE token_hash = $1
+       LIMIT 1`,
+      [tokenHash]
+    )
+    const row = result.rows[0]
+    if (!row) return null
+    if (row.revoked_at) return null
+    const expiresAt = new Date(row.expires_at)
+    if (!(expiresAt.getTime() > Date.now())) return null
+    return row
+  }
 }
 
 export async function touchSession(sessionId: number, customDb?: Queryable): Promise<Date> {

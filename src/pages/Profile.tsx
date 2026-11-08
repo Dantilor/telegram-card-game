@@ -9,6 +9,8 @@ import { haptic, getTgUser, getInitData } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import { isWebShell } from '../config/shell'
+import { useWebSession } from '../shell/WebSessionContext'
 import './Profile.css'
 
 const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
@@ -24,14 +26,28 @@ function getInitials(firstName?: string, lastName?: string): string {
 
 function Profile() {
   const handleBack = useBack('/')
-  const user = getTgUser()
+  const tgUser = getTgUser()
+  const webSession = useWebSession()
+  const web = isWebShell()
+  const user = web
+    ? webSession.session
+      ? {
+          first_name: webSession.session.displayName?.split(/\s+/)[0] || 'Host',
+          last_name: webSession.session.displayName?.split(/\s+/).slice(1).join(' ') || undefined,
+          username: webSession.session.username ?? undefined,
+          photo_url: webSession.session.pictureUrl ?? undefined,
+          id: webSession.session.telegramId,
+        }
+      : null
+    : tgUser
   const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
   const initData = getInitData()
-  const userId = initData.userId ?? initData.user?.id
+  const userId = web ? webSession.session?.telegramId : (initData.userId ?? initData.user?.id)
   const legal = useLegal()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
+  const [logoutBusy, setLogoutBusy] = useState(false)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleRestorePurchase = useCallback(async () => {
@@ -64,7 +80,24 @@ function Profile() {
     }
   }, [])
 
+  const handleLogout = useCallback(async () => {
+    if (!web) return
+    haptic('light')
+    setLogoutBusy(true)
+    try {
+      await webSession.logout()
+      window.location.assign('/login')
+    } finally {
+      setLogoutBusy(false)
+    }
+  }, [web, webSession])
+
   const getErrorMessage = () => {
+    if (web) {
+      if (serverError503) return 'Сервис временно недоступен, попробуйте позже'
+      if (authError401 || authError) return 'Сессия истекла. Войдите снова через Telegram.'
+      return null
+    }
     if (authError401) return 'Откройте внутри Telegram'
     if (serverError503) return 'Сервис временно недоступен, попробуйте позже'
     if (authError) return 'Откройте внутри Telegram'
@@ -115,8 +148,13 @@ function Profile() {
             </>
           ) : (
             <p className="profile-identity__guest">
-              Откройте приложение внутри Telegram, чтобы увидеть профиль и статус Premium
+              {web
+                ? 'Войдите через Telegram, чтобы увидеть профиль и статус Premium'
+                : 'Откройте приложение внутри Telegram, чтобы увидеть профиль и статус Premium'}
             </p>
+          )}
+          {web && userId != null && (
+            <p className="profile-identity__username">Telegram ID {userId}</p>
           )}
 
           <span className={`profile-identity__badge${isPremium ? ' profile-identity__badge--pro' : ''}`}>
@@ -233,6 +271,23 @@ function Profile() {
               </span>
               <span className="profile-menu__chev" aria-hidden>›</span>
             </button>
+            {web && (
+              <button
+                type="button"
+                className="profile-menu__row"
+                onClick={() => void handleLogout()}
+                disabled={logoutBusy}
+              >
+                <span className="profile-menu__icon" aria-hidden>⎋</span>
+                <span className="profile-menu__label">
+                  <span className="profile-menu__label-main">
+                    {logoutBusy ? 'Выход…' : 'Выйти'}
+                  </span>
+                  <span className="profile-menu__label-sub">Завершить WEB-сессию</span>
+                </span>
+                <span className="profile-menu__chev" aria-hidden>›</span>
+              </button>
+            )}
           </div>
         </section>
         </div>

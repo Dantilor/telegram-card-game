@@ -19,6 +19,7 @@ import {
 import { LegalError, isPgMissingRelation, legalErrorBody } from '../legal/errors.js'
 import { renderDocumentHtml, renderUnavailableHtml } from '../legal/html.js'
 import { verifyInitData } from '../telegram/verifyInitData.js'
+import { resolveAuth } from '../auth/resolveAuth.js'
 import type { LegalPlan, Queryable, TransactionRunner } from '../legal/types.js'
 
 const RequestIdSchema = z.string().regex(/^[A-Za-z0-9_-]{8,80}$/)
@@ -117,10 +118,25 @@ function readInitData(req: Request): unknown {
   return null
 }
 
-function subjectFromRequest(req: Request, deps: LegalRouterDeps, res: Response): number | null {
+async function subjectFromRequest(
+  req: Request,
+  deps: LegalRouterDeps,
+  res: Response
+): Promise<number | null> {
+  // Dual-auth: Mini App initData or WEB session cookie. Never trust body telegram_id.
+  try {
+    const auth = await resolveAuth(req, {
+      botToken: deps.getBotToken(),
+      requireCsrfForWeb: req.method !== 'GET' && req.method !== 'HEAD',
+    })
+    if (auth) return auth.telegramId
+  } catch {
+    /* fall through */
+  }
+
   const initData = readInitData(req)
   if (typeof initData !== 'string') {
-    res.status(401).json({ error: 'initData required' })
+    res.status(401).json({ error: 'Unauthorized', code: 'unauthorized' })
     return null
   }
   try {
@@ -214,7 +230,7 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/account', async (req, res) => {
-    const telegramId = subjectFromRequest(req, deps, res)
+    const telegramId = await subjectFromRequest(req, deps, res)
     if (telegramId == null) return
     const parsed = accountRegistrationSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -230,7 +246,7 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/agreement', async (req, res) => {
-    const telegramId = subjectFromRequest(req, deps, res)
+    const telegramId = await subjectFromRequest(req, deps, res)
     if (telegramId == null) return
     const parsed = AgreementSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -245,7 +261,7 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/offer-acceptances', async (req, res) => {
-    const telegramId = subjectFromRequest(req, deps, res)
+    const telegramId = await subjectFromRequest(req, deps, res)
     if (telegramId == null) return
     const parsed = OfferSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -265,7 +281,7 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/consents', async (req, res) => {
-    const telegramId = subjectFromRequest(req, deps, res)
+    const telegramId = await subjectFromRequest(req, deps, res)
     if (telegramId == null) return
     const parsed = GrantSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -280,7 +296,7 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/consents/decline', async (req, res) => {
-    const telegramId = subjectFromRequest(req, deps, res)
+    const telegramId = await subjectFromRequest(req, deps, res)
     if (telegramId == null) return
     const parsed = ChannelActionSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -295,7 +311,7 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/consents/withdraw', async (req, res) => {
-    const telegramId = subjectFromRequest(req, deps, res)
+    const telegramId = await subjectFromRequest(req, deps, res)
     if (telegramId == null) return
     const parsed = ChannelActionSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -310,7 +326,7 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.get('/me', async (req, res) => {
-    const telegramId = subjectFromRequest(req, deps, res)
+    const telegramId = await subjectFromRequest(req, deps, res)
     if (telegramId == null) return
     try {
       const records = await readOwnRecords(deps.query, telegramId)

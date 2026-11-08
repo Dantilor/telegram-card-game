@@ -10,6 +10,8 @@ import { getMe } from './api/subscription'
 import { preloadImages } from './utils/preloadImages'
 import { PRELOAD_CRITICAL_URLS } from './assets/images'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
+import { isWebShell } from './config/shell'
+import { WebAuthGate } from './shell/WebAuthGate'
 import './App.css'
 
 // Главная загружается сразу (первый экран)
@@ -93,12 +95,15 @@ function App() {
     return () => cancelAnimationFrame(raf)
   }, [])
   useEffect(() => {
-    try {
-      readyAndExpand()
-    } catch {
-      // no-op: don't block UI
+    if (!isWebShell()) {
+      try {
+        readyAndExpand()
+      } catch {
+        // no-op: don't block UI
+      }
     }
     const fallbackT = setTimeout(() => {
+      if (isWebShell()) return
       try {
         readyAndExpand()
       } catch {
@@ -152,10 +157,8 @@ function App() {
     }
   }, [])
 
-  return (
-    <PremiumProvider>
-      <LegalProvider>
-      <div className={`app${isReady ? ' is-ready' : ''}`}>
+  const routes = (
+      <div className={`app${isReady ? ' is-ready' : ''}${isWebShell() ? ' app--web' : ''}`}>
         <Suspense
           fallback={
             <DelayedFallback delayMs={250}>
@@ -245,10 +248,17 @@ function App() {
         <Route path="/legal/privacy" element={<LegalDocumentPage documentId="privacy" />} />
         <Route path="/legal/terms" element={<LegalDocumentPage documentId="agreement" />} />
         <Route path="/legal/premium" element={<LegalDocumentPage documentId="offer" />} />
+        <Route path="/login" element={<Home />} />
         </Routes>
         </Suspense>
       </div>
-      <FirstUseSheet />
+  )
+
+  return (
+    <PremiumProvider>
+      <LegalProvider>
+        {isWebShell() ? <WebAuthGate>{routes}</WebAuthGate> : routes}
+        <FirstUseSheet />
       </LegalProvider>
     </PremiumProvider>
   )

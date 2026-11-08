@@ -5,6 +5,8 @@ import { LegalClientError, legalApiBase } from './client'
 import { preloadDocuments } from './documentCache'
 import { PROFILE_DOCUMENTS } from './catalog'
 import { getInitData } from '../lib/telegram'
+import { isWebShell } from '../config/shell'
+import { csrfHeadersForMutation } from '../lib/csrf'
 import type { OwnLegalRecords } from './types'
 
 type Viewer = { id: string; version?: string }
@@ -20,6 +22,11 @@ type LegalContextValue = {
 
 const LegalContext = createContext<LegalContextValue | null>(null)
 
+function hasLegalAuth(): boolean {
+  if (isWebShell()) return true
+  return Boolean(getInitData())
+}
+
 async function requestLegal(
   path: string,
   method: 'GET' | 'POST',
@@ -27,12 +34,16 @@ async function requestLegal(
 ): Promise<unknown> {
   const base = legalApiBase(import.meta.env)
   const initData = getInitData()
-  if (!initData) {
+  const web = isWebShell()
+  if (!web && !initData) {
     throw new LegalClientError('auth_required', 401, 'Откройте приложение внутри Telegram.')
   }
   const headers: Record<string, string> = {
     Accept: 'application/json',
-    'x-telegram-init-data': initData,
+    ...csrfHeadersForMutation(method),
+  }
+  if (!web && initData) {
+    headers['x-telegram-init-data'] = initData
   }
   if (body) headers['Content-Type'] = 'application/json'
   let response: Response
@@ -41,7 +52,7 @@ async function requestLegal(
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
-      credentials: 'omit',
+      credentials: web ? 'include' : 'omit',
     })
   } catch {
     throw new LegalClientError('network', 0, 'Нет соединения. Подтверждение не сохранено.')
@@ -72,9 +83,8 @@ export function LegalProvider({ children }: { children: ReactNode }) {
   const [viewer, setViewer] = useState<Viewer | null>(null)
 
   const refreshRecords = useCallback(async () => {
-    // Collection is disabled in this product flow, including older grants.
     blockAnalyticsTransport()
-    if (!getInitData()) {
+    if (!hasLegalAuth()) {
       blockAnalyticsTransport()
       setRecords(null)
       setStatus('anonymous')
@@ -88,6 +98,12 @@ export function LegalProvider({ children }: { children: ReactNode }) {
       setError(null)
     } catch (reason) {
       blockAnalyticsTransport()
+      if (reason instanceof LegalClientError && reason.status === 401 && isWebShell()) {
+        setRecords(null)
+        setStatus('anonymous')
+        setError(null)
+        return
+      }
       setStatus('error')
       setError(reason instanceof LegalClientError ? reason.message : 'Не удалось проверить согласия.')
     }

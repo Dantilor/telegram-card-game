@@ -1,5 +1,7 @@
 import { resolveApiBase } from './apiBase'
 import { getInitData } from './telegram'
+import { isWebShell } from '../config/shell'
+import { csrfHeadersForMutation } from './csrf'
 
 const API_TIMEOUT_MS = 7000
 const isDev = import.meta.env.DEV
@@ -11,13 +13,16 @@ export function getBaseUrl(): string {
 async function request<T>(path: string, options: RequestInit & { method?: string; body?: string } = {}): Promise<T> {
   const baseUrl = getBaseUrl()
   const initData = getInitData()
+  const method = (options.method ?? 'GET').toUpperCase()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(typeof options.headers === 'object' && !(options.headers instanceof Headers)
       ? (options.headers as Record<string, string>)
       : {}),
+    ...csrfHeadersForMutation(method),
   }
-  if (initData) {
+  // Mini App only: never inject forged initData into WEB.
+  if (!isWebShell() && initData) {
     headers['x-telegram-init-data'] = initData
   }
 
@@ -29,8 +34,9 @@ async function request<T>(path: string, options: RequestInit & { method?: string
   try {
     res = await fetch(url, {
       ...options,
+      method,
       headers,
-      credentials: 'omit',
+      credentials: isWebShell() ? 'include' : 'omit',
       signal: controller.signal,
     })
   } catch (e) {

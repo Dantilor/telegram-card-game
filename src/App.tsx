@@ -6,9 +6,7 @@ import { PremiumProvider } from './contexts/PremiumContext'
 import { LegalProvider } from './legal/LegalProvider'
 import { FirstUseSheet } from './components/LegalChoices'
 import { readyAndExpand } from './utils/telegram'
-import { getMe } from './api/subscription'
-import { preloadImages } from './utils/preloadImages'
-import { PRELOAD_CRITICAL_URLS } from './assets/images'
+import { scheduleIdleImports, scheduleWhenIdle } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import './App.css'
 
@@ -105,50 +103,30 @@ function App() {
         // no-op
       }
     }, 1800)
-    // app_open отправляется только после уже действующего серверного согласия на аналитику.
-    const t0 = setTimeout(() => {
-      getMe().catch(() => {})
-    }, 150)
-    // Предзагрузка изображений карточек/режимов (с кэшем в preloadImages)
-    const t0img = setTimeout(() => preloadImages(PRELOAD_CRITICAL_URLS), 200)
-    // Предзагрузка основных экранов и чанков игр — чтобы при первом запуске не подвисало
-    const t1 = setTimeout(() => import('./pages/Games'), 300)
-    const t2 = setTimeout(() => import('./pages/CardGameEntry'), 600)
-    const t3 = setTimeout(() => import('./pages/Profile'), 900)
-    const t4 = setTimeout(() => import('./pages/Decks'), 1200)
-    const t5 = setTimeout(() => import('./pages/ModePage'), 1500)
-    const t6 = setTimeout(() => import('./pages/Favorites'), 1800)
-    const t7 = setTimeout(() => import('./pages/Play'), 2100)
-    const gameChunks = [
-      () => import('./pages/AliasLayout'),
-      () => import('./pages/ActivityLayout'),
-      () => import('./pages/MafiaLayout'),
-      () => import('./pages/SabotageLayout'),
-      () => import('./pages/QuizLayout'),
-      () => import('./pages/TruthDareLayout'),
-      () => import('./pages/WhoIsWhoLayout'),
-      () => import('./pages/PhraseTranslator'),
-      () => import('./pages/FreebieTrashLayout'),
-      () => import('./pages/RussiaTravel'),
-      () => import('./pages/RussiaTravelPlay'),
-      () => import('./pages/SledLayout'),
-      () => import('./pages/MafiaShadowsLayout'),
-      () => import('./pages/DoublesLayout'),
-      () => import('./pages/InfectedLayout'),
-    ]
-    const gameChunkTimers = gameChunks.map((fn, i) => setTimeout(fn, 400 + i * 80))
+
+    // Тёплый кэш только самых вероятных следующих экранов — в idle, без шторма игровых чанков.
+    // Premium/getMe уже грузит PremiumProvider; дублирующий prefetch и preload картинок убраны.
+    const cancelRouteWarm = scheduleIdleImports(
+      [
+        () => import('./pages/Games'),
+        () => import('./pages/Profile'),
+      ],
+      { startDelayMs: 1200, gapMs: 500, timeoutMs: 3500 }
+    )
+
+    // Каталог обложек игр — только после простоя, чтобы не конкурировать с hero Home.
+    const cancelCatalogWarm = scheduleWhenIdle(() => {
+      void import('./assets/images').then(({ PRELOAD_GAMES_CATALOG_URLS }) =>
+        import('./utils/preloadImages').then(({ preloadImages }) => {
+          preloadImages(PRELOAD_GAMES_CATALOG_URLS)
+        })
+      )
+    }, 5000)
+
     return () => {
       clearTimeout(fallbackT)
-      clearTimeout(t0)
-      clearTimeout(t0img)
-      clearTimeout(t1)
-      clearTimeout(t2)
-      clearTimeout(t3)
-      clearTimeout(t4)
-      clearTimeout(t5)
-      clearTimeout(t6)
-      clearTimeout(t7)
-      gameChunkTimers.forEach(clearTimeout)
+      cancelRouteWarm()
+      cancelCatalogWarm()
     }
   }, [])
 

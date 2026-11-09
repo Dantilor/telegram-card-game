@@ -93,10 +93,12 @@ export function usePremiumStatus(): {
         serverError503: false,
       }
     }
+    // Без кэша не блокируем UI «вечной» проверкой: показываем free-состояние,
+    // а фактический статус догружается в фоне (ошибка API тоже снимает loading).
     return {
       isPremium: false,
       activeUntil: null,
-      loading: true,
+      loading: false,
       authError: false,
       authError401: false,
       serverError503: false,
@@ -133,7 +135,10 @@ export function usePremiumStatus(): {
       }
     }
 
-    setState((s) => ({ ...s, loading: true }))
+    // bypassCache (ручной refresh) может показать loading; фоновый cold-start — нет.
+    if (bypassCache && mountedRef.current) {
+      setState((s) => ({ ...s, loading: true }))
+    }
     try {
       const me = await getMe()
       const data = {

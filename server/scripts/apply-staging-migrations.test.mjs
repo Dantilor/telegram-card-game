@@ -38,6 +38,27 @@ test('dry-run lists schema through grants without connecting', () => {
   assert.equal(/GRANT\s+gnh_app\s+TO/i.test(result.stdout + result.stderr), false)
 })
 
+test('preflight refuses app role gnh_web_stage before connect', () => {
+  const result = run({
+    STAGING_DATABASE_URL: 'postgresql://gnh_web_stage:x@db.example:5432/gnh_web_staging?sslmode=verify-full',
+    STAGING_EXPECT_HOST: 'db.example',
+    STAGING_MIGRATE_USER: 'gnh_web_stage',
+  }, ['--preflight'])
+  assert.notEqual(result.status, 0)
+  assert.match(`${result.stdout}\n${result.stderr}`, /gnh_web_stage/)
+  assert.equal(/postgresql:\/\/gnh_web_stage:x@/i.test(result.stdout + result.stderr), false)
+})
+
+test('preflight refuses production database name', () => {
+  const result = run({
+    STAGING_DATABASE_URL: 'postgresql://root:x@db.example:5432/gnh_supabase?sslmode=verify-full',
+    STAGING_EXPECT_HOST: 'db.example',
+    STAGING_MIGRATE_USER: 'root',
+  }, ['--preflight'])
+  assert.notEqual(result.status, 0)
+  assert.match(`${result.stdout}\n${result.stderr}`, /gnh_supabase/)
+})
+
 test('refuses production database name in STAGING_DATABASE_URL', () => {
   const result = run({
     STAGING_DATABASE_URL: 'postgresql://migrate:x@db.example:5432/gnh_supabase',

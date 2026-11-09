@@ -4,7 +4,7 @@
 
 | Роль | Назначение |
 |------|------------|
-| **Cluster admin** (например `gen_user`) | Предпочтительный исполнитель миграций: подключение **только** к БД `gnh_web_staging`. DDL/владелец объектов staging. |
+| **Cluster / DB admin** (`root` владелец `gnh_web_staging`, или `gen_user`) | Предпочтительный исполнитель миграций: подключение **только** к БД `gnh_web_staging`. DDL/владелец объектов staging. Отдельный `gnh_web_migrate` не обязателен. |
 | **`gnh_web_stage`** | LOGIN приложения стенда. DML + sequences + собственные RLS policies. **Не** migrate-admin. **Не** член `gnh_app`. |
 | **`gnh_app`** | Production NOLOGIN-роль кластера. Staging-скрипты её **не создают, не ALTER, не GRANT TO / GRANT membership**. |
 
@@ -31,28 +31,39 @@
 
 Пароль и полный URL **не** логируются.
 
-## Команды (Timeweb staging — вручную)
+## Команды (Timeweb staging — Windows)
 
-Из каталога `server/` (после `npm run build:api`):
+Рекомендуемый путь: `deploy/stand/Migrate-GnhWebStaging.ps1` (оркестратор поверх `npm run migrate:staging*`).
 
-```bash
-# 1) Dry-run (без сети)
-npm run migrate:staging:dry
+Миграции выполняет **владелец/admin тестовой БД** (`root` в панели Timeweb, либо `gen_user` кластера) — **не** `gnh_web_stage`.
 
-# 2) Применить к Timeweb gnh_web_staging от существующего admin
-unset DATABASE_URL
-export STAGING_DATABASE_URL='postgresql://CLUSTER_ADMIN:PASSWORD@HOST.twc1.net:5432/gnh_web_staging?sslmode=verify-full'
-export STAGING_EXPECT_HOST='HOST.twc1.net'
-export STAGING_MIGRATE_USER='CLUSTER_ADMIN'
-export DATABASE_TLS_CA_FILE='/absolute/path/to/timeweb-ca.crt'
-# optional: DATABASE_TLS_SERVERNAME='HOST.twc1.net'  # если host в URL — IP
+```powershell
+# 1) Только локальные проверки (без Timeweb)
+.\deploy\stand\Migrate-GnhWebStaging.ps1 -LocalOnly -CaFile 'C:\path\to\timeweb-ca.crt'
 
+# 2) Preflight TLS + apply после явного YES
+.\deploy\stand\Migrate-GnhWebStaging.ps1 -Apply `
+  -HostName 'HOST.twc1.net' `
+  -MigrateUser 'root' `
+  -CaFile 'C:\path\to\timeweb-ca.crt'
+```
+
+Эквивалент вручную из `server/` (после `npm run build:api`):
+
+```powershell
+Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+$env:STAGING_DATABASE_URL = 'postgresql://CLUSTER_ADMIN:PASSWORD@HOST.twc1.net:5432/gnh_web_staging?sslmode=verify-full'
+$env:STAGING_EXPECT_HOST = 'HOST.twc1.net'
+$env:STAGING_MIGRATE_USER = 'CLUSTER_ADMIN'
+$env:DATABASE_TLS_CA_FILE = 'C:\path\to\timeweb-ca.crt'
+npm run migrate:staging:preflight
 npm run migrate:staging
-# опционально seed:
-# npm run migrate:staging:seed
+# опционально: npm run migrate:staging:seed
 ```
 
 Перед grants-шагом роль `gnh_web_stage` должна уже существовать в кластере (Timeweb UI).
+
+Проверка после миграций: `deploy/stand/verify-gnh-web-staging.sql` (только SELECT / privilege probes).
 
 App env стенда после миграций:
 

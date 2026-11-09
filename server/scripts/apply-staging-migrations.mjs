@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Apply schema + migrations 001–014 (+ staging grants) to gnh_web_staging only.
+ * Apply schema + migrations 001–015 (+ staging grants) to gnh_web_staging only.
  *
  * Usage (from server/, after `npm run build:api`):
  *   npm run migrate:staging:dry
+ *   npm run migrate:staging:preflight   # TLS/isolation checks, no SQL
  *   unset DATABASE_URL
  *   STAGING_DATABASE_URL=postgresql://CLUSTER_ADMIN:...@HOST/gnh_web_staging?sslmode=verify-full \
  *   STAGING_EXPECT_HOST=HOST \
@@ -11,8 +12,8 @@
  *   DATABASE_TLS_CA_FILE=/path/to/timeweb-ca.crt \
  *   npm run migrate:staging
  *
- * Prefer existing cluster admin connected ONLY to gnh_web_staging.
- * Never uses production .env DATABASE_URL.
+ * Prefer existing cluster admin (Timeweb DB owner / root / gen_user) connected ONLY
+ * to gnh_web_staging. Never uses production .env DATABASE_URL.
  * Never migrates as gnh_web_stage (app role).
  * Never grants membership in production role gnh_app.
  * TLS via resolvePgPoolConfig (rejectUnauthorized + servername; PGSSLMODE=disable refused).
@@ -28,6 +29,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const serverRoot = path.resolve(__dirname, '..')
 const wantSeed = process.argv.includes('--seed')
 const dryRun = process.argv.includes('--dry-run')
+const preflightOnly = process.argv.includes('--preflight')
 
 const EXPECTED_DB = 'gnh_web_staging'
 const APP_ROLE = 'gnh_web_stage'
@@ -195,6 +197,11 @@ if (resolved.summary.user === APP_ROLE) {
 }
 
 logTlsSummary(resolved.summary)
+
+if (preflightOnly) {
+  console.log('PREFLIGHT_OK isolation+TLS resolved; no database connection opened.')
+  process.exit(0)
+}
 
 async function main() {
   const client = new pg.Client({

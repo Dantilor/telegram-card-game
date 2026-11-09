@@ -13,6 +13,7 @@
     "migrate:staging": "node scripts/apply-staging-migrations.mjs",
     "migrate:staging:seed": "node scripts/apply-staging-migrations.mjs --seed",
     "migrate:staging:dry": "node scripts/apply-staging-migrations.mjs --dry-run",
+    "migrate:staging:preflight": "node scripts/apply-staging-migrations.mjs --preflight",
     "migrate:production-web:dry": "node scripts/apply-production-web-migrations.mjs --dry-run",
     "migrate:production-web": "node scripts/apply-production-web-migrations.mjs"
   },

@@ -17,12 +17,22 @@
 
 | Путь | Назначение |
 |------|------------|
-| `deploy/staging/Dockerfile` | Сборка `dist-web` + Express API |
+| `Dockerfile.staging` | **Timeweb:** context = корень репо, Dockerfile = этот файл |
+| `deploy/staging/Dockerfile` | Зеркало (compose); не выбирать `deploy/staging` как context |
 | `deploy/staging/docker-compose.yml` | Локальный/ручной подъём staging |
-| `deploy/staging/nginx.conf` | Опциональный edge proxy + SPA |
+| `deploy/staging/nginx.conf` | Опциональный edge proxy + SPA (в образе по умолчанию nginx нет) |
 | `deploy/staging/env.staging.example` | Шаблон переменных |
-| `server/scripts/apply-staging-migrations.mjs` | Миграции 001–014 + seed |
+| `server/scripts/apply-staging-migrations.mjs` | Миграции 001–014 + seed (вручную, не при старте контейнера) |
 | `server/db/staging/*` | Фикс тарифов, роли, seed |
+
+### Timeweb App Platform — точные поля
+
+1. **Build context / project directory:** корень репозитория (`/`).
+2. **Dockerfile path:** `Dockerfile.staging` (не `deploy/staging`).
+3. **Compose:** не требуется — один контейнер Express отдаёт WEB + `/api`.
+4. **Port:** `3001` (или `PORT` из env).
+5. **Healthcheck:** `GET /api/health` (также `/health`).
+6. Миграции SQL **не** входят в CMD контейнера — только `npm run migrate:staging` с вашей машины.
 
 ---
 

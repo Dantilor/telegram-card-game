@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   adminBroadcastDisabled,
+  assertStagingDatabaseUrl,
   isStagingRuntime,
   telegramBotSideEffectsDisabled,
   trustProxyHops,
@@ -40,5 +41,17 @@ test('trust proxy defaults on for staging', () => {
   })
   withEnv({ GNH_STAGING: undefined, TRUST_PROXY: '0', NODE_ENV: 'development' }, () => {
     assert.equal(trustProxyHops(), false)
+  })
+})
+
+test('staging DATABASE_URL must be gnh_web_staging and never gnh_supabase', () => {
+  withEnv({ GNH_STAGING_DB_NAME: undefined }, () => {
+    assert.equal(assertStagingDatabaseUrl('postgres://u:p@h:5432/gnh_web_staging').ok, true)
+    assert.equal(assertStagingDatabaseUrl('postgres://u:p@h:5432/gnh_supabase').ok, false)
+    assert.equal(assertStagingDatabaseUrl('postgres://u:p@h:5432/other').ok, false)
+  })
+  withEnv({ GNH_STAGING_DB_NAME: 'custom_staging' }, () => {
+    assert.equal(assertStagingDatabaseUrl('postgres://u:p@h:5432/custom_staging').ok, true)
+    assert.equal(assertStagingDatabaseUrl('postgres://u:p@h:5432/gnh_web_staging').ok, false)
   })
 })

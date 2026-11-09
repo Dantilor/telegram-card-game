@@ -24,6 +24,7 @@ import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
 import { webPublicOrigin } from './auth/config.js'
 import {
+  assertStagingDatabaseUrl,
   isStagingRuntime,
   serveWebStaticEnabled,
   telegramBotSideEffectsDisabled,
@@ -49,13 +50,20 @@ if (process.env.DATABASE_URL) {
   try {
     const u = new URL(process.env.DATABASE_URL)
     console.log('[DB] user=', u.username, 'host=', u.host, 'port=', u.port, 'db=', u.pathname)
-    if (isStagingRuntime() && /gnh_supabase/i.test(u.pathname)) {
-      console.error('[DB] Refusing to start staging against gnh_supabase')
-      process.exit(1)
-    }
   } catch {
     console.error('[DB] DATABASE_URL is not a valid URL (value not logged)')
+    if (isStagingRuntime()) process.exit(1)
   }
+  if (isStagingRuntime()) {
+    const check = assertStagingDatabaseUrl(process.env.DATABASE_URL)
+    if (!check.ok) {
+      console.error('[DB] Staging database check failed:', check.reason)
+      process.exit(1)
+    }
+  }
+} else if (isStagingRuntime()) {
+  console.error('[DB] DATABASE_URL is required in staging')
+  process.exit(1)
 }
 
 const app = express()

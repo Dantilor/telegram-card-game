@@ -1,15 +1,18 @@
-# GameNight Host WEB — STAGING image (Timeweb Cloud Apps / Docker)
-# Builds WEB (dist-web) + Express API. Serves both from one origin when
-# GNH_SERVE_WEB_STATIC=1 (default in this image).
+# Canonical Timeweb/Docker staging image lives at repository root:
+#   Dockerfile.staging
 #
-# DO NOT point DATABASE_URL at gnh_supabase.
-# DO NOT use production YooKassa or @GameNightHostBot tokens.
+# Timeweb App Platform settings:
+#   Build context = repository ROOT
+#   Dockerfile    = Dockerfile.staging
+#
+# This file is kept as a mirror for `docker compose -f deploy/staging/docker-compose.yml`
+# (compose sets context to the repo root). Keep both files identical.
 
 FROM node:20-bookworm-slim AS frontend-build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY index.html vite.config.js vite.config.ts tsconfig*.json ./
+COPY index.html vite.config.js vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json ./
 COPY public ./public
 COPY src ./src
 COPY .env.web ./.env.web

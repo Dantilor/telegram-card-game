@@ -4,8 +4,11 @@ import {
   adminBroadcastDisabled,
   assertStagingDatabaseUrl,
   isStagingRuntime,
+  isWebOwnerAllowed,
+  serveWebStaticEnabled,
   telegramBotSideEffectsDisabled,
   trustProxyHops,
+  webFeatureEnabled,
 } from './runtimeFlags.js'
 
 function withEnv(vars: Record<string, string | undefined>, fn: () => void): void {
@@ -53,5 +56,23 @@ test('staging DATABASE_URL must be gnh_web_staging and never gnh_supabase', () =
   withEnv({ GNH_STAGING_DB_NAME: 'custom_staging' }, () => {
     assert.equal(assertStagingDatabaseUrl('postgres://u:p@h:5432/custom_staging').ok, true)
     assert.equal(assertStagingDatabaseUrl('postgres://u:p@h:5432/gnh_web_staging').ok, false)
+  })
+})
+
+test('production WEB feature flag and owner allowlist', () => {
+  withEnv({ GNH_WEB_ENABLED: '0', GNH_SERVE_WEB_STATIC: '1' }, () => {
+    assert.equal(webFeatureEnabled(), false)
+    assert.equal(serveWebStaticEnabled(), false)
+  })
+  withEnv({ GNH_WEB_ENABLED: '1', GNH_SERVE_WEB_STATIC: '1' }, () => {
+    assert.equal(webFeatureEnabled(), true)
+    assert.equal(serveWebStaticEnabled(), true)
+  })
+  withEnv({ WEB_OWNER_TELEGRAM_IDS: '111,222' }, () => {
+    assert.equal(isWebOwnerAllowed(111), true)
+    assert.equal(isWebOwnerAllowed(999), false)
+  })
+  withEnv({ WEB_OWNER_TELEGRAM_IDS: undefined }, () => {
+    assert.equal(isWebOwnerAllowed(999), true)
   })
 })

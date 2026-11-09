@@ -17,6 +17,7 @@ import {
   verifyCsrf,
   findActiveSessionByToken,
 } from '../auth/webSession.js'
+import { isWebOwnerAllowed, webFeatureEnabled } from '../config/runtimeFlags.js'
 
 const router = Router()
 
@@ -53,6 +54,10 @@ function devLoginEnabled(): boolean {
  */
 router.get('/web/auth/telegram/start', async (req: Request, res: Response) => {
   try {
+    if (!webFeatureEnabled()) {
+      res.status(503).json({ error: 'WEB login disabled', code: 'web_disabled' })
+      return
+    }
     const returnTo = typeof req.query.return_to === 'string' ? req.query.return_to : null
     const started = await startTelegramOidcLogin({ returnTo })
     const wantsRedirect =
@@ -94,7 +99,21 @@ router.get('/web/auth/telegram/callback', async (req: Request, res: Response) =>
       return
     }
 
+    if (!webFeatureEnabled()) {
+      res.status(503).json({ error: 'WEB login disabled', code: 'web_disabled' })
+      return
+    }
+
     const completed = await completeTelegramOidcLogin({ code, state })
+    if (!isWebOwnerAllowed(completed.telegramId)) {
+      const origin = webPublicOrigin()
+      if (origin) {
+        res.redirect(302, `${origin}/login?error=${encodeURIComponent('owner_only')}`)
+        return
+      }
+      res.status(403).json({ error: 'Forbidden', code: 'owner_only' })
+      return
+    }
     await ensureUser(completed.telegramId)
 
     const session = await createWebSession(completed.telegramId, {

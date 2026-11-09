@@ -41,8 +41,44 @@ export function adminBroadcastDisabled(): boolean {
   )
 }
 
-export function serveWebStaticEnabled(): boolean {
+/**
+ * Master feature flag for browser WEB shell on the shared production API.
+ * When off: do not serve dist-web SPA; OIDC login start returns 503.
+ * Mini App, Telegram webhook, admin, and YooKassa keep working regardless.
+ */
+export function webFeatureEnabled(): boolean {
+  if (process.env.GNH_WEB_ENABLED === '0' || process.env.GNH_WEB_ENABLED === 'false') return false
+  if (process.env.GNH_WEB_ENABLED === '1' || process.env.GNH_WEB_ENABLED === 'true') return true
+  // Staging images enable static by default via GNH_SERVE_WEB_STATIC alone.
+  return serveWebStaticFlag()
+}
+
+function serveWebStaticFlag(): boolean {
   return process.env.GNH_SERVE_WEB_STATIC === '1' || process.env.GNH_SERVE_WEB_STATIC === 'true'
+}
+
+/** Serve dist-web only when WEB feature is on AND static serving is requested. */
+export function serveWebStaticEnabled(): boolean {
+  return webFeatureEnabled() && serveWebStaticFlag()
+}
+
+/**
+ * Optional owner-only allowlist for early WEB access (comma-separated telegram ids).
+ * Empty = no extra restriction (any Telegram user who completes OIDC).
+ */
+export function webOwnerAllowlist(): number[] {
+  const raw = (process.env.WEB_OWNER_TELEGRAM_IDS ?? '').trim()
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((part) => Number.parseInt(part.trim(), 10))
+    .filter((n) => Number.isInteger(n) && n > 0)
+}
+
+export function isWebOwnerAllowed(telegramId: number): boolean {
+  const list = webOwnerAllowlist()
+  if (list.length === 0) return true
+  return list.includes(telegramId)
 }
 
 export function trustProxyHops(): number | false {

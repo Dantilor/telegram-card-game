@@ -29,6 +29,7 @@ import {
   serveWebStaticEnabled,
   telegramBotSideEffectsDisabled,
   trustProxyHops,
+  webFeatureEnabled,
 } from './config/runtimeFlags.js'
 
 const port = Number(process.env.PORT || 3001)
@@ -44,7 +45,16 @@ const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins, ...(web
 const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3k2lQp').replace(/\/+$/, '')
 
 console.log('[TCG] ENV PORT =', process.env.PORT)
-console.log('[TCG] staging =', isStagingRuntime(), 'telegramBotSideEffectsDisabled =', telegramBotSideEffectsDisabled())
+console.log(
+  '[TCG] staging =',
+  isStagingRuntime(),
+  'webFeature =',
+  webFeatureEnabled(),
+  'serveWebStatic =',
+  serveWebStaticEnabled(),
+  'telegramBotSideEffectsDisabled =',
+  telegramBotSideEffectsDisabled()
+)
 
 if (process.env.DATABASE_URL) {
   try {
@@ -169,7 +179,8 @@ app.use(
 )
 app.use('/legal', createLegalHtmlRouter({ query: db }))
 
-// Optional single-origin staging: Express serves dist-web + SPA fallback after API routes.
+// Optional same-origin WEB: Express serves dist-web + SPA fallback after API routes.
+// Controlled by GNH_WEB_ENABLED + GNH_SERVE_WEB_STATIC (never used by Mini App shell).
 if (serveWebStaticEnabled()) {
   const webRoot = path.resolve(
     process.env.GNH_WEB_STATIC_DIR?.trim() || path.join(process.cwd(), '..', 'dist-web')

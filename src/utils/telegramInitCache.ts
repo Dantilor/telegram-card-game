@@ -6,7 +6,7 @@
 const TG_INIT_CACHE = 'TG_INIT_CACHE'
 
 export type CachedInitData = {
-  source: 'hash'
+  source: 'hash' | 'webapp'
   userId?: number
   user?: { id?: number; first_name?: string; last_name?: string; username?: string; photo_url?: string }
   chatInstance?: string
@@ -99,6 +99,38 @@ export function parseAndCacheFromHash(): CachedInitData | null {
     }
     sessionStorage.setItem(TG_INIT_CACHE, JSON.stringify(cached))
     normalizeHash()
+    return cached
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Persist signed WebApp.initData for the session.
+ * Modern Telegram often leaves hash empty after boot; without this, a later empty
+ * `Telegram.WebApp.initData` makes payment think the user is outside Telegram.
+ * Never logs or returns secrets to callers beyond the cached object.
+ */
+export function cacheInitDataFromWebApp(initDataRaw: string): CachedInitData | null {
+  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') return null
+  const raw = typeof initDataRaw === 'string' ? initDataRaw.trim() : ''
+  // Keep the exact Telegram string for HMAC; never store a re-decoded variant.
+  if (!raw || !raw.includes('auth_date') || !raw.includes('hash=')) return null
+  if (!raw.includes('user=') && !raw.includes('chat=')) return null
+  try {
+    const existing = getCachedInitData()
+    if (existing?.initDataRaw === raw) return existing
+    const parsed = parseTgWebAppData(raw)
+    const cached: CachedInitData = {
+      source: 'webapp',
+      userId: parsed?.userId,
+      user: parsed?.user,
+      chatInstance: parsed?.chatInstance,
+      chatType: parsed?.chatType,
+      initDataRaw: raw,
+      themeParams: existing?.themeParams,
+    }
+    sessionStorage.setItem(TG_INIT_CACHE, JSON.stringify(cached))
     return cached
   } catch {
     return null

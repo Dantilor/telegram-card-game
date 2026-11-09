@@ -3,7 +3,7 @@
  * Requires script: https://telegram.org/js/telegram-web-app.js
  */
 
-import { getCachedInitData } from '../utils/telegramInitCache'
+import { cacheInitDataFromWebApp, getCachedInitData } from '../utils/telegramInitCache'
 
 export function getTelegramWebApp(): {
   initData?: string
@@ -38,11 +38,40 @@ function localPreviewInitData(): string {
 export function getInitData(): string {
   const tg = getTelegramWebApp()
   const fromTg = (tg && typeof tg.initData === 'string' ? tg.initData : '') || ''
-  if (fromTg) return fromTg
+  if (fromTg) {
+    cacheInitDataFromWebApp(fromTg)
+    return fromTg
+  }
   const preview = localPreviewInitData()
   if (preview) return preview
   const cached = getCachedInitData()
   return cached?.initDataRaw ?? ''
+}
+
+/**
+ * Best-effort refresh before payment. Telegram may expose WebApp before initData is filled.
+ * Does not log initData.
+ */
+export async function ensureInitData(timeoutMs = 800): Promise<string> {
+  const existing = getInitData()
+  if (existing) return existing
+  const tg = getTelegramWebApp()
+  if (!tg) return ''
+  try {
+    tg.ready?.()
+  } catch {
+    // no-op
+  }
+  const started = Date.now()
+  while (Date.now() - started < timeoutMs) {
+    const raw = typeof tg.initData === 'string' ? tg.initData : ''
+    if (raw) {
+      cacheInitDataFromWebApp(raw)
+      return raw
+    }
+    await new Promise((r) => setTimeout(r, 50))
+  }
+  return getInitData()
 }
 
 let readyCalled = false
@@ -65,4 +94,6 @@ export function initTelegram(): void {
       // no-op
     }
   }
+  const raw = typeof tg?.initData === 'string' ? tg.initData : ''
+  if (raw) cacheInitDataFromWebApp(raw)
 }

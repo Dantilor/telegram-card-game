@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { haptic } from '../utils/telegram'
-import { getTelegramWebApp, getInitData } from '../lib/telegram'
+import { getTelegramWebApp, ensureInitData } from '../lib/telegram'
 import { isWebShell } from '../config/shell'
 import { useLegal } from '../legal/LegalProvider'
 import { classifyReceipt, LegalClientError, submitNewPremiumOrder, userFacingLoadError } from '../legal/client'
@@ -233,12 +233,6 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       return
     }
 
-    const initData = getInitData()
-    if (!isWebShell() && !initData) {
-      setError('Откройте приложение внутри Telegram для оплаты')
-      return
-    }
-
     const plan = selectedPlan
     if (!plan) {
       setError('Нет доступных тарифов')
@@ -258,6 +252,13 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     setError(null)
     setLoading(true)
     try {
+      if (!isWebShell()) {
+        const initData = await ensureInitData()
+        if (!initData) {
+          setError('Откройте приложение внутри Telegram для оплаты')
+          return
+        }
+      }
       const res = await submitNewPremiumOrder({
         document: offerDocument,
         plan: {

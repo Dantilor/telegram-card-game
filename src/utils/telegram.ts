@@ -43,7 +43,7 @@ export function getTg(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null
 }
 
-import { getCachedInitData, parseAndCacheFromHash } from './telegramInitCache'
+import { cacheInitDataFromWebApp, getCachedInitData, parseAndCacheFromHash } from './telegramInitCache'
 
 export type InitData = {
   userId?: number
@@ -58,7 +58,27 @@ export type InitData = {
 export function getInitData(): InitData {
   try {
     const tg = getTg()
-    if (tg?.initDataUnsafe) {
+    const raw = typeof tg?.initData === 'string' ? tg.initData : ''
+    if (raw) cacheInitDataFromWebApp(raw)
+    // Prefer signed initData for API. initDataUnsafe alone is not enough for payment.
+    if (raw) {
+      const cached = getCachedInitData()
+      return {
+        userId: cached?.userId,
+        user: cached?.user,
+        chatInstance: cached?.chatInstance,
+        chatType: cached?.chatType,
+        source: 'telegram',
+        initDataRaw: raw,
+        themeParams: cached?.themeParams,
+      }
+    }
+    const cached = getCachedInitData()
+    if (cached?.initDataRaw) return { ...cached, source: cached.source === 'webapp' ? 'telegram' : cached.source }
+    const fromHash = parseAndCacheFromHash()
+    if (fromHash?.initDataRaw) return fromHash
+    // Last resort: unsafe profile only (no payment auth).
+    if (tg?.initDataUnsafe?.user) {
       const u = tg.initDataUnsafe.user
       const c = tg.initDataUnsafe.chat
       const userId = u != null && typeof (u as { id?: number }).id === 'number' ? (u as { id: number }).id : undefined
@@ -68,13 +88,9 @@ export function getInitData(): InitData {
         chatInstance: c?.id != null ? String(c.id) : undefined,
         chatType: c?.type,
         source: 'telegram',
-        initDataRaw: tg.initData || undefined,
+        initDataRaw: undefined,
       }
     }
-    const cached = getCachedInitData()
-    if (cached) return cached
-    const fromHash = parseAndCacheFromHash()
-    if (fromHash) return fromHash
   } catch {
     // ignore
   }
@@ -98,6 +114,9 @@ export function readyAndExpand() {
   if (tg) {
     tg.ready?.()
     tg.expand?.()
+    if (typeof tg.initData === 'string' && tg.initData) {
+      cacheInitDataFromWebApp(tg.initData)
+    }
   }
 }
 

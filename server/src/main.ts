@@ -76,6 +76,14 @@ if (process.env.DATABASE_URL) {
   process.exit(1)
 }
 
+if (isStagingRuntime()) {
+  if (process.env.WEB_DEV_LOGIN_ENABLED === '1' || process.env.WEB_DEV_LOGIN_ENABLED === 'true') {
+    console.error('[TCG] Refusing staging boot with WEB_DEV_LOGIN_ENABLED')
+    process.exit(1)
+  }
+  console.log('[TCG] staging isolation: telegram bot side-effects and admin broadcasts disabled')
+}
+
 const app = express()
 const proxyHops = trustProxyHops()
 if (proxyHops !== false) {
@@ -182,8 +190,15 @@ app.use('/legal', createLegalHtmlRouter({ query: db }))
 // Optional same-origin WEB: Express serves dist-web + SPA fallback after API routes.
 // Controlled by GNH_WEB_ENABLED + GNH_SERVE_WEB_STATIC (never used by Mini App shell).
 if (serveWebStaticEnabled()) {
+  // Prefer server/web-dist (Timeweb Project directory=/server sidecar build),
+  // then ../dist-web (local monorepo), unless GNH_WEB_STATIC_DIR is set.
+  const defaultWebRoots = [
+    path.join(process.cwd(), 'web-dist'),
+    path.join(process.cwd(), '..', 'dist-web'),
+  ]
+  const configured = process.env.GNH_WEB_STATIC_DIR?.trim()
   const webRoot = path.resolve(
-    process.env.GNH_WEB_STATIC_DIR?.trim() || path.join(process.cwd(), '..', 'dist-web')
+    configured || defaultWebRoots.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || defaultWebRoots[0]
   )
   if (!fs.existsSync(path.join(webRoot, 'index.html'))) {
     console.warn('[TCG] GNH_SERVE_WEB_STATIC set but index.html missing at', webRoot)

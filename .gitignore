@@ -12,6 +12,7 @@ dist
 dist-web
 dist-ssr
 server/dist
+server/web-dist
 preview-serve
 *.local
 

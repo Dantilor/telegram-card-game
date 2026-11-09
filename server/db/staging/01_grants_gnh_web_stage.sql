@@ -1,8 +1,8 @@
 -- Staging-only grants for the Timeweb app LOGIN role `gnh_web_stage`.
 -- Run only while connected to database `gnh_web_staging`.
--- Does NOT touch gnh_supabase. Does NOT REVOKE anything on production DBs.
+-- Does NOT touch gnh_supabase. Does NOT REVOKE/GRANT/ALTER on production objects.
+-- Does NOT grant membership in production role `gnh_app` (cluster-wide).
 -- Role `gnh_web_stage` must already exist (create LOGIN in Timeweb panel).
--- Role `gnh_app` (NOLOGIN) is created by 00_roles_optional for party RLS policies.
 
 DO $$
 BEGIN
@@ -15,16 +15,22 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'gnh_web_stage') THEN
     RAISE EXCEPTION 'role gnh_web_stage does not exist — create the LOGIN role in Timeweb first';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'gnh_app') THEN
-    RAISE EXCEPTION 'role gnh_app does not exist — run 00_roles_optional first';
+
+  -- Hard stop if someone already made gnh_web_stage a member of gnh_app.
+  IF EXISTS (
+    SELECT 1
+      FROM pg_auth_members m
+      JOIN pg_roles r ON r.oid = m.roleid
+      JOIN pg_roles u ON u.oid = m.member
+     WHERE r.rolname = 'gnh_app'
+       AND u.rolname = 'gnh_web_stage'
+  ) THEN
+    RAISE EXCEPTION 'gnh_web_stage is a member of gnh_app — revoke that membership manually before staging grants (cluster-wide; do not alter from gnh_supabase)';
   END IF;
 END $$;
 
 GRANT CONNECT ON DATABASE gnh_web_staging TO gnh_web_stage;
 GRANT USAGE ON SCHEMA public TO gnh_web_stage;
-
--- Inherit party RLS policies that target gnh_app (011_party_app_grants).
-GRANT gnh_app TO gnh_web_stage;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   users,
@@ -76,7 +82,7 @@ BEGIN
   END LOOP;
 END $$;
 
--- Explicit party RLS policies for the LOGIN role (in addition to gnh_app membership).
+-- Dedicated RLS policies for gnh_web_stage only (no inheritance from gnh_app).
 DO $$
 DECLARE
   rel text;

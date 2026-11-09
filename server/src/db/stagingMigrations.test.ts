@@ -12,6 +12,7 @@ function readSql(rel: string): string {
   return fs.readFileSync(path.join(serverRoot, rel), 'utf8')
 }
 
+/** Schema/RLS chain used by apply-staging-migrations.mjs (grants need LOGIN role). */
 const STAGING_ORDER = [
   'db/schema.sql',
   'db/migrations/001_payments_new_schema.sql',
@@ -20,15 +21,22 @@ const STAGING_ORDER = [
   'db/migrations/004_payments_premium_granted_at.sql',
   'db/migrations/005_legal_documents.sql',
   'db/migrations/006_sled_rooms.sql',
-  'db/migrations/007_sled_rls.sql',
+  'db/staging/007_sled_rls_staging.sql',
   'db/migrations/008_mafia_shadows.sql',
   'db/migrations/009_doubles.sql',
   'db/migrations/010_infected.sql',
   'db/staging/00_roles_optional.sql',
-  'db/migrations/011_party_app_grants.sql',
+  'db/staging/011_party_rls_staging.sql',
   'db/migrations/012_web_sessions.sql',
   'db/migrations/013_web_session_profile.sql',
   'db/migrations/014_legal_confirmation_source_web.sql',
+]
+
+const STAGING_SQL_ISOLATION = [
+  'db/staging/00_roles_optional.sql',
+  'db/staging/007_sled_rls_staging.sql',
+  'db/staging/011_party_rls_staging.sql',
+  'db/staging/01_grants_gnh_web_stage.sql',
 ]
 
 test('staging migration files exist in apply order', () => {
@@ -36,16 +44,50 @@ test('staging migration files exist in apply order', () => {
     assert.ok(fs.existsSync(path.join(serverRoot, rel)), rel)
   }
   assert.ok(fs.existsSync(path.join(serverRoot, 'db/staging/seed_minimal.sql')))
+  assert.ok(fs.existsSync(path.join(serverRoot, 'db/staging/01_grants_gnh_web_stage.sql')))
   assert.ok(fs.existsSync(path.join(serverRoot, 'scripts/apply-staging-migrations.mjs')))
+})
+
+test('staging SQL never creates/alters/grants production role gnh_app', () => {
+  for (const rel of STAGING_SQL_ISOLATION) {
+    const sql = readSql(rel)
+    assert.doesNotMatch(sql, /CREATE\s+ROLE\s+gnh_app/i, rel)
+    assert.doesNotMatch(sql, /ALTER\s+ROLE\s+gnh_app/i, rel)
+    assert.doesNotMatch(sql, /GRANT\s+gnh_app\s+TO/i, rel)
+    assert.doesNotMatch(sql, /GRANT\b[^;]*\bTO\s+gnh_app\b/i, rel)
+    assert.doesNotMatch(sql, /CREATE\s+POLICY\b[^;]*\bTO\s+gnh_app\b/i, rel)
+  }
+})
+
+test('grants SQL is staging-gated and never targets gnh_supabase REVOKE', () => {
+  const sql = readSql('db/staging/01_grants_gnh_web_stage.sql')
+  assert.match(sql, /gnh_web_staging/)
+  assert.match(sql, /gnh_web_stage/)
+  assert.match(sql, /party_gnh_web_stage_backend/)
+  assert.match(sql, /refusing grants on production database gnh_supabase/)
+  assert.doesNotMatch(sql, /^\s*REVOKE\b[^;]*gnh_supabase/im)
+  assert.doesNotMatch(sql, /GRANT\s+gnh_app\s+TO/i)
 })
 
 test('clean DB accepts staging migration chain twice (idempotent core)', async () => {
   const pg = new PGlite()
   try {
     for (const rel of STAGING_ORDER) {
-      await pg.exec(readSql(rel))
+      // PGlite has no current_database() name gnh_web_staging — patch guards for unit run.
+      let sql = readSql(rel)
+      if (rel.startsWith('db/staging/')) {
+        sql = sql
+          .replace(
+            /IF current_database\(\) = 'gnh_supabase' THEN[\s\S]*?END IF;/g,
+            'IF false THEN NULL; END IF;'
+          )
+          .replace(
+            /IF current_database\(\) IS DISTINCT FROM 'gnh_web_staging' THEN[\s\S]*?END IF;/g,
+            'IF false THEN NULL; END IF;'
+          )
+      }
+      await pg.exec(sql)
     }
-    // Second pass of additive WEB + legal migrations must not destroy data.
     await pg.exec(readSql('db/migrations/012_web_sessions.sql'))
     await pg.exec(readSql('db/migrations/013_web_session_profile.sql'))
     await pg.exec(readSql('db/migrations/014_legal_confirmation_source_web.sql'))
@@ -105,12 +147,4 @@ test('clean DB accepts staging migration chain twice (idempotent core)', async (
   } finally {
     await pg.close()
   }
-})
-
-test('grants SQL is staging-gated and never targets gnh_supabase REVOKE', () => {
-  const sql = readSql('db/staging/01_grants_gnh_web_stage.sql')
-  assert.match(sql, /gnh_web_staging/)
-  assert.match(sql, /gnh_web_stage/)
-  assert.match(sql, /refusing grants on production database gnh_supabase/)
-  assert.doesNotMatch(sql, /REVOKE[^\n]*gnh_supabase/i)
 })

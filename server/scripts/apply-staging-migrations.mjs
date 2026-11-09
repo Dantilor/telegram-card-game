@@ -5,14 +5,16 @@
  * Usage (from server/, after `npm run build:api`):
  *   npm run migrate:staging:dry
  *   unset DATABASE_URL
- *   STAGING_DATABASE_URL=postgresql://MIGRATE_USER:...@HOST/gnh_web_staging?sslmode=verify-full \
+ *   STAGING_DATABASE_URL=postgresql://CLUSTER_ADMIN:...@HOST/gnh_web_staging?sslmode=verify-full \
  *   STAGING_EXPECT_HOST=HOST \
- *   STAGING_MIGRATE_USER=MIGRATE_USER \
+ *   STAGING_MIGRATE_USER=CLUSTER_ADMIN \
  *   DATABASE_TLS_CA_FILE=/path/to/timeweb-ca.crt \
  *   npm run migrate:staging
  *
+ * Prefer existing cluster admin connected ONLY to gnh_web_staging.
  * Never uses production .env DATABASE_URL.
  * Never migrates as gnh_web_stage (app role).
+ * Never grants membership in production role gnh_app.
  * TLS via resolvePgPoolConfig (rejectUnauthorized + servername; PGSSLMODE=disable refused).
  * Passwords / full URLs are never logged.
  */
@@ -51,12 +53,12 @@ const steps = [
   { label: '004', file: 'db/migrations/004_payments_premium_granted_at.sql' },
   { label: '005', file: 'db/migrations/005_legal_documents.sql' },
   { label: '006', file: 'db/migrations/006_sled_rooms.sql' },
-  { label: '007', file: 'db/migrations/007_sled_rls.sql' },
+  { label: '007-staging', file: 'db/staging/007_sled_rls_staging.sql' },
   { label: '008', file: 'db/migrations/008_mafia_shadows.sql' },
   { label: '009', file: 'db/migrations/009_doubles.sql' },
   { label: '010', file: 'db/migrations/010_infected.sql' },
-  { label: '00-roles', file: 'db/staging/00_roles_optional.sql' },
-  { label: '011', file: 'db/migrations/011_party_app_grants.sql' },
+  { label: '00-roles-guard', file: 'db/staging/00_roles_optional.sql' },
+  { label: '011-staging', file: 'db/staging/011_party_rls_staging.sql' },
   { label: '012', file: 'db/migrations/012_web_sessions.sql' },
   { label: '013', file: 'db/migrations/013_web_session_profile.sql' },
   { label: '014', file: 'db/migrations/014_legal_confirmation_source_web.sql' },

@@ -29,9 +29,12 @@ test('dry-run lists schema through grants without connecting', () => {
   const result = run({}, ['--dry-run'])
   assert.equal(result.status, 0, result.stderr || result.stdout)
   assert.match(result.stdout, /DRY schema/)
+  assert.match(result.stdout, /DRY 007-staging/)
+  assert.match(result.stdout, /DRY 011-staging/)
   assert.match(result.stdout, /DRY 014/)
   assert.match(result.stdout, /DRY grants-stage/)
   assert.equal(/postgres(?:ql)?:\/\/\S+/i.test(result.stdout + result.stderr), false)
+  assert.equal(/GRANT\s+gnh_app\s+TO/i.test(result.stdout + result.stderr), false)
 })
 
 test('refuses production database name in STAGING_DATABASE_URL', () => {

@@ -1,12 +1,15 @@
-# Canonical Timeweb/Docker staging image lives at repository root:
-#   Dockerfile.staging
+# Timeweb App Platform / Docker — STAGING WEB + API
 #
-# Timeweb App Platform settings:
-#   Build context = repository ROOT
-#   Dockerfile    = Dockerfile.staging
+# IMPORTANT (Timeweb):
+#   Build context  = repository ROOT (not deploy/staging)
+#   Dockerfile     = Dockerfile.staging   ← prefer root file in App Platform UI
 #
-# This file is kept as a mirror for `docker compose -f deploy/staging/docker-compose.yml`
-# (compose sets context to the repo root). Keep both files identical.
+# This file mirrors Dockerfile.staging for docker-compose
+# (compose sets context to the repo root). Keep both files identical in instructions + stages.
+#
+# Does NOT run migrations on start.
+# Does NOT start Telegram polling / production webhook handling.
+# Refuses DATABASE_URL pointing at gnh_supabase when GNH_STAGING=1.
 
 FROM node:20-bookworm-slim AS frontend-build
 WORKDIR /app

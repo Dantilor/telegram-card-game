@@ -1,11 +1,14 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
+import { PRELOAD_GAMES_CATALOG_URLS } from '../assets/images'
 import { useBack } from '../hooks/useBack'
 import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
 import { usePremium } from '../contexts/PremiumContext'
 import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
+import { scheduleIdleImports, scheduleWhenIdle } from '../utils/scheduleWhenIdle'
+import { preloadImages } from '../utils/preloadImages'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import HeroGameCard from '../components/HeroGameCard'
@@ -45,20 +48,38 @@ function Games() {
   const { isPremium } = usePremium()
 
   useEffect(() => {
-    import('./AliasLayout')
-    import('./ActivityLayout')
-    import('./MafiaLayout')
-    import('./SabotageLayout')
-    import('./QuizLayout')
-    import('./TruthDareLayout')
-    import('./WhoIsWhoLayout')
-    import('./PhraseTranslator')
-    import('./FreebieTrashLayout')
-    import('./RussiaTravel')
-    import('./SledLayout')
-    import('./MafiaShadowsLayout')
-    import('./DoublesLayout')
-    import('./InfectedLayout')
+    // Обложки каталога — сразу после входа на /games (пользователь уже видит сетку).
+    preloadImages(PRELOAD_GAMES_CATALOG_URLS)
+
+    // Чанки игр — последовательно в idle, чтобы не забивать сеть на 3G и не тормозить UI.
+    const cancelWarm = scheduleIdleImports(
+      [
+        () => import('./AliasLayout'),
+        () => import('./ActivityLayout'),
+        () => import('./MafiaLayout'),
+        () => import('./SabotageLayout'),
+        () => import('./QuizLayout'),
+        () => import('./TruthDareLayout'),
+        () => import('./WhoIsWhoLayout'),
+        () => import('./PhraseTranslator'),
+        () => import('./FreebieTrashLayout'),
+        () => import('./RussiaTravel'),
+        () => import('./SledLayout'),
+        () => import('./MafiaShadowsLayout'),
+        () => import('./DoublesLayout'),
+        () => import('./InfectedLayout'),
+      ],
+      { startDelayMs: 400, gapMs: 280, timeoutMs: 2500 }
+    )
+
+    const cancelCardWarm = scheduleWhenIdle(() => {
+      void import('./CardGameEntry')
+    }, 3000)
+
+    return () => {
+      cancelWarm()
+      cancelCardWarm()
+    }
   }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)

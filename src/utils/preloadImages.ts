@@ -8,26 +8,33 @@ function loadOne(url: string): void {
   if (!url || preloadedUrls.has(url)) return
   preloadedUrls.add(url)
   const img = new Image()
+  img.decoding = 'async'
   img.src = url
 }
 
 /**
- * Предзагрузка изображений через new Image() для кэширования в браузере.
- * Вызывать при старте приложения до первого рендера. Использует батчи:
- * сначала самые критичные (hero, первые карточки), затем остальные.
+ * Предзагрузка изображений батчами, чтобы не открывать десятки соединений сразу.
  * Повторный вызов с теми же URL не создаёт повторных загрузок (кэш Set).
  */
-export function preloadImages(urls: string[]): void {
+export function preloadImages(urls: string[], options?: { batchSize?: number; gapMs?: number }): void {
   if (!urls.length) return
-  const batch1 = urls.slice(0, 8)
-  const batch2 = urls.slice(8)
-  batch1.forEach(loadOne)
-  if (batch2.length > 0) {
-    const loadRest = () => batch2.forEach(loadOne)
+  const batchSize = Math.max(1, options?.batchSize ?? 4)
+  const gapMs = options?.gapMs ?? 120
+  const unique = urls.filter((url) => url && !preloadedUrls.has(url))
+  if (!unique.length) return
+
+  const runBatch = (start: number) => {
+    const slice = unique.slice(start, start + batchSize)
+    slice.forEach(loadOne)
+    const next = start + batchSize
+    if (next >= unique.length) return
+    const scheduleNext = () => runBatch(next)
     if (typeof requestIdleCallback !== 'undefined') {
-      requestIdleCallback(loadRest, { timeout: 200 })
+      requestIdleCallback(scheduleNext, { timeout: gapMs + 400 })
     } else {
-      setTimeout(loadRest, 50)
+      setTimeout(scheduleNext, gapMs)
     }
   }
+
+  runBatch(0)
 }

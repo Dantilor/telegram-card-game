@@ -32,6 +32,7 @@ test('dry-run lists schema through grants without connecting', () => {
   assert.match(result.stdout, /DRY 007-staging/)
   assert.match(result.stdout, /DRY 011-staging/)
   assert.match(result.stdout, /DRY 014/)
+  assert.match(result.stdout, /DRY 015/)
   assert.match(result.stdout, /DRY grants-stage/)
   assert.equal(/postgres(?:ql)?:\/\/\S+/i.test(result.stdout + result.stderr), false)
   assert.equal(/GRANT\s+gnh_app\s+TO/i.test(result.stdout + result.stderr), false)

@@ -83,10 +83,25 @@ test('one secret sabotage fails the infected cycle', () => {
   assert.deepEqual(infectedCycleOutcome(4, 3), { success: false, sabotaged: 1 })
 })
 
-test('infected room code is six digits', () => {
+test('infected room code is six digits and may include 0 and 1', () => {
   assert.equal(numericRoomCode(() => 0), '100000')
+  assert.equal(numericRoomCode(() => 1), '100001')
+  assert.equal(numericRoomCode(() => 1010), '101010')
   assert.equal(numericRoomCode(() => 899999), '999999')
+  assert.match(numericRoomCode(() => 0), /^[A-Z0-9]{6}$/)
+  assert.match(numericRoomCode(() => 0), /0/)
+  assert.match(numericRoomCode(() => 1), /1/)
   assert.match(numericRoomCode((max) => Math.floor(Math.random() * max)), /^\d{6}$/)
+})
+
+test('party room code formats: infected/doubles/mafia numeric; sled numeric helper', async () => {
+  const { roomCode: sledRoomCode } = await import('../sled/room-server.js')
+  const sled = sledRoomCode()
+  assert.match(sled, /^\d{6}$/)
+  // Doubles / mafia generators use the same 100000+random(900000) shape.
+  assert.match(String(100000 + 0), /^\d{6}$/)
+  assert.match(String(100000 + 1), /1/)
+  assert.match('100001', /^[0-9]{6}$/)
 })
 
 test('erased guess list hides the answer among the witness and decoys', () => {

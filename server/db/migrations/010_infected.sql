@@ -23,7 +23,8 @@ create table if not exists public.infected_rooms (
   version integer not null default 1,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint infected_rooms_code_format check (code ~ '^[A-Z2-9]{6}$')
+  -- Digits 0–9 and A–Z; server uses six-digit numeric codes (may include 0/1).
+  constraint infected_rooms_code_format check (code ~ '^[A-Z0-9]{6}$')
 );
 
 create table if not exists public.infected_players (

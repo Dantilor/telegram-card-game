@@ -30,6 +30,7 @@ const STAGING_ORDER = [
   'db/migrations/012_web_sessions.sql',
   'db/migrations/013_web_session_profile.sql',
   'db/migrations/014_legal_confirmation_source_web.sql',
+  'db/migrations/015_infected_rooms_code_digits.sql',
 ]
 
 const STAGING_SQL_ISOLATION = [
@@ -144,7 +145,31 @@ test('clean DB accepts staging migration chain twice (idempotent core)', async (
     )
     assert.equal(rls.rows.length, 4)
     assert.ok(rls.rows.every((r) => r.relrowsecurity === true))
+
+    // Infected codes may include 0 and 1 (numericRoomCode range).
+    await pg.exec(`
+      INSERT INTO infected_rooms (code, phase, host_id)
+      VALUES ('100001', 'lobby', NULL), ('101010', 'lobby', NULL), ('999999', 'lobby', NULL)
+    `)
+    const infectedCodes = await pg.query<{ c: string }>(
+      `SELECT count(*)::text AS c FROM infected_rooms WHERE code IN ('100001','101010','999999')`
+    )
+    assert.equal(infectedCodes.rows[0]?.c, '3')
+
+    // Doubles stays digits-only (`^[0-9]{6}$`); sled/mafia have no format CHECK in SQL.
+    await pg.exec(`INSERT INTO doubles_rooms (id, code, host_token, phase, case_key, public_message, created_at, updated_at)
+      VALUES (gen_random_uuid(), '100001', gen_random_uuid(), 'lobby', 'case', 'msg', 1, 1)`)
   } finally {
     await pg.close()
   }
+})
+
+test('015 infected code migration is idempotent and allows 0/1', () => {
+  const sql = readSql('db/migrations/015_infected_rooms_code_digits.sql')
+  assert.match(sql, /DROP CONSTRAINT IF EXISTS infected_rooms_code_format/)
+  assert.match(sql, /\^\[A-Z0-9\]\{6\}\$/)
+  assert.doesNotMatch(sql, /A-Z2-9/)
+  const ten = readSql('db/migrations/010_infected.sql')
+  assert.match(ten, /\^\[A-Z0-9\]\{6\}\$/)
+  assert.doesNotMatch(ten, /A-Z2-9/)
 })

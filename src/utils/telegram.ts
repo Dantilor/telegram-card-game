@@ -74,9 +74,29 @@ export function getInitData(): InitData {
       }
     }
     const cached = getCachedInitData()
-    if (cached?.initDataRaw) return { ...cached, source: cached.source === 'webapp' ? 'telegram' : cached.source }
+    if (cached?.initDataRaw) {
+      return {
+        userId: cached.userId,
+        user: cached.user,
+        chatInstance: cached.chatInstance,
+        chatType: cached.chatType,
+        source: cached.source === 'hash' ? 'hash' : 'telegram',
+        initDataRaw: cached.initDataRaw,
+        themeParams: cached.themeParams,
+      }
+    }
     const fromHash = parseAndCacheFromHash()
-    if (fromHash?.initDataRaw) return fromHash
+    if (fromHash?.initDataRaw) {
+      return {
+        userId: fromHash.userId,
+        user: fromHash.user,
+        chatInstance: fromHash.chatInstance,
+        chatType: fromHash.chatType,
+        source: 'hash',
+        initDataRaw: fromHash.initDataRaw,
+        themeParams: fromHash.themeParams,
+      }
+    }
     // Last resort: unsafe profile only (no payment auth).
     if (tg?.initDataUnsafe?.user) {
       const u = tg.initDataUnsafe.user

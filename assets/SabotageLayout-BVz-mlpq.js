@@ -1,0 +1,1 @@
+import{j as t,O as o}from"./index-CGNVRUul.js";import{S as r}from"./SabotageGameContext-CAYqq4ID.js";/* empty css                      */function i(){return t.jsx(r,{children:t.jsx(o,{})})}export{i as default};

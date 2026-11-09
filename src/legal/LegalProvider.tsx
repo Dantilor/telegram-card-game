@@ -110,8 +110,24 @@ export function LegalProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id))
     void refreshRecords()
+    // Тексты документов не нужны для первого кадра Home — грузим в idle.
+    let idleId: number | undefined
+    let timeoutId: number | undefined
+    const warmDocs = () => {
+      preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id))
+    }
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(warmDocs, { timeout: 5000 })
+    } else {
+      timeoutId = window.setTimeout(warmDocs, 2000)
+    }
+    return () => {
+      if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
+    }
   }, [refreshRecords])
 
   const openDocument = useCallback((id: string, version?: string) => setViewer({ id, version }), [])

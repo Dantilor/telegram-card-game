@@ -76,8 +76,18 @@ export const PRELOAD_MAFIA_URLS: string[] = [
   IMAGES.mafiaHost.png,
 ]
 
-/** URL картинок первого экрана (сетка игр + режимы карточной игры) для preload */
-export const PRELOAD_CRITICAL_URLS: string[] = [
+/**
+ * Только то, что видно на Home в блоке «Попробуйте сегодня».
+ * Не включать весь каталог игр — иначе холодный старт на мобильном душится десятками картинок.
+ */
+export const PRELOAD_HOME_URLS: string[] = [
+  IMAGES.mafiaShadows.png,
+  IMAGES.doubles.png,
+  IMAGES.infected.png,
+]
+
+/** Каталог игр + режимы карточной игры — preload только после перехода на /games или в idle после Home. */
+export const PRELOAD_GAMES_CATALOG_URLS: string[] = [
   IMAGES.cardGameHero.png,
   IMAGES.mafia.png,
   IMAGES.activity.png,
@@ -100,3 +110,6 @@ export const PRELOAD_CRITICAL_URLS: string[] = [
   IMAGES.psychologyMode.png,
   IMAGES.lifeChoiceMode.png,
 ]
+
+/** @deprecated Используйте PRELOAD_HOME_URLS / PRELOAD_GAMES_CATALOG_URLS */
+export const PRELOAD_CRITICAL_URLS: string[] = PRELOAD_HOME_URLS

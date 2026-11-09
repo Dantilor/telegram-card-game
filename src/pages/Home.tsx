@@ -12,7 +12,9 @@ import ThemeToggle from '../components/ThemeToggle'
 import HomeWelcomeTop from '../components/HomeWelcomeTop'
 import HomePremiumBanner from '../components/HomePremiumBanner'
 import PremiumOverlay from '../components/PremiumOverlay'
-import { IMAGES } from '../assets/images'
+import pickMafiaShadows from '../assets/mafia_shadows_hero.png'
+import pickDoubles from '../assets/dvoiniki_keyart.webp'
+import pickInfected from '../assets/infected_cover.png'
 import heroPortal from '../assets/home/neon/hero-portal.png'
 import iconFavoriteStar from '../assets/icons/gnh/action-favorite-star.svg'
 import iconProfileUser from '../assets/icons/gnh/action-profile-user.svg'
@@ -43,9 +45,9 @@ const APP_FEATURES = [
 ]
 
 const HOME_PICKS = [
-  { title: 'Мафия: Тени города', image: IMAGES.mafiaShadows.png, gameId: 'mafia-shadows', to: '/mafia-shadows' },
-  { title: 'Двойники', image: IMAGES.doubles.png, gameId: 'doubles', to: '/doubles' },
-  { title: 'Заражённые', image: IMAGES.infected.png, gameId: 'infected', to: '/infected' },
+  { title: 'Мафия: Тени города', image: pickMafiaShadows, gameId: 'mafia-shadows', to: '/mafia-shadows' },
+  { title: 'Двойники', image: pickDoubles, gameId: 'doubles', to: '/doubles' },
+  { title: 'Заражённые', image: pickInfected, gameId: 'infected', to: '/infected' },
 ] as const
 
 function HomePlayIcon({ size = 'picks' }: { size?: 'picks' | 'cta' }) {
@@ -69,13 +71,32 @@ function Home() {
   const favoritesLocked = isFavoritesLocked(isPremium)
 
   useEffect(() => {
-    apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
-      .then((res) => {
-        if (res.ok && Array.isArray(res.plans)) {
-          setPlansPriceLabel(formatPlansFromPrice(res.plans))
-        }
-      })
-      .catch(() => {})
+    // Цена планов не блокирует первый экран: грузим после простоя / с небольшой задержкой.
+    let cancelled = false
+    const loadPlans = () => {
+      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
+        .then((res) => {
+          if (cancelled) return
+          if (res.ok && Array.isArray(res.plans)) {
+            setPlansPriceLabel(formatPlansFromPrice(res.plans))
+          }
+        })
+        .catch(() => {})
+    }
+    let idleId: number | undefined
+    let timeoutId: number | undefined
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(loadPlans, { timeout: 4000 })
+    } else {
+      timeoutId = window.setTimeout(loadPlans, 1500)
+    }
+    return () => {
+      cancelled = true
+      if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
+    }
   }, [])
 
   const handleFavoritesClick = useCallback(() => {
@@ -150,6 +171,7 @@ function Home() {
               className="home-calm-hero__bg"
               decoding="async"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="home-calm-hero__shade" aria-hidden />
             <div className="home-calm-hero__content">
@@ -252,6 +274,7 @@ function Home() {
               className="home-sunset-hero__bg"
               decoding="async"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="home-sunset-hero__shade" aria-hidden />
             <div className="home-sunset-hero__content">
@@ -354,6 +377,7 @@ function Home() {
               className="home-light-hero__bg"
               decoding="async"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="home-light-hero__shade" aria-hidden />
             <div className="home-light-hero__content">
@@ -456,6 +480,7 @@ function Home() {
               className="home-neon-hero__bg"
               decoding="async"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="home-neon-hero__shade" aria-hidden />
             <div className="home-neon-hero__content">

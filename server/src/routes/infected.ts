@@ -2,8 +2,7 @@ import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import { Router, json, type Request } from "express";
 import type { Pool, PoolClient } from "pg";
 import { pool } from "../db.js";
-import { verifyInitData } from "../telegram/verifyInitData.js";
-import { getUserPremiumWithDb } from "../premiumStore.js";
+import { callerIsPremium as callerIsPremiumAuth } from "../auth/premiumCaller.js";
 import { infectedCycleOutcome, infectedWaitingFor, numericRoomCode } from "../party/partyRules.js";
 
 type Db = Pool | PoolClient;
@@ -718,18 +717,7 @@ function messageFor(error: unknown) {
 }
 
 async function callerIsPremium(request: Request) {
-  const raw = request.headers["x-telegram-init-data"];
-  const initData = typeof raw === "string" ? raw.trim() : "";
-  if (!initData) return false;
-  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? process.env.BOT_TOKEN ?? "";
-  if (!botToken) return false;
-  try {
-    const parsed = verifyInitData(initData, botToken);
-    const status = await getUserPremiumWithDb(parsed.telegram_id);
-    return status.premium;
-  } catch {
-    return false;
-  }
+  return callerIsPremiumAuth(request);
 }
 
 export function createInfectedGameRouter(pool: Pool) {

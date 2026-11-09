@@ -39,7 +39,11 @@ function safeReturnPath(returnTo: string | null | undefined): string {
 }
 
 function devLoginEnabled(): boolean {
+  // Hard-disable in any production-like environment regardless of WEB_DEV_LOGIN_ENABLED.
   if (process.env.NODE_ENV === 'production') return false
+  if (process.env.GNH_PRODUCTION === '1' || process.env.GNH_PRODUCTION === 'true') return false
+  if (process.env.RENDER === 'true' || Boolean(process.env.RENDER_EXTERNAL_URL)) return false
+  if (process.env.TIMEWEB === '1' || process.env.TIMEWEB === 'true') return false
   return process.env.WEB_DEV_LOGIN_ENABLED === '1' || process.env.WEB_DEV_LOGIN_ENABLED === 'true'
 }
 

@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { haptic } from '../utils/telegram'
@@ -8,12 +9,55 @@ import PremiumOverlay from '../components/PremiumOverlay'
 import '../styles/GamePageShell.css'
 import './PremiumPage.css'
 
+const EXPECTING_PAYMENT_FLAG = 'tcg_expecting_payment'
+
 function PremiumPage() {
   const handleBack = useBack('/')
   const { isPremium, activeUntil, refreshPremium } = usePremium()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
+  const [paymentReturnStatus, setPaymentReturnStatus] = useState<string | null>(null)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const paymentPollRef = useRef(false)
+
+  // WEB return_url from YooKassa — refresh status; never treat return alone as paid.
+  useEffect(() => {
+    const payment = searchParams.get('payment')
+    if (payment !== 'return') return
+    try {
+      sessionStorage.setItem(EXPECTING_PAYMENT_FLAG, String(Date.now()))
+    } catch {
+      /* ignore */
+    }
+    setSearchParams({}, { replace: true })
+    if (paymentPollRef.current) return
+    paymentPollRef.current = true
+    setPaymentReturnStatus('Проверяем оплату…')
+    let cancelled = false
+    ;(async () => {
+      for (let i = 0; i < 15; i += 1) {
+        if (cancelled) return
+        const result = await refreshPremium()
+        if (result?.isPremium) {
+          try {
+            sessionStorage.removeItem(EXPECTING_PAYMENT_FLAG)
+          } catch {
+            /* ignore */
+          }
+          setPaymentReturnStatus('Premium активирован')
+          paymentPollRef.current = false
+          return
+        }
+        await new Promise((r) => setTimeout(r, 2000))
+      }
+      setPaymentReturnStatus('Оплата ещё не подтверждена. Если вы оплатили — подождите или нажмите «Восстановить покупки».')
+      paymentPollRef.current = false
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [searchParams, setSearchParams, refreshPremium])
 
   const handleRestorePurchase = useCallback(async () => {
     haptic('medium')
@@ -46,6 +90,7 @@ function PremiumPage() {
           <h1 className="premium-page__title">Premium-доступ</h1>
         </header>
         <section className="premium-page__card premium-page__card--active game-page__panel game-page__panel--glow-b">
+          {paymentReturnStatus && <p className="premium-page__status">{paymentReturnStatus}</p>}
           <p className="premium-page__status">
             Premium активен до {activeUntil ? new Date(activeUntil).toLocaleDateString('ru-RU') : '—'}
           </p>
@@ -74,6 +119,9 @@ function PremiumPage() {
         <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
       <div className="premium-page__content">
+        {paymentReturnStatus && (
+          <p className="premium-page__status" style={{ marginBottom: 12 }}>{paymentReturnStatus}</p>
+        )}
         <PremiumOverlay
           isOpen={true}
           onClose={handleBack}

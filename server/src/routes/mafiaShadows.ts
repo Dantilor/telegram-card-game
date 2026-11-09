@@ -1,8 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import type { PoolClient } from 'pg'
 import { pool } from '../db.js'
-import { verifyInitData } from '../telegram/verifyInitData.js'
-import { getUserPremiumWithDb } from '../premiumStore.js'
+import { callerIsPremium as callerIsPremiumAuth } from '../auth/premiumCaller.js'
 import {
   CITY_EVENTS,
   MAX_PLAYERS,
@@ -197,18 +196,7 @@ async function latestEvents(client: PoolClient, roomId: string) {
 }
 
 async function callerIsPremium(req: Request) {
-  const raw = req.headers['x-telegram-init-data']
-  const initData = typeof raw === 'string' ? raw.trim() : ''
-  if (!initData) return false
-  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? process.env.BOT_TOKEN ?? ''
-  if (!botToken) return false
-  try {
-    const parsed = verifyInitData(initData, botToken)
-    const status = await getUserPremiumWithDb(parsed.telegram_id)
-    return status.premium
-  } catch {
-    return false
-  }
+  return callerIsPremiumAuth(req)
 }
 
 async function createRoom(req: Request, rawName?: string) {

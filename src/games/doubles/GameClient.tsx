@@ -33,7 +33,8 @@ import BackButton from "../../components/BackButton";
 import PremiumOverlay from "../../components/PremiumOverlay";
 import { getApiBaseUrl } from "../../api/client";
 import { trackEvent } from "../../lib/analytics";
-import { getInitData } from "../../lib/telegram";
+import { partyFetch } from "../../lib/partyFetch";
+import { buildPartyInviteUrl, readRoomCodeFromLocation } from "../../lib/inviteUrl";
 import { MAX_PLAYERS, MIN_PLAYERS, PHASE_TITLES, type Archetype, type Phase } from "./doubles";
 
 type Session = { code: string; token: string; hostToken?: string };
@@ -201,16 +202,10 @@ function useAudio(enabled: boolean) {
   return { unlock, cue };
 }
 
-function initDataHeader(): Record<string, string> {
-  const initData = getInitData();
-  return initData ? { "x-telegram-init-data": initData } : {};
-}
 async function post(payload: Record<string, unknown>) {
-  const response = await fetch(API, {
+  const response = await partyFetch(API, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...initDataHeader() },
     body: JSON.stringify(payload),
-    cache: "no-store",
   });
   const result = await response.json() as Record<string, unknown> & { error?: string };
   if (!response.ok) throw new Error(result.error || "Не удалось выполнить действие.");
@@ -373,7 +368,7 @@ function PlayerList({ players, identities = false }: { players: Player[]; identi
 function Lobby({ state, act }: { state: State; act: (action: string) => Promise<void> }) {
   const missing = Math.max(0, MIN_PLAYERS - state.players.length);
   const share = async () => {
-    const url = `${location.origin}${location.pathname}#/doubles?room=${state.room.code}`;
+    const url = buildPartyInviteUrl("/doubles", state.room.code);
     if (navigator.share) await navigator.share({ title: "Двойники", text: `Заходи в комнату ${state.room.code}. Здесь кому-то выдали твою жизнь.`, url });
     else {
       await navigator.clipboard.writeText(url);
@@ -590,7 +585,7 @@ export function GameClient() {
     window.Telegram?.WebApp?.ready?.();
     window.Telegram?.WebApp?.expand?.();
     window.Telegram?.WebApp?.setHeaderColor?.("#080b1b");
-    const fromLink = (searchParams.get("room") ?? "").replace(/\D/g, "").slice(0, 6);
+    const fromLink = (searchParams.get("room") || readRoomCodeFromLocation() || "").replace(/\D/g, "").slice(0, 6);
     const last = localStorage.getItem("gnh_doubles_last") ?? "";
     const code = fromLink || "";
     setInitialCode(code || last);
@@ -602,7 +597,7 @@ export function GameClient() {
     if (!session) return;
     const query = new URLSearchParams({ code: session.code, token: session.token });
     if (session.hostToken) query.set("hostToken", session.hostToken);
-    const response = await fetch(`${API}?${query}`, { cache: "no-store", headers: initDataHeader() });
+    const response = await partyFetch(`${API}?${query}`, { method: "GET" });
     const result = await response.json() as State & { error?: string };
     if (!response.ok) throw new Error(result.error || "Связь с комнатой потеряна");
     setState(result);

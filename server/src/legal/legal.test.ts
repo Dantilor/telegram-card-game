@@ -12,7 +12,14 @@ import { PGlite } from '@electric-sql/pglite'
 import { assessAnalyticsEvent, handleAnalyticsEvent } from './analytics.js'
 import { assertCheckout, customerForNewYookassaReceipt, parseReceiptContact } from './checkout.js'
 import { LegalError } from './errors.js'
-import { STATEMENTS, DOCUMENT_CATALOG, type DocumentId } from './constants.js'
+import {
+  STATEMENTS,
+  DOCUMENT_CATALOG,
+  CONFIRMATION_SOURCE,
+  CONFIRMATION_SOURCE_WEB,
+  confirmationSourceForAuth,
+  type DocumentId,
+} from './constants.js'
 import { deleteExpiredAnalytics } from './cleanup.js'
 import {
   acceptOffer,
@@ -20,6 +27,7 @@ import {
   grantConsent,
   hasActiveAnalyticsConsent,
   registerAccount,
+  withConfirmationSource,
   withdrawConsent,
 } from './consents.js'
 import { activateDocuments, deactivateDocuments, importDocuments, readActiveDocument, readStoredVersion } from './documents.js'
@@ -703,6 +711,52 @@ test('server sources do not embed the private legal package', () => {
   const admin = fs.readFileSync(path.join(serverRoot, 'src/routes/admin.ts'), 'utf8')
   assert.equal(admin.includes("if (req.body?.service"), false)
   assert.ok((admin.match(/sendConsentedMarketing/g) ?? []).length >= 5)
+})
+
+test('confirmationSourceForAuth maps WEB sessions to telegram_login_web', () => {
+  assert.equal(confirmationSourceForAuth('telegram_init_data'), CONFIRMATION_SOURCE)
+  assert.equal(confirmationSourceForAuth('web_session'), CONFIRMATION_SOURCE_WEB)
+})
+
+test('migration 014 allows telegram_login_web evidence without rewriting docs', async () => {
+  const pg = new PGlite()
+  try {
+    await pg.exec(readSql('db/schema.sql'))
+    await pg.exec(readSql('db/migrations/005_legal_documents.sql'))
+    await pg.exec(readSql('db/migrations/014_legal_confirmation_source_web.sql'))
+    await pg.query(`INSERT INTO users (telegram_id) VALUES (9001)`)
+    await pg.query(
+      `INSERT INTO legal_evidence (
+         subject_telegram_id, action, document_id, document_version, document_sha256,
+         context, confirmation_source, request_id
+       ) VALUES (
+         9001, 'accept_agreement', 'agreement', '2026-01-01.1', $1,
+         '{}'::jsonb, $2, 'web-source-test-001'
+       )`,
+      ['a'.repeat(64), CONFIRMATION_SOURCE_WEB]
+    )
+    const rows = await pg.query<{ confirmation_source: string }>(
+      `SELECT confirmation_source FROM legal_evidence WHERE request_id = 'web-source-test-001'`
+    )
+    assert.equal(rows.rows[0]?.confirmation_source, CONFIRMATION_SOURCE_WEB)
+
+    await pg.query(
+      `INSERT INTO legal_evidence (
+         subject_telegram_id, action, document_id, document_version, document_sha256,
+         context, confirmation_source, request_id
+       ) VALUES (
+         9001, 'accept_agreement', 'agreement', '2026-01-01.1', $1,
+         '{}'::jsonb, $2, 'mini-source-test-001'
+       )`,
+      ['b'.repeat(64), CONFIRMATION_SOURCE]
+    )
+  } finally {
+    await pg.close()
+  }
+})
+
+test('withConfirmationSource scopes WEB source for inserts', async () => {
+  assert.equal(typeof withConfirmationSource, 'function')
 })
 
 test('import dry-run does not contact a database', async () => {

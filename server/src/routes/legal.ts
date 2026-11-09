@@ -7,8 +7,10 @@ import {
   grantConsent,
   readOwnRecords,
   registerAccount,
+  withConfirmationSource,
   withdrawConsent,
 } from '../legal/consents.js'
+import { confirmationSourceForAuth } from '../legal/constants.js'
 import {
   listActiveDocuments,
   listPublishedVersionLinks,
@@ -122,14 +124,14 @@ async function subjectFromRequest(
   req: Request,
   deps: LegalRouterDeps,
   res: Response
-): Promise<number | null> {
+): Promise<{ telegramId: number; authSource: string } | null> {
   // Dual-auth: Mini App initData or WEB session cookie. Never trust body telegram_id.
   try {
     const auth = await resolveAuth(req, {
       botToken: deps.getBotToken(),
       requireCsrfForWeb: req.method !== 'GET' && req.method !== 'HEAD',
     })
-    if (auth) return auth.telegramId
+    if (auth) return { telegramId: auth.telegramId, authSource: auth.source }
   } catch {
     /* fall through */
   }
@@ -140,7 +142,10 @@ async function subjectFromRequest(
     return null
   }
   try {
-    return deps.verifyInitData(initData, deps.getBotToken()).telegram_id
+    return {
+      telegramId: deps.verifyInitData(initData, deps.getBotToken()).telegram_id,
+      authSource: 'telegram_init_data',
+    }
   } catch {
     res.status(401).json({ error: 'Unauthorized' })
     return null
@@ -230,15 +235,18 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/account', async (req, res) => {
-    const telegramId = await subjectFromRequest(req, deps, res)
-    if (telegramId == null) return
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
+    const { telegramId, authSource } = subject
     const parsed = accountRegistrationSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
       return
     }
     try {
-      const result = await registerAccount(deps.withTransaction, telegramId, parsed.data)
+      const result = await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
+        registerAccount(deps.withTransaction, telegramId, parsed.data)
+      )
       res.status(201).json({ telegramId, legal: result })
     } catch (error) {
       sendFailure(res, error)
@@ -246,23 +254,29 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   })
 
   router.post('/agreement', async (req, res) => {
-    const telegramId = await subjectFromRequest(req, deps, res)
-    if (telegramId == null) return
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
+    const { telegramId, authSource } = subject
     const parsed = AgreementSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
       return
     }
     try {
-      res.status(201).json(await acceptAgreement(deps.withTransaction, telegramId, parsed.data))
+      res.status(201).json(
+        await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
+          acceptAgreement(deps.withTransaction, telegramId, parsed.data)
+        )
+      )
     } catch (error) {
       sendFailure(res, error)
     }
   })
 
   router.post('/offer-acceptances', async (req, res) => {
-    const telegramId = await subjectFromRequest(req, deps, res)
-    if (telegramId == null) return
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
+    const { telegramId, authSource } = subject
     const parsed = OfferSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
@@ -274,63 +288,82 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
         res.status(400).json({ error: 'plan_not_found', message: 'Тариф не найден или выключен.' })
         return
       }
-      res.status(201).json(await acceptOffer(deps.withTransaction, telegramId, { ...parsed.data, plan }))
+      res.status(201).json(
+        await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
+          acceptOffer(deps.withTransaction, telegramId, { ...parsed.data, plan })
+        )
+      )
     } catch (error) {
       sendFailure(res, error)
     }
   })
 
   router.post('/consents', async (req, res) => {
-    const telegramId = await subjectFromRequest(req, deps, res)
-    if (telegramId == null) return
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
+    const { telegramId, authSource } = subject
     const parsed = GrantSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
       return
     }
     try {
-      res.status(201).json(await grantConsent(deps.withTransaction, telegramId, parsed.data))
+      res.status(201).json(
+        await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
+          grantConsent(deps.withTransaction, telegramId, parsed.data)
+        )
+      )
     } catch (error) {
       sendFailure(res, error)
     }
   })
 
   router.post('/consents/decline', async (req, res) => {
-    const telegramId = await subjectFromRequest(req, deps, res)
-    if (telegramId == null) return
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
+    const { telegramId, authSource } = subject
     const parsed = ChannelActionSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
       return
     }
     try {
-      res.status(201).json(await declineConsent(deps.withTransaction, telegramId, parsed.data))
+      res.status(201).json(
+        await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
+          declineConsent(deps.withTransaction, telegramId, parsed.data)
+        )
+      )
     } catch (error) {
       sendFailure(res, error)
     }
   })
 
   router.post('/consents/withdraw', async (req, res) => {
-    const telegramId = await subjectFromRequest(req, deps, res)
-    if (telegramId == null) return
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
+    const { telegramId, authSource } = subject
     const parsed = ChannelActionSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
       return
     }
     try {
-      res.status(201).json(await withdrawConsent(deps.withTransaction, telegramId, parsed.data))
+      res.status(201).json(
+        await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
+          withdrawConsent(deps.withTransaction, telegramId, parsed.data)
+        )
+      )
     } catch (error) {
       sendFailure(res, error)
     }
   })
 
   router.get('/me', async (req, res) => {
-    const telegramId = await subjectFromRequest(req, deps, res)
-    if (telegramId == null) return
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
     try {
-      const records = await readOwnRecords(deps.query, telegramId)
-      res.json({ telegramId, ...records })
+      const records = await readOwnRecords(deps.query, subject.telegramId)
+      res.json({ telegramId: subject.telegramId, ...records })
     } catch (error) {
       sendFailure(res, error)
     }

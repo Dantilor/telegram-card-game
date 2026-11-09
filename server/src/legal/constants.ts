@@ -1,6 +1,20 @@
 export const SCHEMA_VERSION = 1
 
+/** Mini App (Telegram WebApp initData) confirmation source. */
 export const CONFIRMATION_SOURCE = 'telegram_webapp'
+
+/**
+ * Standalone WEB (Telegram Login / OIDC session) confirmation source.
+ * Requires migration 014. Existing Mini App evidence stays telegram_webapp.
+ */
+export const CONFIRMATION_SOURCE_WEB = 'telegram_login_web'
+
+export const CONFIRMATION_SOURCES = [CONFIRMATION_SOURCE, CONFIRMATION_SOURCE_WEB] as const
+export type ConfirmationSource = (typeof CONFIRMATION_SOURCES)[number]
+
+export function confirmationSourceForAuth(source: 'telegram_init_data' | 'web_session' | string): ConfirmationSource {
+  return source === 'web_session' ? CONFIRMATION_SOURCE_WEB : CONFIRMATION_SOURCE
+}
 
 export const CALENDAR_TIME_ZONE = 'Europe/Moscow'
 

@@ -234,12 +234,8 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     }
 
     const initData = getInitData()
-    if (!initData) {
-      setError(
-        isWebShell()
-          ? 'Оплата Premium в WEB подключается на следующем этапе. Статус Premium уже читается из вашей сессии.'
-          : 'Откройте приложение внутри Telegram для оплаты'
-      )
+    if (!isWebShell() && !initData) {
+      setError('Откройте приложение внутри Telegram для оплаты')
       return
     }
 
@@ -284,10 +280,10 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
       } catch { /* ignore */ }
 
       const tg = getTelegramWebApp()
-      if (tg?.openLink) {
+      if (!isWebShell() && tg?.openLink) {
         tg.openLink(url)
       } else {
-        window.open(url, '_blank', 'noopener,noreferrer')
+        window.location.assign(url)
       }
       pollAbortRef.current?.()
       pollAbortRef.current = pollPremiumStatus(refresh, () => {

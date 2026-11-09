@@ -58,6 +58,7 @@ async function createHarness(): Promise<Harness> {
   const pg = new PGlite()
   await pg.exec(readSql('db/schema.sql'))
   await pg.exec(readSql('db/migrations/012_web_sessions.sql'))
+  await pg.exec(readSql('db/migrations/013_web_session_profile.sql'))
   const wrap = (target: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> }): Queryable => ({
     query: async (sql, params) => {
       const result = await target.query(sql, params)
@@ -442,4 +443,33 @@ test('invalid Mini App initData signature is rejected (regression)', () => {
   assert.throws(() => verifyInitData('auth_date=1&user=%7B%22id%22%3A1%7D&hash=deadbeef', BOT_TOKEN))
   const good = signInitData(1)
   assert.equal(verifyInitData(good, BOT_TOKEN).telegram_id, 1)
+})
+
+test('migrations 012+013 are additive and keep session profile columns', async () => {
+  const harness = await createHarness()
+  try {
+    await harness.query.query(`INSERT INTO users (telegram_id) VALUES (55)`)
+    const session = await createWebSession(55, {
+      db: harness.query,
+      profile: { displayName: 'Host', username: 'host55', pictureUrl: null },
+    })
+    const row = await findActiveSessionByToken(session.sessionToken, harness.query)
+    assert.ok(row)
+    assert.equal(String(row.telegram_id), '55')
+    const profile = await harness.query.query<{ display_name: string | null; username: string | null }>(
+      `SELECT display_name, username FROM web_sessions WHERE id = $1`,
+      [row.id]
+    )
+    assert.equal(profile.rows[0]?.display_name, 'Host')
+    assert.equal(profile.rows[0]?.username, 'host55')
+  } finally {
+    await harness.close()
+  }
+})
+
+test('premiumCaller rejects unauthenticated callers (source audit)', () => {
+  const src = fs.readFileSync(path.join(serverRoot, 'src/auth/premiumCaller.ts'), 'utf8')
+  assert.match(src, /resolveAuth/)
+  assert.match(src, /getUserPremiumWithDb/)
+  assert.equal(src.includes('req.body'), false)
 })

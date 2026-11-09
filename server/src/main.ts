@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import path from 'node:path'
+import fs from 'node:fs'
 import express from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth.js'
@@ -22,10 +23,19 @@ import { verifyInitData } from './telegram/verifyInitData.js'
 import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
 import { webPublicOrigin } from './auth/config.js'
+import {
+  isStagingRuntime,
+  serveWebStaticEnabled,
+  telegramBotSideEffectsDisabled,
+  trustProxyHops,
+} from './config/runtimeFlags.js'
 
 const port = Number(process.env.PORT || 3001)
 const corsOriginRaw = process.env.CORS_ORIGIN || 'http://localhost:5173'
-const corsOrigins = corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean)
+const corsOrigins = corsOriginRaw
+  .split(',')
+  .map((o) => o.trim())
+  .filter((o) => o && o !== '*')
 const localhostOrigins = ['http://localhost:4173', 'http://localhost:5173', 'http://127.0.0.1:4173', 'http://127.0.0.1:5173']
 const webOrigin = webPublicOrigin()
 const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins, ...(webOrigin ? [webOrigin] : [])])]
@@ -33,13 +43,28 @@ const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins, ...(web
 const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3k2lQp').replace(/\/+$/, '')
 
 console.log('[TCG] ENV PORT =', process.env.PORT)
+console.log('[TCG] staging =', isStagingRuntime(), 'telegramBotSideEffectsDisabled =', telegramBotSideEffectsDisabled())
 
 if (process.env.DATABASE_URL) {
-  const u = new URL(process.env.DATABASE_URL)
-  console.log('[DB] user=', u.username, 'host=', u.host, 'port=', u.port, 'db=', u.pathname)
+  try {
+    const u = new URL(process.env.DATABASE_URL)
+    console.log('[DB] user=', u.username, 'host=', u.host, 'port=', u.port, 'db=', u.pathname)
+    if (isStagingRuntime() && /gnh_supabase/i.test(u.pathname)) {
+      console.error('[DB] Refusing to start staging against gnh_supabase')
+      process.exit(1)
+    }
+  } catch {
+    console.error('[DB] DATABASE_URL is not a valid URL (value not logged)')
+  }
 }
 
 const app = express()
+const proxyHops = trustProxyHops()
+if (proxyHops !== false) {
+  app.set('trust proxy', proxyHops)
+  console.log('[TCG] trust proxy hops =', proxyHops)
+}
+
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true)
@@ -48,6 +73,7 @@ app.use(cors({
   },
   // Same-origin reverse proxy (WEB-DOMAIN/api) does not need credentialed CORS.
   // When WEB and API are temporarily on different origins during local/dev, cookies need this.
+  // Never pair credentials with Access-Control-Allow-Origin: *.
   credentials: true,
 }))
 app.use(express.json({ limit: '2mb' }))
@@ -58,13 +84,25 @@ app.use('/public', express.static(path.join(process.cwd(), 'public'), {
   },
 }))
 
+function sendHealth(_req: express.Request, res: express.Response) {
+  res.status(200).json({
+    ok: true,
+    service: 'gnh',
+    env: isStagingRuntime() ? 'staging' : 'app',
+  })
+}
+
 // Health check — always 200, no DB
-app.get('/health', (_req, res) => {
-  res.status(200).send('ok')
-})
+app.get('/health', sendHealth)
+app.get('/api/health', sendHealth)
 
 // Telegram webhook — must be before other routes, always 200
 app.post(BOT_WEBHOOK_PATH, async (req, res) => {
+  if (telegramBotSideEffectsDisabled()) {
+    console.log('[telegram] webhook ignored (staging / bot side-effects disabled)')
+    res.status(200).send('ok')
+    return
+  }
   console.log('[telegram] POST', BOT_WEBHOOK_PATH)
   if (req.body?.update_id != null) {
     console.log('[telegram] update_id', req.body.update_id)
@@ -80,7 +118,7 @@ app.post(BOT_WEBHOOK_PATH, async (req, res) => {
       res.status(200).send('ok')
     }
   } catch (e) {
-    console.error('[telegram] webhook error:', e)
+    console.error('[telegram] webhook error:', e instanceof Error ? e.message : 'error')
     if (!res.headersSent) {
       res.status(200).send('ok')
     }
@@ -122,6 +160,41 @@ app.use(
   })
 )
 app.use('/legal', createLegalHtmlRouter({ query: db }))
+
+// Optional single-origin staging: Express serves dist-web + SPA fallback after API routes.
+if (serveWebStaticEnabled()) {
+  const webRoot = path.resolve(
+    process.env.GNH_WEB_STATIC_DIR?.trim() || path.join(process.cwd(), '..', 'dist-web')
+  )
+  if (!fs.existsSync(path.join(webRoot, 'index.html'))) {
+    console.warn('[TCG] GNH_SERVE_WEB_STATIC set but index.html missing at', webRoot)
+  } else {
+    console.log('[TCG] serving WEB static from', webRoot)
+    app.use(express.static(webRoot, { index: false, maxAge: '1h' }))
+    app.get('*', (req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+      if (
+        req.path.startsWith('/api') ||
+        req.path.startsWith('/legal') ||
+        req.path.startsWith('/public') ||
+        req.path === '/health' ||
+        req.path === BOT_WEBHOOK_PATH
+      ) {
+        return next()
+      }
+      res.sendFile(path.join(webRoot, 'index.html'), (err) => {
+        if (err) next(err)
+      })
+    })
+  }
+}
+
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[TCG] unhandled error:', err instanceof Error ? err.message : 'error')
+  if (!res.headersSent) {
+    res.status(500).json({ error: 'Internal server error', code: 'internal_error' })
+  }
+})
 
 // HTTP server (webhook mode — no bot.launch/polling)
 app.listen(port, '0.0.0.0', () => {

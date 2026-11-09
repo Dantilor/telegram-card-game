@@ -4,6 +4,7 @@ import { INSERT_ADMIN_GRANT_PAYMENT_SQL } from '../payments/premiumGrantSql.js'
 import { bot } from '../bot.js'
 import { runConsentedBroadcast, type MarketingMessage } from '../legal/marketing.js'
 import { db, withTransaction } from '../legal/runtime.js'
+import { adminBroadcastDisabled } from '../config/runtimeFlags.js'
 
 const expectedToken = (process.env.ADMIN_TOKEN ?? '') as string
 
@@ -29,6 +30,18 @@ function requireAdmin(req: Request, res: Response, next: () => void): void {
   if (!token || token !== expectedToken) {
     console.warn('[admin] Unauthorized: received length', token?.length ?? 0, 'expected length', expectedToken.length)
     res.status(401).json({ error: 'Unauthorized' })
+    return
+  }
+  next()
+}
+
+function rejectBroadcastInStaging(_req: Request, res: Response, next: () => void): void {
+  if (adminBroadcastDisabled()) {
+    res.status(403).json({
+      error: 'Forbidden',
+      code: 'broadcast_disabled',
+      message: 'Telegram broadcasts are disabled in staging / isolated runtimes.',
+    })
     return
   }
   next()
@@ -102,6 +115,10 @@ function parseBroadcastReplyMarkup(body: {
 
 const router = Router()
 router.use(requireAdmin)
+router.use((req, res, next) => {
+  if (req.path.startsWith('/broadcast')) return rejectBroadcastInStaging(req, res, next)
+  next()
+})
 
 router.get('/ping', (_req: Request, res: Response) => {
   res.status(200).json({ ok: true })

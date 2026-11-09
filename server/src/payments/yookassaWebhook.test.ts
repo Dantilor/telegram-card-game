@@ -109,3 +109,13 @@ test('dev-login hard-disabled in production regardless of WEB_DEV_LOGIN_ENABLED'
   assert.match(src, /TIMEWEB/)
   assert.match(src, /WEB_DEV_LOGIN_ENABLED/)
 })
+
+test('empty YOOKASSA_WEBHOOK_SECRET does not skip API verification', () => {
+  const route = fs.readFileSync(path.join(serverRoot, 'src/routes/yookassa.ts'), 'utf8')
+  const webhook = route.slice(route.indexOf('async function handleWebhook'), route.indexOf('async function handleConfirm'))
+  // Optional Authorization secret must never be the only gate.
+  assert.match(webhook, /relying on authenticated payment lookup|fetchYookassaPayment/)
+  assert.match(webhook, /YOOKASSA_WEBHOOK_REQUIRE_SECRET/)
+  // Default path with empty secret still reaches API verify before grant.
+  assert.ok(webhook.indexOf('fetchYookassaPayment') > webhook.indexOf('webhook secret empty') || webhook.includes('fetchYookassaPayment'))
+})

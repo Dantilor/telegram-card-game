@@ -30,6 +30,7 @@ preview-serve
 .env.local
 .env.production
 server/.env
+deploy/staging/.env.staging
 
 /_private_legal_import/
 /GNH_Legal_Cursor_2026-10-20.zip

@@ -1,0 +1,24 @@
+# Local / Timeweb-compatible STAGING stack (API serves dist-web).
+# Usage (from repo root):
+#   docker compose -f deploy/staging/docker-compose.yml --env-file deploy/staging/.env.staging up --build
+#
+# Never set DATABASE_URL to production gnh_supabase.
+
+services:
+  gnh-staging:
+    build:
+      context: ../..
+      dockerfile: deploy/staging/Dockerfile
+    ports:
+      - "${STAGING_HOST_PORT:-8080}:3001"
+    env_file:
+      - .env.staging
+    environment:
+      GNH_STAGING: "1"
+      GNH_SERVE_WEB_STATIC: "1"
+      GNH_DISABLE_TELEGRAM_BOT: "1"
+      GNH_DISABLE_ADMIN_BROADCAST: "1"
+      WEB_DEV_LOGIN_ENABLED: "0"
+      TRUST_PROXY: "1"
+      NODE_ENV: production
+    restart: unless-stopped

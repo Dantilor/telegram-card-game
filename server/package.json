@@ -7,7 +7,10 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsx --test src/legal/legal.test.ts src/party/partyRules.test.ts src/auth/webAuth.test.ts src/payments/yookassaWebhook.test.ts"
+    "test": "tsx --test src/legal/legal.test.ts src/party/partyRules.test.ts src/auth/webAuth.test.ts src/payments/yookassaWebhook.test.ts src/config/runtimeFlags.test.ts src/db/stagingMigrations.test.ts",
+    "migrate:staging": "node scripts/apply-staging-migrations.mjs",
+    "migrate:staging:seed": "node scripts/apply-staging-migrations.mjs --seed",
+    "migrate:staging:dry": "node scripts/apply-staging-migrations.mjs --dry-run"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -88,6 +88,14 @@ test('plaintext and disabled verification are refused before a socket exists', (
     /without TLS verification/
   )
   assert.throws(
+    () =>
+      resolvePgPoolConfig({
+        DATABASE_URL: 'postgresql://gen_user@db.example:5432/db?sslmode=verify-full',
+        PGSSLMODE: 'disable',
+      }),
+    /PGSSLMODE/
+  )
+  assert.throws(
     () => resolvePgPoolConfig({ DATABASE_URL: 'postgresql://gen_user@127.0.0.1:5432/db?ssl=false' }),
     /without TLS verification/
   )

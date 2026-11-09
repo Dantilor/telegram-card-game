@@ -53,6 +53,26 @@ test('clean DB accepts staging migration chain twice (idempotent core)', async (
     await pg.exec(readSql('db/staging/seed_minimal.sql'))
     await pg.exec(readSql('db/staging/seed_minimal.sql'))
 
+    const required = [
+      'users',
+      'subscriptions',
+      'payments',
+      'web_sessions',
+      'web_oidc_states',
+      'legal_evidence',
+      'sled_rooms',
+      'mafia_rooms',
+      'doubles_rooms',
+      'infected_rooms',
+    ]
+    const tables = await pg.query<{ tablename: string }>(
+      `SELECT tablename FROM pg_tables
+        WHERE schemaname = 'public' AND tablename = ANY($1::text[])
+        ORDER BY 1`,
+      [required]
+    )
+    assert.equal(tables.rows.length, required.length)
+
     const users = await pg.query<{ c: string }>(`SELECT count(*)::text AS c FROM users WHERE telegram_id BETWEEN 900001 AND 900004`)
     assert.equal(users.rows[0]?.c, '4')
 
@@ -71,7 +91,26 @@ test('clean DB accepts staging migration chain twice (idempotent core)', async (
         WHERE conname = 'legal_evidence_source_check'`
     )
     assert.match(String(constraint.rows[0]?.consrc ?? ''), /telegram_login_web/)
+
+    const rls = await pg.query<{ relname: string; relrowsecurity: boolean }>(
+      `SELECT c.relname, c.relrowsecurity
+         FROM pg_class c
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+          AND c.relname IN ('sled_rooms','mafia_rooms','doubles_rooms','infected_rooms')
+        ORDER BY 1`
+    )
+    assert.equal(rls.rows.length, 4)
+    assert.ok(rls.rows.every((r) => r.relrowsecurity === true))
   } finally {
     await pg.close()
   }
+})
+
+test('grants SQL is staging-gated and never targets gnh_supabase REVOKE', () => {
+  const sql = readSql('db/staging/01_grants_gnh_web_stage.sql')
+  assert.match(sql, /gnh_web_staging/)
+  assert.match(sql, /gnh_web_stage/)
+  assert.match(sql, /refusing grants on production database gnh_supabase/)
+  assert.doesNotMatch(sql, /REVOKE[^\n]*gnh_supabase/i)
 })

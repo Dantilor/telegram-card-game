@@ -9,7 +9,7 @@
     "build:api": "tsc",
     "build:web-sidecar": "node scripts/build-web-sidecar.mjs",
     "start": "node dist/index.js",
-    "test": "tsx --test src/legal/legal.test.ts src/party/partyRules.test.ts src/auth/webAuth.test.ts src/payments/yookassaWebhook.test.ts src/config/runtimeFlags.test.ts src/db/stagingMigrations.test.ts scripts/build-web-sidecar.test.mjs",
+    "test": "tsx --test src/legal/legal.test.ts src/party/partyRules.test.ts src/auth/webAuth.test.ts src/payments/yookassaWebhook.test.ts src/config/runtimeFlags.test.ts src/db/stagingMigrations.test.ts scripts/build-web-sidecar.test.mjs scripts/apply-staging-migrations.test.mjs",
     "migrate:staging": "node scripts/apply-staging-migrations.mjs",
     "migrate:staging:seed": "node scripts/apply-staging-migrations.mjs --seed",
     "migrate:staging:dry": "node scripts/apply-staging-migrations.mjs --dry-run",

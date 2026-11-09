@@ -187,6 +187,10 @@ export function resolvePgPoolConfig(env: NodeJS.ProcessEnv = process.env): Resol
   if (env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
     fail('NODE_TLS_REJECT_UNAUTHORIZED=0 is refused because it disables certificate verification')
   }
+  const pgSslMode = (env.PGSSLMODE ?? '').trim().toLowerCase()
+  if (pgSslMode === 'disable' || PLAINTEXT_SSL.has(pgSslMode)) {
+    fail('PGSSLMODE disables TLS and is refused')
+  }
   const rawUrl = env.DATABASE_URL
   if (!rawUrl || rawUrl.trim() === '') fail('DATABASE_URL is required')
   if (rawUrl.includes('\n') || rawUrl.includes('\r')) fail('DATABASE_URL could not be parsed')
@@ -200,6 +204,8 @@ export function resolvePgPoolConfig(env: NodeJS.ProcessEnv = process.env): Resol
   if (sslmode === 'disable' || PLAINTEXT_SSL.has(sslFlag)) {
     fail('DATABASE_URL requests a connection without TLS verification')
   }
+  // verify-full / verify-ca / require are accepted; node-pg always uses
+  // rejectUnauthorized + servername (verify-full equivalent).
 
   const connectionString = stripSslQuery(rawUrl)
   const parsed = parseUrl(connectionString)

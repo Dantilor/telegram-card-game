@@ -1,20 +1,25 @@
 #!/usr/bin/env node
 /**
- * Apply schema + migrations 001–014 to a STAGING PostgreSQL database.
- * Refuses production database name gnh_supabase.
+ * Apply schema + migrations 001–014 (+ staging grants) to gnh_web_staging only.
  *
- * Usage (from server/):
- *   node scripts/apply-staging-migrations.mjs
- *   STAGING_DATABASE_URL=postgres://... node scripts/apply-staging-migrations.mjs --seed
+ * Usage (from server/, after `npm run build:api`):
+ *   npm run migrate:staging:dry
+ *   unset DATABASE_URL
+ *   STAGING_DATABASE_URL=postgresql://MIGRATE_USER:...@HOST/gnh_web_staging?sslmode=verify-full \
+ *   STAGING_EXPECT_HOST=HOST \
+ *   STAGING_MIGRATE_USER=MIGRATE_USER \
+ *   DATABASE_TLS_CA_FILE=/path/to/timeweb-ca.crt \
+ *   npm run migrate:staging
  *
- * Requires: DATABASE_URL or STAGING_DATABASE_URL, and `psql` on PATH,
- * or falls back to node-pg when psql is unavailable.
+ * Never uses production .env DATABASE_URL.
+ * Never migrates as gnh_web_stage (app role).
+ * TLS via resolvePgPoolConfig (rejectUnauthorized + servername; PGSSLMODE=disable refused).
+ * Passwords / full URLs are never logged.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { spawnSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import pg from 'pg'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -22,23 +27,20 @@ const serverRoot = path.resolve(__dirname, '..')
 const wantSeed = process.argv.includes('--seed')
 const dryRun = process.argv.includes('--dry-run')
 
-const databaseUrl = (process.env.STAGING_DATABASE_URL || process.env.DATABASE_URL || '').trim()
+const EXPECTED_DB = 'gnh_web_staging'
+const APP_ROLE = 'gnh_web_stage'
 
-let dbName = ''
-if (databaseUrl) {
-  try {
-    dbName = new URL(databaseUrl).pathname.replace(/^\//, '')
-  } catch {
-    console.error('DATABASE_URL is not a valid URL')
-    process.exit(1)
-  }
-  if (/gnh_supabase/i.test(dbName) || /gnh_supabase/i.test(databaseUrl)) {
-    console.error('Refusing to migrate production database gnh_supabase')
-    process.exit(1)
-  }
-} else if (!dryRun) {
-  console.error('Set STAGING_DATABASE_URL (preferred) or DATABASE_URL')
+function die(message) {
+  console.error(message)
   process.exit(1)
+}
+
+function redactError(err) {
+  const msg = err instanceof Error ? err.message : String(err)
+  return msg
+    .replace(/postgresql:\/\/[^\s'"]+/gi, 'postgresql://***')
+    .replace(/postgres:\/\/[^\s'"]+/gi, 'postgres://***')
+    .replace(/password[=:]\s*\S+/gi, 'password=***')
 }
 
 const steps = [
@@ -58,6 +60,7 @@ const steps = [
   { label: '012', file: 'db/migrations/012_web_sessions.sql' },
   { label: '013', file: 'db/migrations/013_web_session_profile.sql' },
   { label: '014', file: 'db/migrations/014_legal_confirmation_source_web.sql' },
+  { label: 'grants-stage', file: 'db/staging/01_grants_gnh_web_stage.sql' },
 ]
 
 if (wantSeed) {
@@ -68,38 +71,90 @@ function resolve(rel) {
   return path.join(serverRoot, rel)
 }
 
-async function applyWithPg(filePath, label) {
-  const sql = fs.readFileSync(filePath, 'utf8')
-  const client = new pg.Client({
-    connectionString: databaseUrl,
-    ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false },
-  })
-  await client.connect()
-  try {
-    await client.query(sql)
-    console.log('OK', label)
-  } finally {
-    await client.end()
+function assertIsolation(rawUrl) {
+  if ((process.env.DATABASE_URL || '').trim()) {
+    die('Refusing: DATABASE_URL is set. Unset it and use only STAGING_DATABASE_URL.')
   }
+  if (!rawUrl) {
+    die('Set STAGING_DATABASE_URL (staging migrate URL only)')
+  }
+
+  let parsed
+  try {
+    parsed = new URL(rawUrl)
+  } catch {
+    die('STAGING_DATABASE_URL is not a valid URL')
+  }
+
+  const dbName = decodeURIComponent(parsed.pathname.replace(/^\//, ''))
+  const user = decodeURIComponent(parsed.username || '')
+  const host = parsed.hostname
+
+  if (!dbName || /gnh_supabase/i.test(dbName) || /gnh_supabase/i.test(rawUrl)) {
+    die('Refusing to migrate production database gnh_supabase')
+  }
+  if (dbName !== EXPECTED_DB) {
+    die(`Refusing: database must be exactly ${EXPECTED_DB} (got "${dbName}")`)
+  }
+  if (!host) die('STAGING_DATABASE_URL host is missing')
+  if (!user) die('STAGING_DATABASE_URL user is missing')
+  if (user === APP_ROLE) {
+    die(`Refusing: do not migrate as ${APP_ROLE} (app role). Use a migrate/admin LOGIN for ${EXPECTED_DB} only.`)
+  }
+
+  const expectHost = (process.env.STAGING_EXPECT_HOST || '').trim()
+  if (!expectHost) {
+    die('STAGING_EXPECT_HOST is required (expected Timeweb / local Postgres hostname or IP)')
+  }
+  if (host.toLowerCase() !== expectHost.toLowerCase()) {
+    die(`Refusing: host does not match STAGING_EXPECT_HOST`)
+  }
+
+  const expectUser = (process.env.STAGING_MIGRATE_USER || '').trim()
+  if (expectUser && user !== expectUser) {
+    die('Refusing: migrate user does not match STAGING_MIGRATE_USER')
+  }
+
+  const pgSslMode = (process.env.PGSSLMODE || '').trim().toLowerCase()
+  if (pgSslMode === 'disable' || ['0', 'false', 'off', 'no', 'allow'].includes(pgSslMode)) {
+    die('Refusing: PGSSLMODE disables TLS')
+  }
+
+  return { dbName, user, host }
 }
 
-function applyWithPsql(filePath, label) {
-  const result = spawnSync(
-    'psql',
-    [databaseUrl, '-v', 'ON_ERROR_STOP=1', '-f', filePath],
-    { encoding: 'utf8' }
-  )
-  if (result.status !== 0) {
-    console.error(result.stderr || result.stdout)
-    throw new Error(`psql failed on ${label}`)
+async function loadResolvePgPoolConfig() {
+  const distPath = path.join(serverRoot, 'dist', 'dbTls.js')
+  if (!fs.existsSync(distPath)) {
+    die('Missing dist/dbTls.js — run `npm run build:api` in server/ before migrating')
   }
+  const mod = await import(pathToFileURL(distPath).href)
+  return mod.resolvePgPoolConfig
+}
+
+function logTlsSummary(summary) {
+  console.log('TLS:', {
+    rejectUnauthorized: summary.rejectUnauthorized,
+    minVersion: summary.minVersion,
+    servername: summary.servername,
+    checkServerIdentity: summary.checkServerIdentity,
+    caSource: summary.caSource,
+    host: summary.host,
+    port: summary.port,
+    database: summary.database,
+    user: summary.user,
+  })
+}
+
+async function applyWithPg(client, filePath, label) {
+  const sql = fs.readFileSync(filePath, 'utf8')
+  await client.query(sql)
   console.log('OK', label)
 }
 
-const hasPsql = spawnSync('psql', ['--version'], { encoding: 'utf8' }).status === 0
+console.log('Target database:', EXPECTED_DB)
+console.log('Driver: node-pg (dbTls verify-full)')
 
-console.log('Target database:', dbName || '(dry-run / unset)')
-console.log('Driver:', hasPsql ? 'psql' : 'node-pg')
 if (dryRun) {
   for (const step of steps) {
     const full = resolve(step.file)
@@ -109,22 +164,81 @@ if (dryRun) {
   process.exit(0)
 }
 
+const stagingUrl = (process.env.STAGING_DATABASE_URL || '').trim()
+const meta = assertIsolation(stagingUrl)
+
+const resolvePgPoolConfig = await loadResolvePgPoolConfig()
+let resolved
+try {
+  resolved = resolvePgPoolConfig({
+    ...process.env,
+    DATABASE_URL: stagingUrl,
+    GNH_EXPECT_HOST: process.env.STAGING_EXPECT_HOST,
+    GNH_EXPECT_DATABASE: EXPECTED_DB,
+    GNH_EXPECT_USER: process.env.STAGING_MIGRATE_USER || meta.user,
+  })
+} catch (e) {
+  die(`TLS/config refused: ${redactError(e)}`)
+}
+
+if (resolved.summary.rejectUnauthorized !== true) {
+  die('TLS verification was not enabled')
+}
+if (resolved.summary.database !== EXPECTED_DB) {
+  die('Resolved database is not gnh_web_staging')
+}
+if (resolved.summary.user === APP_ROLE) {
+  die(`Refusing resolved migrate user ${APP_ROLE}`)
+}
+
+logTlsSummary(resolved.summary)
+
 async function main() {
-  for (const step of steps) {
-    const full = resolve(step.file)
-    if (!fs.existsSync(full)) {
-      console.error('Missing file', step.file)
-      process.exit(1)
-    }
-    try {
-      if (hasPsql) applyWithPsql(full, step.label)
-      else await applyWithPg(full, step.label)
-    } catch (e) {
-      console.error('FAILED', step.label, e instanceof Error ? e.message : e)
-      process.exit(1)
-    }
+  const client = new pg.Client({
+    connectionString: resolved.connectionString,
+    ssl: resolved.ssl,
+  })
+
+  try {
+    await client.connect()
+  } catch (e) {
+    console.error('CONNECT_FAILED', redactError(e))
+    process.exit(1)
   }
-  console.log('Staging migrations complete.')
+
+  try {
+    const identity = await client.query(
+      `SELECT current_database() AS db, current_user AS usr, inet_server_addr()::text AS addr`
+    )
+    const row = identity.rows[0]
+    if (row.db !== EXPECTED_DB) {
+      die(`Connected database mismatch: expected ${EXPECTED_DB}`)
+    }
+    if (row.usr === APP_ROLE) {
+      die(`Connected as ${APP_ROLE}; refuse migrations`)
+    }
+    if (/gnh_supabase/i.test(row.db)) {
+      die('Refusing connected production database')
+    }
+    console.log('Connected:', { database: row.db, user: row.usr, serverAddrSet: Boolean(row.addr) })
+
+    for (const step of steps) {
+      const full = resolve(step.file)
+      if (!fs.existsSync(full)) {
+        console.error('Missing file', step.file)
+        process.exit(1)
+      }
+      try {
+        await applyWithPg(client, full, step.label)
+      } catch (e) {
+        console.error('FAILED', step.label, redactError(e))
+        process.exit(1)
+      }
+    }
+    console.log('Staging migrations complete.')
+  } finally {
+    await client.end().catch(() => {})
+  }
 }
 
 await main()

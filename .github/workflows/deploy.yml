@@ -24,12 +24,13 @@ jobs:
       - run: npm ci
       - name: Build frontend with production API URL
         env:
-          # Without this secret the Mini App cannot load plans/offer (api_not_configured).
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_API_BASE: ${{ secrets.VITE_API_URL }}
+          # The API origin is public (not a credential). The repository secret can
+          # override the known production Timeweb hostname on a future migration.
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://dantilor-telegram-card-game-3706.twc1.net' }}
+          VITE_API_BASE: ${{ secrets.VITE_API_URL || 'https://dantilor-telegram-card-game-3706.twc1.net' }}
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            echo "Missing GitHub Actions secret VITE_API_URL (Timeweb API origin)."
+            echo "Missing production VITE_API_URL."
             exit 1
           fi
           npm run build

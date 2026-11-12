@@ -1,1 +1,0 @@
-import{j as r,O as t}from"./index-Dp8q8WaU.js";import{A as o}from"./AliasStateContext-BphuCeHG.js";/* empty css                      */function e(){return r.jsx(o,{children:r.jsx(t,{})})}export{e as default};

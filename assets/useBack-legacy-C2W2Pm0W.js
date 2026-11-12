@@ -1,1 +1,0 @@
-System.register(["./index-legacy-Ds2THQJv.js"],function(e,t){"use strict";var n,i,r,u;return{setters:[e=>{n=e.u,i=e.X,r=e.r,u=e.f}],execute:function(){e("u",function(e){const t=n(),s="undefined"!=typeof window&&!!i();return r.useCallback(()=>{u("light"),s||window.history.length<=1?t(e):t(-1)},[t,e,s])})}}});

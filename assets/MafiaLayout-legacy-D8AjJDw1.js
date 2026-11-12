@@ -1,0 +1,1 @@
+System.register(["./index-legacy-D79XyQjP.js","./MafiaPage-legacy-C1lwP8ba.js","./preloadImages-legacy-CU7Ti3Bx.js"],function(e,t){"use strict";var s,r,a,c,n,u;return{setters:[e=>{s=e.r,r=e.j,a=e.O,c=e.J},e=>{n=e.M},e=>{u=e.p}],execute:function(){e("default",function(){return s.useEffect(()=>{u(c)},[]),r.jsx(n,{children:r.jsx(a,{})})})}}});

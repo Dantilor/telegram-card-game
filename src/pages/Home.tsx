@@ -12,22 +12,24 @@ import ThemeToggle from '../components/ThemeToggle'
 import HomeWelcomeTop from '../components/HomeWelcomeTop'
 import HomePremiumBanner from '../components/HomePremiumBanner'
 import PremiumOverlay from '../components/PremiumOverlay'
-import pickMafiaShadows from '../assets/mafia_shadows_hero.png'
-import pickDoubles from '../assets/dvoiniki_keyart.webp'
-import pickInfected from '../assets/infected_cover.png'
-import heroPortal from '../assets/home/neon/hero-portal.png'
+import { HOME_PICK_THUMBS } from '../assets/images'
+import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
+import pickMafiaShadowsAvif from '../assets/optimized/home-pick-mafia-shadows.avif'
+import pickDoublesAvif from '../assets/optimized/home-pick-doubles.avif'
+import pickInfectedAvif from '../assets/optimized/home-pick-infected.avif'
+import heroPortal from '../assets/optimized/home-hero-neon.webp'
 import iconFavoriteStar from '../assets/icons/gnh/action-favorite-star.svg'
 import iconProfileUser from '../assets/icons/gnh/action-profile-user.svg'
 import iconChevronRight from '../assets/icons/gnh/chevron-right.svg'
 import iconLightFavorite from '../assets/icons/gnh-light-pro/light-favorite-star-pro.svg'
 import iconLightProfile from '../assets/icons/gnh-light-pro/light-profile-user-pro.svg'
 import iconLightChevronRight from '../assets/icons/gnh-light-pro/light-chevron-right-pro.svg'
-import lightHeroExact from '../assets/home/light-pixel/light_hero_exact.png'
-import heroSunset from '../assets/home/sunset/hero-sunset.png'
+import lightHeroExact from '../assets/optimized/home-hero-light.webp'
+import heroSunset from '../assets/optimized/home-hero-sunset.webp'
 import iconSunsetFavorite from '../assets/icons/gnh-sunset-pro/sunset-favorite-star-pro.svg'
 import iconSunsetProfile from '../assets/icons/gnh-sunset-pro/sunset-profile-user-pro.svg'
 import iconSunsetChevronRight from '../assets/icons/gnh-sunset-pro/sunset-chevron-right-pro.svg'
-import heroCalm from '../assets/home/calm/hero-calm.png'
+import heroCalm from '../assets/optimized/home-hero-calm.webp'
 import iconCalmFavorite from '../assets/icons/gnh-calm-pro/calm-favorite-star-pro.svg'
 import iconCalmProfile from '../assets/icons/gnh-calm-pro/calm-profile-user-pro.svg'
 import iconCalmChevronRight from '../assets/icons/gnh-calm-pro/calm-chevron-right-pro.svg'
@@ -45,10 +47,19 @@ const APP_FEATURES = [
 ]
 
 const HOME_PICKS = [
-  { title: 'Мафия: Тени города', image: pickMafiaShadows, gameId: 'mafia-shadows', to: '/mafia-shadows' },
-  { title: 'Двойники', image: pickDoubles, gameId: 'doubles', to: '/doubles' },
-  { title: 'Заражённые', image: pickInfected, gameId: 'infected', to: '/infected' },
+  { title: 'Мафия: Тени города', image: HOME_PICK_THUMBS.mafiaShadows, avif: pickMafiaShadowsAvif, gameId: 'mafia-shadows', to: '/mafia-shadows' },
+  { title: 'Двойники', image: HOME_PICK_THUMBS.doubles, avif: pickDoublesAvif, gameId: 'doubles', to: '/doubles' },
+  { title: 'Заражённые', image: HOME_PICK_THUMBS.infected, avif: pickInfectedAvif, gameId: 'infected', to: '/infected' },
 ] as const
+
+function HomePickThumb({ image, avif }: { image: string; avif: string }) {
+  return (
+    <picture>
+      <source type="image/avif" srcSet={avif} />
+      <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
+    </picture>
+  )
+}
 
 function HomePlayIcon({ size = 'picks' }: { size?: 'picks' | 'cta' }) {
   return (
@@ -67,7 +78,8 @@ function Home() {
   const { isPremium, loading } = usePremium()
   const navigate = useNavigate()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
-  const [plansPriceLabel, setPlansPriceLabel] = useState('от 259 ₽')
+  // Цена показывается только из ответа сервера, без зашитого значения.
+  const [plansPriceLabel, setPlansPriceLabel] = useState('Тарифы')
   const favoritesLocked = isFavoritesLocked(isPremium)
 
   useEffect(() => {
@@ -171,7 +183,7 @@ function Home() {
               className="home-calm-hero__bg"
               decoding="async"
               loading="eager"
-              fetchPriority="high"
+              {...HIGH_FETCH_PRIORITY}
             />
             <div className="home-calm-hero__shade" aria-hidden />
             <div className="home-calm-hero__content">
@@ -232,7 +244,7 @@ function Home() {
         <section className="home-calm-picks" aria-labelledby="home-calm-picks-title">
           <h2 id="home-calm-picks-title" className="home-calm-picks__title">Попробуйте сегодня</h2>
           <ul className="home-calm-picks__list">
-            {HOME_PICKS.map(({ title, image, to }) => (
+            {HOME_PICKS.map(({ title, image, avif, to }) => (
               <li key={title}>
                 <button
                   type="button"
@@ -240,7 +252,7 @@ function Home() {
                   onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
-                    <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
+                    <HomePickThumb image={image} avif={avif} />
                   </span>
                   <span className="home-calm-picks__name">{title}</span>
                   <span className="home-picks__play" aria-hidden>
@@ -274,7 +286,7 @@ function Home() {
               className="home-sunset-hero__bg"
               decoding="async"
               loading="eager"
-              fetchPriority="high"
+              {...HIGH_FETCH_PRIORITY}
             />
             <div className="home-sunset-hero__shade" aria-hidden />
             <div className="home-sunset-hero__content">
@@ -335,7 +347,7 @@ function Home() {
         <section className="home-sunset-picks" aria-labelledby="home-sunset-picks-title">
           <h2 id="home-sunset-picks-title" className="home-sunset-picks__title">Попробуйте сегодня</h2>
           <ul className="home-sunset-picks__list">
-            {HOME_PICKS.map(({ title, image, to }) => (
+            {HOME_PICKS.map(({ title, image, avif, to }) => (
               <li key={title}>
                 <button
                   type="button"
@@ -343,7 +355,7 @@ function Home() {
                   onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
-                    <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
+                    <HomePickThumb image={image} avif={avif} />
                   </span>
                   <span className="home-sunset-picks__name">{title}</span>
                   <span className="home-picks__play" aria-hidden>
@@ -377,7 +389,7 @@ function Home() {
               className="home-light-hero__bg"
               decoding="async"
               loading="eager"
-              fetchPriority="high"
+              {...HIGH_FETCH_PRIORITY}
             />
             <div className="home-light-hero__shade" aria-hidden />
             <div className="home-light-hero__content">
@@ -438,7 +450,7 @@ function Home() {
         <section className="home-light-picks" aria-labelledby="home-light-picks-title">
           <h2 id="home-light-picks-title" className="home-light-picks__title">Попробуйте сегодня</h2>
           <ul className="home-light-picks__list">
-            {HOME_PICKS.map(({ title, image, to }) => (
+            {HOME_PICKS.map(({ title, image, avif, to }) => (
               <li key={title}>
                 <button
                   type="button"
@@ -446,7 +458,7 @@ function Home() {
                   onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
-                    <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
+                    <HomePickThumb image={image} avif={avif} />
                   </span>
                   <span className="home-light-picks__name">{title}</span>
                   <span className="home-picks__play" aria-hidden>
@@ -480,7 +492,7 @@ function Home() {
               className="home-neon-hero__bg"
               decoding="async"
               loading="eager"
-              fetchPriority="high"
+              {...HIGH_FETCH_PRIORITY}
             />
             <div className="home-neon-hero__shade" aria-hidden />
             <div className="home-neon-hero__content">
@@ -541,7 +553,7 @@ function Home() {
         <section className="home-neon-picks" aria-labelledby="home-neon-picks-title">
           <h2 id="home-neon-picks-title" className="home-neon-picks__title">Попробуйте сегодня</h2>
           <ul className="home-neon-picks__list">
-            {HOME_PICKS.map(({ title, image, to }) => (
+            {HOME_PICKS.map(({ title, image, avif, to }) => (
               <li key={title}>
                 <button
                   type="button"
@@ -549,7 +561,7 @@ function Home() {
                   onClick={() => handlePickClick(to)}
                 >
                   <span className="home-picks__thumb-wrap" aria-hidden>
-                    <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
+                    <HomePickThumb image={image} avif={avif} />
                   </span>
                   <span className="home-neon-picks__name">{title}</span>
                   <span className="home-picks__play" aria-hidden>

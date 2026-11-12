@@ -2,6 +2,7 @@ import 'dotenv/config'
 import path from 'node:path'
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import authRouter from './routes/auth.js'
 import premiumRouter from './routes/premium.js'
 import meRouter from './routes/me.js'
@@ -24,7 +25,10 @@ import { bot } from './bot.js'
 import { buildAllowedCorsOrigins, isOriginAllowed } from './corsOrigins.js'
 
 const port = Number(process.env.PORT || 3001)
-const allowedOrigins = buildAllowedCorsOrigins(process.env)
+const allowedOrigins = buildAllowedCorsOrigins({
+  CORS_ORIGIN: process.env.CORS_ORIGIN,
+  WEBAPP_URL: process.env.WEBAPP_URL,
+})
 const rejectedCorsOrigins = new Set<string>()
 
 const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3k2lQp').replace(/\/+$/, '')
@@ -47,7 +51,12 @@ app.use(cors({
     }
     cb(null, false)
   },
+  // Lets the WebView skip repeating the preflight for authorized GETs on a slow link.
+  maxAge: 600,
+  exposedHeaders: ['Retry-After'],
 }))
+// Legal documents are ~60–110 KB of JSON; the Timeweb proxy passes them uncompressed.
+app.use(compression({ threshold: 1024 }))
 app.use(express.json({ limit: '2mb' }))
 
 app.use('/public', express.static(path.join(process.cwd(), 'public'), {

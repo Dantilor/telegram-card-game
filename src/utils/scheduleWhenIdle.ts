@@ -41,6 +41,46 @@ export function scheduleWhenIdle(task: IdleTask, timeoutMs = 2500): () => void {
   return () => timers.clearTimeout(id)
 }
 
+/** React 18 has no `fetchPriority` prop; the lowercase attribute reaches the DOM without a warning. */
+export const HIGH_FETCH_PRIORITY = { fetchpriority: 'high' } as Record<string, string>
+
+/**
+ * Run `task` once the first-screen images marked high priority have loaded
+ * (or failed), with a timeout, so optional downloads do not compete with them.
+ */
+export function afterCriticalImages(task: IdleTask, timeoutMs = 8000): () => void {
+  let done = false
+  const pending = Array.from(document.querySelectorAll<HTMLImageElement>('img[fetchpriority="high"]')).filter(
+    (img) => !img.complete
+  )
+  const finish = () => {
+    if (done) return
+    done = true
+    cleanup()
+    task()
+  }
+  const onSettled = () => {
+    if (pending.every((img) => img.complete)) finish()
+  }
+  const timer = window.setTimeout(finish, timeoutMs)
+  function cleanup() {
+    window.clearTimeout(timer)
+    for (const img of pending) {
+      img.removeEventListener('load', onSettled)
+      img.removeEventListener('error', onSettled)
+    }
+  }
+  for (const img of pending) {
+    img.addEventListener('load', onSettled)
+    img.addEventListener('error', onSettled)
+  }
+  if (!pending.length) window.setTimeout(finish, 0)
+  return () => {
+    done = true
+    cleanup()
+  }
+}
+
 /**
  * Sequentially warm dynamic imports during idle time so we do not open
  * many parallel network requests on slow mobile connections.

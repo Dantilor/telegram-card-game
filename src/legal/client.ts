@@ -1,10 +1,11 @@
 import { ApiConfigError, resolveApiBase } from '../lib/apiBase'
-import { fetchGetWithRetry } from '../lib/fetchWithRetry'
+import { fetchGetWithRetry, parseRetryAfterMs } from '../lib/fetchWithRetry'
 import type { OwnLegalRecords, PublicDocument } from './types'
 
 export class LegalClientError extends Error {
   code: string
   status: number
+  retryAfterMs?: number
 
   constructor(code: string, status: number, message: string) {
     super(message)
@@ -130,10 +131,18 @@ type FetchLike = (url: string, init?: RequestInit) => Promise<Response>
 async function readJson<T>(response: Response): Promise<T> {
   const text = await response.text()
   if (!response.ok) {
-    throw new LegalClientError(`http_${response.status}`, response.status, safeLegalMessage(response.status, text))
+    const error = new LegalClientError(`http_${response.status}`, response.status, safeLegalMessage(response.status, text))
+    const retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'))
+    if (retryAfterMs !== null) error.retryAfterMs = retryAfterMs
+    throw error
   }
   if (!text) return {} as T
-  return JSON.parse(text) as T
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    // A VPN or proxy error page instead of API JSON is a transient condition.
+    throw new LegalClientError('bad_response', 502, 'Сервер вернул неожиданный ответ. Подтверждение не сохранено.')
+  }
 }
 
 export async function fetchPublicDocument(

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchGetWithRetry } from './fetchWithRetry'
+import { fetchGetWithRetry, parseRetryAfterMs } from './fetchWithRetry'
 
 describe('fetchGetWithRetry', () => {
   it('retries a transient network failure and then succeeds', async () => {
@@ -34,6 +34,21 @@ describe('fetchGetWithRetry', () => {
       method: 'POST',
     }, fetchImpl)).rejects.toThrow('GET requests only')
     expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('hands a long Retry-After back to the caller instead of hammering the server', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(new Response('slow down', { status: 429, headers: { 'Retry-After': '20' } }))
+    const response = await fetchGetWithRetry('https://example.com/api/plans', {}, fetchImpl)
+    expect(response.status).toBe(429)
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+
+  it('parses Retry-After seconds and HTTP dates', () => {
+    expect(parseRetryAfterMs('5')).toBe(5_000)
+    expect(parseRetryAfterMs(new Date(10_000).toUTCString(), 4_000)).toBe(6_000)
+    expect(parseRetryAfterMs('soon')).toBeNull()
+    expect(parseRetryAfterMs(null)).toBeNull()
   })
 
   it('retries HTTP 429 and 502 then returns the successful response', async () => {

@@ -11,9 +11,12 @@ export function getBaseUrl(): string {
 
 async function request<T>(path: string, options: RequestInit & { method?: string; body?: string } = {}): Promise<T> {
   const baseUrl = getBaseUrl()
-  const initData = getInitData()
+  // The plans catalog is public. Keep this a CORS-simple GET (no preflight)
+  // instead of sending an unneeded Telegram header / JSON content type.
+  const publicPlans = path === '/api/plans' && (options.method ?? 'GET').toUpperCase() === 'GET'
+  const initData = publicPlans ? null : getInitData()
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(publicPlans ? { Accept: 'application/json' } : { 'Content-Type': 'application/json' }),
     ...(typeof options.headers === 'object' && !(options.headers instanceof Headers)
       ? (options.headers as Record<string, string>)
       : {}),

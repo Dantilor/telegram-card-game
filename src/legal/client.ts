@@ -1,4 +1,5 @@
 import { ApiConfigError, resolveApiBase } from '../lib/apiBase'
+import { fetchGetWithRetry } from '../lib/fetchWithRetry'
 import type { OwnLegalRecords, PublicDocument } from './types'
 
 export class LegalClientError extends Error {
@@ -145,7 +146,7 @@ export async function fetchPublicDocument(
   })
   let response: Response
   try {
-    response = await fetchImpl(request.url, request.init)
+    response = await fetchGetWithRetry(request.url, request.init, fetchImpl)
   } catch {
     throw new LegalClientError('network', 0, 'Нет соединения. Утверждённый текст не загружен.')
   }

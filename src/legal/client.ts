@@ -1,4 +1,5 @@
 import { ApiConfigError, resolveApiBase } from '../lib/apiBase'
+import { fetchGetWithRetry } from '../lib/fetchWithRetry'
 import type { OwnLegalRecords, PublicDocument } from './types'
 
 export class LegalClientError extends Error {
@@ -16,7 +17,13 @@ export class LegalClientError extends Error {
 export function userFacingLoadError(error: unknown, dev = import.meta.env.DEV): string {
   const fallback = 'Не удалось загрузить данные. Повторите запрос. Подтверждение не отправлено.'
   const coded = error instanceof LegalClientError || error instanceof ApiConfigError
-  if (!coded) return fallback
+  if (!coded) {
+    const message = error instanceof Error ? error.message : ''
+    if (/Failed to fetch|NetworkError|Сеть недоступна|abort|timeout|Load failed/i.test(message)) {
+      return 'Нет стабильного соединения с сервером. Проверьте сеть или VPN и повторите загрузку.'
+    }
+    return fallback
+  }
   if (dev) return error.message
   if (error.code === 'network') return 'Нет соединения. Повторите загрузку. Подтверждение не отправлено.'
   if (
@@ -24,7 +31,7 @@ export function userFacingLoadError(error: unknown, dev = import.meta.env.DEV): 
     error.code === 'api_base_conflict' ||
     error.code === 'render_fallback_blocked'
   ) {
-    return fallback
+    return 'Сервер приложения недоступен из этой сборки. Повторите позже. Подтверждение не отправлено.'
   }
   if (/VITE_|DATABASE_URL|initData|secret|password/i.test(error.message)) return fallback
   return error.message || fallback
@@ -145,7 +152,7 @@ export async function fetchPublicDocument(
   })
   let response: Response
   try {
-    response = await fetchImpl(request.url, request.init)
+    response = await fetchGetWithRetry(request.url, request.init, fetchImpl)
   } catch {
     throw new LegalClientError('network', 0, 'Нет соединения. Утверждённый текст не загружен.')
   }

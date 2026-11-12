@@ -21,15 +21,16 @@ import { verifyInitData } from './telegram/verifyInitData.js'
 import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
 
+import { buildAllowedCorsOrigins, isOriginAllowed } from './corsOrigins.js'
+
 const port = Number(process.env.PORT || 3001)
-const corsOriginRaw = process.env.CORS_ORIGIN || 'http://localhost:5173'
-const corsOrigins = corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean)
-const localhostOrigins = ['http://localhost:4173', 'http://localhost:5173', 'http://127.0.0.1:4173', 'http://127.0.0.1:5173']
-const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins])]
+const allowedOrigins = buildAllowedCorsOrigins(process.env)
+const rejectedCorsOrigins = new Set<string>()
 
 const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3k2lQp').replace(/\/+$/, '')
 
 console.log('[TCG] ENV PORT =', process.env.PORT)
+console.log('[TCG] CORS allow-list origins =', allowedOrigins.join(', '))
 
 if (process.env.DATABASE_URL) {
   const u = new URL(process.env.DATABASE_URL)
@@ -39,8 +40,11 @@ if (process.env.DATABASE_URL) {
 const app = express()
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true)
-    if (allowedOrigins.includes(origin)) return cb(null, true)
+    if (isOriginAllowed(origin, allowedOrigins)) return cb(null, true)
+    if (origin && !rejectedCorsOrigins.has(origin)) {
+      rejectedCorsOrigins.add(origin)
+      console.warn('[TCG] CORS rejected Origin (browser cannot read API):', origin)
+    }
     cb(null, false)
   },
 }))

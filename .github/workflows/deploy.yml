@@ -22,7 +22,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build frontend with production API URL
+        env:
+          # Without this secret the Mini App cannot load plans/offer (api_not_configured).
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_BASE: ${{ secrets.VITE_API_URL }}
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "Missing GitHub Actions secret VITE_API_URL (Timeweb API origin)."
+            exit 1
+          fi
+          npm run build
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:

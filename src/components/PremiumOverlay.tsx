@@ -109,6 +109,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const gem = GEMS_BY_THEME[theme]
   const [offerDocument, setOfferDocument] = useState<PublicDocument | null>(() => cachedDocument('offer'))
   const [offerError, setOfferError] = useState<string | null>(null)
+  const [offerLoading, setOfferLoading] = useState(false)
   const [offerChecked, setOfferChecked] = useState(false)
   const [receipt, setReceipt] = useState('')
   const [plans, setPlans] = useState<PlanOption[]>([])
@@ -123,11 +124,23 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const [success, setSuccess] = useState(false)
   const [offerAttempt, setOfferAttempt] = useState(0)
   const pollAbortRef = useRef<(() => void) | null>(null)
+  const autoRetryRef = useRef(false)
+
+  // Keep the receipt email across retries, but clear it for a new checkout.
+  useEffect(() => {
+    if (isOpen) {
+      setReceipt('')
+      autoRetryRef.current = false
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
+    // Each document reload requires the user to review and accept its version.
     setOfferChecked(false)
-    setReceipt('')
+    setOfferError(null)
+    setOfferLoading(true)
+    setOfferDocument(cachedDocument('offer'))
     let cancelled = false
     loadDocument('offer')
       .then((document) => {
@@ -141,32 +154,67 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         setOfferDocument(null)
         setOfferError(userFacingLoadError(reason))
       })
+      .finally(() => {
+        if (!cancelled) setOfferLoading(false)
+      })
     return () => {
       cancelled = true
     }
   }, [isOpen, offerAttempt])
 
   useEffect(() => {
-    if (isOpen) {
-      setPlansLoading(true)
-      setPlansError(null)
-      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
-        .then((res) => {
-          if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
-            setPlans(res.plans)
-            const hasDefault = res.plans.some((p) => p.id === DEFAULT_PLAN_ID)
-            setSelectedPlanId(hasDefault ? DEFAULT_PLAN_ID : res.plans[0].id)
-          } else {
-            setPlans([])
-          }
-        })
-        .catch((reason: unknown) => {
+    if (!isOpen) return
+    let cancelled = false
+    setPlansLoading(true)
+    setPlansError(null)
+    apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
+      .then((res) => {
+        if (cancelled) return
+        if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
+          setPlans(res.plans)
+          const hasDefault = res.plans.some((p) => p.id === DEFAULT_PLAN_ID)
+          setSelectedPlanId(hasDefault ? DEFAULT_PLAN_ID : res.plans[0].id)
+        } else {
           setPlans([])
-          setPlansError(userFacingLoadError(reason))
-        })
-        .finally(() => setPlansLoading(false))
+          setPlansError('Тарифы временно недоступны. Повторите загрузку.')
+        }
+      })
+      .catch((reason: unknown) => {
+        if (cancelled) return
+        setPlans([])
+        setPlansError(userFacingLoadError(reason))
+      })
+      .finally(() => {
+        if (!cancelled) setPlansLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
   }, [isOpen, plansAttempt])
+
+  // One automatic recovery when the WebView regains network after a failed load.
+  useEffect(() => {
+    if (!isOpen) return
+    const maybeRetry = () => {
+      if (autoRetryRef.current) return
+      if (!plansError && !offerError) return
+      autoRetryRef.current = true
+      if (plansError) setPlansAttempt((value) => value + 1)
+      if (offerError) {
+        invalidateDocument('offer')
+        setOfferAttempt((value) => value + 1)
+      }
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') maybeRetry()
+    }
+    window.addEventListener('online', maybeRetry)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('online', maybeRetry)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [isOpen, plansError, offerError])
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId) ?? plans[0] ?? null
 
@@ -317,7 +365,16 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const receiptEmail = receipt.trim()
   const receiptCheck = receiptEmail ? classifyReceipt(receiptEmail) : null
   const receiptError = receiptCheck && 'error' in receiptCheck ? receiptCheck.error : null
-  const canStartPayment = Boolean(selectedPlan && offerDocument && offerChecked && receiptCheck && !receiptError && !offerError)
+  const canStartPayment = Boolean(
+    selectedPlan &&
+      offerDocument &&
+      offerChecked &&
+      receiptCheck &&
+      !receiptError &&
+      !offerError &&
+      !offerLoading &&
+      !plansLoading
+  )
   const buyLabel = selectedPlan
     ? `Открыть Premium · ${formatPlanPriceLabel(selectedPlan)}`
     : 'Открыть Premium'
@@ -392,7 +449,14 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             <div className="premium-overlay__plans-empty">
               <img src={iconClock} alt="" className="premium-overlay__plans-empty-icon" decoding="async" aria-hidden />
               <p className="premium-overlay__plans-loading">{plansError ?? 'Тарифы временно недоступны'}</p>
-              <button type="button" className="premium-overlay__legal-link" onClick={() => setPlansAttempt((value) => value + 1)}>
+              <button
+                type="button"
+                className="premium-overlay__legal-link"
+                onClick={() => {
+                  autoRetryRef.current = false
+                  setPlansAttempt((value) => value + 1)
+                }}
+              >
                 Повторить загрузку
               </button>
             </div>
@@ -449,7 +513,15 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           {offerError && (
             <p className="premium-offer__error">
               {offerError}{' '}
-              <button type="button" className="premium-overlay__legal-link" onClick={() => { invalidateDocument('offer'); setOfferAttempt((value) => value + 1) }}>
+              <button
+                type="button"
+                className="premium-overlay__legal-link"
+                onClick={() => {
+                  autoRetryRef.current = false
+                  invalidateDocument('offer')
+                  setOfferAttempt((value) => value + 1)
+                }}
+              >
                 Повторить загрузку
               </button>
             </p>
@@ -458,13 +530,20 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             <input
               type="checkbox"
               checked={offerChecked}
-              disabled={!offerDocument || offerDocument.confirmation.available !== true || offerDocument.confirmation.mode !== 'statement'}
+              disabled={
+                offerLoading ||
+                !offerDocument ||
+                offerDocument.confirmation.available !== true ||
+                offerDocument.confirmation.mode !== 'statement'
+              }
               onChange={(event) => setOfferChecked(event.target.checked)}
             />
             <span>
               {offerDocument?.confirmation.available === true && offerDocument.confirmation.mode === 'statement'
                 ? offerDocument.confirmation.statement
-                : 'Текст оферты ещё не загружен'}
+                : offerLoading
+                  ? 'Загрузка текста оферты…'
+                  : 'Текст оферты ещё не загружен'}
             </span>
           </label>
           <label className="premium-offer__field">

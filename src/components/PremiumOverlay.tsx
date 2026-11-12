@@ -124,16 +124,15 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const [offerAttempt, setOfferAttempt] = useState(0)
   const pollAbortRef = useRef<(() => void) | null>(null)
 
-  // Reset the checkout form only when opened, not when retrying a failed offer GET.
+  // Keep the receipt email across retries, but clear it for a new checkout.
   useEffect(() => {
-    if (isOpen) {
-      setOfferChecked(false)
-      setReceipt('')
-    }
+    if (isOpen) setReceipt('')
   }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
+    // Each document reload requires the user to review and accept its version.
+    setOfferChecked(false)
     setOfferError(null)
     setOfferDocument(cachedDocument('offer'))
     let cancelled = false

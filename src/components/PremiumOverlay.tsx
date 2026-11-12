@@ -124,10 +124,18 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const [offerAttempt, setOfferAttempt] = useState(0)
   const pollAbortRef = useRef<(() => void) | null>(null)
 
+  // Reset the checkout form only when opened, not when retrying a failed offer GET.
+  useEffect(() => {
+    if (isOpen) {
+      setOfferChecked(false)
+      setReceipt('')
+    }
+  }, [isOpen])
+
   useEffect(() => {
     if (!isOpen) return
-    setOfferChecked(false)
-    setReceipt('')
+    setOfferError(null)
+    setOfferDocument(cachedDocument('offer'))
     let cancelled = false
     loadDocument('offer')
       .then((document) => {
@@ -147,24 +155,31 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   }, [isOpen, offerAttempt])
 
   useEffect(() => {
-    if (isOpen) {
-      setPlansLoading(true)
-      setPlansError(null)
-      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
-        .then((res) => {
-          if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
-            setPlans(res.plans)
-            const hasDefault = res.plans.some((p) => p.id === DEFAULT_PLAN_ID)
-            setSelectedPlanId(hasDefault ? DEFAULT_PLAN_ID : res.plans[0].id)
-          } else {
-            setPlans([])
-          }
-        })
-        .catch((reason: unknown) => {
+    if (!isOpen) return
+    let cancelled = false
+    setPlansLoading(true)
+    setPlansError(null)
+    apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
+      .then((res) => {
+        if (cancelled) return
+        if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
+          setPlans(res.plans)
+          const hasDefault = res.plans.some((p) => p.id === DEFAULT_PLAN_ID)
+          setSelectedPlanId(hasDefault ? DEFAULT_PLAN_ID : res.plans[0].id)
+        } else {
           setPlans([])
-          setPlansError(userFacingLoadError(reason))
-        })
-        .finally(() => setPlansLoading(false))
+        }
+      })
+      .catch((reason: unknown) => {
+        if (cancelled) return
+        setPlans([])
+        setPlansError(userFacingLoadError(reason))
+      })
+      .finally(() => {
+        if (!cancelled) setPlansLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
   }, [isOpen, plansAttempt])
 

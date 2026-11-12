@@ -1,8 +1,8 @@
 import { useTheme } from '../hooks/useTheme'
-import iconPremiumDiamond from '../assets/icons/gnh-light-pro/premium-diamond-pro.png'
-import iconLightPremiumDiamond from '../assets/icons/gnh-calm-pro/premium-diamond-pro.png'
-import iconSunsetPremiumDiamond from '../assets/icons/gnh-sunset-pro/premium-diamond-pro.png'
-import iconCalmPremiumDiamond from '../assets/icons/gnh/premium-diamond.png'
+import iconPremiumDiamond from '../assets/optimized/premium-gem-neon.webp'
+import iconLightPremiumDiamond from '../assets/optimized/premium-gem-light.webp'
+import iconSunsetPremiumDiamond from '../assets/optimized/premium-gem-sunset.webp'
+import iconCalmPremiumDiamond from '../assets/optimized/premium-gem-calm.webp'
 import './HomePremiumBanner.css'
 
 const GEMS_BY_THEME = {

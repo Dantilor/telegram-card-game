@@ -19,5 +19,5 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "exclude": ["src/legal/legalClient.test.tsx"]
+  "exclude": ["src/legal/legalClient.test.tsx", "src/assets/images.preload.test.ts"]
 }

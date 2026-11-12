@@ -6,7 +6,7 @@ import { PremiumProvider } from './contexts/PremiumContext'
 import { LegalProvider } from './legal/LegalProvider'
 import { FirstUseSheet } from './components/LegalChoices'
 import { readyAndExpand } from './utils/telegram'
-import { scheduleIdleImports, scheduleWhenIdle } from './utils/scheduleWhenIdle'
+import { scheduleIdleImports } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import './App.css'
 
@@ -114,19 +114,11 @@ function App() {
       { startDelayMs: 1200, gapMs: 500, timeoutMs: 3500 }
     )
 
-    // Каталог обложек игр — только после простоя, чтобы не конкурировать с hero Home.
-    const cancelCatalogWarm = scheduleWhenIdle(() => {
-      void import('./assets/images').then(({ PRELOAD_GAMES_CATALOG_URLS }) =>
-        import('./utils/preloadImages').then(({ preloadImages }) => {
-          preloadImages(PRELOAD_GAMES_CATALOG_URLS)
-        })
-      )
-    }, 5000)
+    // Обложки каталога грузит сама страница /games: на главной они забивали медленный канал.
 
     return () => {
       clearTimeout(fallbackT)
       cancelRouteWarm()
-      cancelCatalogWarm()
     }
   }, [])
 

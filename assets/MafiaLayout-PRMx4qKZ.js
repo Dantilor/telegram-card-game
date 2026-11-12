@@ -1,1 +1,0 @@
-import{r as t,j as r,O as a}from"./index-CGNVRUul.js";import{M as o}from"./MafiaPage-qoldGCUU.js";import{preloadImages as e}from"./preloadImages-BxA7newP.js";import{PRELOAD_MAFIA_URLS as s}from"./images-Bo2aeiiu.js";function u(){return t.useEffect(()=>{e(s)},[]),r.jsx(o,{children:r.jsx(a,{})})}export{u as default};

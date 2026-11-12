@@ -1,5 +1,6 @@
 import { resolveApiBase } from './apiBase'
 import { getInitData } from './telegram'
+import { fetchGetWithRetry } from './fetchWithRetry'
 
 const API_TIMEOUT_MS = 7000
 const isDev = import.meta.env.DEV
@@ -22,23 +23,30 @@ async function request<T>(path: string, options: RequestInit & { method?: string
   }
 
   const url = path.startsWith('http') ? path : `${baseUrl}${path}`
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
-
   let res: Response
   try {
-    res = await fetch(url, {
+    const init: RequestInit = {
       ...options,
       headers,
       credentials: 'omit',
-      signal: controller.signal,
-    })
+    }
+    if ((options.method ?? 'GET').toUpperCase() === 'GET') {
+      // Public data loads can fail transiently when Telegram starts through a VPN.
+      res = await fetchGetWithRetry(url, init)
+    } else {
+      // Never retry POST: it can create a payment or record legal consent.
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+      try {
+        res = await fetch(url, { ...init, signal: controller.signal })
+      } finally {
+        clearTimeout(timeoutId)
+      }
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to fetch'
     if (isDev) console.warn('[TCG] API fetch failed:', msg)
     throw new Error(`Сеть недоступна: ${msg}`) as Error & { status?: number }
-  } finally {
-    clearTimeout(timeoutId)
   }
 
   if (!res.ok) {

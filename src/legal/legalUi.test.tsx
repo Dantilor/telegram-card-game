@@ -146,10 +146,36 @@ describe('document cache and reader', () => {
   })
 
   it('does not cache failed requests', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('offline'))
+    fetchMock
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockRejectedValueOnce(new Error('offline'))
     await expect(loadDocument('privacy')).rejects.toThrow()
     expect(cachedDocument('privacy')).toBeNull()
     await loadDocument('privacy')
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('starts a fresh document fetch after invalidate even if a previous request is still pending', async () => {
+    let releaseFirst: ((value: Response) => void) | undefined
+    fetchMock
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            releaseFirst = resolve
+          })
+      )
+      .mockResolvedValueOnce(json(publicDocument('privacy', 'fresh-version')))
+
+    const first = loadDocument('privacy')
+    invalidateDocument('privacy')
+    const second = await loadDocument('privacy')
+    expect(second.version).toBe('fresh-version')
+    expect(cachedDocument('privacy')?.version).toBe('fresh-version')
+
+    releaseFirst?.(json(publicDocument('privacy', 'stale-version')))
+    await expect(first).resolves.toMatchObject({ version: 'stale-version' })
+    expect(cachedDocument('privacy')?.version).toBe('fresh-version')
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
@@ -165,12 +191,16 @@ describe('document cache and reader', () => {
   })
 
   it('recovers a failed document without dismissing the reader or accepting anything', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('offline'))
+    fetchMock
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockRejectedValueOnce(new Error('offline'))
     const close = vi.fn()
     render(<LegalDocumentModal documentId="privacy" onClose={close} />)
-    await screen.findByRole('heading', { name: 'Документ не загрузился' })
+    // Bounded GET retries + backoff can take a couple of seconds before the error UI appears.
+    await screen.findByRole('heading', { name: 'Документ не загрузился' }, { timeout: 5000 })
     fireEvent.click(screen.getByRole('button', { name: 'Повторить загрузку' }))
-    await screen.findByRole('heading', { name: 'Полный текст privacy' })
+    await screen.findByRole('heading', { name: 'Полный текст privacy' }, { timeout: 5000 })
     expect(close).not.toHaveBeenCalled()
     expect(fetchMock.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true)
   })

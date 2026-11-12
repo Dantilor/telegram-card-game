@@ -35,4 +35,15 @@ describe('fetchGetWithRetry', () => {
     }, fetchImpl)).rejects.toThrow('GET requests only')
     expect(fetchImpl).not.toHaveBeenCalled()
   })
+
+  it('retries HTTP 429 and 502 then returns the successful response', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(new Response('slow down', { status: 429 }))
+      .mockResolvedValueOnce(new Response('bad gateway', { status: 502 }))
+      .mockResolvedValueOnce(new Response('{"ok":true}', { status: 200 }))
+
+    const response = await fetchGetWithRetry('https://example.com/api/plans', {}, fetchImpl)
+    expect(response.status).toBe(200)
+    expect(fetchImpl).toHaveBeenCalledTimes(3)
+  })
 })

@@ -58,7 +58,8 @@ describe('public documents', () => {
     await expect(fetchPublicDocument('privacy', undefined, { VITE_API_URL: 'https://api.example.test' }, fetchImpl)).rejects.toMatchObject({
       code: 'http_503',
     })
-    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    // Transient 503 is retried; after the bounded attempts the error still surfaces.
+    expect(fetchImpl).toHaveBeenCalledTimes(3)
   })
 
   it('refuses the Render fallback for legal calls', () => {

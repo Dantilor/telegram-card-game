@@ -60,7 +60,7 @@ jobs:
             echo "Timeweb static build unexpectedly contains GitHub Pages base path."
             exit 1
           fi
-          printf '{"source_commit":"%s","api_url":"%s","base":"/"}\\n' "$GITHUB_SHA" "$VITE_API_URL" > dist/deployment-info.json
+          printf '{"source_commit":"%s","api_url":"%s","base":"/"}\n' "$GITHUB_SHA" "$VITE_API_URL" > dist/deployment-info.json
           touch dist/.nojekyll
       - name: Publish static files for Timeweb
         uses: peaceiris/actions-gh-pages@v4

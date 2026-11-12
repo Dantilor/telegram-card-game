@@ -1,0 +1,1 @@
+import{r,j as a,O as t,J as s}from"./index-D6slryaT.js";import{M as e}from"./MafiaPage-BwLHUCwd.js";import{p as o}from"./preloadImages-DrOrwTFE.js";function p(){return r.useEffect(()=>{o(s)},[]),a.jsx(e,{children:a.jsx(t,{})})}export{p as default};

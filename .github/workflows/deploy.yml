@@ -22,9 +22,50 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build frontend with production API URL
+        env:
+          # The API origin is public (not a credential). The repository secret can
+          # override the known production Timeweb hostname on a future migration.
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://dantilor-telegram-card-game-3706.twc1.net' }}
+          VITE_API_BASE: ${{ secrets.VITE_API_URL || 'https://dantilor-telegram-card-game-3706.twc1.net' }}
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "Missing production VITE_API_URL."
+            exit 1
+          fi
+          npm run build
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+
+  deploy-timeweb-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build Timeweb frontend at root URL
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://dantilor-telegram-card-game-3706.twc1.net' }}
+          VITE_API_BASE: ${{ secrets.VITE_API_URL || 'https://dantilor-telegram-card-game-3706.twc1.net' }}
+        run: |
+          npm run build -- --base=/
+          test -f dist/index.html
+          if grep -q '/telegram-card-game/assets/' dist/index.html; then
+            echo "Timeweb static build unexpectedly contains GitHub Pages base path."
+            exit 1
+          fi
+          printf '{"source_commit":"%s","api_url":"%s","base":"/"}\n' "$GITHUB_SHA" "$VITE_API_URL" > dist/deployment-info.json
+          touch dist/.nojekyll
+      - name: Publish static files for Timeweb
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: timeweb-static
+          publish_dir: ./dist
+          commit_message: "Deploy Timeweb static from ${{ github.sha }}"

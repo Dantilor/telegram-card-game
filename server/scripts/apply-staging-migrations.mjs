@@ -5,6 +5,7 @@
  * Usage (from server/, after `npm run build:api`):
  *   npm run migrate:staging:dry
  *   npm run migrate:staging:preflight   # TLS/isolation checks, no SQL
+ *   npm run migrate:staging:check-connection  # connect + privilege SELECTs only
  *   unset DATABASE_URL
  *   STAGING_DATABASE_URL=postgresql://CLUSTER_ADMIN:...@HOST/gnh_web_staging?sslmode=verify-full \
  *   STAGING_EXPECT_HOST=HOST \
@@ -18,6 +19,7 @@
  * Never grants membership in production role gnh_app.
  * TLS via resolvePgPoolConfig (rejectUnauthorized + servername; PGSSLMODE=disable refused).
  * Passwords / full URLs are never logged.
+ * --check-connection uses SELECT / privilege metadata only (no CREATE/ALTER/GRANT/REVOKE/migrate/seed).
  */
 
 import fs from 'node:fs'
@@ -30,9 +32,11 @@ const serverRoot = path.resolve(__dirname, '..')
 const wantSeed = process.argv.includes('--seed')
 const dryRun = process.argv.includes('--dry-run')
 const preflightOnly = process.argv.includes('--preflight')
+const checkConnectionOnly = process.argv.includes('--check-connection')
 
 const EXPECTED_DB = 'gnh_web_staging'
 const APP_ROLE = 'gnh_web_stage'
+const PROD_ROLE = 'gnh_app'
 
 function die(message) {
   console.error(message)
@@ -203,6 +207,119 @@ if (preflightOnly) {
   process.exit(0)
 }
 
+/**
+ * Read-only privilege probe for migrate LOGIN against gnh_web_staging.
+ * Uses has_*_privilege / pg_roles / pg_auth_members only — never DDL or GRANT.
+ */
+async function runCheckConnection(client) {
+  const identity = await client.query(
+    `SELECT current_database() AS db, current_user AS usr, session_user AS session_usr,
+            inet_server_addr()::text AS addr`
+  )
+  const row = identity.rows[0]
+  if (row.db !== EXPECTED_DB) {
+    die(`Connected database mismatch: expected ${EXPECTED_DB}`)
+  }
+  if (row.usr === APP_ROLE || row.session_usr === APP_ROLE) {
+    die(`Connected as ${APP_ROLE}; refuse check-connection (use migrate admin such as gen_user)`)
+  }
+  if (/gnh_supabase/i.test(row.db)) {
+    die('Refusing connected production database')
+  }
+  console.log('Connected:', {
+    database: row.db,
+    user: row.usr,
+    sessionUser: row.session_usr,
+    serverAddrSet: Boolean(row.addr),
+  })
+
+  const priv = await client.query(
+    `SELECT
+       has_database_privilege(current_user, current_database(), 'CONNECT') AS db_connect,
+       has_database_privilege(current_user, current_database(), 'CREATE') AS db_create,
+       has_schema_privilege(current_user, 'public', 'USAGE') AS schema_usage,
+       has_schema_privilege(current_user, 'public', 'CREATE') AS schema_create`
+  )
+  const p = priv.rows[0]
+  console.log('Privileges (self on staging):', {
+    CONNECT: p.db_connect,
+    CREATE_database: p.db_create,
+    USAGE_public: p.schema_usage,
+    CREATE_public: p.schema_create,
+  })
+
+  const missing = []
+  if (!p.db_connect) missing.push('CONNECT on database gnh_web_staging')
+  if (!p.db_create) missing.push('CREATE on database gnh_web_staging')
+  if (!p.schema_usage) missing.push('USAGE on schema public')
+  if (!p.schema_create) missing.push('CREATE on schema public')
+
+  const appRole = await client.query(
+    `SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1) AS exists`,
+    [APP_ROLE]
+  )
+  const appExists = Boolean(appRole.rows[0]?.exists)
+  console.log('App role:', { role: APP_ROLE, exists: appExists })
+  if (!appExists) {
+    missing.push(`LOGIN role ${APP_ROLE} must exist (create in Timeweb panel for staging only)`)
+  }
+
+  let stageMemberOfProd = null
+  if (appExists) {
+    const membership = await client.query(
+      `SELECT pg_has_role($1, $2, 'member') AS is_member`,
+      [APP_ROLE, PROD_ROLE]
+    )
+    stageMemberOfProd = Boolean(membership.rows[0]?.is_member)
+    console.log('Isolation:', {
+      [`${APP_ROLE}_member_of_${PROD_ROLE}`]: stageMemberOfProd,
+      expected: false,
+    })
+    if (stageMemberOfProd) {
+      // Report only — this tool never REVOKE / ALTER ROLE (production roles must stay untouched).
+      missing.push(
+        `${APP_ROLE} is a member of ${PROD_ROLE} (report only; fix only after explicit approval — never alter gnh_supabase / gen_user / gnh_app / gamenight_bot from this tool)`
+      )
+    }
+  }
+
+  // Capability hint for future staging DDL: metadata only; never executes GRANT/ALTER ROLE.
+  let canGrantRole = null
+  if (appExists) {
+    const grantProbe = await client.query(
+      `SELECT
+         pg_has_role(current_user, $1, 'USAGE') AS has_usage_on_app,
+         (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) AS is_super,
+         (SELECT rolcreaterole FROM pg_roles WHERE rolname = current_user) AS can_create_role`,
+      [APP_ROLE]
+    )
+    const g = grantProbe.rows[0]
+    canGrantRole = Boolean(g.is_super) || Boolean(g.has_usage_on_app) || Boolean(g.can_create_role)
+    console.log('DDL/GRANT readiness (metadata):', {
+      canLikelyGrantToAppRole: canGrantRole,
+      isSuper: Boolean(g.is_super),
+      hasUsageOnAppRole: Boolean(g.has_usage_on_app),
+      canCreateRole: Boolean(g.can_create_role),
+    })
+    if (!canGrantRole) {
+      missing.push(
+        `Future staging migrate needs object GRANT rights on gnh_web_staging only (prefer: make migrate user DB owner of gnh_web_staging in Timeweb panel). Do not change production roles gen_user / gnh_app / gamenight_bot or gnh_supabase.`
+      )
+    }
+  }
+
+  if (missing.length) {
+    console.error('CHECK_CONNECTION_INCOMPLETE')
+    console.error('Report only — no SQL was applied. Needed on gnh_web_staging only (never gnh_supabase / never production role changes):')
+    for (const item of missing) {
+      console.error(' -', item)
+    }
+    process.exit(2)
+  }
+
+  console.log('CHECK_CONNECTION_OK migrate user can connect and appears ready for staging DDL/GRANT.')
+}
+
 async function main() {
   const client = new pg.Client({
     connectionString: resolved.connectionString,
@@ -213,10 +330,20 @@ async function main() {
     await client.connect()
   } catch (e) {
     console.error('CONNECT_FAILED', redactError(e))
+    if (checkConnectionOnly) {
+      console.error(
+        'Hint: connect to database gnh_web_staging (not postgres). Use migrate admin gen_user. Do not use root if password auth failed.'
+      )
+    }
     process.exit(1)
   }
 
   try {
+    if (checkConnectionOnly) {
+      await runCheckConnection(client)
+      return
+    }
+
     const identity = await client.query(
       `SELECT current_database() AS db, current_user AS usr, inet_server_addr()::text AS addr`
     )

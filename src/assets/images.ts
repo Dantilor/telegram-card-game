@@ -1,23 +1,27 @@
 /**
  * Централизованный маппинг изображений.
- * Готов к добавлению WebP: webpSrc для каждого ключа.
+ * Обложки каталога — сжатые копии из `optimized/` (scripts/optimize-catalog-images.mjs);
+ * исходники лежат рядом и внутри игр не заменяются.
  */
 
-import cardGameHero from './card_game_hero.png'
-import mafiaGame from './mafia_game.png'
-import activityGame from './activity_game.png'
-import sabotageGame from './sabotage_game.png'
-import aliasGame from './alias_game.png'
-import quizGame from './quiz_game.png'
-import truthDareGame from './truth_dare_game.png'
-import whoIsWhoGame from '../games/who-is-who/assets/who-is-who-card.png'
-import phraseTranslatorGame from './phrase_translator_game.png'
-import freebieTrashGame from './freebie_trash_game.png'
-import russiaTravelGame from './russia_travel_game.png'
-import sledCover from './sled_cover.jpg'
-import mafiaShadowsHero from './mafia_shadows_hero.png'
-import doublesKeyart from './dvoiniki_keyart.webp'
-import infectedCover from './infected_cover.png'
+import cardGameHero from './optimized/catalog-card-game.webp'
+import mafiaGame from './optimized/catalog-mafia.webp'
+import activityGame from './optimized/catalog-activity.webp'
+import sabotageGame from './optimized/catalog-sabotage.webp'
+import aliasGame from './optimized/catalog-alias.webp'
+import quizGame from './optimized/catalog-quiz.webp'
+import truthDareGame from './optimized/catalog-truth-dare.webp'
+import whoIsWhoGame from './optimized/catalog-who-is-who.webp'
+import phraseTranslatorGame from './optimized/catalog-phrase-translator.webp'
+import freebieTrashGame from './optimized/catalog-freebie-trash.webp'
+import russiaTravelGame from './optimized/catalog-russia-travel.webp'
+import sledCover from './optimized/catalog-sled.webp'
+import mafiaShadowsHero from './optimized/catalog-mafia-shadows.webp'
+import doublesKeyart from './optimized/catalog-doubles.webp'
+import infectedCover from './optimized/catalog-infected.webp'
+import homePickMafiaShadows from './optimized/home-pick-mafia-shadows.webp'
+import homePickDoubles from './optimized/home-pick-doubles.webp'
+import homePickInfected from './optimized/home-pick-infected.webp'
 import fireplaceScene from './fireplace_scene.png'
 import adultMode from './adult_mode.png'
 import partyMode from './party_mode.png'
@@ -76,17 +80,20 @@ export const PRELOAD_MAFIA_URLS: string[] = [
   IMAGES.mafiaHost.png,
 ]
 
+/** Миниатюры блока «Попробуйте сегодня» на Home (десятки КБ вместо мегабайтных обложек). */
+export const HOME_PICK_THUMBS = {
+  mafiaShadows: homePickMafiaShadows,
+  doubles: homePickDoubles,
+  infected: homePickInfected,
+} as const
+
 /**
  * Только то, что видно на Home в блоке «Попробуйте сегодня».
  * Не включать весь каталог игр — иначе холодный старт на мобильном душится десятками картинок.
  */
-export const PRELOAD_HOME_URLS: string[] = [
-  IMAGES.mafiaShadows.png,
-  IMAGES.doubles.png,
-  IMAGES.infected.png,
-]
+export const PRELOAD_HOME_URLS: string[] = Object.values(HOME_PICK_THUMBS)
 
-/** Каталог игр + режимы карточной игры — preload только после перехода на /games или в idle после Home. */
+/** Каталог игр + режимы карточной игры — preload только после перехода на /games. */
 export const PRELOAD_GAMES_CATALOG_URLS: string[] = [
   IMAGES.cardGameHero.png,
   IMAGES.mafia.png,

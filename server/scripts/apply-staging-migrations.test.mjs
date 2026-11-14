@@ -49,6 +49,27 @@ test('preflight refuses app role gnh_web_stage before connect', () => {
   assert.equal(/postgresql:\/\/gnh_web_stage:x@/i.test(result.stdout + result.stderr), false)
 })
 
+test('check-connection refuses app role before connect', () => {
+  const result = run({
+    STAGING_DATABASE_URL: 'postgresql://gnh_web_stage:x@db.example:5432/gnh_web_staging?sslmode=verify-full',
+    STAGING_EXPECT_HOST: 'db.example',
+    STAGING_MIGRATE_USER: 'gnh_web_stage',
+  }, ['--check-connection'])
+  assert.notEqual(result.status, 0)
+  assert.match(`${result.stdout}\n${result.stderr}`, /gnh_web_stage/)
+  assert.equal(/postgresql:\/\/gnh_web_stage:x@/i.test(result.stdout + result.stderr), false)
+})
+
+test('check-connection refuses production database name', () => {
+  const result = run({
+    STAGING_DATABASE_URL: 'postgresql://gen_user:x@db.example:5432/gnh_supabase?sslmode=verify-full',
+    STAGING_EXPECT_HOST: 'db.example',
+    STAGING_MIGRATE_USER: 'gen_user',
+  }, ['--check-connection'])
+  assert.notEqual(result.status, 0)
+  assert.match(`${result.stdout}\n${result.stderr}`, /gnh_supabase/)
+})
+
 test('preflight refuses production database name', () => {
   const result = run({
     STAGING_DATABASE_URL: 'postgresql://root:x@db.example:5432/gnh_supabase?sslmode=verify-full',

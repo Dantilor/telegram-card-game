@@ -14,10 +14,12 @@
     "migrate:staging:seed": "node scripts/apply-staging-migrations.mjs --seed",
     "migrate:staging:dry": "node scripts/apply-staging-migrations.mjs --dry-run",
     "migrate:staging:preflight": "node scripts/apply-staging-migrations.mjs --preflight",
+    "migrate:staging:check-connection": "node scripts/apply-staging-migrations.mjs --check-connection",
     "migrate:production-web:dry": "node scripts/apply-production-web-migrations.mjs --dry-run",
     "migrate:production-web": "node scripts/apply-production-web-migrations.mjs"
   },
   "dependencies": {
+    "compression": "^1.7.5",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.10",
+    "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.10",

@@ -1,9 +1,11 @@
 import { ApiConfigError, resolveApiBase } from '../lib/apiBase'
+import { fetchGetWithRetry, parseRetryAfterMs } from '../lib/fetchWithRetry'
 import type { OwnLegalRecords, PublicDocument } from './types'
 
 export class LegalClientError extends Error {
   code: string
   status: number
+  retryAfterMs?: number
 
   constructor(code: string, status: number, message: string) {
     super(message)
@@ -16,7 +18,13 @@ export class LegalClientError extends Error {
 export function userFacingLoadError(error: unknown, dev = import.meta.env.DEV): string {
   const fallback = 'Не удалось загрузить данные. Повторите запрос. Подтверждение не отправлено.'
   const coded = error instanceof LegalClientError || error instanceof ApiConfigError
-  if (!coded) return fallback
+  if (!coded) {
+    const message = error instanceof Error ? error.message : ''
+    if (/Failed to fetch|NetworkError|Сеть недоступна|abort|timeout|Load failed/i.test(message)) {
+      return 'Нет стабильного соединения с сервером. Проверьте сеть или VPN и повторите загрузку.'
+    }
+    return fallback
+  }
   if (dev) return error.message
   if (error.code === 'network') return 'Нет соединения. Повторите загрузку. Подтверждение не отправлено.'
   if (
@@ -24,7 +32,7 @@ export function userFacingLoadError(error: unknown, dev = import.meta.env.DEV): 
     error.code === 'api_base_conflict' ||
     error.code === 'render_fallback_blocked'
   ) {
-    return fallback
+    return 'Сервер приложения недоступен из этой сборки. Повторите позже. Подтверждение не отправлено.'
   }
   if (/VITE_|DATABASE_URL|initData|secret|password/i.test(error.message)) return fallback
   return error.message || fallback
@@ -123,10 +131,18 @@ type FetchLike = (url: string, init?: RequestInit) => Promise<Response>
 async function readJson<T>(response: Response): Promise<T> {
   const text = await response.text()
   if (!response.ok) {
-    throw new LegalClientError(`http_${response.status}`, response.status, safeLegalMessage(response.status, text))
+    const error = new LegalClientError(`http_${response.status}`, response.status, safeLegalMessage(response.status, text))
+    const retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'))
+    if (retryAfterMs !== null) error.retryAfterMs = retryAfterMs
+    throw error
   }
   if (!text) return {} as T
-  return JSON.parse(text) as T
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    // A VPN or proxy error page instead of API JSON is a transient condition.
+    throw new LegalClientError('bad_response', 502, 'Сервер вернул неожиданный ответ. Подтверждение не сохранено.')
+  }
 }
 
 export async function fetchPublicDocument(
@@ -145,7 +161,7 @@ export async function fetchPublicDocument(
   })
   let response: Response
   try {
-    response = await fetchImpl(request.url, request.init)
+    response = await fetchGetWithRetry(request.url, request.init, fetchImpl)
   } catch {
     throw new LegalClientError('network', 0, 'Нет соединения. Утверждённый текст не загружен.')
   }

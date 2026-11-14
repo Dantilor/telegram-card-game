@@ -6,11 +6,12 @@ import { isWebShell } from '../config/shell'
 import { useLegal } from '../legal/LegalProvider'
 import { classifyReceipt, LegalClientError, submitNewPremiumOrder, userFacingLoadError } from '../legal/client'
 import type { PublicDocument } from '../legal/types'
-import { cachedDocument, invalidateDocument, loadDocument } from '../legal/documentCache'
+import { invalidateDocument, loadDocument } from '../legal/documentCache'
 import { trackEvent } from '../lib/analytics'
 import { apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import { useTheme } from '../hooks/useTheme'
+import { useRecoveringResource } from '../hooks/useRecoveringResource'
 import {
   DEFAULT_PLAN_ID,
   formatPlanPeriod,
@@ -18,10 +19,10 @@ import {
   isLifetimePlan,
   type PlanOption,
 } from '../utils/planLabel'
-import gemNeon from '../assets/icons/gnh-light-pro/premium-diamond-pro.png'
-import gemLight from '../assets/icons/gnh-calm-pro/premium-diamond-pro.png'
-import gemSunset from '../assets/icons/gnh-sunset-pro/premium-diamond-pro.png'
-import gemCalm from '../assets/icons/gnh/premium-diamond.png'
+import gemNeon from '../assets/optimized/premium-gem-neon.webp'
+import gemLight from '../assets/optimized/premium-gem-light.webp'
+import gemSunset from '../assets/optimized/premium-gem-sunset.webp'
+import gemCalm from '../assets/optimized/premium-gem-calm.webp'
 import iconCheckCircle from '../assets/icons/premium-modal/check-circle.svg'
 import iconCloseX from '../assets/icons/premium-modal/close-x.svg'
 import iconClock from '../assets/icons/premium-modal/clock.svg'
@@ -95,6 +96,28 @@ function pollPremiumStatus(
   return cancel
 }
 
+async function loadPlans(signal: AbortSignal): Promise<PlanOption[]> {
+  const res = await apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans', { signal })
+  if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) return res.plans
+  // An empty catalog is a server-side condition; keep recovering instead of inventing plans.
+  throw Object.assign(new Error('plans_unavailable'), { status: 503 })
+}
+
+function loadOffer(): Promise<PublicDocument> {
+  return loadDocument('offer')
+}
+
+function RecoveryNotice({ label, onRetry }: { label: string; onRetry: () => void }) {
+  return (
+    <p className="premium-overlay__plans-loading" role="status">
+      {label}{' '}
+      <button type="button" className="premium-overlay__legal-link" onClick={onRetry}>
+        Повторить сейчас
+      </button>
+    </p>
+  )
+}
+
 type Props = {
   isOpen: boolean
   onClose: () => void
@@ -108,15 +131,9 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const legal = useLegal()
   const [theme] = useTheme()
   const gem = GEMS_BY_THEME[theme]
-  const [offerDocument, setOfferDocument] = useState<PublicDocument | null>(() => cachedDocument('offer'))
-  const [offerError, setOfferError] = useState<string | null>(null)
   const [offerChecked, setOfferChecked] = useState(false)
   const [receipt, setReceipt] = useState('')
-  const [plans, setPlans] = useState<PlanOption[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState<string>(DEFAULT_PLAN_ID)
-  const [plansLoading, setPlansLoading] = useState(true)
-  const [plansError, setPlansError] = useState<string | null>(null)
-  const [plansAttempt, setPlansAttempt] = useState(0)
   const [loading, setLoading] = useState(false)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [restoreToast, setRestoreToast] = useState<string | null>(null)
@@ -125,49 +142,30 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const [offerAttempt, setOfferAttempt] = useState(0)
   const pollAbortRef = useRef<(() => void) | null>(null)
 
+  // Plans and the offer recover independently while the Premium screen is open.
+  const plansResource = useRecoveringResource(isOpen, loadPlans)
+  const offerResource = useRecoveringResource(isOpen, loadOffer, offerAttempt)
+  const plans = plansResource.data ?? []
+  const plansLoading = plansResource.status !== 'ready'
+  const offerDocument = offerResource.data
+  const offerLoading = offerResource.status === 'loading' || offerResource.status === 'recovering'
+  const offerError = offerResource.status === 'failed' ? userFacingLoadError(offerResource.error) : null
+
+  // Keep the receipt email across retries, but clear it for a new checkout.
   useEffect(() => {
-    if (!isOpen) return
+    if (isOpen) setReceipt('')
+  }, [isOpen])
+
+  // Each document (re)load requires the user to review and accept its version.
+  useEffect(() => {
     setOfferChecked(false)
-    setReceipt('')
-    let cancelled = false
-    loadDocument('offer')
-      .then((document) => {
-        if (!cancelled) {
-          setOfferDocument(document)
-          setOfferError(null)
-        }
-      })
-      .catch((reason: unknown) => {
-        if (cancelled) return
-        setOfferDocument(null)
-        setOfferError(userFacingLoadError(reason))
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [isOpen, offerAttempt])
+  }, [isOpen, offerDocument])
 
   useEffect(() => {
-    if (isOpen) {
-      setPlansLoading(true)
-      setPlansError(null)
-      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
-        .then((res) => {
-          if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
-            setPlans(res.plans)
-            const hasDefault = res.plans.some((p) => p.id === DEFAULT_PLAN_ID)
-            setSelectedPlanId(hasDefault ? DEFAULT_PLAN_ID : res.plans[0].id)
-          } else {
-            setPlans([])
-          }
-        })
-        .catch((reason: unknown) => {
-          setPlans([])
-          setPlansError(userFacingLoadError(reason))
-        })
-        .finally(() => setPlansLoading(false))
-    }
-  }, [isOpen, plansAttempt])
+    const loaded = plansResource.data
+    if (!loaded?.length) return
+    setSelectedPlanId(loaded.some((p) => p.id === DEFAULT_PLAN_ID) ? DEFAULT_PLAN_ID : loaded[0].id)
+  }, [plansResource.data])
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId) ?? plans[0] ?? null
 
@@ -319,7 +317,16 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const receiptEmail = receipt.trim()
   const receiptCheck = receiptEmail ? classifyReceipt(receiptEmail) : null
   const receiptError = receiptCheck && 'error' in receiptCheck ? receiptCheck.error : null
-  const canStartPayment = Boolean(selectedPlan && offerDocument && offerChecked && receiptCheck && !receiptError && !offerError)
+  const canStartPayment = Boolean(
+    selectedPlan &&
+      offerDocument &&
+      offerChecked &&
+      receiptCheck &&
+      !receiptError &&
+      !offerError &&
+      !offerLoading &&
+      !plansLoading
+  )
   const buyLabel = selectedPlan
     ? `Открыть Premium · ${formatPlanPriceLabel(selectedPlan)}`
     : 'Открыть Premium'
@@ -388,16 +395,21 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         </div>
 
         <div className="premium-overlay__plans">
-          {plansLoading ? (
-            <p className="premium-overlay__plans-loading">Загрузка тарифов…</p>
-          ) : plans.length === 0 ? (
+          {plansResource.status === 'recovering' ? (
             <div className="premium-overlay__plans-empty">
               <img src={iconClock} alt="" className="premium-overlay__plans-empty-icon" decoding="async" aria-hidden />
-              <p className="premium-overlay__plans-loading">{plansError ?? 'Тарифы временно недоступны'}</p>
-              <button type="button" className="premium-overlay__legal-link" onClick={() => setPlansAttempt((value) => value + 1)}>
+              <RecoveryNotice label="Восстанавливаем соединение…" onRetry={plansResource.retryNow} />
+            </div>
+          ) : plansResource.status === 'failed' ? (
+            <div className="premium-overlay__plans-empty">
+              <img src={iconClock} alt="" className="premium-overlay__plans-empty-icon" decoding="async" aria-hidden />
+              <p className="premium-overlay__plans-loading">{userFacingLoadError(plansResource.error)}</p>
+              <button type="button" className="premium-overlay__legal-link" onClick={plansResource.retryNow}>
                 Повторить загрузку
               </button>
             </div>
+          ) : plansLoading ? (
+            <p className="premium-overlay__plans-loading">Загрузка тарифов…</p>
           ) : (
             <div className="premium-overlay__plans-list" role="radiogroup" aria-label="Тариф Premium">
               {plans.map((plan) => {
@@ -448,10 +460,13 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); legal.openDocument('offer') }}>
             Открыть публичную оферту
           </button>
+          {offerResource.status === 'recovering' && (
+            <RecoveryNotice label="Восстанавливаем соединение…" onRetry={offerResource.retryNow} />
+          )}
           {offerError && (
             <p className="premium-offer__error">
               {offerError}{' '}
-              <button type="button" className="premium-overlay__legal-link" onClick={() => { invalidateDocument('offer'); setOfferAttempt((value) => value + 1) }}>
+              <button type="button" className="premium-overlay__legal-link" onClick={offerResource.retryNow}>
                 Повторить загрузку
               </button>
             </p>
@@ -460,13 +475,20 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             <input
               type="checkbox"
               checked={offerChecked}
-              disabled={!offerDocument || offerDocument.confirmation.available !== true || offerDocument.confirmation.mode !== 'statement'}
+              disabled={
+                offerLoading ||
+                !offerDocument ||
+                offerDocument.confirmation.available !== true ||
+                offerDocument.confirmation.mode !== 'statement'
+              }
               onChange={(event) => setOfferChecked(event.target.checked)}
             />
             <span>
               {offerDocument?.confirmation.available === true && offerDocument.confirmation.mode === 'statement'
                 ? offerDocument.confirmation.statement
-                : 'Текст оферты ещё не загружен'}
+                : offerLoading
+                  ? 'Загрузка текста оферты…'
+                  : 'Текст оферты ещё не загружен'}
             </span>
           </label>
           <label className="premium-offer__field">

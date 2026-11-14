@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { scheduleIdleImports, scheduleWhenIdle } from './scheduleWhenIdle'
+import { afterCriticalImages, scheduleIdleImports, scheduleWhenIdle } from './scheduleWhenIdle'
 
 describe('scheduleWhenIdle', () => {
   afterEach(() => {
@@ -18,6 +18,36 @@ describe('scheduleWhenIdle', () => {
     expect(task).not.toHaveBeenCalled()
     vi.advanceTimersByTime(900)
     expect(task).toHaveBeenCalledTimes(1)
+  })
+
+  it('waits for high-priority first-screen images before optional downloads', () => {
+    vi.useFakeTimers()
+    const img = document.createElement('img')
+    img.setAttribute('fetchpriority', 'high')
+    let complete = false
+    Object.defineProperty(img, 'complete', { configurable: true, get: () => complete })
+    document.body.appendChild(img)
+    const task = vi.fn()
+    afterCriticalImages(task, 8000)
+    vi.advanceTimersByTime(5000)
+    expect(task).not.toHaveBeenCalled()
+    complete = true
+    img.dispatchEvent(new Event('load'))
+    expect(task).toHaveBeenCalledTimes(1)
+    img.remove()
+  })
+
+  it('does not wait forever for a stuck hero image', () => {
+    vi.useFakeTimers()
+    const img = document.createElement('img')
+    img.setAttribute('fetchpriority', 'high')
+    Object.defineProperty(img, 'complete', { configurable: true, get: () => false })
+    document.body.appendChild(img)
+    const task = vi.fn()
+    afterCriticalImages(task, 8000)
+    vi.advanceTimersByTime(8000)
+    expect(task).toHaveBeenCalledTimes(1)
+    img.remove()
   })
 
   it('loads dynamic imports one by one instead of in parallel', async () => {

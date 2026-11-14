@@ -3,6 +3,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import authRouter from './routes/auth.js'
 import premiumRouter from './routes/premium.js'
 import meRouter from './routes/me.js'
@@ -32,19 +33,20 @@ import {
   webFeatureEnabled,
 } from './config/runtimeFlags.js'
 
+import { buildAllowedCorsOrigins, isOriginAllowed } from './corsOrigins.js'
+
 const port = Number(process.env.PORT || 3001)
-const corsOriginRaw = process.env.CORS_ORIGIN || 'http://localhost:5173'
-const corsOrigins = corsOriginRaw
-  .split(',')
-  .map((o) => o.trim())
-  .filter((o) => o && o !== '*')
-const localhostOrigins = ['http://localhost:4173', 'http://localhost:5173', 'http://127.0.0.1:4173', 'http://127.0.0.1:5173']
-const webOrigin = webPublicOrigin()
-const allowedOrigins = [...new Set([...corsOrigins, ...localhostOrigins, ...(webOrigin ? [webOrigin] : [])])]
+const allowedOrigins = buildAllowedCorsOrigins({
+  CORS_ORIGIN: process.env.CORS_ORIGIN,
+  WEBAPP_URL: process.env.WEBAPP_URL,
+  WEB_PUBLIC_ORIGIN: process.env.WEB_PUBLIC_ORIGIN || webPublicOrigin() || undefined,
+})
+const rejectedCorsOrigins = new Set<string>()
 
 const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3k2lQp').replace(/\/+$/, '')
 
 console.log('[TCG] ENV PORT =', process.env.PORT)
+console.log('[TCG] CORS allow-list origins =', allowedOrigins.join(', '))
 console.log(
   '[TCG] staging =',
   isStagingRuntime(),
@@ -93,15 +95,23 @@ if (proxyHops !== false) {
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true)
-    if (allowedOrigins.includes(origin)) return cb(null, true)
+    if (isOriginAllowed(origin, allowedOrigins)) return cb(null, true)
+    if (origin && !rejectedCorsOrigins.has(origin)) {
+      rejectedCorsOrigins.add(origin)
+      console.warn('[TCG] CORS rejected Origin (browser cannot read API):', origin)
+    }
     cb(null, false)
   },
-  // Same-origin reverse proxy (WEB-DOMAIN/api) does not need credentialed CORS.
-  // When WEB and API are temporarily on different origins during local/dev, cookies need this.
+  // WEB shell cookies need credentials when API is temporarily on another origin.
+  // Same-origin reverse proxy (WEB-DOMAIN/api) does not rely on CORS at all.
   // Never pair credentials with Access-Control-Allow-Origin: *.
   credentials: true,
+  // Lets the WebView skip repeating the preflight for authorized GETs on a slow link.
+  maxAge: 600,
+  exposedHeaders: ['Retry-After'],
 }))
+// Legal documents are ~60–110 KB of JSON; the Timeweb proxy passes them uncompressed.
+app.use(compression({ threshold: 1024 }))
 app.use(express.json({ limit: '2mb' }))
 
 app.use('/public', express.static(path.join(process.cwd(), 'public'), {

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
 import './SmartImage.css'
 
 type Props = {
@@ -26,7 +27,7 @@ export default function SmartImage({ src, alt, className, priority, webpSrc, asp
       className={`smart-image__img ${loaded ? 'smart-image__img--loaded' : ''}`}
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
-      {...(priority && { fetchPriority: 'high' as const })}
+      {...(priority ? HIGH_FETCH_PRIORITY : {})}
       onLoad={(e) => {
         const img = e.currentTarget
         if (img.decode) {

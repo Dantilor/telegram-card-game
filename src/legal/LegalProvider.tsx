@@ -7,6 +7,7 @@ import { PROFILE_DOCUMENTS } from './catalog'
 import { getInitData } from '../lib/telegram'
 import { isWebShell } from '../config/shell'
 import { csrfHeadersForMutation } from '../lib/csrf'
+import { afterCriticalImages, scheduleWhenIdle } from '../utils/scheduleWhenIdle'
 import type { OwnLegalRecords } from './types'
 
 type Viewer = { id: string; version?: string }
@@ -111,22 +112,14 @@ export function LegalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshRecords()
-    // Тексты документов не нужны для первого кадра Home — грузим в idle.
-    let idleId: number | undefined
-    let timeoutId: number | undefined
-    const warmDocs = () => {
-      preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id))
-    }
-    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(warmDocs, { timeout: 5000 })
-    } else {
-      timeoutId = window.setTimeout(warmDocs, 2000)
-    }
+    // Тексты документов не нужны для первого кадра Home: сначала hero, затем idle.
+    let cancelIdle: (() => void) | null = null
+    const cancelWait = afterCriticalImages(() => {
+      cancelIdle = scheduleWhenIdle(() => preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id)), 5000)
+    })
     return () => {
-      if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
-        window.cancelIdleCallback(idleId)
-      }
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
+      cancelWait()
+      cancelIdle?.()
     }
   }, [refreshRecords])
 

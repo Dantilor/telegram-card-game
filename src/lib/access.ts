@@ -4,7 +4,6 @@
  */
 
 import { getDeckFromIndex, type DeckIndexEntry } from '../data/decksIndex'
-import { getDeckFull } from '../data/decks'
 import { PREMIUM_ENABLED } from '../utils/premium'
 import { FREE_GAMES } from '../config/premium'
 import type { ModeId } from '../data/modes'
@@ -14,34 +13,6 @@ export class AccessDeniedError extends Error {
     super(message)
     this.name = 'AccessDeniedError'
   }
-}
-
-/**
- * Возвращает массив вопросов с учётом premium и freeLimit.
- * - premium → все вопросы
- * - deck имеет freeLimit → slice(0, freeLimit)
- * - deck isPremium и !premium → [] (UI покажет paywall)
- */
-export function getDeckQuestions(
-  deckId: string,
-  opts: { premium: boolean }
-): string[] {
-  const full = getDeckFull(deckId)
-  const questions = full?.questions ?? []
-  if (!questions.length) return []
-
-  if (opts.premium || !PREMIUM_ENABLED) return [...questions]
-
-  const entry = getDeckFromIndex(deckId)
-  if (!entry) return []
-
-  if (entry.freeLimit != null && entry.freeLimit > 0) {
-    return questions.slice(0, entry.freeLimit)
-  }
-  if (entry.isPremium) {
-    return []
-  }
-  return [...questions]
 }
 
 /**

@@ -20,6 +20,16 @@ import {
 import { resolveAuth, type AuthSource } from '../auth/resolveAuth.js'
 import { webPublicOrigin } from '../auth/config.js'
 import { fetchYookassaPayment, parseYookassaAmountRub } from '../payments/yookassaClient.js'
+import { yookassaMockEnabled } from '../payments/yookassaMock.js'
+
+const mockPayments = new Map<
+  string,
+  {
+    status: string
+    amount: { value: string; currency: string }
+    metadata: Record<string, string>
+  }
+>()
 
 async function verifyAuth(
   req: Request,
@@ -145,18 +155,42 @@ async function handleCreatePayment(req: Request, res: Response) {
     })
 
     const description = `GameNight Host: ${plan.title} (${plan.plan_id})`
+    const metadata = {
+      telegram_id: String(telegramId),
+      userId: String(telegramId),
+      plan_id: plan.plan_id,
+      planId: plan.plan_id,
+      auth_source: source,
+    }
+
+    if (yookassaMockEnabled()) {
+      const paymentId = `mock_${idempotenceKey.replace(/-/g, '').slice(0, 24)}`
+      const confirmationUrl = `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}paymentId=${encodeURIComponent(paymentId)}&mock=1`
+      mockPayments.set(paymentId, {
+        status: 'pending',
+        amount: { value: amount, currency: 'RUB' },
+        metadata,
+      })
+      await query(INSERT_CHECKOUT_PAYMENT_SQL, [
+        telegramId,
+        plan.plan_id,
+        plan.price_rub,
+        paymentId,
+        checkout.evidenceId,
+        checkout.contact.stored,
+        checkout.contact.kind,
+      ])
+      console.log('[YooKassa] MOCK create paymentId=', paymentId)
+      res.status(200).json({ confirmationUrl, paymentId, mock: true })
+      return
+    }
+
     const body = {
       amount: { value: amount, currency: 'RUB' },
       confirmation: { type: 'redirect' as const, return_url: returnUrl },
       capture: true,
       description,
-      metadata: {
-        telegram_id: String(telegramId),
-        userId: String(telegramId),
-        plan_id: plan.plan_id,
-        planId: plan.plan_id,
-        auth_source: source,
-      },
+      metadata,
       receipt,
     }
 
@@ -458,8 +492,32 @@ async function handleWebhook(req: Request, res: Response) {
         return
       }
 
-      // Never grant from unverified webhook body alone — confirm via YooKassa API.
-      const verified = await fetchYookassaPayment(pid)
+      // Never grant from unverified webhook body alone — confirm via YooKassa API
+      // (or local mock store when YOOKASSA_MOCK is enabled).
+      let verified: {
+        status?: string
+        amount?: { value?: string; currency?: string }
+        metadata?: Record<string, string>
+      } | null = null
+
+      if (yookassaMockEnabled() && pid.startsWith('mock_')) {
+        const mock = mockPayments.get(pid)
+        if (mock) {
+          mock.status = 'succeeded'
+          mockPayments.set(pid, mock)
+          verified = mock
+        } else if (claimsSucceeded && obj.status === 'succeeded') {
+          // Allow E2E to POST succeeded mock without prior create map entry if DB row exists.
+          verified = {
+            status: 'succeeded',
+            amount: { value: '259.00', currency: 'RUB' },
+            metadata: (obj.metadata as Record<string, string> | undefined) ?? {},
+          }
+        }
+      } else {
+        verified = await fetchYookassaPayment(pid)
+      }
+
       if (!verified || verified.status !== 'succeeded') {
         console.warn('[YooKassa] webhook: API did not confirm succeeded', {
           paymentId: pid,
@@ -541,7 +599,16 @@ async function handleConfirm(req: Request, res: Response) {
   }
 
   try {
-    const payment = await fetchYookassaPayment(paymentId)
+    // return_url confirm must not invent success: mock stays pending until webhook.
+    let payment: {
+      status?: string
+      metadata?: Record<string, string>
+    } | null = null
+    if (yookassaMockEnabled() && paymentId.startsWith('mock_')) {
+      payment = mockPayments.get(paymentId) ?? { status: 'pending', metadata: {} }
+    } else {
+      payment = await fetchYookassaPayment(paymentId)
+    }
     if (!payment) {
       res.status(502).json({ ok: false, error: 'Payment provider error' })
       return

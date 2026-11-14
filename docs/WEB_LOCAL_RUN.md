@@ -2,56 +2,68 @@
 
 ## Требования
 
-- Node 20+
-- Локальный PostgreSQL / PGlite-тесты (не production Timeweb)
-- Применённые миграции `012_web_sessions.sql` и желательно `013_web_session_profile.sql` на **тестовой** БД
+- Node 20+ (локально допускается 24.x с предупреждением engines)
+- **Локальная** БД `gnh_web_local` (embedded Postgres через Setup; Docker не обязателен)
+- Запрещено: `gnh_supabase`, Timeweb `gnh_web_staging`, реальный YooKassa, production secrets
 
-## Команды
+PGlite используется только в unit-тестах сервера. HTTP API требует настоящий Postgres (`pg.Pool`); для E2E Setup поднимает `embedded-postgres` на `127.0.0.1:55432`.
 
-```bash
-# API
+## Быстрый старт E2E
+
+```powershell
+# 1) БД + миграции + seed (один раз / при сбросе)
+.\deploy\local\Setup-GnhWebLocal.ps1
+
+# 2) Браузер Playwright (если скачивание chromium падает — повторить или GNH_E2E_USE_SYSTEM_CHROME=1)
+npm run test:e2e:install
+
+# 3) E2E (сам поднимает API + Vite WEB)
+npm run test:e2e
+```
+
+Остановка embedded Postgres:
+
+```powershell
+.\deploy\local\Setup-GnhWebLocal.ps1 -Stop
+```
+
+## Ручной dev
+
+```powershell
+.\deploy\local\Setup-GnhWebLocal.ps1
+# server/.env.web-local создаётся автоматически (gitignored)
+
+# API с локальным env
 cd server
-cp .env.example .env
-# DATABASE_URL=... (локальная БД)
-# WEB_COOKIE_SECURE=false
-# WEB_DEV_LOGIN_ENABLED=1
-# WEB_DEV_LOGIN_SECRET=local-dev-secret-change-me
-# TELEGRAM_OIDC_* когда готов реальный Login
-npm run dev
+node scripts/run-with-web-local-env.mjs npx tsx watch src/index.ts
 
-# WEB frontend (отдельный терминал, корень репозитория)
+# WEB (корень репозитория)
 npm run dev:web
 ```
 
-Откройте `http://localhost:5173/`. Vite proxy направляет `/api` на `http://127.0.0.1:3001`.
+Откройте `http://localhost:5173/`. Vite proxy → `127.0.0.1:3001`.
 
 ## Вход
 
-- Кнопка «Войти через Telegram» → `/api/web/auth/telegram/start` (нужен настроенный OIDC).
-- Либо локальный dev-login (только при `WEB_DEV_LOGIN_ENABLED=1`):
-
-```bash
-curl -i -X POST http://127.0.0.1:3001/api/web/auth/dev-login \
-  -H "Content-Type: application/json" \
-  -d "{\"telegramId\":123456,\"secret\":\"local-dev-secret-change-me\",\"displayName\":\"Test Host\"}"
-```
-
-Затем откройте WEB с теми же cookies (через proxy same-origin проще после реализации cookie на 5173 — для dev-login через proxy:
+- Telegram OIDC: кнопка «Войти через Telegram» (нужны `TELEGRAM_OIDC_*`).
+- Локальный E2E: `WEB_DEV_LOGIN_ENABLED=1` + кнопка «Локальный вход (dev)» при `VITE_WEB_DEV_LOGIN=1` в gitignored `.env.web.local` (см. пример в docs; Vite mode `web` подхватывает его автоматически), либо:
 
 ```bash
 curl -i -c cookies.txt -X POST http://localhost:5173/api/web/auth/dev-login \
   -H "Content-Type: application/json" \
-  -d "{\"telegramId\":123456,\"secret\":\"local-dev-secret-change-me\",\"displayName\":\"Test Host\"}"
+  -d "{\"telegramId\":900002,\"secret\":\"local-e2e-dev-secret-not-for-prod\",\"displayName\":\"Test Host\"}"
 ```
+
+Seed пользователи: `900001` free, `900002` 1m, `900003` lifetime, `900004` expired.
+
+## Платежи
+
+`YOOKASSA_MOCK=1` только в development / local. Create возвращает `mock_*` paymentId; Premium выдаётся после mock webhook, не по одному return_url.
 
 ## Сборки
 
 ```bash
-npm run build        # Mini App → dist/, base /telegram-card-game/
-npm run build:web    # WEB → dist-web/, base /
+npm run build        # Mini App → dist/
+npm run build:web    # WEB → dist-web/
+npm run build --prefix server
 ```
-
-## Предпочтительный production shape (ещё не деплоить)
-
-- `https://web-domain/` → static `dist-web`
-- `https://web-domain/api/` → reverse proxy на существующий Express

@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import crownIcon from '../assets/icons/gnh/host-crown.svg'
-import { buildTelegramLoginUrl, fetchWebSessionMe, type WebSessionMe } from '../lib/webAuth'
+import {
+  buildTelegramLoginUrl,
+  devLoginWeb,
+  fetchWebSessionMe,
+  type WebSessionMe,
+} from '../lib/webAuth'
 import { WebSessionProvider } from './WebSessionContext'
 import './WebAuthGate.css'
+
+function localDevLoginUiEnabled(): boolean {
+  return Boolean(import.meta.env.DEV) && import.meta.env.VITE_WEB_DEV_LOGIN === '1'
+}
 
 type GateState =
   | { status: 'loading' }
@@ -24,17 +33,44 @@ function WebLoginScreen({
   error,
   returnTo,
   onRetryCheck,
+  onDevLoginSuccess,
 }: {
   error: string | null
   returnTo: string
   onRetryCheck: () => void
+  onDevLoginSuccess: () => void
 }) {
   const [starting, setStarting] = useState(false)
+  const [devBusy, setDevBusy] = useState(false)
+  const [devError, setDevError] = useState<string | null>(null)
+  const showDevLogin = localDevLoginUiEnabled()
 
   const startLogin = () => {
     setStarting(true)
     const url = buildTelegramLoginUrl(returnTo)
     window.location.assign(url)
+  }
+
+  const runDevLogin = async () => {
+    const secret = import.meta.env.VITE_WEB_DEV_LOGIN_SECRET as string | undefined
+    if (!secret) {
+      setDevError('VITE_WEB_DEV_LOGIN_SECRET не задан')
+      return
+    }
+    setDevBusy(true)
+    setDevError(null)
+    try {
+      await devLoginWeb({
+        telegramId: 900002,
+        secret,
+        displayName: 'Local Premium Host',
+      })
+      onDevLoginSuccess()
+    } catch {
+      setDevError('Локальный вход не удался. Проверьте WEB_DEV_LOGIN_* на сервере.')
+    } finally {
+      setDevBusy(false)
+    }
   }
 
   return (
@@ -48,9 +84,9 @@ function WebLoginScreen({
           <p className="web-auth-gate__lead">Ваши игры и Premium всегда с вами</p>
         </div>
 
-        {error && (
+        {(error || devError) && (
           <p className="web-auth-gate__error" role="alert">
-            {error}
+            {devError || error}
           </p>
         )}
 
@@ -62,6 +98,18 @@ function WebLoginScreen({
         >
           {starting ? 'Переход в Telegram…' : 'Войти через Telegram'}
         </button>
+
+        {showDevLogin && (
+          <button
+            type="button"
+            className="web-auth-gate__ghost"
+            data-testid="web-dev-login"
+            onClick={() => void runDevLogin()}
+            disabled={devBusy}
+          >
+            {devBusy ? 'Локальный вход…' : 'Локальный вход (dev)'}
+          </button>
+        )}
 
         <button type="button" className="web-auth-gate__ghost" onClick={onRetryCheck}>
           Уже вошли? Проверить сессию
@@ -126,6 +174,7 @@ export function WebAuthGate({ children }: { children: ReactNode }) {
         error={gate.error}
         returnTo={returnTo}
         onRetryCheck={() => void checkSession()}
+        onDevLoginSuccess={() => void checkSession()}
       />
     )
   }

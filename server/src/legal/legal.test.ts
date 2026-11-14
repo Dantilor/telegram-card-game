@@ -203,7 +203,8 @@ test('new yookassa receipt is email only and a phone does not reach the provider
   const route = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../routes/yookassa.ts'), 'utf8')
   const guard = route.indexOf('customerForNewYookassaReceipt(req.body')
   const providerCall = route.indexOf('https://api.yookassa.ru/v3/payments')
-  const paymentInsert = route.indexOf('query(INSERT_CHECKOUT_PAYMENT_SQL')
+  // Live path INSERT after API call (mock path also inserts earlier when YOOKASSA_MOCK is on).
+  const paymentInsert = route.indexOf('query(INSERT_CHECKOUT_PAYMENT_SQL', providerCall)
   assert.ok(guard !== -1 && providerCall !== -1 && paymentInsert !== -1)
   assert.ok(guard < providerCall && providerCall < paymentInsert)
   assert.equal(route.includes('customer.phone'), false)

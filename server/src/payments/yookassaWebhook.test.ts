@@ -110,6 +110,15 @@ test('dev-login hard-disabled in production regardless of WEB_DEV_LOGIN_ENABLED'
   assert.match(src, /WEB_DEV_LOGIN_ENABLED/)
 })
 
+test('YOOKASSA_MOCK is refused in production-like environments', async () => {
+  const { yookassaMockEnabled } = await import('./yookassaMock.js')
+  assert.equal(yookassaMockEnabled({ YOOKASSA_MOCK: '1', NODE_ENV: 'development' }), true)
+  assert.equal(yookassaMockEnabled({ YOOKASSA_MOCK: '1', NODE_ENV: 'production' }), false)
+  assert.equal(yookassaMockEnabled({ YOOKASSA_MOCK: '1', NODE_ENV: 'development', GNH_STAGING: '1' }), false)
+  assert.equal(yookassaMockEnabled({ YOOKASSA_MOCK: '1', NODE_ENV: 'development', TIMEWEB: '1' }), false)
+  assert.equal(yookassaMockEnabled({ YOOKASSA_MOCK: '0', NODE_ENV: 'development' }), false)
+})
+
 test('empty YOOKASSA_WEBHOOK_SECRET does not skip API verification', () => {
   const route = fs.readFileSync(path.join(serverRoot, 'src/routes/yookassa.ts'), 'utf8')
   const webhook = route.slice(route.indexOf('async function handleWebhook'), route.indexOf('async function handleConfirm'))

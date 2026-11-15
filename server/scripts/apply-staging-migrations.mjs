@@ -208,9 +208,18 @@ if (preflightOnly) {
   process.exit(0)
 }
 
+function listMissingMigrationFiles() {
+  const missing = []
+  for (const step of steps) {
+    if (step.label === 'seed') continue
+    if (!fs.existsSync(resolve(step.file))) missing.push(step.file)
+  }
+  return missing
+}
+
 /**
  * Read-only privilege probe for migrate LOGIN against gnh_web_staging.
- * Uses has_*_privilege / pg_roles / pg_auth_members only — never DDL or GRANT.
+ * Uses has_*_privilege / pg_roles / pg_auth_members / ownership SELECTs only — never DDL or GRANT.
  */
 async function runCheckConnection(client) {
   const identity = await client.query(
@@ -222,7 +231,7 @@ async function runCheckConnection(client) {
     die(`Connected database mismatch: expected ${EXPECTED_DB}`)
   }
   if (row.usr === APP_ROLE || row.session_usr === APP_ROLE) {
-    die(`Connected as ${APP_ROLE}; refuse check-connection (use migrate admin such as gen_user)`)
+    die(`Connected as ${APP_ROLE}; refuse check-connection (use migrate admin such as gnh_web_migrate)`)
   }
   if (/gnh_supabase/i.test(row.db)) {
     die('Refusing connected production database')
@@ -234,12 +243,27 @@ async function runCheckConnection(client) {
     serverAddrSet: Boolean(row.addr),
   })
 
+  const missingFiles = listMissingMigrationFiles()
+  const migrationFilesReady = missingFiles.length === 0
+  console.log(
+    `CHECK migrations pack schema+001-015+grants-stage: ${migrationFilesReady ? 'ready' : 'incomplete'}`
+  )
+  if (!migrationFilesReady) {
+    for (const file of missingFiles) console.log(` - missing file ${file}`)
+  }
+
   const priv = await client.query(
     `SELECT
        has_database_privilege(current_user, current_database(), 'CONNECT') AS db_connect,
        has_database_privilege(current_user, current_database(), 'CREATE') AS db_create,
        has_schema_privilege(current_user, 'public', 'USAGE') AS schema_usage,
-       has_schema_privilege(current_user, 'public', 'CREATE') AS schema_create`
+       has_schema_privilege(current_user, 'public', 'CREATE') AS schema_create,
+       has_database_privilege(current_user, current_database(), 'CONNECT WITH GRANT OPTION') AS db_connect_grant_option,
+       has_schema_privilege(current_user, 'public', 'USAGE WITH GRANT OPTION') AS schema_usage_grant_option,
+       (SELECT d.datdba = (SELECT oid FROM pg_roles WHERE rolname = current_user)
+          FROM pg_database d WHERE d.datname = current_database()) AS is_db_owner,
+       (SELECT n.nspowner = (SELECT oid FROM pg_roles WHERE rolname = current_user)
+          FROM pg_namespace n WHERE n.nspname = 'public') AS is_schema_owner`
   )
   const p = priv.rows[0]
 
@@ -253,12 +277,23 @@ async function runCheckConnection(client) {
   let isSuper = false
   let hasUsageOnAppRole = false
   let canCreateRole = false
+  let appHasDbConnect = null
+  let appHasSchemaUsage = null
   if (appExists) {
     const membership = await client.query(
       `SELECT pg_has_role($1, $2, 'member') AS is_member`,
       [APP_ROLE, PROD_ROLE]
     )
     stageMemberOfProd = Boolean(membership.rows[0]?.is_member)
+
+    const appPriv = await client.query(
+      `SELECT
+         has_database_privilege($1, current_database(), 'CONNECT') AS app_connect,
+         has_schema_privilege($1, 'public', 'USAGE') AS app_usage`,
+      [APP_ROLE]
+    )
+    appHasDbConnect = Boolean(appPriv.rows[0]?.app_connect)
+    appHasSchemaUsage = Boolean(appPriv.rows[0]?.app_usage)
 
     // Metadata only — never executes GRANT/ALTER ROLE.
     const grantProbe = await client.query(
@@ -290,18 +325,38 @@ async function runCheckConnection(client) {
     isSuper,
     hasUsageOnAppRole,
     canCreateRole,
+    appHasDbConnect,
+    appHasSchemaUsage,
+    migrateIsDbOwner: Boolean(p.is_db_owner),
+    migrateCanGrantDbConnect: Boolean(p.db_connect_grant_option),
+    migrateIsSchemaOwner: Boolean(p.is_schema_owner),
+    migrateCanGrantSchemaUsage: Boolean(p.schema_usage_grant_option),
+    migrationFilesReady,
+    missingMigrationFiles: missingFiles,
     appRole: APP_ROLE,
     prodRole: PROD_ROLE,
   })
 
   // Print each privilege on its own line so PowerShell/CI logs stay readable.
-  console.log(`CHECK privilege CONNECT database: ${evaluated.checks.CONNECT}`)
-  console.log(`CHECK privilege CREATE database: ${evaluated.checks.CREATE_database}`)
-  console.log(`CHECK privilege USAGE schema public: ${evaluated.checks.USAGE_public}`)
-  console.log(`CHECK privilege CREATE schema public: ${evaluated.checks.CREATE_public}`)
+  console.log(`CHECK privilege CONNECT database (migrate): ${evaluated.checks.CONNECT}`)
+  console.log(`CHECK privilege CREATE database (migrate): ${evaluated.checks.CREATE_database}`)
+  console.log(`CHECK privilege USAGE schema public (migrate): ${evaluated.checks.USAGE_public}`)
+  console.log(`CHECK privilege CREATE schema public (migrate): ${evaluated.checks.CREATE_public}`)
   console.log(`CHECK app role ${APP_ROLE} exists: ${appExists}`)
   console.log(
     `CHECK isolation ${APP_ROLE} member of ${PROD_ROLE}: ${stageMemberOfProd === null ? 'n/a' : stageMemberOfProd} (expected false)`
+  )
+  console.log(
+    `CHECK ${APP_ROLE} CONNECT on gnh_web_staging: ${appHasDbConnect === null ? 'n/a' : appHasDbConnect} (${evaluated.appRoleGrants.connectStatus})`
+  )
+  console.log(
+    `CHECK ${APP_ROLE} USAGE on schema public: ${appHasSchemaUsage === null ? 'n/a' : appHasSchemaUsage} (${evaluated.appRoleGrants.usageStatus})`
+  )
+  console.log(
+    `CHECK migrate can GRANT CONNECT to ${APP_ROLE}: ${evaluated.appRoleGrants.migrateCanGrantConnect} (db_owner=${Boolean(p.is_db_owner)} grant_option=${Boolean(p.db_connect_grant_option)} super=${isSuper})`
+  )
+  console.log(
+    `CHECK migrate can GRANT USAGE on public to ${APP_ROLE}: ${evaluated.appRoleGrants.migrateCanGrantUsage} (schema_owner=${Boolean(p.is_schema_owner)} grant_option=${Boolean(p.schema_usage_grant_option)} super=${isSuper})`
   )
   console.log(
     `CHECK grant to ${APP_ROLE} on migrate-owned objects: ${evaluated.grantToAppRole.onOwnedObjects}`
@@ -317,15 +372,23 @@ async function runCheckConnection(client) {
     // Use stdout (not stderr) so Windows PowerShell Stop + NativeCommandError cannot hide the list.
     console.log('CHECK_CONNECTION_INCOMPLETE')
     console.log(
-      'Report only — no SQL was applied. Needed on gnh_web_staging only (never gnh_supabase / never production role changes):'
+      'Report only — no SQL was applied. Needed on gnh_web_staging only (never gnh_supabase / never production role changes / never CREATEROLE):'
     )
     for (const item of evaluated.missing) {
       console.log(' -', item)
     }
+    if (evaluated.actions.length) {
+      console.log('Actions (gnh_web_staging only):')
+      for (const action of evaluated.actions) {
+        console.log(' *', action)
+      }
+    }
     process.exit(2)
   }
 
-  console.log('CHECK_CONNECTION_OK migrate user can connect and appears ready for staging DDL/GRANT on owned objects.')
+  console.log(
+    'CHECK_CONNECTION_OK migrate user ready for staging DDL; app CONNECT/USAGE either present or grantable; migrations pack ready.'
+  )
 }
 
 async function main() {

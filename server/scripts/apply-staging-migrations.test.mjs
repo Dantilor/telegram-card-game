@@ -167,6 +167,13 @@ test('evaluateStagingCheckPrivileges: reports CONNECT/CREATE/USAGE/CREATE separa
     isSuper: false,
     hasUsageOnAppRole: false,
     canCreateRole: false,
+    appHasDbConnect: true,
+    appHasSchemaUsage: true,
+    migrateIsDbOwner: false,
+    migrateCanGrantDbConnect: false,
+    migrateIsSchemaOwner: false,
+    migrateCanGrantSchemaUsage: false,
+    migrationFilesReady: true,
   })
   assert.equal(result.ok, false)
   assert.equal(result.checks.CONNECT, true)
@@ -177,4 +184,103 @@ test('evaluateStagingCheckPrivileges: reports CONNECT/CREATE/USAGE/CREATE separa
   assert.ok(result.missing.some((m) => /USAGE on schema public/.test(m)))
   assert.ok(result.missing.some((m) => /CREATE on schema public/.test(m)))
   assert.equal(result.missing.some((m) => /CREATEROLE/i.test(m)), false)
+})
+
+test('evaluateStagingCheckPrivileges: app CONNECT/USAGE already present skips grant ability requirement', () => {
+  const result = evaluateStagingCheckPrivileges({
+    dbConnect: true,
+    dbCreate: true,
+    schemaUsage: true,
+    schemaCreate: true,
+    appRoleExists: true,
+    appRoleMemberOfProd: false,
+    isSuper: false,
+    hasUsageOnAppRole: false,
+    canCreateRole: false,
+    appHasDbConnect: true,
+    appHasSchemaUsage: true,
+    migrateIsDbOwner: false,
+    migrateCanGrantDbConnect: false,
+    migrateIsSchemaOwner: false,
+    migrateCanGrantSchemaUsage: false,
+    migrationFilesReady: true,
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.appRoleGrants.connectStatus, 'already_present_skip_grant')
+  assert.equal(result.appRoleGrants.usageStatus, 'already_present_skip_grant')
+  assert.equal(result.appRoleGrants.migrateCanGrantConnect, false)
+})
+
+test('evaluateStagingCheckPrivileges: missing app CONNECT without grant ability is hard fail', () => {
+  const result = evaluateStagingCheckPrivileges({
+    dbConnect: true,
+    dbCreate: true,
+    schemaUsage: true,
+    schemaCreate: true,
+    appRoleExists: true,
+    appRoleMemberOfProd: false,
+    isSuper: false,
+    hasUsageOnAppRole: false,
+    canCreateRole: false,
+    appHasDbConnect: false,
+    appHasSchemaUsage: true,
+    migrateIsDbOwner: false,
+    migrateCanGrantDbConnect: false,
+    migrateIsSchemaOwner: true,
+    migrateCanGrantSchemaUsage: true,
+    migrationFilesReady: true,
+  })
+  assert.equal(result.ok, false)
+  assert.equal(result.appRoleGrants.connectStatus, 'missing_migrate_cannot_grant')
+  assert.ok(result.missing.some((m) => /lacks CONNECT/.test(m)))
+  assert.ok(result.actions.some((a) => /GRANT CONNECT ON DATABASE gnh_web_staging/.test(a)))
+  assert.equal(result.missing.some((m) => /CREATEROLE/i.test(m)), false)
+})
+
+test('evaluateStagingCheckPrivileges: missing app CONNECT is OK when migrate is DB owner', () => {
+  const result = evaluateStagingCheckPrivileges({
+    dbConnect: true,
+    dbCreate: true,
+    schemaUsage: true,
+    schemaCreate: true,
+    appRoleExists: true,
+    appRoleMemberOfProd: false,
+    isSuper: false,
+    hasUsageOnAppRole: false,
+    canCreateRole: false,
+    appHasDbConnect: false,
+    appHasSchemaUsage: false,
+    migrateIsDbOwner: true,
+    migrateCanGrantDbConnect: false,
+    migrateIsSchemaOwner: true,
+    migrateCanGrantSchemaUsage: false,
+    migrationFilesReady: true,
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.appRoleGrants.connectStatus, 'missing_migrate_can_grant')
+  assert.equal(result.appRoleGrants.usageStatus, 'missing_migrate_can_grant')
+})
+
+test('evaluateStagingCheckPrivileges: incomplete migration pack fails', () => {
+  const result = evaluateStagingCheckPrivileges({
+    dbConnect: true,
+    dbCreate: true,
+    schemaUsage: true,
+    schemaCreate: true,
+    appRoleExists: true,
+    appRoleMemberOfProd: false,
+    isSuper: false,
+    hasUsageOnAppRole: false,
+    canCreateRole: false,
+    appHasDbConnect: true,
+    appHasSchemaUsage: true,
+    migrateIsDbOwner: true,
+    migrateCanGrantDbConnect: true,
+    migrateIsSchemaOwner: true,
+    migrateCanGrantSchemaUsage: true,
+    migrationFilesReady: false,
+    missingMigrationFiles: ['db/staging/01_grants_gnh_web_stage.sql'],
+  })
+  assert.equal(result.ok, false)
+  assert.ok(result.missing.some((m) => /Migration pack incomplete/.test(m)))
 })

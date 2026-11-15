@@ -29,8 +29,16 @@ BEGIN
   END IF;
 END $$;
 
-GRANT CONNECT ON DATABASE gnh_web_staging TO gnh_web_stage;
-GRANT USAGE ON SCHEMA public TO gnh_web_stage;
+-- CONNECT / USAGE: skip when already present (idempotent; migrate role may lack GRANT OPTION).
+DO $$
+BEGIN
+  IF NOT has_database_privilege('gnh_web_stage', 'gnh_web_staging', 'CONNECT') THEN
+    EXECUTE 'GRANT CONNECT ON DATABASE gnh_web_staging TO gnh_web_stage';
+  END IF;
+  IF NOT has_schema_privilege('gnh_web_stage', 'public', 'USAGE') THEN
+    EXECUTE 'GRANT USAGE ON SCHEMA public TO gnh_web_stage';
+  END IF;
+END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   users,

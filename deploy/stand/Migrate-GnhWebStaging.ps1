@@ -276,6 +276,18 @@ try {
         exit 0
       }
 
+      Write-Step 'Final read-only check-connection before Apply (no DDL)'
+      $finalChk = Invoke-NpmCaptured -NpmArguments @('run', 'migrate:staging:check-connection')
+      Assert-NoSecretLeak $finalChk.Text
+      Write-Host $finalChk.Text
+      if ($finalChk.ExitCode -ne 0 -or $finalChk.Text -notmatch 'CHECK_CONNECTION_OK') {
+        if ($finalChk.Text -match 'CHECK_CONNECTION_INCOMPLETE') {
+          Write-Step 'CHECK_CONNECTION_INCOMPLETE — fix gnh_web_staging-only rights above, then re-run -Apply. No migration was executed.'
+          exit 2
+        }
+        Fail 'Final check-connection failed; refusing Apply (no migration executed).'
+      }
+
       Write-Host ''
       Write-Host 'About to APPLY migrations 001-015 + grants to database gnh_web_staging only.'
       Write-Host 'This will CONNECT to Timeweb. Production gnh_supabase must not be targeted.'

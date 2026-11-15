@@ -15,6 +15,7 @@
     "migrate:staging:dry": "node scripts/apply-staging-migrations.mjs --dry-run",
     "migrate:staging:preflight": "node scripts/apply-staging-migrations.mjs --preflight",
     "migrate:staging:check-connection": "node scripts/apply-staging-migrations.mjs --check-connection",
+    "verify:staging": "node scripts/verify-staging.mjs",
     "migrate:local": "node scripts/apply-local-migrations.mjs",
     "migrate:local:dry": "node scripts/apply-local-migrations.mjs --dry-run",
     "local:pg:start": "node scripts/start-local-embedded-pg.mjs",

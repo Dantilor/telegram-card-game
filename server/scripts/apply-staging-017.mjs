@@ -2,7 +2,7 @@
 /**
  * Apply ONLY migrations 017 + 018 + grants subset to gnh_web_staging.
  * All three steps run in a single BEGIN/COMMIT transaction; errors ROLLBACK.
- * Does NOT re-run 001–015. Never touches gnh_supabase.
+ * Does NOT re-run 001вЂ“015. Never touches gnh_supabase.
  *
  * Usage (from server/, after `npm run build:api`):
  *   Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
@@ -91,7 +91,7 @@ function assertIsolation(rawUrl) {
 async function loadResolvePgPoolConfig() {
   const distPath = path.join(serverRoot, 'dist', 'dbTls.js')
   if (!fs.existsSync(distPath)) {
-    throw new Error('Missing dist/dbTls.js — run `npm run build:api` in server/ first')
+    throw new Error('Missing dist/dbTls.js вЂ” run `npm run build:api` in server/ first')
   }
   const mod = await import(pathToFileURL(distPath).href)
   return mod.resolvePgPoolConfig
@@ -143,7 +143,7 @@ async function main() {
     return
   }
 
-  const client = new pg.Client(resolved.config)
+  const client = new pg.Client({ connectionString: resolved.connectionString, ssl: resolved.ssl })
   let transactionOpen = false
   try {
     await client.connect()

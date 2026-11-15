@@ -67,6 +67,7 @@ if (process.env.DATABASE_URL) {
     if (isStagingRuntime()) process.exit(1)
   }
   if (isStagingRuntime()) {
+    // Format normalize already ran in index.ts before pool import; re-check isolation only.
     const check = assertStagingDatabaseUrl(process.env.DATABASE_URL)
     if (!check.ok) {
       console.error('[DB] Staging database check failed:', check.reason)

@@ -82,6 +82,7 @@ const STAGE_PRIVILEGES = [
   ['plans', 'SELECT'],
   ['web_sessions', 'SELECT'],
   ['web_sessions', 'INSERT'],
+  ['web_sessions', 'UPDATE'],
   ['web_oidc_states', 'SELECT'],
   ['web_oidc_states', 'INSERT'],
   ['legal_evidence', 'SELECT'],
@@ -96,6 +97,42 @@ const STAGE_PRIVILEGES = [
   ['doubles_rooms', 'INSERT'],
   ['infected_rooms', 'SELECT'],
   ['infected_rooms', 'INSERT'],
+  // 017 / 018 anonymous WEB objects — full DML for app role
+  ['web_accounts', 'SELECT'],
+  ['web_accounts', 'INSERT'],
+  ['web_accounts', 'UPDATE'],
+  ['web_accounts', 'DELETE'],
+  ['web_entitlements', 'SELECT'],
+  ['web_entitlements', 'INSERT'],
+  ['web_entitlements', 'UPDATE'],
+  ['web_entitlements', 'DELETE'],
+  ['web_telegram_links', 'SELECT'],
+  ['web_telegram_links', 'INSERT'],
+  ['web_telegram_links', 'UPDATE'],
+  ['web_telegram_links', 'DELETE'],
+  ['web_telegram_link_challenges', 'SELECT'],
+  ['web_telegram_link_challenges', 'INSERT'],
+  ['web_telegram_link_challenges', 'UPDATE'],
+  ['web_telegram_link_challenges', 'DELETE'],
+  ['web_email_otps', 'SELECT'],
+  ['web_email_otps', 'INSERT'],
+  ['web_email_otps', 'UPDATE'],
+  ['web_email_otps', 'DELETE'],
+  ['web_payments', 'SELECT'],
+  ['web_payments', 'INSERT'],
+  ['web_payments', 'UPDATE'],
+  ['web_payments', 'DELETE'],
+  ['web_rate_buckets', 'SELECT'],
+  ['web_rate_buckets', 'INSERT'],
+  ['web_rate_buckets', 'UPDATE'],
+  ['web_rate_buckets', 'DELETE'],
+]
+
+const STAGE_SEQUENCE_USAGE = [
+  'web_entitlements_id_seq',
+  'web_telegram_links_id_seq',
+  'web_telegram_link_challenges_id_seq',
+  'web_email_otps_id_seq',
 ]
 
 function die(message) {
@@ -275,6 +312,25 @@ async function main() {
         results,
         'required',
         `priv.${APP_ROLE}.${table}.${priv}`,
+        Boolean(q.rows[0]?.ok),
+        ''
+      )
+    }
+
+    for (const seq of STAGE_SEQUENCE_USAGE) {
+      const exists = await client.query(`SELECT to_regclass($1)::text AS reg`, [`public.${seq}`])
+      if (!exists.rows[0]?.reg) {
+        record(results, 'required', `seq.${seq}.exists`, false, 'sequence missing')
+        continue
+      }
+      const q = await client.query(`SELECT has_sequence_privilege($1, $2, 'USAGE') AS ok`, [
+        APP_ROLE,
+        seq,
+      ])
+      record(
+        results,
+        'required',
+        `priv.${APP_ROLE}.${seq}.USAGE`,
         Boolean(q.rows[0]?.ok),
         ''
       )

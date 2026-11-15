@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
  * Apply ONLY migrations 017 + 018 + grants subset to gnh_web_staging.
+ * All three steps run in a single BEGIN/COMMIT transaction; errors ROLLBACK.
  * Does NOT re-run 001–015. Never touches gnh_supabase.
  *
  * Usage (from server/, after `npm run build:api`):
- *   # PowerShell: Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+ *   Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
  *   $env:STAGING_DATABASE_URL='postgresql://gnh_web_migrate:***@HOST:5432/gnh_web_staging?sslmode=verify-full'
  *   $env:STAGING_EXPECT_HOST='HOST'
  *   $env:STAGING_MIGRATE_USER='gnh_web_migrate'
@@ -34,11 +35,6 @@ const steps = [
   { label: 'grants-017-018', file: 'db/staging/02_grants_017_018_only.sql' },
 ]
 
-function die(message) {
-  console.error(message)
-  process.exit(1)
-}
-
 function redactError(err) {
   const msg = err instanceof Error ? err.message : String(err)
   return msg
@@ -53,41 +49,41 @@ function resolve(rel) {
 
 function assertIsolation(rawUrl) {
   if ((process.env.DATABASE_URL || '').trim()) {
-    die('Refusing: DATABASE_URL is set. Unset it and use only STAGING_DATABASE_URL.')
+    throw new Error('Refusing: DATABASE_URL is set. Unset it and use only STAGING_DATABASE_URL.')
   }
-  if (!rawUrl) die('Set STAGING_DATABASE_URL')
+  if (!rawUrl) throw new Error('Set STAGING_DATABASE_URL')
   let parsed
   try {
     parsed = new URL(rawUrl)
   } catch {
-    die('STAGING_DATABASE_URL is not a valid URL')
+    throw new Error('STAGING_DATABASE_URL is not a valid URL')
   }
   const dbName = decodeURIComponent(parsed.pathname.replace(/^\//, ''))
   const user = decodeURIComponent(parsed.username || '')
   const host = parsed.hostname
   if (!dbName || /gnh_supabase/i.test(dbName) || /gnh_supabase/i.test(rawUrl)) {
-    die('Refusing to migrate production database gnh_supabase')
+    throw new Error('Refusing to migrate production database gnh_supabase')
   }
   if (dbName !== EXPECTED_DB) {
-    die(`Refusing: database must be exactly ${EXPECTED_DB} (got "${dbName}")`)
+    throw new Error(`Refusing: database must be exactly ${EXPECTED_DB} (got "${dbName}")`)
   }
-  if (!host) die('STAGING_DATABASE_URL host is missing')
-  if (!user) die('STAGING_DATABASE_URL user is missing')
+  if (!host) throw new Error('STAGING_DATABASE_URL host is missing')
+  if (!user) throw new Error('STAGING_DATABASE_URL user is missing')
   if (user === APP_ROLE) {
-    die(`Refusing: do not migrate as ${APP_ROLE}`)
+    throw new Error(`Refusing: do not migrate as ${APP_ROLE}`)
   }
   const expectHost = (process.env.STAGING_EXPECT_HOST || '').trim()
-  if (!expectHost) die('STAGING_EXPECT_HOST is required')
+  if (!expectHost) throw new Error('STAGING_EXPECT_HOST is required')
   if (host.toLowerCase() !== expectHost.toLowerCase()) {
-    die('Refusing: host does not match STAGING_EXPECT_HOST')
+    throw new Error('Refusing: host does not match STAGING_EXPECT_HOST')
   }
   const expectUser = (process.env.STAGING_MIGRATE_USER || '').trim()
   if (expectUser && user !== expectUser) {
-    die('Refusing: migrate user does not match STAGING_MIGRATE_USER')
+    throw new Error('Refusing: migrate user does not match STAGING_MIGRATE_USER')
   }
   const pgSslMode = (process.env.PGSSLMODE || '').trim().toLowerCase()
   if (pgSslMode === 'disable' || ['0', 'false', 'off', 'no', 'allow'].includes(pgSslMode)) {
-    die('Refusing: PGSSLMODE disables TLS')
+    throw new Error('Refusing: PGSSLMODE disables TLS')
   }
   return { dbName, user, host }
 }
@@ -95,91 +91,120 @@ function assertIsolation(rawUrl) {
 async function loadResolvePgPoolConfig() {
   const distPath = path.join(serverRoot, 'dist', 'dbTls.js')
   if (!fs.existsSync(distPath)) {
-    die('Missing dist/dbTls.js — run `npm run build:api` in server/ first')
+    throw new Error('Missing dist/dbTls.js — run `npm run build:api` in server/ first')
   }
   const mod = await import(pathToFileURL(distPath).href)
   return mod.resolvePgPoolConfig
 }
 
-console.log('Target: gnh_web_staging | steps: 017 + 018 + grants-017-018 only')
+async function main() {
+  console.log('Target: gnh_web_staging | steps: 017 + 018 + grants-017-018 only (single transaction)')
 
-if (dryRun) {
-  for (const step of steps) {
-    const full = resolve(step.file)
-    if (!fs.existsSync(full)) throw new Error(`Missing ${step.file}`)
-    console.log('DRY', step.label, step.file)
+  if (dryRun) {
+    for (const step of steps) {
+      const full = resolve(step.file)
+      if (!fs.existsSync(full)) throw new Error(`Missing ${step.file}`)
+      console.log('DRY', step.label, step.file)
+    }
+    return
   }
-  process.exit(0)
-}
 
-const stagingUrl = (process.env.STAGING_DATABASE_URL || '').trim()
-const meta = assertIsolation(stagingUrl)
-const resolvePgPoolConfig = await loadResolvePgPoolConfig()
-let resolved
-try {
-  resolved = resolvePgPoolConfig({
+  const stagingUrl = (process.env.STAGING_DATABASE_URL || '').trim()
+  const meta = assertIsolation(stagingUrl)
+  const resolvePgPoolConfig = await loadResolvePgPoolConfig()
+  const resolved = resolvePgPoolConfig({
     ...process.env,
     DATABASE_URL: stagingUrl,
     GNH_EXPECT_HOST: process.env.STAGING_EXPECT_HOST,
     GNH_EXPECT_DATABASE: EXPECTED_DB,
     GNH_EXPECT_USER: process.env.STAGING_MIGRATE_USER || meta.user,
   })
-} catch (e) {
-  die(`TLS/config refused: ${redactError(e)}`)
-}
-if (resolved.summary.rejectUnauthorized !== true) die('TLS verification was not enabled')
-if (resolved.summary.database !== EXPECTED_DB) die('Resolved database is not gnh_web_staging')
-if (resolved.summary.user === APP_ROLE) die(`Refusing resolved migrate user ${APP_ROLE}`)
+  if (resolved.summary.rejectUnauthorized !== true) {
+    throw new Error('TLS verification was not enabled')
+  }
+  if (resolved.summary.database !== EXPECTED_DB) {
+    throw new Error('Resolved database is not gnh_web_staging')
+  }
+  if (resolved.summary.user === APP_ROLE) {
+    throw new Error(`Refusing resolved migrate user ${APP_ROLE}`)
+  }
 
-console.log('TLS:', {
-  rejectUnauthorized: resolved.summary.rejectUnauthorized,
-  servername: resolved.summary.servername,
-  caSource: resolved.summary.caSource,
-  host: resolved.summary.host,
-  database: resolved.summary.database,
-  user: resolved.summary.user,
-})
+  console.log('TLS:', {
+    rejectUnauthorized: resolved.summary.rejectUnauthorized,
+    servername: resolved.summary.servername,
+    caSource: resolved.summary.caSource,
+    host: resolved.summary.host,
+    database: resolved.summary.database,
+    user: resolved.summary.user,
+  })
 
-if (preflightOnly) {
-  console.log('PREFLIGHT_OK (017/018 pack); no connection opened.')
-  process.exit(0)
-}
+  if (preflightOnly) {
+    console.log('PREFLIGHT_OK (017/018 pack); no connection opened.')
+    return
+  }
 
-const client = new pg.Client(resolved.config)
-try {
-  await client.connect()
-  const id = await client.query('select current_database() as db, current_user as usr')
-  const row = id.rows[0]
-  if (row.db !== EXPECTED_DB) die(`Connected DB mismatch: ${row.db}`)
-  if (row.usr === APP_ROLE) die(`Connected as app role ${APP_ROLE}`)
-  console.log('Connected:', { database: row.db, user: row.usr })
+  const client = new pg.Client(resolved.config)
+  let transactionOpen = false
+  try {
+    await client.connect()
+    const id = await client.query('select current_database() as db, current_user as usr')
+    const row = id.rows[0]
+    if (row.db !== EXPECTED_DB) throw new Error(`Connected DB mismatch: ${row.db}`)
+    if (row.usr === APP_ROLE) throw new Error(`Connected as app role ${APP_ROLE}`)
+    console.log('Connected:', { database: row.db, user: row.usr })
 
-  if (checkOnly) {
-    for (const rel of [
-      'web_accounts',
-      'web_entitlements',
-      'web_telegram_links',
-      'web_telegram_link_challenges',
-      'web_email_otps',
-      'web_payments',
-      'web_rate_buckets',
-    ]) {
-      const r = await client.query(`select to_regclass($1)::text as reg`, [`public.${rel}`])
-      console.log('table', rel, r.rows[0]?.reg ? 'PRESENT' : 'MISSING')
+    if (checkOnly) {
+      for (const rel of [
+        'web_accounts',
+        'web_entitlements',
+        'web_telegram_links',
+        'web_telegram_link_challenges',
+        'web_email_otps',
+        'web_payments',
+        'web_rate_buckets',
+      ]) {
+        const r = await client.query(`select to_regclass($1)::text as reg`, [`public.${rel}`])
+        console.log('table', rel, r.rows[0]?.reg ? 'PRESENT' : 'MISSING')
+      }
+      console.log('CHECK_CONNECTION_OK (read-only probes)')
+      return
     }
-    console.log('CHECK_CONNECTION_OK (read-only probes)')
-    process.exit(0)
-  }
 
-  // Skip already-applied 017 if web_accounts exists (idempotent CREATE IF NOT EXISTS still OK).
-  for (const step of steps) {
-    const sql = fs.readFileSync(resolve(step.file), 'utf8')
-    await client.query(sql)
-    console.log('OK', step.label)
+    await client.query('BEGIN')
+    transactionOpen = true
+    for (const step of steps) {
+      const sql = fs.readFileSync(resolve(step.file), 'utf8')
+      await client.query(sql)
+      console.log('OK', step.label)
+    }
+    await client.query('COMMIT')
+    transactionOpen = false
+    console.log('DONE 017+018+grants on gnh_web_staging only (committed)')
+  } catch (e) {
+    if (transactionOpen) {
+      try {
+        await client.query('ROLLBACK')
+        console.error('ROLLBACK applied after migrate error')
+      } catch (rollbackErr) {
+        console.error('ROLLBACK failed:', redactError(rollbackErr))
+      }
+      transactionOpen = false
+    }
+    throw e
+  } finally {
+    try {
+      await client.end()
+    } catch {
+      // ignore close errors
+    }
   }
-  console.log('DONE 017+018+grants on gnh_web_staging only')
-} catch (e) {
-  die(`Migrate failed: ${redactError(e)}`)
-} finally {
-  await client.end().catch(() => {})
 }
+
+main()
+  .then(() => {
+    process.exitCode = 0
+  })
+  .catch((e) => {
+    console.error(redactError(e))
+    process.exitCode = 1
+  })

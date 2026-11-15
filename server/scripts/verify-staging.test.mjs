@@ -43,6 +43,17 @@ test('verify SQL checklist exists and is SELECT-only', () => {
   assert.match(text, /gnh_supabase/)
 })
 
+test('verify-staging.mjs checks 017/018 table DML and sequence USAGE for app role', () => {
+  const src = fs.readFileSync(script, 'utf8')
+  assert.match(src, /web_accounts/)
+  assert.match(src, /web_rate_buckets/)
+  assert.match(src, /web_payments/)
+  assert.match(src, /has_sequence_privilege/)
+  assert.match(src, /web_entitlements_id_seq/)
+  assert.match(src, /\['web_accounts', 'DELETE'\]/)
+  assert.match(src, /\['web_rate_buckets', 'UPDATE'\]/)
+})
+
 test('verify refuses production database name', () => {
   const result = run({
     STAGING_DATABASE_URL: 'postgresql://gnh_web_migrate:x@db.example:5432/gnh_supabase?sslmode=verify-full',

@@ -8,9 +8,10 @@ import { evaluateStagingCheckPrivileges } from './stagingCheckPrivileges.mjs'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const serverRoot = path.resolve(here, '..')
 const script = path.join(here, 'apply-staging-migrations.mjs')
+const script017 = path.join(here, 'apply-staging-017.mjs')
 
-function run(env, args = []) {
-  return spawnSync(process.execPath, [script, ...args], {
+function run(env, args = [], target = script) {
+  return spawnSync(process.execPath, [target, ...args], {
     cwd: serverRoot,
     encoding: 'utf8',
     env: {
@@ -39,6 +40,32 @@ test('dry-run lists schema through grants without connecting', () => {
   assert.match(result.stdout, /DRY grants-stage/)
   assert.equal(/postgres(?:ql)?:\/\/\S+/i.test(result.stdout + result.stderr), false)
   assert.equal(/GRANT\s+gnh_app\s+TO/i.test(result.stdout + result.stderr), false)
+})
+
+test('017-only dry-run lists 017+018+grants and mentions single transaction', () => {
+  const result = run({}, ['--dry-run'], script017)
+  assert.equal(result.status, 0, result.stderr || result.stdout)
+  assert.match(result.stdout, /single transaction/i)
+  assert.match(result.stdout, /DRY 017/)
+  assert.match(result.stdout, /DRY 018/)
+  assert.match(result.stdout, /DRY grants-017-018/)
+  assert.equal(/DRY schema/.test(result.stdout), false)
+  assert.equal(/postgres(?:ql)?:\/\/\S+/i.test(result.stdout + result.stderr), false)
+})
+
+test('017-only preflight refuses app role before connect', () => {
+  const result = run(
+    {
+      STAGING_DATABASE_URL:
+        'postgresql://gnh_web_stage:x@db.example:5432/gnh_web_staging?sslmode=verify-full',
+      STAGING_EXPECT_HOST: 'db.example',
+      STAGING_MIGRATE_USER: 'gnh_web_stage',
+    },
+    ['--preflight'],
+    script017
+  )
+  assert.notEqual(result.status, 0)
+  assert.match(`${result.stdout}\n${result.stderr}`, /gnh_web_stage|Refusing/i)
 })
 
 test('preflight refuses app role gnh_web_stage before connect', () => {

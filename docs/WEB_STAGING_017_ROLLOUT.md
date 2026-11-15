@@ -21,11 +21,13 @@
 
 Подставьте `HOST`, `MIGRATE_PASSWORD`, путь к CA. Миграции выполнять **только** под `gnh_web_migrate` (или DB owner staging), **не** под `gnh_web_stage`.
 
-### 1.1 Backup `gnh_web_staging`
+### 1.1 Backup `gnh_web_staging` (TLS + проверка dump)
 
 ```powershell
 # С машины, где есть pg_dump и доступ к Timeweb Postgres (TLS).
 $env:PGPASSWORD = '<MIGRATE_PASSWORD>'
+$env:PGSSLMODE = 'verify-full'
+$env:PGSSLROOTCERT = 'C:\path\to\timeweb-ca.crt'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $backup = "C:\backups\gnh_web_staging-$stamp.dump"
 New-Item -ItemType Directory -Force -Path (Split-Path $backup) | Out-Null
@@ -36,8 +38,13 @@ pg_dump `
   --dbname=gnh_web_staging `
   --format=custom --file=$backup
 
-# Проверка, что файл не пустой:
+# Непустой файл:
 (Get-Item $backup).Length
+
+# Содержимое dump читаемо (список объектов без restore):
+pg_restore --list $backup | Select-Object -First 40
+# Ожидание: TABLE / INDEX / ACL entries для существующих staging-объектов; exit code 0.
+if ($LASTEXITCODE -ne 0) { throw "pg_restore --list failed" }
 ```
 
 ### 1.2 Preflight (без SQL)
@@ -68,6 +75,8 @@ npm run migrate:staging:017:check
 
 ### 1.4 Apply 017+018+grants (только после явного разрешения)
 
+Один `BEGIN`/`COMMIT` на все три шага; при ошибке скрипт делает `ROLLBACK` и exit code ≠ 0.
+
 ```powershell
 npm run migrate:staging:017
 ```
@@ -78,24 +87,33 @@ npm run migrate:staging:017
 npm run verify:staging
 ```
 
-Должны пройти таблицы `web_accounts`, `web_payments`, `web_rate_buckets` и права app role.
+Должны пройти таблицы `web_accounts`, `web_payments`, `web_rate_buckets`, DML-права `gnh_web_stage` (SELECT/INSERT/UPDATE/DELETE) и `USAGE` на последовательности `web_*_id_seq`.
 
-### 1.6 Rollback / restore
+### 1.6 Rollback / restore (осторожно)
 
-Если apply сломал стенд:
+`pg_restore --clean --if-exists` **не гарантирует** полное восстановление прав, RLS-политик и membership без проверки. После любого restore обязателен `npm run verify:staging`.
 
 ```powershell
-# Остановить GNH-WEB-Test в панели Timeweb (не трогать production Host).
+# 1) Остановить GNH-WEB-Test в панели Timeweb (не трогать production Host).
 $env:PGPASSWORD = '<MIGRATE_PASSWORD>'
-pg_restore `
-  --host=<HOST> --port=5432 `
-  --username=gnh_web_migrate `
-  --dbname=gnh_web_staging `
-  --clean --if-exists `
-  $backup
+$env:PGSSLMODE = 'verify-full'
+$env:PGSSLROOTCERT = 'C:\path\to\timeweb-ca.crt'
+
+# 2) Снова проверить dump перед restore:
+pg_restore --list $backup | Select-Object -First 20
+
+# 3) Restore в отдельную временную БД (предпочтительно) ИЛИ в staging после согласования:
+#    Создание/удаление БД — только владелец кластера; не выполнять без разрешения.
+# pg_restore --host=<HOST> --port=5432 --username=gnh_web_migrate `
+#   --dbname=gnh_web_staging --clean --if-exists $backup
+
+# 4) После restore:
+#    - сравнить ACL: has_table_privilege / has_sequence_privilege для gnh_web_stage
+#    - npm run verify:staging
+#    - ручной smoke /api/health
 ```
 
-Альтернатива точечного отката 017/018: только restore из dump (DROP новых таблиц вручную рискованнее из‑за FK/`web_sessions.web_account_id`).
+Точечный DROP таблиц 017/018 вручную **не рекомендуется** из‑за FK на `web_sessions.web_account_id` и уже выданных GRANT.
 
 ---
 
@@ -118,7 +136,8 @@ pg_restore `
 | `GNH_STAGING` | `1` |
 | `GNH_EXPECT_DATABASE` | `gnh_web_staging` |
 | `GNH_EXPECT_USER` | `gnh_web_stage` |
-| `DATABASE_URL` | только `…/gnh_web_staging`, user `gnh_web_stage` |
+| `DATABASE_URL` | `…/gnh_web_staging`, user `gnh_web_stage`, `sslmode=verify-full` |
+| `DATABASE_TLS_CA_FILE` | путь к Timeweb CA в контейнере |
 | `TRUST_PROXY` | `1` |
 | `WEB_COOKIE_SECURE` | `true` |
 | `WEB_PUBLIC_ORIGIN` | `https://<STAGING-DOMAIN>` |
@@ -128,6 +147,7 @@ pg_restore `
 | `GNH_DISABLE_TELEGRAM_BOT` | `1` |
 | `GNH_DISABLE_ADMIN_BROADCAST` | `1` |
 | `GNH_SERVE_WEB_STATIC` | `1` |
+| `GNH_WEB_STATIC_DIR` | `/app/server/web-dist` |
 | `YOOKASSA_*` | **тестовый** магазин; не live |
 | `TELEGRAM_BOT_TOKEN` | **staging** бот; не production |
 | `SMTP_ENABLED` / `SMTP_FROM` / `SMTP_RELAY_URL` | обязательны при `NODE_ENV=production` |

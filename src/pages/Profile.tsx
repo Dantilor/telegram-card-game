@@ -11,6 +11,7 @@ import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import { isWebShell } from '../config/shell'
 import { useWebSession } from '../shell/WebSessionContext'
+import { startEmailBind, startTelegramLinkRestore, verifyEmailBind } from '../lib/webAuth'
 import './Profile.css'
 
 const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
@@ -32,22 +33,36 @@ function Profile() {
   const user = web
     ? webSession.session
       ? {
-          first_name: webSession.session.displayName?.split(/\s+/)[0] || 'Host',
+          first_name:
+            webSession.session.displayName?.split(/\s+/)[0] ||
+            (webSession.session.webAccountId ? 'Игрок' : 'Host'),
           last_name: webSession.session.displayName?.split(/\s+/).slice(1).join(' ') || undefined,
           username: webSession.session.username ?? undefined,
           photo_url: webSession.session.pictureUrl ?? undefined,
-          id: webSession.session.telegramId,
+          id: webSession.session.telegramId ?? undefined,
         }
-      : null
+      : {
+          first_name: 'Игрок',
+          last_name: undefined,
+          username: undefined,
+          photo_url: undefined,
+          id: undefined,
+        }
     : tgUser
   const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
   const initData = getInitData()
   const userId = web ? webSession.session?.telegramId : (initData.userId ?? initData.user?.id)
+  const webAccountId = web ? webSession.session?.webAccountId : null
   const legal = useLegal()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [logoutBusy, setLogoutBusy] = useState(false)
+  const [emailDraft, setEmailDraft] = useState('')
+  const [emailCode, setEmailCode] = useState('')
+  const [emailStep, setEmailStep] = useState<'idle' | 'code'>('idle')
+  const [emailBusy, setEmailBusy] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<string | null>(null)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleRestorePurchase = useCallback(async () => {
@@ -69,6 +84,56 @@ function Profile() {
       }, 2500)
     }
   }, [refreshPremium])
+
+  const handleRestoreFromTelegram = useCallback(async () => {
+    if (!web) return
+    haptic('medium')
+    if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current)
+    setRestoreStatus(null)
+    setRestoreLoading(true)
+    try {
+      const started = await startTelegramLinkRestore()
+      const codeHint = started.code ? ` Код: ${started.code}` : ''
+      setRestoreStatus(
+        (started.instruction || 'Откройте Mini App и введите код привязки.') + codeHint
+      )
+    } catch {
+      setRestoreStatus('Не удалось начать восстановление из Telegram')
+    } finally {
+      setRestoreLoading(false)
+      restoreTimerRef.current = setTimeout(() => {
+        setRestoreStatus(null)
+        restoreTimerRef.current = null
+      }, 12000)
+    }
+  }, [web])
+
+  const handleEmailProtect = useCallback(async () => {
+    if (!web || !emailDraft.trim()) return
+    haptic('medium')
+    setEmailBusy(true)
+    setEmailStatus(null)
+    try {
+      if (emailStep === 'idle') {
+        const started = await startEmailBind(emailDraft.trim())
+        setEmailStep('code')
+        setEmailStatus(
+          started.code
+            ? `Код отправлен (тестовый: ${started.code})`
+            : 'Код отправлен на почту. Действует 10 минут.'
+        )
+      } else {
+        await verifyEmailBind(emailDraft.trim(), emailCode.trim())
+        setEmailStatus('Email подтверждён — покупки можно восстановить на другом устройстве.')
+        setEmailStep('idle')
+        setEmailCode('')
+      }
+    } catch {
+      setEmailStatus('Не удалось подтвердить email. Попробуйте позже.')
+    } finally {
+      setEmailBusy(false)
+    }
+  }, [web, emailDraft, emailCode, emailStep])
 
   const handleSupport = useCallback(() => {
     haptic('light')
@@ -149,9 +214,12 @@ function Profile() {
           ) : (
             <p className="profile-identity__guest">
               {web
-                ? 'Войдите через Telegram, чтобы увидеть профиль и статус Premium'
+                ? 'Анонимный WEB-профиль. Покупки сохраняются в cookie этого устройства.'
                 : 'Откройте приложение внутри Telegram, чтобы увидеть профиль и статус Premium'}
             </p>
+          )}
+          {web && webAccountId && (
+            <p className="profile-identity__username">WEB · покупки на этом устройстве</p>
           )}
           {web && userId != null && (
             <p className="profile-identity__username">Telegram ID {userId}</p>
@@ -184,8 +252,18 @@ function Profile() {
                 onClick={handleRestorePurchase}
                 disabled={restoreLoading}
               >
-                {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+                {restoreLoading ? 'Загрузка…' : 'Обновить статус Premium'}
               </button>
+              {web && (
+                <button
+                  type="button"
+                  className="profile-pass__restore"
+                  onClick={() => void handleRestoreFromTelegram()}
+                  disabled={restoreLoading}
+                >
+                  Восстановить покупку из Telegram
+                </button>
+              )}
               {restoreStatus && (
                 <span className="profile-pass__toast">{restoreStatus}</span>
               )}
@@ -201,6 +279,9 @@ function Profile() {
               </div>
               <p className="profile-pass__desc">
                 Все игры, колоды, избранное и 18+ режимы — без автосписаний.
+                {web
+                  ? ' Покупка сохраняется на этом устройстве; email для переноса — необязателен.'
+                  : ''}
               </p>
               <div className="profile-pass__perks">
                 {PREMIUM_PERKS.map((perk) => (
@@ -224,14 +305,72 @@ function Profile() {
                 onClick={handleRestorePurchase}
                 disabled={restoreLoading}
               >
-                {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+                {restoreLoading ? 'Загрузка…' : 'Обновить статус Premium'}
               </button>
+              {web && (
+                <button
+                  type="button"
+                  className="profile-pass__restore"
+                  onClick={() => void handleRestoreFromTelegram()}
+                  disabled={restoreLoading}
+                >
+                  Восстановить покупку из Telegram
+                </button>
+              )}
               {restoreStatus && (
                 <span className="profile-pass__toast">{restoreStatus}</span>
               )}
             </div>
           )}
         </section>
+
+        {web && (
+          <section className="profile-pass profile-pass--email">
+            <p className="profile-pass__eyebrow">Защита покупки</p>
+            <p className="profile-pass__desc">
+              Email необязателен. Без него покупка остаётся только в cookie этого устройства —
+              очистка браузера может привести к потере доступа.
+            </p>
+            <label className="profile-pass__email-label">
+              Email
+              <input
+                type="email"
+                className="profile-pass__email-input"
+                value={emailDraft}
+                onChange={(e) => setEmailDraft(e.target.value)}
+                placeholder="name@example.com"
+                autoComplete="email"
+              />
+            </label>
+            {emailStep === 'code' && (
+              <label className="profile-pass__email-label">
+                Код из письма
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="profile-pass__email-input"
+                  value={emailCode}
+                  onChange={(e) => setEmailCode(e.target.value)}
+                  placeholder="6 цифр"
+                  maxLength={6}
+                />
+              </label>
+            )}
+            <button
+              type="button"
+              className="profile-pass__restore"
+              onClick={() => void handleEmailProtect()}
+              disabled={emailBusy || !emailDraft.trim()}
+            >
+              {emailBusy
+                ? 'Загрузка…'
+                : emailStep === 'code'
+                  ? 'Подтвердить код'
+                  : 'Защитить покупку — добавить email'}
+            </button>
+            {emailStatus && <span className="profile-pass__toast">{emailStatus}</span>}
+          </section>
+        )}
 
         <div className="profile-aside">
         <section className="profile-menu">

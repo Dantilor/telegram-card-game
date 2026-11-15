@@ -33,14 +33,14 @@ function HomeWelcomeTop() {
   const tgUser = getTgUser()
   const webSession = useWebSession()
   const user = isWebShell()
-    ? webSession.session
-      ? {
-          first_name: webSession.session.displayName?.split(/\s+/)[0] || 'Host',
-          last_name: webSession.session.displayName?.split(/\s+/).slice(1).join(' ') || undefined,
-          username: webSession.session.username ?? undefined,
-          photo_url: webSession.session.pictureUrl ?? undefined,
-        }
-      : null
+    ? {
+        first_name:
+          webSession.session?.displayName?.split(/\s+/)[0] ||
+          (webSession.session?.webAccountId ? 'Игрок' : 'Host'),
+        last_name: webSession.session?.displayName?.split(/\s+/).slice(1).join(' ') || undefined,
+        username: webSession.session?.username ?? undefined,
+        photo_url: webSession.session?.pictureUrl ?? undefined,
+      }
     : tgUser
   const crownIcon = CROWN_BY_THEME[theme]
   const formattedCount = usersCount === null ? '—' : formatUsersCount(usersCount)

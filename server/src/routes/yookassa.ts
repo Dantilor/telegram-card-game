@@ -21,6 +21,7 @@ import { resolveAuth, type AuthSource } from '../auth/resolveAuth.js'
 import { webPublicOrigin } from '../auth/config.js'
 import { fetchYookassaPayment, parseYookassaAmountRub } from '../payments/yookassaClient.js'
 import { yookassaMockEnabled } from '../payments/yookassaMock.js'
+import { grantWebEntitlement } from '../auth/webAccounts.js'
 
 const mockPayments = new Map<
   string,
@@ -34,17 +35,25 @@ const mockPayments = new Map<
 async function verifyAuth(
   req: Request,
   res: Response
-): Promise<{ telegramId: number; source: AuthSource } | null> {
+): Promise<{ telegramId?: number; webAccountId?: string; source: AuthSource } | null> {
   const auth = await resolveAuth(req, { requireCsrfForWeb: true })
   if (!auth) {
     res.status(401).json({ error: 'Unauthorized', code: 'unauthorized' })
     return null
   }
-  return { telegramId: auth.telegramId, source: auth.source }
+  if (!auth.telegramId && !auth.webAccountId) {
+    res.status(401).json({ error: 'Unauthorized', code: 'unauthorized' })
+    return null
+  }
+  return {
+    telegramId: auth.telegramId,
+    webAccountId: auth.webAccountId,
+    source: auth.source,
+  }
 }
 
 function resolvePaymentReturnUrl(source: AuthSource): string | null {
-  if (source === 'web_session') {
+  if (source === 'web_session' || source === 'web_account') {
     const webReturn = (process.env.YOOKASSA_RETURN_URL_WEB ?? '').trim()
     if (webReturn) return webReturn
     const origin = webPublicOrigin()
@@ -52,6 +61,58 @@ function resolvePaymentReturnUrl(source: AuthSource): string | null {
   }
   const legacy = (process.env.YOOKASSA_RETURN_URL ?? '').trim()
   return legacy || null
+}
+
+async function grantWebAccountPremiumFromPayment(input: {
+  paymentId: string
+  webAccountId: string
+  planId: string
+  amountRub: number
+}): Promise<{ granted: boolean; alreadyDone?: boolean }> {
+  const existing = await query<{ premium_granted_at: Date | null }>(
+    `SELECT premium_granted_at FROM web_payments WHERE id = $1 LIMIT 1`,
+    [input.paymentId]
+  )
+  if (existing.rows[0]?.premium_granted_at) return { granted: false, alreadyDone: true }
+
+  const days = await getPlanDurationDays(input.planId)
+  if (!days) return { granted: false }
+
+  // Renew from max(now, existing WEB entitlement) so renewals never shrink Lifetime / active term.
+  const existingUntil = await query<{ active_until: Date }>(
+    `SELECT active_until FROM web_entitlements
+      WHERE web_account_id = $1::uuid AND active_until > now()
+      ORDER BY active_until DESC LIMIT 1`,
+    [input.webAccountId]
+  )
+  const base = existingUntil.rows[0]?.active_until
+    ? new Date(existingUntil.rows[0].active_until)
+    : new Date()
+  const start = base.getTime() > Date.now() ? base : new Date()
+  const activeUntil = new Date(start.getTime())
+  activeUntil.setUTCDate(activeUntil.getUTCDate() + days)
+
+  const claimed = await query<{ id: string }>(
+    `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status, paid_at, premium_granted_at)
+     VALUES ($1, $2::uuid, $3, $4, 'succeeded', now(), now())
+     ON CONFLICT (id) DO UPDATE SET
+       status = 'succeeded',
+       paid_at = COALESCE(web_payments.paid_at, now()),
+       premium_granted_at = now()
+     WHERE web_payments.premium_granted_at IS NULL
+     RETURNING id`,
+    [input.paymentId, input.webAccountId, input.planId, input.amountRub]
+  )
+  if (!claimed.rows[0]) return { granted: false, alreadyDone: true }
+
+  await grantWebEntitlement({
+    webAccountId: input.webAccountId,
+    planId: input.planId,
+    activeUntil,
+    source: 'web_purchase',
+    paymentId: input.paymentId,
+  })
+  return { granted: true }
 }
 
 const router = Router()
@@ -95,7 +156,7 @@ function buildReceipt(params: {
 async function handleCreatePayment(req: Request, res: Response) {
   const auth = await verifyAuth(req, res)
   if (auth == null) return
-  const { telegramId, source } = auth
+  const { telegramId, webAccountId, source } = auth
 
   const planId = req.body?.planId
   if (typeof planId !== 'string' || !planId.trim()) {
@@ -117,6 +178,47 @@ async function handleCreatePayment(req: Request, res: Response) {
     const plan = await getActivePlanById(planId.trim())
     if (!plan) {
       res.status(400).json({ ok: false, error: 'Plan not found or inactive' })
+      return
+    }
+
+    // Anonymous / email-bound WEB account checkout — never invents telegram_id.
+    if (webAccountId) {
+      const idempotenceKey = randomUUID()
+      const amount = `${plan.price_rub}.00`
+      const metadata = {
+        web_account_id: webAccountId,
+        plan_id: plan.plan_id,
+        planId: plan.plan_id,
+        auth_source: source,
+      }
+      if (yookassaMockEnabled()) {
+        const paymentId = `mock_web_${idempotenceKey.replace(/-/g, '').slice(0, 20)}`
+        const confirmationUrl = `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}paymentId=${encodeURIComponent(paymentId)}&mock=1`
+        mockPayments.set(paymentId, {
+          status: 'pending',
+          amount: { value: amount, currency: 'RUB' },
+          metadata,
+        })
+        await query(
+          `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status)
+           VALUES ($1, $2::uuid, $3, $4, 'pending')
+           ON CONFLICT (id) DO NOTHING`,
+          [paymentId, webAccountId, plan.plan_id, plan.price_rub]
+        )
+        console.log('[YooKassa] MOCK WEB create paymentId=', paymentId)
+        res.status(200).json({ confirmationUrl, paymentId, mock: true, webAccount: true })
+        return
+      }
+      res.status(503).json({
+        ok: false,
+        error: 'Live WEB YooKassa checkout is not enabled on this environment',
+        code: 'web_checkout_not_enabled',
+      })
+      return
+    }
+
+    if (!telegramId) {
+      res.status(401).json({ ok: false, error: 'Unauthorized', code: 'unauthorized' })
       return
     }
 
@@ -553,6 +655,31 @@ async function handleWebhook(req: Request, res: Response) {
           })
           return
         }
+      }
+
+      const meta = verified.metadata ?? {}
+      const webAccountId = (meta.web_account_id || '').trim()
+      const planId = (meta.plan_id || meta.planId || '').trim()
+      if (webAccountId && planId) {
+        const amountRub = parseYookassaAmountRub(verified.amount?.value) ?? 0
+        const webGrant = await grantWebAccountPremiumFromPayment({
+          paymentId: pid,
+          webAccountId,
+          planId,
+          amountRub: amountRub > 0 ? amountRub : 259,
+        })
+        if (webGrant.granted) {
+          console.log(
+            `[YooKassa] webhook: WEB premium granted paymentId=${pid} webAccountId=${webAccountId} planId=${planId}`
+          )
+          return
+        }
+        if (webGrant.alreadyDone) {
+          console.log('[YooKassa] webhook: WEB already processed paymentId=', pid)
+          return
+        }
+        console.error('[YooKassa] webhook: failed to grant WEB premium', { paymentId: pid })
+        return
       }
 
       const result = await grantPremiumByPaymentId(pid, {

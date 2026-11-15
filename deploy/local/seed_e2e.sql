@@ -18,6 +18,9 @@ INSERT INTO users (telegram_id) VALUES
   (900004)  -- expired
 ON CONFLICT (telegram_id) DO NOTHING;
 
+-- Free user must never keep leftover Premium from prior mock webhooks.
+DELETE FROM subscriptions WHERE telegram_id = 900001;
+
 INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
 VALUES
   (900002, 'premium_1m', now() + interval '30 days', now()),

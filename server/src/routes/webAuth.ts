@@ -17,7 +17,21 @@ import {
   verifyCsrf,
   findActiveSessionByToken,
 } from '../auth/webSession.js'
+import {
+  countRecentAnonAccounts,
+  createAnonymousWebAccountSession,
+  getWebAccountPremium,
+  grantWebEntitlement,
+} from '../auth/webAccounts.js'
+import {
+  completeEmailRecover,
+  startEmailBind,
+  startEmailRecover,
+  verifyEmailBind,
+} from '../auth/webEmailOtp.js'
 import { isWebOwnerAllowed, webFeatureEnabled } from '../config/runtimeFlags.js'
+import { sha256Hex } from '../auth/cryptoTokens.js'
+import { query } from '../db.js'
 
 const router = Router()
 
@@ -244,15 +258,404 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
   const cookies = readCookies(req)
   const sessionToken = cookies[SESSION_COOKIE]
   const session = sessionToken ? await findActiveSessionByToken(sessionToken) : null
+  const auth = req.auth!
+  let premium: { isPremium: boolean; activeUntil: string | null; sources?: string[] } | undefined
+  if (auth.webAccountId) {
+    const status = await getWebAccountPremium(auth.webAccountId)
+    premium = {
+      isPremium: status.isPremium,
+      activeUntil: status.activeUntil,
+      sources: status.sources,
+    }
+  }
   res.status(200).json({
     ok: true,
-    telegramId: req.auth!.telegramId,
-    source: req.auth!.source,
-    sessionId: req.auth!.sessionId,
+    telegramId: auth.telegramId ?? null,
+    webAccountId: auth.webAccountId ?? null,
+    source: auth.source,
+    sessionId: auth.sessionId,
     displayName: session?.display_name ?? null,
     username: session?.username ?? null,
     pictureUrl: session?.picture_url ?? null,
+    premium,
   })
+})
+
+/**
+ * Ensure anonymous WEB account + cookie session (no registration).
+ * POST /api/web/session/ensure
+ * Idempotent when a valid cookie already exists.
+ */
+router.post('/web/session/ensure', async (req: Request, res: Response) => {
+  try {
+    if (!webFeatureEnabled()) {
+      res.status(503).json({ error: 'WEB auth disabled', code: 'web_disabled' })
+      return
+    }
+    const existing = await resolveAuth(req, { requireCsrfForWeb: false })
+    if (existing?.webAccountId || existing?.telegramId) {
+      res.status(200).json({
+        ok: true,
+        created: false,
+        webAccountId: existing.webAccountId ?? null,
+        telegramId: existing.telegramId ?? null,
+        source: existing.source,
+      })
+      return
+    }
+
+    // Soft rate limit: global create burst (staging/local protection).
+    const recent = await countRecentAnonAccounts(60_000)
+    const maxPerMinute = Number(process.env.WEB_ANON_CREATE_MAX_PER_MIN || 120)
+    if (recent >= maxPerMinute) {
+      res.status(429).json({ error: 'Too many anonymous sessions', code: 'rate_limited' })
+      return
+    }
+
+    const created = await createAnonymousWebAccountSession({
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    })
+    const maxAgeSec = Math.floor(sessionTtlMs() / 1000)
+    setSessionCookies(res, {
+      sessionToken: created.sessionToken,
+      csrfToken: created.csrfToken,
+      maxAgeSec,
+    })
+    res.status(200).json({
+      ok: true,
+      created: true,
+      webAccountId: created.webAccountId,
+      source: 'web_account',
+      expiresAt: created.expiresAt.toISOString(),
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * Start Telegram Premium restore challenge for current WEB account.
+ * POST /api/web/telegram-link/start  (CSRF)
+ * Returns a short one-time code the user confirms from Mini App (staging/E2E may echo code when WEB_TELEGRAM_LINK_ECHO=1).
+ */
+router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const auth = req.auth!
+    if (!auth.webAccountId) {
+      res.status(400).json({ error: 'Anonymous WEB account required', code: 'web_account_required' })
+      return
+    }
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const code = String(Math.floor(100000 + Math.random() * 900000))
+    const expiresAt = new Date(Date.now() + 10 * 60_000)
+    await query(
+      `INSERT INTO web_telegram_link_challenges (web_account_id, code_hash, expires_at)
+       VALUES ($1::uuid, $2, $3)`,
+      [auth.webAccountId, sha256Hex(code), expiresAt.toISOString()]
+    )
+    const echo = process.env.WEB_TELEGRAM_LINK_ECHO === '1' && process.env.NODE_ENV !== 'production'
+    res.status(200).json({
+      ok: true,
+      expiresAt: expiresAt.toISOString(),
+      instruction:
+        'Откройте GameNight Host в Telegram Mini App → Привязать WEB и введите этот код. Код действует 10 минут.',
+      ...(echo ? { code } : {}),
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * Complete Telegram link from Mini App initData + code.
+ * POST /api/web/telegram-link/complete  (initData auth, body: { code })
+ */
+router.post('/web/telegram-link/complete', async (req: Request, res: Response) => {
+  try {
+    const auth = await resolveAuth(req)
+    if (!auth?.telegramId || auth.source !== 'telegram_init_data') {
+      res.status(401).json({ error: 'Telegram Mini App auth required', code: 'telegram_init_required' })
+      return
+    }
+    const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
+    if (!/^\d{6}$/.test(code)) {
+      res.status(400).json({ error: 'Invalid code', code: 'invalid_code' })
+      return
+    }
+    const challenge = await query<{
+      id: number
+      web_account_id: string
+      attempts: number
+      expires_at: Date
+      consumed_at: Date | null
+    }>(
+      `SELECT id, web_account_id, attempts, expires_at, consumed_at
+         FROM web_telegram_link_challenges
+        WHERE code_hash = $1
+        ORDER BY id DESC
+        LIMIT 1`,
+      [sha256Hex(code)]
+    )
+    const row = challenge.rows[0]
+    if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
+      res.status(400).json({ error: 'Code expired or unknown', code: 'code_invalid' })
+      return
+    }
+    if (row.attempts >= 5) {
+      res.status(429).json({ error: 'Too many attempts', code: 'rate_limited' })
+      return
+    }
+    await query(`UPDATE web_telegram_link_challenges SET attempts = attempts + 1 WHERE id = $1`, [row.id])
+
+    // Consume code
+    await query(
+      `UPDATE web_telegram_link_challenges SET consumed_at = now() WHERE id = $1 AND consumed_at IS NULL`,
+      [row.id]
+    )
+
+    // One active telegram ↔ one account
+    await query(
+      `UPDATE web_telegram_links SET revoked_at = now()
+        WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
+      [auth.telegramId, row.web_account_id]
+    )
+    await query(
+      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+      [row.web_account_id, auth.telegramId]
+    )
+
+    // Mirror active Telegram subscription into web_entitlements (telegram_link source) without mutating subscriptions.
+    const sub = await query<{ active_until: Date; plan_id: string }>(
+      `SELECT active_until, plan_id FROM subscriptions
+        WHERE telegram_id = $1::bigint AND active_until > now()
+        ORDER BY active_until DESC LIMIT 1`,
+      [auth.telegramId]
+    )
+    if (sub.rows[0]) {
+      await grantWebEntitlement({
+        webAccountId: row.web_account_id,
+        planId: sub.rows[0].plan_id || 'premium_1m',
+        activeUntil: new Date(sub.rows[0].active_until),
+        source: 'telegram_link',
+        linkedTelegramId: auth.telegramId,
+      })
+    }
+
+    res.status(200).json({
+      ok: true,
+      linked: true,
+      telegramId: auth.telegramId,
+      premiumRestored: Boolean(sub.rows[0]),
+      activeUntil: sub.rows[0]?.active_until?.toISOString?.() ?? null,
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * Staging/E2E: complete Telegram link without Mini App initData.
+ * POST /api/web/telegram-link/complete-mock { code, telegramId, secret }
+ * Enabled only when WEB_TELEGRAM_LINK_ECHO=1 and not production.
+ */
+router.post('/web/telegram-link/complete-mock', async (req: Request, res: Response) => {
+  try {
+    if (process.env.NODE_ENV === 'production' || process.env.WEB_TELEGRAM_LINK_ECHO !== '1') {
+      res.status(404).json({ error: 'Not found', code: 'not_found' })
+      return
+    }
+    const secret = typeof req.body?.secret === 'string' ? req.body.secret : ''
+    const expected = process.env.WEB_DEV_LOGIN_SECRET || ''
+    if (!expected || secret !== expected) {
+      res.status(401).json({ error: 'Unauthorized', code: 'unauthorized' })
+      return
+    }
+    const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
+    const telegramId = Number(req.body?.telegramId)
+    if (!/^\d{6}$/.test(code) || !Number.isFinite(telegramId) || telegramId <= 0) {
+      res.status(400).json({ error: 'Invalid payload', code: 'invalid_body' })
+      return
+    }
+    const challenge = await query<{
+      id: number
+      web_account_id: string
+      attempts: number
+      expires_at: Date
+      consumed_at: Date | null
+    }>(
+      `SELECT id, web_account_id, attempts, expires_at, consumed_at
+         FROM web_telegram_link_challenges
+        WHERE code_hash = $1
+        ORDER BY id DESC
+        LIMIT 1`,
+      [sha256Hex(code)]
+    )
+    const row = challenge.rows[0]
+    if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
+      res.status(400).json({ error: 'Code expired or unknown', code: 'code_invalid' })
+      return
+    }
+    await query(
+      `UPDATE web_telegram_link_challenges SET consumed_at = now() WHERE id = $1 AND consumed_at IS NULL`,
+      [row.id]
+    )
+    await ensureUser(telegramId)
+    await query(
+      `UPDATE web_telegram_links SET revoked_at = now()
+        WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
+      [telegramId, row.web_account_id]
+    )
+    await query(
+      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+      [row.web_account_id, telegramId]
+    )
+    const sub = await query<{ active_until: Date; plan_id: string }>(
+      `SELECT active_until, plan_id FROM subscriptions
+        WHERE telegram_id = $1::bigint AND active_until > now()
+        ORDER BY active_until DESC LIMIT 1`,
+      [telegramId]
+    )
+    if (sub.rows[0]) {
+      await grantWebEntitlement({
+        webAccountId: row.web_account_id,
+        planId: sub.rows[0].plan_id || 'premium_1m',
+        activeUntil: new Date(sub.rows[0].active_until),
+        source: 'telegram_link',
+        linkedTelegramId: telegramId,
+      })
+    }
+    res.status(200).json({
+      ok: true,
+      linked: true,
+      telegramId,
+      premiumRestored: Boolean(sub.rows[0]),
+      activeUntil: sub.rows[0]?.active_until
+        ? new Date(sub.rows[0].active_until).toISOString()
+        : null,
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * Optional: bind email to current WEB account (purchase protection).
+ * POST /api/web/email/bind/start { email }  CSRF
+ */
+router.post('/web/email/bind/start', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const auth = req.auth!
+    if (!auth.webAccountId) {
+      res.status(400).json({ error: 'Anonymous WEB account required', code: 'web_account_required' })
+      return
+    }
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const email = typeof req.body?.email === 'string' ? req.body.email : ''
+    const started = await startEmailBind({ webAccountId: auth.webAccountId, email })
+    res.status(200).json({
+      ok: true,
+      expiresAt: started.expiresAt.toISOString(),
+      ...(started.echoCode ? { code: started.echoCode } : {}),
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * POST /api/web/email/bind/verify { email, code } CSRF
+ */
+router.post('/web/email/bind/verify', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const auth = req.auth!
+    if (!auth.webAccountId) {
+      res.status(400).json({ error: 'Anonymous WEB account required', code: 'web_account_required' })
+      return
+    }
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const email = typeof req.body?.email === 'string' ? req.body.email : ''
+    const code = typeof req.body?.code === 'string' ? req.body.code : ''
+    const verified = await verifyEmailBind({ webAccountId: auth.webAccountId, email, code })
+    res.status(200).json({ ok: true, email: verified.emailNormalized })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * POST /api/web/email/recover/start { email } — no auth; anti-enumeration
+ */
+router.post('/web/email/recover/start', async (req: Request, res: Response) => {
+  try {
+    if (!webFeatureEnabled()) {
+      res.status(503).json({ error: 'WEB auth disabled', code: 'web_disabled' })
+      return
+    }
+    const email = typeof req.body?.email === 'string' ? req.body.email : ''
+    const started = await startEmailRecover({ email })
+    res.status(200).json({
+      ok: true,
+      expiresAt: started.expiresAt,
+      ...(started.echoCode ? { code: started.echoCode } : {}),
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * POST /api/web/email/recover/complete { email, code } — sets new session cookies
+ */
+router.post('/web/email/recover/complete', async (req: Request, res: Response) => {
+  try {
+    if (!webFeatureEnabled()) {
+      res.status(503).json({ error: 'WEB auth disabled', code: 'web_disabled' })
+      return
+    }
+    const email = typeof req.body?.email === 'string' ? req.body.email : ''
+    const code = typeof req.body?.code === 'string' ? req.body.code : ''
+    const recovered = await completeEmailRecover({
+      email,
+      code,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    })
+    const maxAgeSec = Math.floor(sessionTtlMs() / 1000)
+    setSessionCookies(res, {
+      sessionToken: recovered.sessionToken,
+      csrfToken: recovered.csrfToken,
+      maxAgeSec,
+    })
+    res.status(200).json({
+      ok: true,
+      webAccountId: recovered.webAccountId,
+      expiresAt: recovered.expiresAt.toISOString(),
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
 })
 
 /**
@@ -268,7 +671,8 @@ router.get('/web/auth/whoami', async (req: Request, res: Response) => {
     }
     res.status(200).json({
       ok: true,
-      telegramId: auth.telegramId,
+      telegramId: auth.telegramId ?? null,
+      webAccountId: auth.webAccountId ?? null,
       source: auth.source,
       sessionId: auth.sessionId ?? null,
     })

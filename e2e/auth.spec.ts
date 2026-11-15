@@ -11,10 +11,13 @@ import {
   readCsrf,
 } from './helpers'
 
-test.describe('WEB auth (dev-login)', () => {
-  test('login screen, session cookies, me endpoints, reload, logout', async ({ page, context }) => {
-    await page.goto(`${BASE_URL}/login`)
-    await expect(page.getByRole('button', { name: /Войти через Telegram/i })).toBeVisible()
+test.describe('WEB auth (dev-login optional)', () => {
+  test('dev-login session cookies, me endpoints, reload; logout returns to anonymous Home', async ({
+    page,
+    context,
+  }) => {
+    await page.goto(`${BASE_URL}/`)
+    await expect(page.getByText('GameNight Host').first()).toBeVisible({ timeout: 30_000 })
 
     const login = await page.request.post(`${BASE_URL}/api/web/auth/dev-login`, {
       data: {
@@ -51,9 +54,9 @@ test.describe('WEB auth (dev-login)', () => {
     expect(logout.ok()).toBeTruthy()
 
     await page.goto(`${BASE_URL}/`)
-    await expect(page.getByRole('button', { name: /Войти через Telegram/i })).toBeVisible({
-      timeout: 15_000,
-    })
+    // After logout, anonymous ensure recreates a WEB session — still no login gate.
+    await expect(page.getByText('GameNight Host').first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('button', { name: /Войти через Telegram/i })).toHaveCount(0)
   })
 
   test('dev-login rejected without secret', async ({ request }) => {

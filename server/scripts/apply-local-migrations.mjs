@@ -58,6 +58,7 @@ const steps = [
   { label: '014', file: 'db/migrations/014_legal_confirmation_source_web.sql' },
   { label: '015', file: 'db/migrations/015_infected_rooms_code_digits.sql' },
   { label: '016-local-subs', file: 'db/local/016_subscriptions_telegram_unique.sql' },
+  { label: '017', file: 'db/migrations/017_web_anonymous_accounts.sql' },
 ]
 
 if (wantSeed) {

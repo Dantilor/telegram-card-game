@@ -36,12 +36,12 @@ export function requireAnyAuth(options: ResolveAuthOptions = {}) {
   }
 }
 
-/** Require WEB session specifically (ignores initData for the test/session endpoints). */
+/** Require WEB cookie session (OIDC telegram or anonymous web_account). */
 export function requireWebSession(options: ResolveAuthOptions = {}) {
   return async (req: AuthedRequest, res: Response, next: NextFunction) => {
     try {
       const auth = await requireAuth(req, { ...options, requireCsrfForWeb: false })
-      if (auth.source !== 'web_session') {
+      if (auth.source !== 'web_session' && auth.source !== 'web_account') {
         res.status(401).json({ error: 'Unauthorized', code: 'web_session_required' })
         return
       }

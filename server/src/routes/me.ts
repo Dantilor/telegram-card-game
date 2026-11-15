@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { getLatestActiveUntil } from '../services/subscriptions.js'
 import { resolveAuth } from '../auth/resolveAuth.js'
+import { getWebAccountPremium } from '../auth/webAccounts.js'
 
 const router = Router()
 
@@ -11,9 +12,28 @@ router.get('/me', async (req: Request, res: Response) => {
     return
   }
 
-  const telegramId = auth.telegramId
-
   try {
+    if (auth.webAccountId) {
+      const status = await getWebAccountPremium(auth.webAccountId)
+      res.status(200).json({
+        telegramId: null,
+        webAccountId: auth.webAccountId,
+        isPremium: status.isPremium,
+        premium: status.isPremium,
+        premiumUntil: status.activeUntil,
+        activeUntil: status.activeUntil,
+        sources: status.sources,
+        authSource: auth.source,
+      })
+      return
+    }
+
+    const telegramId = auth.telegramId
+    if (!telegramId) {
+      res.status(401).json({ error: 'Unauthorized', code: 'unauthorized' })
+      return
+    }
+
     const activeUntilDate = await getLatestActiveUntil(telegramId)
     const now = new Date()
     const premium = activeUntilDate != null && activeUntilDate > now

@@ -2,15 +2,24 @@ import type { Request } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
 import type { Queryable } from '../legal/types.js'
 import { CSRF_COOKIE, SESSION_COOKIE, readCookies } from './cookies.js'
-import { findActiveSessionByToken, parseTelegramId, touchSession, verifyCsrf } from './webSession.js'
+import {
+  findActiveSessionByToken,
+  parseTelegramId,
+  touchSession,
+  verifyCsrf,
+} from './webSession.js'
+import { touchWebAccount } from './webAccounts.js'
 
-export type AuthSource = 'telegram_init_data' | 'web_session'
+export type AuthSource = 'telegram_init_data' | 'web_session' | 'web_account'
 
 export type ResolvedAuth = {
-  telegramId: number
+  /** Mini App / OIDC WEB session subject. Absent for anonymous WEB accounts. */
+  telegramId?: number
+  /** Anonymous or email-bound WEB account. Absent for Mini App initData. */
+  webAccountId?: string
   source: AuthSource
   sessionId?: number
-  /** Present for web_session; used by CSRF checks on mutating routes. */
+  /** Present for cookie sessions; used by CSRF checks on mutating routes. */
   csrfValid?: boolean
 }
 
@@ -54,8 +63,11 @@ function readCsrfToken(req: Request, cookies: Record<string, string>): string | 
 }
 
 /**
- * Dual auth: Mini App initData (signature verified) OR WEB session cookie (DB verified).
- * Client-supplied telegram_id is never trusted.
+ * Dual/triple auth:
+ * - Mini App initData (signature verified) → telegramId
+ * - WEB OIDC session cookie → telegramId
+ * - Anonymous WEB account cookie → webAccountId (never a fake telegram_id)
+ * Client-supplied telegram_id / web_account_id is never trusted.
  */
 export async function resolveAuth(
   req: Request,
@@ -70,8 +82,6 @@ export async function resolveAuth(
       const parsed = verifyInitData(initData, botToken)
       return { telegramId: parsed.telegram_id, source: 'telegram_init_data' }
     } catch {
-      // Fall through to WEB session only when initData was absent.
-      // If the client sent initData but it is invalid, fail closed for that path.
       return null
     }
   }
@@ -91,8 +101,23 @@ export async function resolveAuth(
   }
 
   if (!options.skipTouch) {
-    // Sliding renewal: refresh expires_at on each successful resolve.
     await touchSession(session.id, options.db)
+  }
+
+  if (session.web_account_id) {
+    if (!options.skipTouch) {
+      await touchWebAccount(String(session.web_account_id), options.db).catch(() => {})
+    }
+    return {
+      webAccountId: String(session.web_account_id),
+      source: 'web_account',
+      sessionId: session.id,
+      csrfValid,
+    }
+  }
+
+  if (session.telegram_id == null || session.telegram_id === '') {
+    return null
   }
 
   return {
@@ -115,4 +140,19 @@ export async function requireAuth(
     throw err
   }
   return auth
+}
+
+/** Require a Telegram-backed subject (Mini App or OIDC WEB). Anonymous WEB accounts fail. */
+export async function requireTelegramAuth(
+  req: Request,
+  options: ResolveAuthOptions = {}
+): Promise<ResolvedAuth & { telegramId: number }> {
+  const auth = await requireAuth(req, options)
+  if (!auth.telegramId) {
+    const err = new Error('Telegram auth required') as Error & { status?: number; code?: string }
+    err.status = 401
+    err.code = 'telegram_auth_required'
+    throw err
+  }
+  return auth as ResolvedAuth & { telegramId: number }
 }

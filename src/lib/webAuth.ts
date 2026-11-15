@@ -4,12 +4,18 @@ import { readCsrfToken } from './csrf'
 
 export type WebSessionMe = {
   ok: boolean
-  telegramId: number
+  telegramId?: number | null
+  webAccountId?: string | null
   source: string
   sessionId?: number
   displayName?: string | null
   username?: string | null
   pictureUrl?: string | null
+  premium?: {
+    isPremium: boolean
+    activeUntil: string | null
+    sources?: string[]
+  }
 }
 
 function apiBase(): string {
@@ -28,6 +34,18 @@ export function buildTelegramLoginUrl(returnTo = '/'): string {
     return_to: path,
   })
   return `${apiBase()}/api/web/auth/telegram/start?${qs.toString()}`
+}
+
+/** Create or resume anonymous WEB session (no registration). */
+export async function ensureWebSession(): Promise<WebSessionMe | null> {
+  const res = await fetch(`${apiBase()}/api/web/session/ensure`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  })
+  if (!res.ok) return null
+  // After ensure, load full profile (premium, display).
+  return fetchWebSessionMe()
 }
 
 export async function fetchWebSessionMe(): Promise<WebSessionMe | null> {
@@ -55,6 +73,73 @@ export async function logoutWebSession(): Promise<void> {
       ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
   })
+}
+
+export async function startTelegramLinkRestore(): Promise<{
+  ok: boolean
+  expiresAt?: string
+  instruction?: string
+  code?: string
+}> {
+  const csrf = readCsrfToken()
+  const res = await fetch(`${apiBase()}/api/web/telegram-link/start`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+  })
+  if (!res.ok) {
+    const err = new Error('telegram_link_start_failed') as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as { ok: boolean; expiresAt?: string; instruction?: string; code?: string }
+}
+
+export async function startEmailBind(email: string): Promise<{
+  ok: boolean
+  expiresAt?: string
+  code?: string
+}> {
+  const csrf = readCsrfToken()
+  const res = await fetch(`${apiBase()}/api/web/email/bind/start`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+    body: JSON.stringify({ email }),
+  })
+  if (!res.ok) {
+    const err = new Error('email_bind_start_failed') as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as { ok: boolean; expiresAt?: string; code?: string }
+}
+
+export async function verifyEmailBind(email: string, code: string): Promise<{ ok: boolean; email?: string }> {
+  const csrf = readCsrfToken()
+  const res = await fetch(`${apiBase()}/api/web/email/bind/verify`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+    body: JSON.stringify({ email, code }),
+  })
+  if (!res.ok) {
+    const err = new Error('email_bind_verify_failed') as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as { ok: boolean; email?: string }
 }
 
 /** Local-only helper when WEB_DEV_LOGIN_ENABLED is on the server. */

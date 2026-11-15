@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { query } from '../db.js'
 import { resolveAuth } from '../auth/resolveAuth.js'
+import { getWebAccountPremium } from '../auth/webAccounts.js'
 
 const QUERY_TIMEOUT_MS = 8000
 const isDev = process.env.NODE_ENV !== 'production'
@@ -25,7 +26,21 @@ router.get('/premium-status', async (req: Request, res: Response) => {
   }
 
   try {
+    if (auth.webAccountId) {
+      const status = await getWebAccountPremium(auth.webAccountId)
+      safeResponse(res, status.isPremium, status.activeUntil, {
+        authSource: auth.source,
+        webAccountId: auth.webAccountId,
+        sources: status.sources,
+      })
+      return
+    }
+
     const telegram_id = auth.telegramId
+    if (!telegram_id) {
+      safeResponse(res, false, null)
+      return
+    }
 
     const queryPromise = query<{ active_until: Date }>(
       `SELECT active_until FROM subscriptions

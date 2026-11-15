@@ -868,3 +868,31 @@ html:has(.profile-page) #root {
     grid-column: 1 / -1;
   }
 }
+
+.profile-pass--email {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.profile-pass__email-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.65rem 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.profile-pass__email-input {
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  border-radius: 12px;
+  background: rgba(15, 13, 24, 0.65);
+  color: #f5f3ff;
+  padding: 0.65rem 0.8rem;
+  font-size: 1rem;
+}
+
+.profile-pass__email-input:focus {
+  outline: 2px solid rgba(167, 139, 250, 0.55);
+  outline-offset: 1px;
+}

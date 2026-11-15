@@ -131,7 +131,7 @@ async function subjectFromRequest(
       botToken: deps.getBotToken(),
       requireCsrfForWeb: req.method !== 'GET' && req.method !== 'HEAD',
     })
-    if (auth) return { telegramId: auth.telegramId, authSource: auth.source }
+    if (auth?.telegramId) return { telegramId: auth.telegramId, authSource: auth.source }
   } catch {
     /* fall through */
   }

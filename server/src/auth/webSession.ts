@@ -5,7 +5,8 @@ import { sessionTtlMs } from './config.js'
 
 export type WebSessionRecord = {
   id: number
-  telegram_id: string | number
+  telegram_id: string | number | null
+  web_account_id?: string | null
   expires_at: Date
   revoked_at: Date | null
   csrf_hash: string
@@ -90,7 +91,7 @@ export async function findActiveSessionByToken(
   const tokenHash = sha256Hex(sessionToken.trim())
   try {
     const result = await db(customDb).query<WebSessionRecord>(
-      `SELECT id, telegram_id, expires_at, revoked_at, csrf_hash,
+      `SELECT id, telegram_id, web_account_id, expires_at, revoked_at, csrf_hash,
               display_name, username, picture_url
        FROM web_sessions
        WHERE token_hash = $1
@@ -104,7 +105,7 @@ export async function findActiveSessionByToken(
     if (!(expiresAt.getTime() > Date.now())) return null
     return row
   } catch {
-    // Fallback when migration 013 profile columns are absent.
+    // Fallback when migration 013/017 columns are absent.
     const result = await db(customDb).query<WebSessionRecord>(
       `SELECT id, telegram_id, expires_at, revoked_at, csrf_hash
        FROM web_sessions

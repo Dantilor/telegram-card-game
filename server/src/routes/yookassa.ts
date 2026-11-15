@@ -68,51 +68,86 @@ async function grantWebAccountPremiumFromPayment(input: {
   webAccountId: string
   planId: string
   amountRub: number
-}): Promise<{ granted: boolean; alreadyDone?: boolean }> {
-  const existing = await query<{ premium_granted_at: Date | null }>(
-    `SELECT premium_granted_at FROM web_payments WHERE id = $1 LIMIT 1`,
+  currency?: string
+}): Promise<{ granted: boolean; alreadyDone?: boolean; reason?: string }> {
+  if (input.currency && input.currency !== 'RUB') {
+    return { granted: false, reason: 'currency_mismatch' }
+  }
+
+  const row = await query<{
+    web_account_id: string
+    plan_id: string
+    amount_rub: number
+    premium_granted_at: Date | null
+  }>(
+    `SELECT web_account_id::text AS web_account_id, plan_id, amount_rub, premium_granted_at
+       FROM web_payments WHERE id = $1 LIMIT 1`,
     [input.paymentId]
   )
-  if (existing.rows[0]?.premium_granted_at) return { granted: false, alreadyDone: true }
+  const payment = row.rows[0]
+  if (!payment) {
+    return { granted: false, reason: 'web_payment_missing' }
+  }
+  if (payment.premium_granted_at) return { granted: false, alreadyDone: true }
+  if (payment.web_account_id !== input.webAccountId) {
+    return { granted: false, reason: 'web_account_mismatch' }
+  }
+  if (payment.plan_id !== input.planId) {
+    return { granted: false, reason: 'plan_mismatch' }
+  }
+  if (Number(payment.amount_rub) !== Number(input.amountRub)) {
+    return { granted: false, reason: 'amount_mismatch' }
+  }
 
   const days = await getPlanDurationDays(input.planId)
-  if (!days) return { granted: false }
+  if (!days) return { granted: false, reason: 'plan_duration_missing' }
 
-  // Renew from max(now, existing WEB entitlement) so renewals never shrink Lifetime / active term.
-  const existingUntil = await query<{ active_until: Date }>(
-    `SELECT active_until FROM web_entitlements
-      WHERE web_account_id = $1::uuid AND active_until > now()
-      ORDER BY active_until DESC LIMIT 1`,
-    [input.webAccountId]
-  )
-  const base = existingUntil.rows[0]?.active_until
-    ? new Date(existingUntil.rows[0].active_until)
-    : new Date()
-  const start = base.getTime() > Date.now() ? base : new Date()
-  const activeUntil = new Date(start.getTime())
-  activeUntil.setUTCDate(activeUntil.getUTCDate() + days)
+  return await withTransaction(async (tx) => {
+    const claimed = await tx.query<{ id: string }>(
+      `UPDATE web_payments
+          SET status = 'succeeded',
+              paid_at = COALESCE(paid_at, now()),
+              premium_granted_at = now()
+        WHERE id = $1
+          AND premium_granted_at IS NULL
+          AND web_account_id = $2::uuid
+          AND plan_id = $3
+          AND amount_rub = $4
+        RETURNING id`,
+      [input.paymentId, input.webAccountId, input.planId, input.amountRub]
+    )
+    if (!claimed.rows[0]) {
+      const again = await tx.query<{ premium_granted_at: Date | null }>(
+        `SELECT premium_granted_at FROM web_payments WHERE id = $1 LIMIT 1`,
+        [input.paymentId]
+      )
+      if (again.rows[0]?.premium_granted_at) return { granted: false, alreadyDone: true }
+      return { granted: false, reason: 'claim_failed' }
+    }
 
-  const claimed = await query<{ id: string }>(
-    `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status, paid_at, premium_granted_at)
-     VALUES ($1, $2::uuid, $3, $4, 'succeeded', now(), now())
-     ON CONFLICT (id) DO UPDATE SET
-       status = 'succeeded',
-       paid_at = COALESCE(web_payments.paid_at, now()),
-       premium_granted_at = now()
-     WHERE web_payments.premium_granted_at IS NULL
-     RETURNING id`,
-    [input.paymentId, input.webAccountId, input.planId, input.amountRub]
-  )
-  if (!claimed.rows[0]) return { granted: false, alreadyDone: true }
+    const existingUntil = await tx.query<{ active_until: Date }>(
+      `SELECT active_until FROM web_entitlements
+        WHERE web_account_id = $1::uuid AND active_until > now()
+        ORDER BY active_until DESC LIMIT 1`,
+      [input.webAccountId]
+    )
+    const base = existingUntil.rows[0]?.active_until
+      ? new Date(existingUntil.rows[0].active_until)
+      : new Date()
+    const start = base.getTime() > Date.now() ? base : new Date()
+    const activeUntil = new Date(start.getTime())
+    activeUntil.setUTCDate(activeUntil.getUTCDate() + days)
 
-  await grantWebEntitlement({
-    webAccountId: input.webAccountId,
-    planId: input.planId,
-    activeUntil,
-    source: 'web_purchase',
-    paymentId: input.paymentId,
+    await grantWebEntitlement({
+      webAccountId: input.webAccountId,
+      planId: input.planId,
+      activeUntil,
+      source: 'web_purchase',
+      paymentId: input.paymentId,
+      db: tx,
+    })
+    return { granted: true }
   })
-  return { granted: true }
 }
 
 const router = Router()
@@ -183,6 +218,14 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     // Anonymous / email-bound WEB account checkout — never invents telegram_id.
     if (webAccountId) {
+      if (!receiptCustomer.email) {
+        res.status(400).json({
+          ok: false,
+          error: 'email required for WEB receipt',
+          code: 'receipt_email_required',
+        })
+        return
+      }
       const idempotenceKey = randomUUID()
       const amount = `${plan.price_rub}.00`
       const metadata = {
@@ -191,6 +234,15 @@ async function handleCreatePayment(req: Request, res: Response) {
         planId: plan.plan_id,
         auth_source: source,
       }
+      const description = `GameNight Host WEB: ${plan.title} (${plan.plan_id})`
+      const receipt = buildReceipt({
+        customerEmail: receiptCustomer.email,
+        planTitle: plan.title,
+        planId: plan.plan_id,
+        durationDays: plan.duration_days,
+        priceRub: plan.price_rub,
+      })
+
       if (yookassaMockEnabled()) {
         const paymentId = `mock_web_${idempotenceKey.replace(/-/g, '').slice(0, 20)}`
         const confirmationUrl = `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}paymentId=${encodeURIComponent(paymentId)}&mock=1`
@@ -209,11 +261,46 @@ async function handleCreatePayment(req: Request, res: Response) {
         res.status(200).json({ confirmationUrl, paymentId, mock: true, webAccount: true })
         return
       }
-      res.status(503).json({
-        ok: false,
-        error: 'Live WEB YooKassa checkout is not enabled on this environment',
-        code: 'web_checkout_not_enabled',
+
+      const yookassaRes = await fetch('https://api.yookassa.ru/v3/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Basic ' + Buffer.from(`${shopId}:${secretKey}`).toString('base64'),
+          'Idempotence-Key': idempotenceKey,
+        },
+        body: JSON.stringify({
+          amount: { value: amount, currency: 'RUB' },
+          confirmation: { type: 'redirect' as const, return_url: returnUrl },
+          capture: true,
+          description,
+          metadata,
+          receipt,
+        }),
       })
+      if (!yookassaRes.ok) {
+        const errText = await yookassaRes.text()
+        console.error('[YooKassa] WEB API error:', yookassaRes.status, errText)
+        res.status(502).json({ ok: false, error: 'Payment provider error' })
+        return
+      }
+      const payment = (await yookassaRes.json()) as {
+        id: string
+        confirmation?: { confirmation_url?: string }
+      }
+      const confirmationUrl = payment.confirmation?.confirmation_url
+      if (!payment.id || !confirmationUrl) {
+        console.error('[YooKassa] WEB: invalid payment response')
+        res.status(502).json({ ok: false, error: 'Invalid payment response' })
+        return
+      }
+      await query(
+        `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status)
+         VALUES ($1, $2::uuid, $3, $4, 'pending')
+         ON CONFLICT (id) DO NOTHING`,
+        [payment.id, webAccountId, plan.plan_id, plan.price_rub]
+      )
+      res.status(200).json({ confirmationUrl, paymentId: payment.id, webAccount: true })
       return
     }
 
@@ -661,12 +748,27 @@ async function handleWebhook(req: Request, res: Response) {
       const webAccountId = (meta.web_account_id || '').trim()
       const planId = (meta.plan_id || meta.planId || '').trim()
       if (webAccountId && planId) {
-        const amountRub = parseYookassaAmountRub(verified.amount?.value) ?? 0
+        const amountRub = parseYookassaAmountRub(verified.amount?.value)
+        if (amountRub == null || amountRub <= 0) {
+          console.error('[YooKassa] webhook: WEB amount missing', { paymentId: pid })
+          return
+        }
+        const catalogPlan = await getActivePlanById(planId)
+        if (!catalogPlan || catalogPlan.price_rub !== amountRub) {
+          console.error('[YooKassa] webhook: WEB plan/amount mismatch vs catalog', {
+            paymentId: pid,
+            planId,
+            amountRub,
+            catalog: catalogPlan?.price_rub,
+          })
+          return
+        }
         const webGrant = await grantWebAccountPremiumFromPayment({
           paymentId: pid,
           webAccountId,
           planId,
-          amountRub: amountRub > 0 ? amountRub : 259,
+          amountRub,
+          currency: verified.amount?.currency || 'RUB',
         })
         if (webGrant.granted) {
           console.log(
@@ -678,7 +780,10 @@ async function handleWebhook(req: Request, res: Response) {
           console.log('[YooKassa] webhook: WEB already processed paymentId=', pid)
           return
         }
-        console.error('[YooKassa] webhook: failed to grant WEB premium', { paymentId: pid })
+        console.error('[YooKassa] webhook: failed to grant WEB premium', {
+          paymentId: pid,
+          reason: webGrant.reason ?? 'unknown',
+        })
         return
       }
 

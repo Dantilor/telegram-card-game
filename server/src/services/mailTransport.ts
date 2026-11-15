@@ -1,6 +1,6 @@
 /**
- * Minimal mail transport for WEB email OTP / transactional messages.
- * No marketing. Staging/local default: log-only test transport.
+ * Mail transport for WEB email OTP / transactional messages.
+ * No marketing. Production must not silently fall back to test transport.
  */
 
 export type MailMessage = {
@@ -13,15 +13,22 @@ export type MailTransport = {
   send(message: MailMessage): Promise<{ ok: true; transport: string }>
 }
 
+function isProductionLike(): boolean {
+  if (process.env.NODE_ENV === 'production') return true
+  if (process.env.GNH_PRODUCTION === '1' || process.env.GNH_PRODUCTION === 'true') return true
+  if (process.env.TIMEWEB === '1' || process.env.TIMEWEB === 'true') return true
+  return false
+}
+
 function smtpConfigured(): boolean {
   return Boolean(
-    (process.env.SMTP_HOST || '').trim() &&
-      (process.env.SMTP_FROM || '').trim() &&
-      process.env.SMTP_ENABLED === '1'
+    (process.env.SMTP_FROM || '').trim() &&
+      process.env.SMTP_ENABLED === '1' &&
+      ((process.env.SMTP_RELAY_URL || '').trim() || (process.env.SMTP_HOST || '').trim())
   )
 }
 
-/** Dev/staging: never sends network mail; echoes to stdout (code never logged by callers). */
+/** Dev/staging: never sends network mail. */
 export function createTestMailTransport(): MailTransport {
   return {
     async send(message) {
@@ -35,20 +42,17 @@ export function createTestMailTransport(): MailTransport {
   }
 }
 
-/**
- * Production-ready SMTP adapter using Node undici-less raw socket is out of scope;
- * when SMTP_ENABLED=1, require SMTP_URL or host/user/pass and use a simple HTTPS relay stub.
- * Without nodemailer dependency we only support test + optional webhook relay.
- */
-export function createSmtpMailTransport(): MailTransport {
+export function createSmtpMailTransport(opts?: { allowTestFallback?: boolean }): MailTransport {
   const from = (process.env.SMTP_FROM || '').trim()
   const relayUrl = (process.env.SMTP_RELAY_URL || '').trim()
   if (!from) {
     throw new Error('SMTP_FROM required when SMTP_ENABLED=1')
   }
   if (!relayUrl) {
-    // Fall back to test if misconfigured rather than crash cold start.
-    console.warn('[mail] SMTP_ENABLED=1 but SMTP_RELAY_URL missing — using test transport')
+    if (opts?.allowTestFallback === false || isProductionLike()) {
+      throw new Error('SMTP_RELAY_URL required in production')
+    }
+    console.warn('[mail] SMTP_ENABLED=1 but SMTP_RELAY_URL missing — using test transport (non-prod)')
     return createTestMailTransport()
   }
   return {
@@ -80,7 +84,16 @@ let cached: MailTransport | null = null
 
 export function getMailTransport(): MailTransport {
   if (cached) return cached
-  cached = smtpConfigured() ? createSmtpMailTransport() : createTestMailTransport()
+  if (isProductionLike()) {
+    if (!smtpConfigured()) {
+      throw new Error('SMTP must be configured in production (SMTP_ENABLED, SMTP_FROM, SMTP_RELAY_URL)')
+    }
+    cached = createSmtpMailTransport({ allowTestFallback: false })
+    return cached
+  }
+  cached = smtpConfigured()
+    ? createSmtpMailTransport({ allowTestFallback: true })
+    : createTestMailTransport()
   return cached
 }
 

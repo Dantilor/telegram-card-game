@@ -13,6 +13,7 @@ export type YookassaPaymentSnapshot = {
     telegramId?: string
     planId?: string
     userId?: string
+    web_account_id?: string
   }
 }
 

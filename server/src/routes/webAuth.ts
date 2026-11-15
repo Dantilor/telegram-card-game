@@ -22,6 +22,7 @@ import {
   createAnonymousWebAccountSession,
   getWebAccountPremium,
   grantWebEntitlement,
+  revokeTelegramLinkEntitlements,
 } from '../auth/webAccounts.js'
 import {
   completeEmailRecover,
@@ -30,10 +31,18 @@ import {
   verifyEmailBind,
 } from '../auth/webEmailOtp.js'
 import { isWebOwnerAllowed, webFeatureEnabled } from '../config/runtimeFlags.js'
-import { sha256Hex } from '../auth/cryptoTokens.js'
+import { randomNumericCode, sha256Hex } from '../auth/cryptoTokens.js'
+import { clientIpFromRequest, consumeRateLimit } from '../auth/rateLimit.js'
 import { query } from '../db.js'
 
 const router = Router()
+
+/** Telegram OIDC is not a standalone WEB login. Opt-in only for legacy unit tests. */
+function oidcWebLoginEnabled(): boolean {
+  return process.env.WEB_OIDC_LOGIN_ENABLED === '1' || process.env.WEB_OIDC_LOGIN_ENABLED === 'true'
+}
+
+const LINK_CODE_RE = /^\d{8}$/
 
 function errorPayload(e: unknown): { status: number; body: Record<string, unknown> } {
   const err = e as Error & { status?: number; code?: string }
@@ -70,6 +79,23 @@ router.get('/web/auth/telegram/start', async (req: Request, res: Response) => {
   try {
     if (!webFeatureEnabled()) {
       res.status(503).json({ error: 'WEB login disabled', code: 'web_disabled' })
+      return
+    }
+    if (!oidcWebLoginEnabled()) {
+      const origin = webPublicOrigin()
+      const wantsRedirect =
+        req.query.redirect === '1' ||
+        req.query.redirect === 'true' ||
+        (typeof req.headers.accept === 'string' && req.headers.accept.includes('text/html'))
+      if (wantsRedirect && origin) {
+        res.redirect(302, `${origin}/?error=${encodeURIComponent('oidc_login_disabled')}`)
+        return
+      }
+      res.status(403).json({
+        error: 'Telegram OIDC login disabled',
+        code: 'oidc_login_disabled',
+        message: 'Используйте анонимный WEB-доступ или восстановление Premium из Telegram Mini App.',
+      })
       return
     }
     const returnTo = typeof req.query.return_to === 'string' ? req.query.return_to : null
@@ -115,6 +141,15 @@ router.get('/web/auth/telegram/callback', async (req: Request, res: Response) =>
 
     if (!webFeatureEnabled()) {
       res.status(503).json({ error: 'WEB login disabled', code: 'web_disabled' })
+      return
+    }
+    if (!oidcWebLoginEnabled()) {
+      const origin = webPublicOrigin()
+      if (origin) {
+        res.redirect(302, `${origin}/?error=${encodeURIComponent('oidc_login_disabled')}`)
+        return
+      }
+      res.status(403).json({ error: 'Telegram OIDC login disabled', code: 'oidc_login_disabled' })
       return
     }
 
@@ -352,20 +387,27 @@ router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedR
       res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
       return
     }
-    const code = String(Math.floor(100000 + Math.random() * 900000))
+    const ip = clientIpFromRequest(req)
+    const limited = consumeRateLimit(`tg_link_start:${auth.webAccountId}:${ip}`, 5, 10 * 60_000)
+    if (!limited.ok) {
+      res.status(429).json({ error: 'Too many codes', code: 'rate_limited' })
+      return
+    }
+    // Always return code to the authenticated WEB session that created it (pairing UX).
+    // Stored only as hash; single-use; short TTL; rate-limited.
+    const code = randomNumericCode(8)
     const expiresAt = new Date(Date.now() + 10 * 60_000)
     await query(
       `INSERT INTO web_telegram_link_challenges (web_account_id, code_hash, expires_at)
        VALUES ($1::uuid, $2, $3)`,
       [auth.webAccountId, sha256Hex(code), expiresAt.toISOString()]
     )
-    const echo = process.env.WEB_TELEGRAM_LINK_ECHO === '1' && process.env.NODE_ENV !== 'production'
     res.status(200).json({
       ok: true,
+      code,
       expiresAt: expiresAt.toISOString(),
       instruction:
         'Откройте GameNight Host в Telegram Mini App → Привязать WEB и введите этот код. Код действует 10 минут.',
-      ...(echo ? { code } : {}),
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -384,8 +426,14 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       res.status(401).json({ error: 'Telegram Mini App auth required', code: 'telegram_init_required' })
       return
     }
+    const ip = clientIpFromRequest(req)
+    const ipLimited = consumeRateLimit(`tg_link_complete_ip:${ip}`, 20, 10 * 60_000)
+    if (!ipLimited.ok) {
+      res.status(429).json({ error: 'Too many attempts', code: 'rate_limited' })
+      return
+    }
     const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
-    if (!/^\d{6}$/.test(code)) {
+    if (!LINK_CODE_RE.test(code)) {
       res.status(400).json({ error: 'Invalid code', code: 'invalid_code' })
       return
     }
@@ -414,24 +462,33 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
     }
     await query(`UPDATE web_telegram_link_challenges SET attempts = attempts + 1 WHERE id = $1`, [row.id])
 
-    // Consume code
-    await query(
-      `UPDATE web_telegram_link_challenges SET consumed_at = now() WHERE id = $1 AND consumed_at IS NULL`,
+    // Consume code (one-shot)
+    const consumed = await query<{ id: number }>(
+      `UPDATE web_telegram_link_challenges SET consumed_at = now()
+        WHERE id = $1 AND consumed_at IS NULL
+        RETURNING id`,
       [row.id]
     )
+    if (!consumed.rows[0]) {
+      res.status(400).json({ error: 'Code already used', code: 'code_invalid' })
+      return
+    }
 
-    // One active telegram ↔ one account
+    // Revoke prior links + expire telegram_link entitlements (no Premium leakage after transfer).
     await query(
       `UPDATE web_telegram_links SET revoked_at = now()
         WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
       [auth.telegramId, row.web_account_id]
     )
+    await revokeTelegramLinkEntitlements({ telegramId: auth.telegramId })
+    await revokeTelegramLinkEntitlements({ webAccountId: row.web_account_id })
+
     await query(
       `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
       [row.web_account_id, auth.telegramId]
     )
 
-    // Mirror active Telegram subscription into web_entitlements (telegram_link source) without mutating subscriptions.
+    // Mirror active Telegram subscription into web_entitlements without mutating subscriptions.
     const sub = await query<{ active_until: Date; plan_id: string }>(
       `SELECT active_until, plan_id FROM subscriptions
         WHERE telegram_id = $1::bigint AND active_until > now()
@@ -453,7 +510,9 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       linked: true,
       telegramId: auth.telegramId,
       premiumRestored: Boolean(sub.rows[0]),
-      activeUntil: sub.rows[0]?.active_until?.toISOString?.() ?? null,
+      activeUntil: sub.rows[0]?.active_until
+        ? new Date(sub.rows[0].active_until).toISOString()
+        : null,
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -480,7 +539,7 @@ router.post('/web/telegram-link/complete-mock', async (req: Request, res: Respon
     }
     const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
     const telegramId = Number(req.body?.telegramId)
-    if (!/^\d{6}$/.test(code) || !Number.isFinite(telegramId) || telegramId <= 0) {
+    if (!LINK_CODE_RE.test(code) || !Number.isFinite(telegramId) || telegramId <= 0) {
       res.status(400).json({ error: 'Invalid payload', code: 'invalid_body' })
       return
     }
@@ -513,6 +572,8 @@ router.post('/web/telegram-link/complete-mock', async (req: Request, res: Respon
         WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
       [telegramId, row.web_account_id]
     )
+    await revokeTelegramLinkEntitlements({ telegramId })
+    await revokeTelegramLinkEntitlements({ webAccountId: row.web_account_id })
     await query(
       `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
       [row.web_account_id, telegramId]
@@ -565,7 +626,11 @@ router.post('/web/email/bind/start', requireWebSession(), async (req: AuthedRequ
       return
     }
     const email = typeof req.body?.email === 'string' ? req.body.email : ''
-    const started = await startEmailBind({ webAccountId: auth.webAccountId, email })
+    const started = await startEmailBind({
+      webAccountId: auth.webAccountId,
+      email,
+      ip: clientIpFromRequest(req),
+    })
     res.status(200).json({
       ok: true,
       expiresAt: started.expiresAt.toISOString(),
@@ -613,7 +678,7 @@ router.post('/web/email/recover/start', async (req: Request, res: Response) => {
       return
     }
     const email = typeof req.body?.email === 'string' ? req.body.email : ''
-    const started = await startEmailRecover({ email })
+    const started = await startEmailRecover({ email, ip: clientIpFromRequest(req) })
     res.status(200).json({
       ok: true,
       expiresAt: started.expiresAt,

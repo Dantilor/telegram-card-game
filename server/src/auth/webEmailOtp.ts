@@ -1,9 +1,10 @@
 import type { Queryable } from '../legal/types.js'
 import { query as defaultQuery } from '../db.js'
-import { randomToken, sha256Hex } from './cryptoTokens.js'
+import { randomNumericCode, randomToken, sha256Hex } from './cryptoTokens.js'
 import { sessionTtlMs } from './config.js'
 import { getMailTransport } from '../services/mailTransport.js'
 import { grantWebEntitlement } from './webAccounts.js'
+import { consumeRateLimit } from './rateLimit.js'
 
 type Db = {
   query: <T>(sql: string, params?: unknown[]) => Promise<{ rows: T[] }>
@@ -33,11 +34,12 @@ export function normalizeEmail(raw: string): string | null {
 }
 
 function otpCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000))
+  return randomNumericCode(8)
 }
 
 const OTP_TTL_MS = 10 * 60_000
 const MAX_ATTEMPTS = 5
+const OTP_DIGITS_RE = /^\d{8}$/
 
 export async function countRecentEmailOtps(
   emailNormalized: string,
@@ -57,8 +59,24 @@ async function insertAndSendOtp(input: {
   webAccountId: string
   emailNormalized: string
   purpose: 'bind' | 'recover'
+  ip?: string | null
   db?: Queryable
 }): Promise<{ expiresAt: Date; echoCode?: string }> {
+  const ipKey = (input.ip || 'unknown').slice(0, 64)
+  for (const key of [
+    `email_otp_ip:${ipKey}`,
+    `email_otp_email:${input.emailNormalized}`,
+    `email_otp_account:${input.webAccountId}`,
+  ]) {
+    const limited = consumeRateLimit(key, key.startsWith('email_otp_ip:') ? 10 : 3, 60_000)
+    if (!limited.ok) {
+      const err = new Error('Too many codes') as Error & { status?: number; code?: string }
+      err.status = 429
+      err.code = 'rate_limited'
+      throw err
+    }
+  }
+
   const recent = await countRecentEmailOtps(input.emailNormalized, 60_000, input.db)
   if (recent >= 3) {
     const err = new Error('Too many codes') as Error & { status?: number; code?: string }
@@ -93,6 +111,7 @@ async function insertAndSendOtp(input: {
 export async function startEmailBind(input: {
   webAccountId: string
   email: string
+  ip?: string | null
   db?: Queryable
 }): Promise<{ expiresAt: Date; echoCode?: string }> {
   const emailNormalized = normalizeEmail(input.email)
@@ -118,6 +137,7 @@ export async function startEmailBind(input: {
     webAccountId: input.webAccountId,
     emailNormalized,
     purpose: 'bind',
+    ip: input.ip,
     db: input.db,
   })
 }
@@ -128,10 +148,15 @@ export async function startEmailBind(input: {
  */
 export async function startEmailRecover(input: {
   email: string
+  ip?: string | null
   db?: Queryable
 }): Promise<{ ok: true; expiresAt?: string; echoCode?: string }> {
   const emailNormalized = normalizeEmail(input.email)
   if (!emailNormalized) {
+    return { ok: true }
+  }
+  const ipLimited = consumeRateLimit(`email_recover_ip:${(input.ip || 'unknown').slice(0, 64)}`, 8, 60_000)
+  if (!ipLimited.ok) {
     return { ok: true }
   }
   const account = await db(input.db).query<{ id: string }>(
@@ -145,16 +170,23 @@ export async function startEmailRecover(input: {
   if (!account.rows[0]) {
     return { ok: true }
   }
-  const started = await insertAndSendOtp({
-    webAccountId: account.rows[0].id,
-    emailNormalized,
-    purpose: 'recover',
-    db: input.db,
-  })
-  return {
-    ok: true,
-    expiresAt: started.expiresAt.toISOString(),
-    echoCode: started.echoCode,
+  try {
+    const started = await insertAndSendOtp({
+      webAccountId: account.rows[0].id,
+      emailNormalized,
+      purpose: 'recover',
+      ip: input.ip,
+      db: input.db,
+    })
+    return {
+      ok: true,
+      expiresAt: started.expiresAt.toISOString(),
+      echoCode: started.echoCode,
+    }
+  } catch (e) {
+    const err = e as Error & { code?: string }
+    if (err.code === 'rate_limited') return { ok: true }
+    throw e
   }
 }
 
@@ -165,7 +197,7 @@ export async function verifyEmailBind(input: {
   db?: Queryable
 }): Promise<{ emailNormalized: string }> {
   const emailNormalized = normalizeEmail(input.email)
-  if (!emailNormalized || !/^\d{6}$/.test(input.code.trim())) {
+  if (!emailNormalized || !OTP_DIGITS_RE.test(input.code.trim())) {
     const err = new Error('Invalid code or email') as Error & { status?: number; code?: string }
     err.status = 400
     err.code = 'invalid_code'
@@ -230,7 +262,7 @@ export async function completeEmailRecover(input: {
   expiresAt: Date
 }> {
   const emailNormalized = normalizeEmail(input.email)
-  if (!emailNormalized || !/^\d{6}$/.test(input.code.trim())) {
+  if (!emailNormalized || !OTP_DIGITS_RE.test(input.code.trim())) {
     const err = new Error('Invalid code or email') as Error & { status?: number; code?: string }
     err.status = 400
     err.code = 'invalid_code'

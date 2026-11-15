@@ -23,9 +23,15 @@
 
 | Variable | Purpose |
 | --- | --- |
-| `WEB_TELEGRAM_LINK_ECHO=1` | Echo link code + enable `complete-mock` (never in production) |
+| `WEB_TELEGRAM_LINK_ECHO=1` | Enable `complete-mock` only (never in production). Pairing code is always returned to the authenticated WEB session on `/telegram-link/start`. |
 | `WEB_DEV_LOGIN_SECRET` | Shared secret for `dev-login` and link mock |
-| `WEB_DEV_LOGIN_ENABLED` | Local OIDC bypass login |
+| `WEB_DEV_LOGIN_ENABLED` | Local telegramId session bypass (not OIDC) |
+| `WEB_OIDC_LOGIN_ENABLED` | Must stay unset/0 — Telegram OIDC is not a WEB login method |
+
+## Auth notes
+
+- Pairing / OTP codes are 8 digits from `crypto.randomInt`.
+- Production SMTP requires `SMTP_ENABLED=1`, `SMTP_FROM`, `SMTP_RELAY_URL` (no silent test fallback).
 
 ## Email OTP
 

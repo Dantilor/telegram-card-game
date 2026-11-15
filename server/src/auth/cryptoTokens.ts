@@ -5,6 +5,14 @@ export function randomToken(bytes = 32): string {
   return crypto.randomBytes(bytes).toString('base64url')
 }
 
+/** Cryptographically strong decimal OTP (default 8 digits). */
+export function randomNumericCode(digits = 8): string {
+  if (digits < 6 || digits > 12) throw new Error('otp_digits_out_of_range')
+  const min = 10 ** (digits - 1)
+  const max = 10 ** digits
+  return String(crypto.randomInt(min, max))
+}
+
 /** SHA-256 hex digest for durable storage (never store raw session tokens). */
 export function sha256Hex(value: string): string {
   return crypto.createHash('sha256').update(value, 'utf8').digest('hex')

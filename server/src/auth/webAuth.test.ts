@@ -94,6 +94,8 @@ function setOidcEnv(): void {
   process.env.TELEGRAM_BOT_TOKEN = BOT_TOKEN
   process.env.WEB_COOKIE_SECURE = 'false'
   process.env.WEB_SESSION_TTL_HOURS = '24'
+  // OIDC is disabled as standalone WEB login by default; unit tests opt in.
+  process.env.WEB_OIDC_LOGIN_ENABLED = '1'
 }
 
 test('extractTelegramIdFromClaims rejects sub spoofing without id', () => {

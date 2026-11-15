@@ -102,7 +102,7 @@ test.describe('Anonymous WEB Premium', () => {
     })
     expect(start.ok(), await start.text()).toBeTruthy()
     const started = await start.json()
-    expect(started.code).toMatch(/^\d{6}$/)
+    expect(started.code).toMatch(/^\d{8}$/)
 
     const verify = await api.post('/api/web/email/bind/verify', {
       headers: { 'X-CSRF-Token': csrf! },
@@ -117,7 +117,7 @@ test.describe('Anonymous WEB Premium', () => {
     })
     expect(recoverStart.ok()).toBeTruthy()
     const recoverBody = await recoverStart.json()
-    expect(recoverBody.code).toMatch(/^\d{6}$/)
+    expect(recoverBody.code).toMatch(/^\d{8}$/)
 
     const complete = await api2.post('/api/web/email/recover/complete', {
       data: { email, code: recoverBody.code },
@@ -145,7 +145,7 @@ test.describe('Anonymous WEB Premium', () => {
     })
     expect(start.ok(), await start.text()).toBeTruthy()
     const { code } = await start.json()
-    expect(code).toMatch(/^\d{6}$/)
+    expect(code).toMatch(/^\d{8}$/)
 
     const complete = await api.post('/api/web/telegram-link/complete-mock', {
       data: {

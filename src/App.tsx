@@ -70,6 +70,7 @@ const TruthDareVote = lazy(() => import('./pages/TruthDareVote'))
 const TruthDareResult = lazy(() => import('./pages/TruthDareResult'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PremiumPage = lazy(() => import('./pages/PremiumPage'))
+const WebPurchaseRecover = lazy(() => import('./pages/WebPurchaseRecover'))
 const LegalDocumentPage = lazy(() => import('./pages/LegalDocumentPage'))
 
 function DelayedFallback({ delayMs, children }: { delayMs: number; children: ReactNode }) {
@@ -213,6 +214,7 @@ function App() {
         />
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
+        <Route path="/recover" element={<WebPurchaseRecover />} />
         <Route path="/legal/documents/:documentId/versions/:version" element={<LegalDocumentPage />} />
         <Route path="/legal/documents/:documentId" element={<LegalDocumentPage />} />
         <Route path="/legal/privacy" element={<LegalDocumentPage documentId="privacy" />} />

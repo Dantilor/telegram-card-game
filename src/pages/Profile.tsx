@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
@@ -351,8 +352,8 @@ function Profile() {
                   className="profile-pass__email-input"
                   value={emailCode}
                   onChange={(e) => setEmailCode(e.target.value)}
-                  placeholder="6 цифр"
-                  maxLength={6}
+                  placeholder="8 цифр"
+                  maxLength={8}
                 />
               </label>
             )}
@@ -369,6 +370,10 @@ function Profile() {
                   : 'Защитить покупку — добавить email'}
             </button>
             {emailStatus && <span className="profile-pass__toast">{emailStatus}</span>}
+            <p className="profile-pass__desc">
+              Потеряли доступ к cookie?{' '}
+              <Link to="/recover">Восстановить покупку по email</Link>
+            </p>
           </section>
         )}
 

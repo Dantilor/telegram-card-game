@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import crownIcon from '../assets/icons/gnh/host-crown.svg'
 import {
   buildTelegramLoginUrl,
   devLoginWeb,
@@ -8,6 +7,7 @@ import {
   type WebSessionMe,
 } from '../lib/webAuth'
 import { WebSessionProvider } from './WebSessionContext'
+import { WebAuthCrystal } from './WebAuthCrystal'
 import './WebAuthGate.css'
 
 function localDevLoginUiEnabled(): boolean {
@@ -27,6 +27,23 @@ function readLoginError(search: string): string | null {
   if (raw === 'oidc_token_invalid' || raw === 'unauthorized') return 'Не удалось подтвердить вход. Попробуйте ещё раз.'
   if (raw === 'oidc_not_configured') return 'Вход через Telegram ещё не настроен на сервере.'
   return 'Не удалось войти. Попробуйте ещё раз.'
+}
+
+function AuthAtmosphere() {
+  return (
+    <>
+      <div className="web-auth-gate__aurora" aria-hidden />
+      <div className="web-auth-gate__veil" aria-hidden />
+      <div className="web-auth-gate__particles" aria-hidden>
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    </>
+  )
 }
 
 function WebLoginScreen({
@@ -75,34 +92,38 @@ function WebLoginScreen({
 
   return (
     <div className="web-auth-gate" data-theme-surface="web-login">
-      <div className="web-auth-gate__bg" aria-hidden />
-      <main className="web-auth-gate__card">
-        <div className="web-auth-gate__brand">
-          <img src={crownIcon} alt="" className="web-auth-gate__logo" width={56} height={56} />
-          <p className="web-auth-gate__eyebrow">GameNight Host</p>
-          <h1 className="web-auth-gate__title">GameNight Host</h1>
-          <p className="web-auth-gate__lead">Ваши игры и Premium всегда с вами</p>
-        </div>
+      <AuthAtmosphere />
+      <main className="web-auth-gate__stage">
+        <WebAuthCrystal className="web-auth-gate__crystal web-auth-gate__enter web-auth-gate__enter--1" />
+
+        <p className="web-auth-gate__eyebrow web-auth-gate__enter web-auth-gate__enter--2">GameNight Host</p>
+        <h1 className="web-auth-gate__title web-auth-gate__enter web-auth-gate__enter--3">GameNight Host</h1>
+        <p className="web-auth-gate__lead web-auth-gate__enter web-auth-gate__enter--4">
+          Твой вечер. Твои правила. Твоя игра.
+        </p>
 
         {(error || devError) && (
-          <p className="web-auth-gate__error" role="alert">
+          <p className="web-auth-gate__error web-auth-gate__enter web-auth-gate__enter--5" role="alert">
             {devError || error}
           </p>
         )}
 
         <button
           type="button"
-          className="web-auth-gate__cta"
+          className="web-auth-gate__cta web-auth-gate__enter web-auth-gate__enter--5"
           onClick={startLogin}
           disabled={starting}
         >
-          {starting ? 'Переход в Telegram…' : 'Войти через Telegram'}
+          <span className="web-auth-gate__cta-sheen" aria-hidden />
+          <span className="web-auth-gate__cta-label">
+            {starting ? 'Переход в Telegram…' : 'Войти через Telegram'}
+          </span>
         </button>
 
         {showDevLogin && (
           <button
             type="button"
-            className="web-auth-gate__ghost"
+            className="web-auth-gate__ghost web-auth-gate__enter web-auth-gate__enter--6"
             data-testid="web-dev-login"
             onClick={() => void runDevLogin()}
             disabled={devBusy}
@@ -111,7 +132,11 @@ function WebLoginScreen({
           </button>
         )}
 
-        <button type="button" className="web-auth-gate__ghost" onClick={onRetryCheck}>
+        <button
+          type="button"
+          className="web-auth-gate__ghost web-auth-gate__enter web-auth-gate__enter--6"
+          onClick={onRetryCheck}
+        >
           Уже вошли? Проверить сессию
         </button>
       </main>
@@ -162,8 +187,11 @@ export function WebAuthGate({ children }: { children: ReactNode }) {
   if (gate.status === 'loading') {
     return (
       <div className="web-auth-gate web-auth-gate--loading" aria-busy="true">
-        <div className="web-auth-gate__bg" aria-hidden />
-        <p className="web-auth-gate__loading">Загрузка…</p>
+        <AuthAtmosphere />
+        <div className="web-auth-gate__loading-stack">
+          <WebAuthCrystal className="web-auth-gate__crystal web-auth-gate__crystal--pulse" />
+          <p className="web-auth-gate__loading">Проверяем сессию…</p>
+        </div>
       </div>
     )
   }

@@ -4,7 +4,7 @@ import { randomNumericCode, randomToken, sha256Hex } from './cryptoTokens.js'
 import { sessionTtlMs } from './config.js'
 import { getMailTransport } from '../services/mailTransport.js'
 import { grantWebEntitlement } from './webAccounts.js'
-import { consumeRateLimit } from './rateLimit.js'
+import { consumeSharedRateLimit } from './rateLimit.js'
 
 type Db = {
   query: <T>(sql: string, params?: unknown[]) => Promise<{ rows: T[] }>
@@ -68,7 +68,12 @@ async function insertAndSendOtp(input: {
     `email_otp_email:${input.emailNormalized}`,
     `email_otp_account:${input.webAccountId}`,
   ]) {
-    const limited = consumeRateLimit(key, key.startsWith('email_otp_ip:') ? 10 : 3, 60_000)
+    const limited = await consumeSharedRateLimit(
+      key,
+      key.startsWith('email_otp_ip:') ? 10 : 3,
+      60_000,
+      input.db
+    )
     if (!limited.ok) {
       const err = new Error('Too many codes') as Error & { status?: number; code?: string }
       err.status = 429
@@ -155,7 +160,12 @@ export async function startEmailRecover(input: {
   if (!emailNormalized) {
     return { ok: true }
   }
-  const ipLimited = consumeRateLimit(`email_recover_ip:${(input.ip || 'unknown').slice(0, 64)}`, 8, 60_000)
+  const ipLimited = await consumeSharedRateLimit(
+    `email_recover_ip:${(input.ip || 'unknown').slice(0, 64)}`,
+    8,
+    60_000,
+    input.db
+  )
   if (!ipLimited.ok) {
     return { ok: true }
   }

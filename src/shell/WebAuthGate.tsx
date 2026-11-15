@@ -48,6 +48,11 @@ export function WebAuthGate({ children }: { children: ReactNode }) {
           session = await ensureWebSession()
         }
         setGate({ status: 'ready', session })
+        // PremiumProvider mounts outside the gate and may have fetched /api/me before cookie —
+        // re-sync after anonymous ensure so first paint does not stick on 401/free.
+        if (session) {
+          window.dispatchEvent(new Event('tcg_premium_sync'))
+        }
       } catch {
         // Soft-fail: still allow browsing free UI; APIs enforce auth where needed.
         setGate({

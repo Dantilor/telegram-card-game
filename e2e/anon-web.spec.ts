@@ -24,8 +24,12 @@ test.describe('Anonymous WEB (no registration)', () => {
   test('reload keeps anonymous session', async ({ page, context }) => {
     await page.goto(`${BASE_URL}/`)
     await expect(page.getByText('GameNight Host').first()).toBeVisible({ timeout: 30_000 })
+    await expect
+      .poll(async () => (await context.cookies()).some((c) => c.name === 'gnh_sid' && c.httpOnly))
+      .toBeTruthy()
     await expectSessionCookies(context)
     const before = await (await page.request.get(`${BASE_URL}/api/web/session/me`)).json()
+    expect(before.webAccountId || before.telegramId).toBeTruthy()
     await page.reload()
     await expect(page.getByText('GameNight Host').first()).toBeVisible()
     const after = await (await page.request.get(`${BASE_URL}/api/web/session/me`)).json()

@@ -60,6 +60,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   web_telegram_link_challenges,
   web_email_otps,
   web_payments,
+  web_rate_buckets,
   sled_rooms,
   sled_participants,
   sled_room_events,

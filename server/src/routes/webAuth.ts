@@ -32,8 +32,9 @@ import {
 } from '../auth/webEmailOtp.js'
 import { isWebOwnerAllowed, webFeatureEnabled } from '../config/runtimeFlags.js'
 import { randomNumericCode, sha256Hex } from '../auth/cryptoTokens.js'
-import { clientIpFromRequest, consumeRateLimit } from '../auth/rateLimit.js'
+import { clientIpFromRequest, consumeSharedRateLimit } from '../auth/rateLimit.js'
 import { query } from '../db.js'
+import { withTransaction } from '../legal/runtime.js'
 
 const router = Router()
 
@@ -388,7 +389,11 @@ router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedR
       return
     }
     const ip = clientIpFromRequest(req)
-    const limited = consumeRateLimit(`tg_link_start:${auth.webAccountId}:${ip}`, 5, 10 * 60_000)
+    const limited = await consumeSharedRateLimit(
+      `tg_link_start:${auth.webAccountId}:${ip}`,
+      5,
+      10 * 60_000
+    )
     if (!limited.ok) {
       res.status(429).json({ error: 'Too many codes', code: 'rate_limited' })
       return
@@ -427,7 +432,7 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       return
     }
     const ip = clientIpFromRequest(req)
-    const ipLimited = consumeRateLimit(`tg_link_complete_ip:${ip}`, 20, 10 * 60_000)
+    const ipLimited = await consumeSharedRateLimit(`tg_link_complete_ip:${ip}`, 20, 10 * 60_000)
     if (!ipLimited.ok) {
       res.status(429).json({ error: 'Too many attempts', code: 'rate_limited' })
       return
@@ -437,82 +442,94 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       res.status(400).json({ error: 'Invalid code', code: 'invalid_code' })
       return
     }
-    const challenge = await query<{
-      id: number
-      web_account_id: string
-      attempts: number
-      expires_at: Date
-      consumed_at: Date | null
-    }>(
-      `SELECT id, web_account_id, attempts, expires_at, consumed_at
-         FROM web_telegram_link_challenges
-        WHERE code_hash = $1
-        ORDER BY id DESC
-        LIMIT 1`,
-      [sha256Hex(code)]
-    )
-    const row = challenge.rows[0]
-    if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
-      res.status(400).json({ error: 'Code expired or unknown', code: 'code_invalid' })
-      return
-    }
-    if (row.attempts >= 5) {
-      res.status(429).json({ error: 'Too many attempts', code: 'rate_limited' })
-      return
-    }
-    await query(`UPDATE web_telegram_link_challenges SET attempts = attempts + 1 WHERE id = $1`, [row.id])
 
-    // Consume code (one-shot)
-    const consumed = await query<{ id: number }>(
-      `UPDATE web_telegram_link_challenges SET consumed_at = now()
-        WHERE id = $1 AND consumed_at IS NULL
-        RETURNING id`,
-      [row.id]
-    )
-    if (!consumed.rows[0]) {
-      res.status(400).json({ error: 'Code already used', code: 'code_invalid' })
-      return
-    }
+    const result = await withTransaction(async (tx) => {
+      const challenge = await tx.query<{
+        id: number
+        web_account_id: string
+        attempts: number
+        expires_at: Date
+        consumed_at: Date | null
+      }>(
+        `SELECT id, web_account_id, attempts, expires_at, consumed_at
+           FROM web_telegram_link_challenges
+          WHERE code_hash = $1
+          ORDER BY id DESC
+          LIMIT 1
+          FOR UPDATE`,
+        [sha256Hex(code)]
+      )
+      const row = challenge.rows[0]
+      if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
+        const err = new Error('Code expired or unknown') as Error & { status?: number; code?: string }
+        err.status = 400
+        err.code = 'code_invalid'
+        throw err
+      }
+      if (row.attempts >= 5) {
+        const err = new Error('Too many attempts') as Error & { status?: number; code?: string }
+        err.status = 429
+        err.code = 'rate_limited'
+        throw err
+      }
+      await tx.query(`UPDATE web_telegram_link_challenges SET attempts = attempts + 1 WHERE id = $1`, [
+        row.id,
+      ])
+      const consumed = await tx.query<{ id: number }>(
+        `UPDATE web_telegram_link_challenges SET consumed_at = now()
+          WHERE id = $1 AND consumed_at IS NULL
+          RETURNING id`,
+        [row.id]
+      )
+      if (!consumed.rows[0]) {
+        const err = new Error('Code already used') as Error & { status?: number; code?: string }
+        err.status = 400
+        err.code = 'code_invalid'
+        throw err
+      }
 
-    // Revoke prior links + expire telegram_link entitlements (no Premium leakage after transfer).
-    await query(
-      `UPDATE web_telegram_links SET revoked_at = now()
-        WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
-      [auth.telegramId, row.web_account_id]
-    )
-    await revokeTelegramLinkEntitlements({ telegramId: auth.telegramId })
-    await revokeTelegramLinkEntitlements({ webAccountId: row.web_account_id })
+      await tx.query(
+        `UPDATE web_telegram_links SET revoked_at = now()
+          WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
+        [auth.telegramId, row.web_account_id]
+      )
+      await revokeTelegramLinkEntitlements({ telegramId: auth.telegramId, db: tx })
+      await revokeTelegramLinkEntitlements({ webAccountId: row.web_account_id, db: tx })
+      await tx.query(
+        `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+        [row.web_account_id, auth.telegramId]
+      )
 
-    await query(
-      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
-      [row.web_account_id, auth.telegramId]
-    )
-
-    // Mirror active Telegram subscription into web_entitlements without mutating subscriptions.
-    const sub = await query<{ active_until: Date; plan_id: string }>(
-      `SELECT active_until, plan_id FROM subscriptions
-        WHERE telegram_id = $1::bigint AND active_until > now()
-        ORDER BY active_until DESC LIMIT 1`,
-      [auth.telegramId]
-    )
-    if (sub.rows[0]) {
-      await grantWebEntitlement({
-        webAccountId: row.web_account_id,
-        planId: sub.rows[0].plan_id || 'premium_1m',
-        activeUntil: new Date(sub.rows[0].active_until),
-        source: 'telegram_link',
-        linkedTelegramId: auth.telegramId,
-      })
-    }
+      const sub = await tx.query<{ active_until: Date; plan_id: string }>(
+        `SELECT active_until, plan_id FROM subscriptions
+          WHERE telegram_id = $1::bigint AND active_until > now()
+          ORDER BY active_until DESC LIMIT 1`,
+        [auth.telegramId]
+      )
+      if (sub.rows[0]) {
+        await grantWebEntitlement({
+          webAccountId: row.web_account_id,
+          planId: sub.rows[0].plan_id || 'premium_1m',
+          activeUntil: new Date(sub.rows[0].active_until),
+          source: 'telegram_link',
+          linkedTelegramId: auth.telegramId,
+          db: tx,
+        })
+      }
+      return {
+        premiumRestored: Boolean(sub.rows[0]),
+        activeUntil: sub.rows[0]?.active_until
+          ? new Date(sub.rows[0].active_until).toISOString()
+          : null,
+      }
+    })
 
     res.status(200).json({
       ok: true,
       linked: true,
       telegramId: auth.telegramId,
-      premiumRestored: Boolean(sub.rows[0]),
-      activeUntil: sub.rows[0]?.active_until
-        ? new Date(sub.rows[0].active_until).toISOString()
-        : null,
+      premiumRestored: result.premiumRestored,
+      activeUntil: result.activeUntil,
     })
   } catch (e) {
     const { status, body } = errorPayload(e)

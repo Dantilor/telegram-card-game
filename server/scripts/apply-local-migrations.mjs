@@ -59,6 +59,7 @@ const steps = [
   { label: '015', file: 'db/migrations/015_infected_rooms_code_digits.sql' },
   { label: '016-local-subs', file: 'db/local/016_subscriptions_telegram_unique.sql' },
   { label: '017', file: 'db/migrations/017_web_anonymous_accounts.sql' },
+  { label: '018', file: 'db/migrations/018_web_rate_buckets.sql' },
 ]
 
 if (wantSeed) {

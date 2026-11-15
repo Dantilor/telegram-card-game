@@ -152,7 +152,7 @@ function Profile() {
     setLogoutBusy(true)
     try {
       await webSession.logout()
-      window.location.assign('/login')
+      window.location.assign('/')
     } finally {
       setLogoutBusy(false)
     }
@@ -161,7 +161,11 @@ function Profile() {
   const getErrorMessage = () => {
     if (web) {
       if (serverError503) return 'Сервис временно недоступен, попробуйте позже'
-      if (authError401 || authError) return 'Сессия истекла. Войдите снова через Telegram.'
+      // Anonymous WEB is normal; 401 before cookie bootstrap is not a login requirement.
+      if ((authError401 || authError) && !webAccountId && !userId) return null
+      if (authError401 || authError) {
+        return 'Сессия устройства недоступна. Обновите страницу или восстановите покупку по email.'
+      }
       return null
     }
     if (authError401) return 'Откройте внутри Telegram'

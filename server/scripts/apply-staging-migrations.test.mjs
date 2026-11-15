@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
+import { evaluateStagingCheckPrivileges } from './stagingCheckPrivileges.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const serverRoot = path.resolve(here, '..')
@@ -134,4 +135,46 @@ test('refuses host mismatch', () => {
   })
   assert.notEqual(result.status, 0)
   assert.match(`${result.stdout}\n${result.stderr}`, /STAGING_EXPECT_HOST/)
+})
+
+test('evaluateStagingCheckPrivileges: missing CREATEROLE is not a hard fail when CREATE schema is present', () => {
+  const result = evaluateStagingCheckPrivileges({
+    dbConnect: true,
+    dbCreate: true,
+    schemaUsage: true,
+    schemaCreate: true,
+    appRoleExists: true,
+    appRoleMemberOfProd: false,
+    isSuper: false,
+    hasUsageOnAppRole: false,
+    canCreateRole: false,
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.grantToAppRole.onOwnedObjects, true)
+  assert.equal(result.grantToAppRole.viaCreateRoleOrRoleUsage, false)
+  assert.equal(result.missing.length, 0)
+  assert.ok(result.notes.some((n) => /CREATEROLE/i.test(n)))
+})
+
+test('evaluateStagingCheckPrivileges: reports CONNECT/CREATE/USAGE/CREATE separately as missing', () => {
+  const result = evaluateStagingCheckPrivileges({
+    dbConnect: true,
+    dbCreate: false,
+    schemaUsage: false,
+    schemaCreate: false,
+    appRoleExists: true,
+    appRoleMemberOfProd: false,
+    isSuper: false,
+    hasUsageOnAppRole: false,
+    canCreateRole: false,
+  })
+  assert.equal(result.ok, false)
+  assert.equal(result.checks.CONNECT, true)
+  assert.equal(result.checks.CREATE_database, false)
+  assert.equal(result.checks.USAGE_public, false)
+  assert.equal(result.checks.CREATE_public, false)
+  assert.ok(result.missing.some((m) => /CREATE on database/.test(m)))
+  assert.ok(result.missing.some((m) => /USAGE on schema public/.test(m)))
+  assert.ok(result.missing.some((m) => /CREATE on schema public/.test(m)))
+  assert.equal(result.missing.some((m) => /CREATEROLE/i.test(m)), false)
 })

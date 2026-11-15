@@ -14,7 +14,7 @@
   PostgreSQL hostname (e.g. xxx.twc1.net). Required for -CheckConnection / -Apply.
 
 .PARAMETER MigrateUser
-  Admin LOGIN for migrations (NOT gnh_web_stage). Example: gen_user
+  Staging migrate LOGIN (NOT gnh_web_stage). Example: gnh_web_migrate (or gen_user if that is the staging DB owner).
 
 .PARAMETER CaFile
   Absolute path to Timeweb root CA PEM (.crt).
@@ -42,11 +42,11 @@
 
 .EXAMPLE
   # Safe connection + privilege probe (no DDL):
-  .\deploy\stand\Migrate-GnhWebStaging.ps1 -CheckConnection -HostName 'xxx.twc1.net' -MigrateUser 'gen_user' -CaFile 'C:\path\to\timeweb-ca.crt'
+  .\deploy\stand\Migrate-GnhWebStaging.ps1 -CheckConnection -HostName 'xxx.twc1.net' -MigrateUser 'gnh_web_migrate' -CaFile 'C:\path\to\timeweb-ca.crt'
 
 .EXAMPLE
   # Preflight TLS config then apply after typing YES:
-  .\deploy\stand\Migrate-GnhWebStaging.ps1 -Apply -HostName 'xxx.twc1.net' -MigrateUser 'gen_user' -CaFile 'C:\path\to\timeweb-ca.crt'
+  .\deploy\stand\Migrate-GnhWebStaging.ps1 -Apply -HostName 'xxx.twc1.net' -MigrateUser 'gnh_web_migrate' -CaFile 'C:\path\to\timeweb-ca.crt'
 #>
 [CmdletBinding()]
 param(
@@ -68,7 +68,7 @@ function Write-Step([string]$Message) {
 }
 
 function Fail([string]$Message) {
-  Write-Error "[gnh-staging] $Message"
+  Write-Host "[gnh-staging] ERROR: $Message" -ForegroundColor Red
   exit 1
 }
 
@@ -76,6 +76,36 @@ function Assert-NoSecretLeak([string]$Text) {
   if ([string]::IsNullOrEmpty($Text)) { return }
   if ($Text -match 'postgresql://[^:\s]+:[^@\s]+@') {
     Fail 'Refusing to continue: a log line appears to contain credentials.'
+  }
+}
+
+# Capture npm/node stdout+stderr without NativeCommandError under $ErrorActionPreference=Stop.
+# Non-zero exit codes must not hide CHECK_CONNECTION_* detail lines.
+function Invoke-NpmCaptured {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string[]]$NpmArguments
+  )
+  $prevEap = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    $raw = & npm @NpmArguments 2>&1
+    $code = $LASTEXITCODE
+    $lines = foreach ($item in @($raw)) {
+      if ($null -eq $item) { continue }
+      if ($item -is [System.Management.Automation.ErrorRecord]) {
+        [string]$item.Exception.Message
+      } else {
+        [string]$item
+      }
+    }
+    $text = ($lines -join [Environment]::NewLine)
+    return [pscustomobject]@{
+      ExitCode = [int]$code
+      Text     = $text
+    }
+  } finally {
+    $ErrorActionPreference = $prevEap
   }
 }
 
@@ -142,19 +172,19 @@ try {
     if ($LASTEXITCODE -ne 0) { Fail 'build:api failed' }
 
     Write-Step 'npm run migrate:staging:dry'
-    $dryOut = npm run migrate:staging:dry 2>&1 | Out-String
-    Assert-NoSecretLeak $dryOut
-    Write-Host $dryOut
-    if ($LASTEXITCODE -ne 0) { Fail 'migrate:staging:dry failed' }
-    if ($dryOut -notmatch 'DRY 015') { Fail 'dry-run missing migration 015' }
-    if ($dryOut -notmatch 'DRY grants-stage') { Fail 'dry-run missing grants-stage' }
+    $dryResult = Invoke-NpmCaptured -NpmArguments @('run', 'migrate:staging:dry')
+    Assert-NoSecretLeak $dryResult.Text
+    Write-Host $dryResult.Text
+    if ($dryResult.ExitCode -ne 0) { Fail 'migrate:staging:dry failed' }
+    if ($dryResult.Text -notmatch 'DRY 015') { Fail 'dry-run missing migration 015' }
+    if ($dryResult.Text -notmatch 'DRY grants-stage') { Fail 'dry-run missing grants-stage' }
   } finally {
     Pop-Location
   }
 
   if ($LocalOnly -and -not $CheckConnection -and -not $Apply) {
     Write-Step 'LOCAL_PREFLIGHT_OK (no Timeweb connection). Re-run with -CheckConnection or -Apply.'
-    Write-Step 'Required migrate user: Timeweb admin/owner of gnh_web_staging (prefer gen_user). Never gnh_web_stage.'
+    Write-Step 'Required migrate user: staging-only owner/admin of gnh_web_staging (prefer gnh_web_migrate). Never gnh_web_stage.'
     Write-Step 'Post-check SQL: deploy/stand/verify-gnh-web-staging.sql'
     exit 0
   }
@@ -162,18 +192,18 @@ try {
   $wantRemote = $CheckConnection -or $Apply -or (-not $LocalOnly -and $HostName -and $MigrateUser)
   if (-not $wantRemote) {
     Write-Step 'LOCAL_PREFLIGHT_OK (no Timeweb connection). Re-run with -CheckConnection -HostName -MigrateUser -CaFile.'
-    Write-Step 'Required migrate user: Timeweb admin/owner of gnh_web_staging (prefer gen_user). Never gnh_web_stage.'
+    Write-Step 'Required migrate user: staging-only owner/admin of gnh_web_staging (prefer gnh_web_migrate). Never gnh_web_stage.'
     Write-Step 'Post-check SQL: deploy/stand/verify-gnh-web-staging.sql'
     exit 0
   }
 
   if (-not $HostName) { Fail '-HostName is required for remote check/apply' }
-  if (-not $MigrateUser) { Fail '-MigrateUser is required for remote check/apply (example: gen_user)' }
+  if (-not $MigrateUser) { Fail '-MigrateUser is required for remote check/apply (example: gnh_web_migrate)' }
   if ($MigrateUser -eq 'gnh_web_stage') {
     Fail 'gnh_web_stage is the app role and must not run DDL migrations or CheckConnection as migrate admin.'
   }
   if ($MigrateUser -eq 'root') {
-    Write-Step 'WARNING: prefer gen_user over root (root password auth previously failed). Continuing as requested.'
+    Write-Step 'WARNING: prefer gnh_web_migrate (staging-only) over root. Continuing as requested.'
   }
   if ($HostName -match 'gnh_supabase' -or $MigrateUser -match 'gnh_supabase') {
     Fail 'Refusing production identifiers in host/user.'
@@ -217,27 +247,29 @@ try {
     try {
       if ($CheckConnection) {
         Write-Step 'npm run migrate:staging:check-connection (TLS + privilege SELECTs only; no DDL)'
-        $chk = npm run migrate:staging:check-connection 2>&1 | Out-String
-        Assert-NoSecretLeak $chk
-        Write-Host $chk
-        if ($LASTEXITCODE -eq 0 -and $chk -match 'CHECK_CONNECTION_OK') {
+        $chkResult = Invoke-NpmCaptured -NpmArguments @('run', 'migrate:staging:check-connection')
+        Assert-NoSecretLeak $chkResult.Text
+        Write-Host $chkResult.Text
+        if ($chkResult.ExitCode -eq 0 -and $chkResult.Text -match 'CHECK_CONNECTION_OK') {
           Write-Step 'CHECK_CONNECTION_OK'
           exit 0
         }
-        if ($chk -match 'CHECK_CONNECTION_INCOMPLETE') {
-          Write-Step 'CHECK_CONNECTION_INCOMPLETE — assign missing privileges on gnh_web_staging only in Timeweb panel.'
+        if ($chkResult.Text -match 'CHECK_CONNECTION_INCOMPLETE') {
+          Write-Step 'CHECK_CONNECTION_INCOMPLETE — see privilege lines and missing list above.'
+          Write-Step 'Assign missing privileges on gnh_web_staging only in Timeweb panel.'
           Write-Step 'Do not change permissions on production database gnh_supabase.'
+          Write-Step 'Missing CREATEROLE alone does not block GRANT on objects created by the migrate role.'
           exit 2
         }
-        Fail 'check-connection failed (see output above). Connect to gnh_web_staging as gen_user, not postgres DB / not root.'
+        Fail 'check-connection failed (see full output above). Connect to gnh_web_staging as gnh_web_migrate (or staging DB owner), not postgres DB / not root / not gnh_web_stage.'
       }
 
       Write-Step 'npm run migrate:staging:preflight (TLS+isolation, no SQL)'
-      $pre = npm run migrate:staging:preflight 2>&1 | Out-String
-      Assert-NoSecretLeak $pre
-      Write-Host $pre
-      if ($LASTEXITCODE -ne 0) { Fail 'preflight failed' }
-      if ($pre -notmatch 'PREFLIGHT_OK') { Fail 'preflight did not report PREFLIGHT_OK' }
+      $preResult = Invoke-NpmCaptured -NpmArguments @('run', 'migrate:staging:preflight')
+      Assert-NoSecretLeak $preResult.Text
+      Write-Host $preResult.Text
+      if ($preResult.ExitCode -ne 0) { Fail 'preflight failed' }
+      if ($preResult.Text -notmatch 'PREFLIGHT_OK') { Fail 'preflight did not report PREFLIGHT_OK' }
 
       if (-not $Apply) {
         Write-Step 'Remote preflight OK. Pass -CheckConnection to probe privileges, or -Apply to migrate after confirmation.'
@@ -255,15 +287,15 @@ try {
 
       if ($Seed) {
         Write-Step 'npm run migrate:staging:seed'
-        $out = npm run migrate:staging:seed 2>&1 | Out-String
+        $migResult = Invoke-NpmCaptured -NpmArguments @('run', 'migrate:staging:seed')
       } else {
         Write-Step 'npm run migrate:staging'
-        $out = npm run migrate:staging 2>&1 | Out-String
+        $migResult = Invoke-NpmCaptured -NpmArguments @('run', 'migrate:staging')
       }
-      Assert-NoSecretLeak $out
-      Write-Host $out
-      if ($LASTEXITCODE -ne 0) { Fail 'migrate:staging failed' }
-      if ($out -notmatch 'Staging migrations complete') {
+      Assert-NoSecretLeak $migResult.Text
+      Write-Host $migResult.Text
+      if ($migResult.ExitCode -ne 0) { Fail 'migrate:staging failed' }
+      if ($migResult.Text -notmatch 'Staging migrations complete') {
         Fail 'migrate finished without success marker'
       }
       Write-Step 'MIGRATE_OK'

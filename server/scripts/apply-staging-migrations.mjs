@@ -26,6 +26,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import pg from 'pg'
+import { evaluateStagingCheckPrivileges } from './stagingCheckPrivileges.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const serverRoot = path.resolve(__dirname, '..')
@@ -241,51 +242,25 @@ async function runCheckConnection(client) {
        has_schema_privilege(current_user, 'public', 'CREATE') AS schema_create`
   )
   const p = priv.rows[0]
-  console.log('Privileges (self on staging):', {
-    CONNECT: p.db_connect,
-    CREATE_database: p.db_create,
-    USAGE_public: p.schema_usage,
-    CREATE_public: p.schema_create,
-  })
-
-  const missing = []
-  if (!p.db_connect) missing.push('CONNECT on database gnh_web_staging')
-  if (!p.db_create) missing.push('CREATE on database gnh_web_staging')
-  if (!p.schema_usage) missing.push('USAGE on schema public')
-  if (!p.schema_create) missing.push('CREATE on schema public')
 
   const appRole = await client.query(
     `SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1) AS exists`,
     [APP_ROLE]
   )
   const appExists = Boolean(appRole.rows[0]?.exists)
-  console.log('App role:', { role: APP_ROLE, exists: appExists })
-  if (!appExists) {
-    missing.push(`LOGIN role ${APP_ROLE} must exist (create in Timeweb panel for staging only)`)
-  }
 
   let stageMemberOfProd = null
+  let isSuper = false
+  let hasUsageOnAppRole = false
+  let canCreateRole = false
   if (appExists) {
     const membership = await client.query(
       `SELECT pg_has_role($1, $2, 'member') AS is_member`,
       [APP_ROLE, PROD_ROLE]
     )
     stageMemberOfProd = Boolean(membership.rows[0]?.is_member)
-    console.log('Isolation:', {
-      [`${APP_ROLE}_member_of_${PROD_ROLE}`]: stageMemberOfProd,
-      expected: false,
-    })
-    if (stageMemberOfProd) {
-      // Report only — this tool never REVOKE / ALTER ROLE (production roles must stay untouched).
-      missing.push(
-        `${APP_ROLE} is a member of ${PROD_ROLE} (report only; fix only after explicit approval — never alter gnh_supabase / gen_user / gnh_app / gamenight_bot from this tool)`
-      )
-    }
-  }
 
-  // Capability hint for future staging DDL: metadata only; never executes GRANT/ALTER ROLE.
-  let canGrantRole = null
-  if (appExists) {
+    // Metadata only — never executes GRANT/ALTER ROLE.
     const grantProbe = await client.query(
       `SELECT
          pg_has_role(current_user, $1, 'USAGE') AS has_usage_on_app,
@@ -294,30 +269,63 @@ async function runCheckConnection(client) {
       [APP_ROLE]
     )
     const g = grantProbe.rows[0]
-    canGrantRole = Boolean(g.is_super) || Boolean(g.has_usage_on_app) || Boolean(g.can_create_role)
-    console.log('DDL/GRANT readiness (metadata):', {
-      canLikelyGrantToAppRole: canGrantRole,
-      isSuper: Boolean(g.is_super),
-      hasUsageOnAppRole: Boolean(g.has_usage_on_app),
-      canCreateRole: Boolean(g.can_create_role),
-    })
-    if (!canGrantRole) {
-      missing.push(
-        `Future staging migrate needs object GRANT rights on gnh_web_staging only (prefer: make migrate user DB owner of gnh_web_staging in Timeweb panel). Do not change production roles gen_user / gnh_app / gamenight_bot or gnh_supabase.`
-      )
-    }
+    isSuper = Boolean(g.is_super)
+    hasUsageOnAppRole = Boolean(g.has_usage_on_app)
+    canCreateRole = Boolean(g.can_create_role)
+  } else {
+    const selfRole = await client.query(
+      `SELECT rolsuper, rolcreaterole FROM pg_roles WHERE rolname = current_user`
+    )
+    isSuper = Boolean(selfRole.rows[0]?.rolsuper)
+    canCreateRole = Boolean(selfRole.rows[0]?.rolcreaterole)
   }
 
-  if (missing.length) {
-    console.error('CHECK_CONNECTION_INCOMPLETE')
-    console.error('Report only — no SQL was applied. Needed on gnh_web_staging only (never gnh_supabase / never production role changes):')
-    for (const item of missing) {
-      console.error(' -', item)
+  const evaluated = evaluateStagingCheckPrivileges({
+    dbConnect: Boolean(p.db_connect),
+    dbCreate: Boolean(p.db_create),
+    schemaUsage: Boolean(p.schema_usage),
+    schemaCreate: Boolean(p.schema_create),
+    appRoleExists: appExists,
+    appRoleMemberOfProd: stageMemberOfProd,
+    isSuper,
+    hasUsageOnAppRole,
+    canCreateRole,
+    appRole: APP_ROLE,
+    prodRole: PROD_ROLE,
+  })
+
+  // Print each privilege on its own line so PowerShell/CI logs stay readable.
+  console.log(`CHECK privilege CONNECT database: ${evaluated.checks.CONNECT}`)
+  console.log(`CHECK privilege CREATE database: ${evaluated.checks.CREATE_database}`)
+  console.log(`CHECK privilege USAGE schema public: ${evaluated.checks.USAGE_public}`)
+  console.log(`CHECK privilege CREATE schema public: ${evaluated.checks.CREATE_public}`)
+  console.log(`CHECK app role ${APP_ROLE} exists: ${appExists}`)
+  console.log(
+    `CHECK isolation ${APP_ROLE} member of ${PROD_ROLE}: ${stageMemberOfProd === null ? 'n/a' : stageMemberOfProd} (expected false)`
+  )
+  console.log(
+    `CHECK grant to ${APP_ROLE} on migrate-owned objects: ${evaluated.grantToAppRole.onOwnedObjects}`
+  )
+  console.log(
+    `CHECK grant via CREATEROLE/role USAGE (informational): ${evaluated.grantToAppRole.viaCreateRoleOrRoleUsage}`
+  )
+  for (const note of evaluated.notes) {
+    console.log(`NOTE: ${note}`)
+  }
+
+  if (!evaluated.ok) {
+    // Use stdout (not stderr) so Windows PowerShell Stop + NativeCommandError cannot hide the list.
+    console.log('CHECK_CONNECTION_INCOMPLETE')
+    console.log(
+      'Report only — no SQL was applied. Needed on gnh_web_staging only (never gnh_supabase / never production role changes):'
+    )
+    for (const item of evaluated.missing) {
+      console.log(' -', item)
     }
     process.exit(2)
   }
 
-  console.log('CHECK_CONNECTION_OK migrate user can connect and appears ready for staging DDL/GRANT.')
+  console.log('CHECK_CONNECTION_OK migrate user can connect and appears ready for staging DDL/GRANT on owned objects.')
 }
 
 async function main() {

@@ -23,6 +23,7 @@ import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
 
 import { buildAllowedCorsOrigins, isOriginAllowed } from './corsOrigins.js'
+import { logPgPrivilegeDiagnostics } from './db.js'
 
 const port = Number(process.env.PORT || 3001)
 const allowedOrigins = buildAllowedCorsOrigins({
@@ -132,4 +133,6 @@ app.use('/legal', createLegalHtmlRouter({ query: db }))
 // HTTP server (webhook mode — no bot.launch/polling)
 app.listen(port, '0.0.0.0', () => {
   console.log(`[TCG] HTTP server listening on port ${port}`)
+  // Temporary Timeweb probe: shared pool role/db/privileges for public.users (no secrets).
+  void logPgPrivilegeDiagnostics()
 })

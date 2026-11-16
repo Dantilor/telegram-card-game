@@ -1,4 +1,4 @@
-/* Mobile + desktop layout for Telegram Mini App — loaded last via App.css */
+﻿/* Mobile + desktop layout for Telegram Mini App — loaded last via App.css */
 
 :root {
   --layout-pad: clamp(0.75rem, 3vw, 1rem);
@@ -78,7 +78,7 @@
     --tg-header-offset: 3rem;
   }
 
-  /* Telegram Mini App + WEB both stay a centered phone column (WEB via web-desktop.css). */
+  /* Telegram Mini App stays a centered phone column; WEB uses web-desktop.css wide shell. */
   .app:not(.app--web) {
     max-width: min(var(--layout-content-max), 100%);
     margin-inline: auto;
@@ -107,3 +107,4 @@
     scroll-behavior: auto !important;
   }
 }
+

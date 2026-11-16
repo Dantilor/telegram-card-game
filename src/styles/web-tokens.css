@@ -1,0 +1,81 @@
+﻿/**
+ * WEB design tokens — theme-aware surfaces for standalone shell.
+ * Scoped so Telegram Mini App keeps its own theme.css values.
+ */
+
+.app.app--web {
+  --web-surface-0: color-mix(in srgb, var(--panel, rgba(20, 22, 45, 0.92)) 88%, transparent);
+  --web-surface-1: color-mix(in srgb, var(--panel, rgba(20, 22, 45, 0.92)) 96%, #fff 4%);
+  --web-surface-elevated: var(--panel, rgba(20, 22, 45, 0.96));
+  --web-ink: var(--text, #f5f3ff);
+  --web-ink-muted: var(--muted, rgba(245, 243, 255, 0.82));
+  --web-accent: var(--primary, #ff3cac);
+  --web-accent-2: var(--primary2, #8a2be2);
+  --web-accent-cyan: var(--secondary, #2bd2ff);
+  --web-border: var(--border, rgba(255, 255, 255, 0.12));
+  --web-shadow: var(--shadow, 0 8px 32px rgba(0, 0, 0, 0.3));
+  --web-nav-bg: rgba(12, 16, 36, 0.82);
+  --web-nav-ink: var(--web-ink);
+  --web-nav-border: color-mix(in srgb, var(--web-border) 85%, transparent);
+  --web-premium-glow: var(--glowPurple, rgba(255, 120, 210, 0.35));
+  --web-card-radius: 1.15rem;
+  --web-btn-radius: 999px;
+  --web-focus: color-mix(in srgb, var(--web-accent-cyan) 70%, #fff);
+  color: var(--web-ink);
+}
+
+html[data-theme="neon-dark"] .app.app--web {
+  --web-nav-bg: rgba(12, 16, 36, 0.88);
+  --web-nav-ink: #f8f7ff;
+  background-color: #12101c;
+}
+
+html[data-theme="neon-light"] .app.app--web {
+  --web-nav-bg: rgba(255, 255, 255, 0.86);
+  --web-nav-ink: #1a102a;
+  --web-nav-border: rgba(26, 16, 42, 0.12);
+  --web-shadow: 0 10px 28px rgba(26, 16, 42, 0.08);
+  background-color: #f7f5ff;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 12% -10%, rgba(255, 101, 216, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 92% 8%, rgba(85, 183, 255, 0.12) 0%, transparent 50%),
+    linear-gradient(165deg, #fbfaff 0%, #f0ecff 45%, #e8f4ff 100%);
+}
+
+html[data-theme="sunset"] .app.app--web {
+  --web-nav-bg: rgba(255, 248, 242, 0.88);
+  --web-nav-ink: #1f1410;
+  --web-nav-border: rgba(80, 40, 30, 0.12);
+  --web-shadow: 0 10px 28px rgba(80, 40, 30, 0.1);
+  background-color: #fff8f2;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 12% -10%, rgba(255, 154, 139, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 92% 8%, rgba(255, 179, 71, 0.14) 0%, transparent 50%),
+    linear-gradient(165deg, #fff8f2 0%, #ffe8dc 45%, #ffd8c8 100%);
+}
+
+html[data-theme="minimal-calm"] .app.app--web {
+  --web-nav-bg: rgba(247, 248, 245, 0.9);
+  --web-nav-ink: #232931;
+  --web-nav-border: rgba(35, 41, 49, 0.12);
+  --web-shadow: 0 8px 24px rgba(35, 41, 49, 0.08);
+  background-color: #f7f8f5;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 12% -10%, rgba(139, 168, 150, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 92% 8%, rgba(123, 137, 184, 0.1) 0%, transparent 50%),
+    linear-gradient(165deg, #f7f8f5 0%, #eef1ec 45%, #e4ebe6 100%);
+}
+
+@media (min-width: 768px) {
+  .app.app--web .home-web-nav {
+    background: var(--web-nav-bg);
+    border-color: var(--web-nav-border);
+    color: var(--web-nav-ink);
+    box-shadow: var(--web-shadow);
+  }
+
+  .app.app--web .home-web-nav__brand,
+  .app.app--web .home-web-nav__link {
+    color: var(--web-nav-ink);
+  }
+}

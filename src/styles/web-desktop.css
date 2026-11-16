@@ -1,30 +1,1285 @@
 /**
- * WEB shell design: same phone-first column as Telegram Mini App.
- * No desktop expansion / wide grids. Loader crystal lives in WebAuthGate.
- * Scoped to `.app.app--web` — Mini App CSS is untouched.
+ * WEB desktop/tablet layout (shell max ~1440px).
+ * Scoped to `.app.app--web` so Telegram Mini App stays phone-first.
  */
 
 .app.app--web {
-  /* Fixed phone column — do not grow into desktop/tablet shells. */
-  --layout-phone-max: 29.375rem;
-  --layout-content-max: 29.375rem;
-  max-width: min(29.375rem, 100%);
-  margin-inline: auto;
+  --web-shell-max: 29.375rem;
+  --web-pad-x: clamp(0.875rem, 2.4vw, 1.25rem);
+  --web-section-gap: clamp(0.55rem, 1.6vw, 0.95rem);
+  --web-hero-radius: 1.35rem;
+  --web-card-lift: translateY(-3px);
+  --layout-phone-max: var(--web-shell-max);
+  --layout-content-max: var(--web-shell-max);
+  max-width: none;
+  margin-inline: 0;
+  border-inline: none;
+  padding-inline: 0;
+}
+
+.app.app--web::after {
+  /* Keep aurora subtle; parallax layer uses transform separately */
+  will-change: transform;
+}
+
+/* —— Breakpoints —— */
+@media (min-width: 768px) {
+  .app.app--web {
+    --web-shell-max: min(100% - 2rem, 46rem);
+    --web-pad-x: clamp(1rem, 3vw, 1.75rem);
+    --web-section-gap: clamp(0.7rem, 1.6vw, 1.15rem);
+    --layout-pad: clamp(1rem, 2.5vw, 1.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app.app--web {
+    --web-shell-max: min(100% - 2rem, 72rem);
+    --web-pad-x: clamp(1.25rem, 3.5vw, 2.25rem);
+    --web-section-gap: clamp(0.8rem, 1.5vw, 1.25rem);
+  }
+}
+
+@media (min-width: 1200px) {
+  .app.app--web {
+    --web-shell-max: min(100% - 2.5rem, 80rem);
+  }
+}
+
+@media (min-width: 1440px) {
+  .app.app--web {
+    --web-shell-max: min(100% - 3rem, 90rem);
+    --web-pad-x: clamp(1.5rem, 4vw, 2.75rem);
+  }
+}
+
+@media (min-width: 1920px) {
+  .app.app--web {
+    --web-shell-max: min(100% - 3.5rem, 90rem);
+  }
+}
+
+/* Shared page shells — widen only inside WEB */
+.app.app--web .games-page,
+.app.app--web .game-page,
+.app.app--web .profile-page,
+.app.app--web .play-page,
+.app.app--web .favorites-page,
+.app.app--web .card-entry-page,
+.app.app--web .deck-select-page,
+.app.app--web .alias-page,
+.app.app--web .mafia-page,
+.app.app--web .comic-reader,
+.app.app--web .page-shell,
+.app.app--web .home-page,
+.app.app--web .home-page--neon,
+.app.app--web .home-page--light,
+.app.app--web .home-page--sunset,
+.app.app--web .home-page--calm {
+  max-width: var(--web-shell-max);
   width: 100%;
-  box-sizing: border-box;
+  margin-inline: auto;
+  padding-left: max(var(--web-pad-x), var(--safe-left));
+  padding-right: max(var(--web-pad-x), var(--safe-right));
 }
 
-/* Desktop-only WEB chrome stays off — home looks like Mini App. */
+/* Hardcoded 29.375rem on themed homes — override for WEB */
+.app.app--web .home-page--neon,
+.app.app--web .home-page--light,
+.app.app--web .home-page--sunset,
+.app.app--web .home-page--calm {
+  max-width: var(--web-shell-max);
+}
+
+/* Fluid type on large WEB surfaces */
+@media (min-width: 1024px) {
+  .app.app--web {
+    font-size: clamp(1rem, 0.95rem + 0.15vw, 1.05rem);
+  }
+}
+
+/* ========== HOME ========== */
 .app.app--web .home-web-nav {
-  display: none !important;
+  display: none;
 }
 
-.app.app--web .home-web-side {
-  display: contents;
+@media (min-width: 768px) {
+  .app.app--web .home-web-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 var(--web-section-gap);
+    padding: 0.5rem 0.75rem;
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--neon-home-card-dark, rgba(12, 16, 36, 0.82)) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--neon-home-border, rgba(180, 90, 255, 0.28)) 85%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  }
+
+  .app.app--web .home-web-nav__brand {
+    font-family: "Unbounded", "Manrope", system-ui, sans-serif;
+    font-size: clamp(0.85rem, 0.7rem + 0.4vw, 1.05rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(90deg, #ff3fd8 0%, #8b4dff 50%, #3b82ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .app.app--web .home-web-nav__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
+
+  .app.app--web .home-web-nav__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.2rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--neon-home-text, var(--text, #f5f7ff));
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 180ms ease, border-color 180ms ease, transform 160ms ease, color 160ms ease;
+  }
+
+  .app.app--web .home-web-nav__link:hover,
+  .app.app--web .home-web-nav__link:focus-visible {
+    background: rgba(139, 77, 255, 0.14);
+    border-color: rgba(139, 77, 255, 0.35);
+    outline: none;
+  }
+
+  .app.app--web .home-web-nav__link--cta {
+    background: linear-gradient(135deg, #ff3fd8 0%, #8b4dff 100%);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(255, 63, 216, 0.28);
+  }
+
+  .app.app--web .home-web-nav__link--cta:hover,
+  .app.app--web .home-web-nav__link--cta:focus-visible {
+    transform: translateY(-1px);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  /* Light / Sunset / Calm — readable nav on themed panels */
+  [data-theme="neon-light"] .app.app--web .home-web-nav {
+    background: color-mix(in srgb, var(--light-home-card, rgba(255, 255, 255, 0.86)) 94%, transparent);
+    border-color: color-mix(in srgb, var(--light-home-border, rgba(142, 99, 255, 0.22)) 90%, transparent);
+    box-shadow: 0 8px 22px rgba(47, 42, 91, 0.08);
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link {
+    color: var(--light-home-text, #181426);
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link:hover,
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link:focus-visible {
+    background: rgba(142, 99, 255, 0.12);
+    border-color: rgba(142, 99, 255, 0.28);
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link--cta,
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link--cta:hover,
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link--cta:focus-visible {
+    color: #fff;
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav {
+    background: color-mix(in srgb, var(--sunset-home-card, rgba(255, 248, 242, 0.9)) 94%, transparent);
+    border-color: color-mix(in srgb, var(--sunset-home-border, rgba(255, 154, 139, 0.28)) 90%, transparent);
+    box-shadow: 0 8px 22px rgba(255, 120, 90, 0.1);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav__link {
+    color: var(--sunset-home-text, #1f1410);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav__link:hover,
+  [data-theme="sunset"] .app.app--web .home-web-nav__link:focus-visible {
+    background: rgba(255, 122, 92, 0.12);
+    border-color: rgba(255, 122, 92, 0.3);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav__link--cta,
+  [data-theme="sunset"] .app.app--web .home-web-nav__link--cta:hover,
+  [data-theme="sunset"] .app.app--web .home-web-nav__link--cta:focus-visible {
+    background: linear-gradient(135deg, #ff7a5c 0%, #ff9a8b 100%);
+    box-shadow: 0 6px 18px rgba(255, 122, 92, 0.28);
+    color: #fff;
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav {
+    background: color-mix(in srgb, var(--calm-home-card, rgba(245, 247, 244, 0.92)) 94%, transparent);
+    border-color: color-mix(in srgb, var(--calm-home-border, rgba(95, 127, 116, 0.22)) 90%, transparent);
+    box-shadow: 0 8px 22px rgba(80, 100, 90, 0.08);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link {
+    color: var(--calm-home-text, #232931);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link:hover,
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link:focus-visible {
+    background: rgba(95, 127, 116, 0.12);
+    border-color: rgba(95, 127, 116, 0.28);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link--cta,
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link--cta:hover,
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link--cta:focus-visible {
+    background: linear-gradient(135deg, #5f7f74 0%, #7b89b8 100%);
+    box-shadow: 0 6px 18px rgba(95, 127, 116, 0.25);
+    color: #fff;
+  }
 }
 
+/* Desktop home composition */
+@media (min-width: 768px) {
+  .app.app--web .home-page--neon,
+  .app.app--web .home-page--light,
+  .app.app--web .home-page--sunset,
+  .app.app--web .home-page--calm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--web-section-gap);
+  }
+
+  .app.app--web .home-neon-hero,
+  .app.app--web .home-light-hero,
+  .app.app--web .home-sunset-hero,
+  .app.app--web .home-calm-hero {
+    margin: 0;
+  }
+
+  .app.app--web .home-neon-hero__card,
+  .app.app--web .home-light-hero__card,
+  .app.app--web .home-sunset-hero__card,
+  .app.app--web .home-calm-hero__card {
+    position: relative;
+    display: block;
+    min-height: clamp(13.5rem, 26vw, 18.5rem);
+    aspect-ratio: auto;
+    overflow: hidden;
+    border-radius: var(--web-hero-radius);
+  }
+
+  .app.app--web .home-neon-hero__bg,
+  .app.app--web .home-light-hero__bg,
+  .app.app--web .home-sunset-hero__bg,
+  .app.app--web .home-calm-hero__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center right;
+    /* Keep portal vivid — no global dimming filter */
+    filter: none;
+    opacity: 1;
+    transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.04);
+    transition: transform 500ms ease;
+    will-change: transform;
+  }
+
+  .app.app--web .home-neon-hero__card:hover .home-neon-hero__bg,
+  .app.app--web .home-light-hero__card:hover .home-light-hero__bg,
+  .app.app--web .home-sunset-hero__card:hover .home-sunset-hero__bg,
+  .app.app--web .home-calm-hero__card:hover .home-calm-hero__bg {
+    transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.07);
+  }
+
+  /* Soft edge veil only — illustration stays bright */
+  .app.app--web .home-neon-hero__shade,
+  .app.app--web .home-light-hero__shade,
+  .app.app--web .home-sunset-hero__shade,
+  .app.app--web .home-calm-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(5, 8, 22, 0.18) 0%, rgba(5, 8, 22, 0.05) 38%, transparent 62%),
+      linear-gradient(180deg, transparent 58%, rgba(5, 8, 22, 0.12) 100%);
+    opacity: 1;
+    mix-blend-mode: normal;
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-light-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 40%, transparent 65%),
+      linear-gradient(180deg, transparent 60%, rgba(47, 42, 91, 0.08) 100%);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-sunset-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(255, 244, 236, 0.3) 0%, rgba(255, 244, 236, 0.08) 40%, transparent 65%),
+      linear-gradient(180deg, transparent 60%, rgba(80, 40, 30, 0.1) 100%);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-calm-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(245, 247, 244, 0.32) 0%, rgba(245, 247, 244, 0.08) 40%, transparent 65%),
+      linear-gradient(180deg, transparent 60%, rgba(35, 41, 49, 0.08) 100%);
+  }
+
+  .app.app--web .home-neon-hero__content,
+  .app.app--web .home-light-hero__content,
+  .app.app--web .home-sunset-hero__content,
+  .app.app--web .home-calm-hero__content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+    min-height: inherit;
+    padding: clamp(1rem, 2.4vw, 1.75rem);
+    max-width: min(34rem, 58%);
+    border-radius: 1rem;
+    /* Local readable scrim under copy only */
+    background: linear-gradient(
+      105deg,
+      rgba(5, 8, 22, 0.55) 0%,
+      rgba(5, 8, 22, 0.28) 58%,
+      rgba(5, 8, 22, 0) 100%
+    );
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-light-hero__content {
+    background: linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.38) 58%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+
+  [data-theme="sunset"] .app.app--web .home-sunset-hero__content {
+    background: linear-gradient(
+      105deg,
+      rgba(255, 248, 242, 0.72) 0%,
+      rgba(255, 248, 242, 0.35) 58%,
+      rgba(255, 248, 242, 0) 100%
+    );
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-calm-hero__content {
+    background: linear-gradient(
+      105deg,
+      rgba(245, 247, 244, 0.75) 0%,
+      rgba(245, 247, 244, 0.36) 58%,
+      rgba(245, 247, 244, 0) 100%
+    );
+  }
+
+  .app.app--web .home-neon-hero__title,
+  .app.app--web .home-light-hero__title,
+  .app.app--web .home-sunset-hero__title,
+  .app.app--web .home-calm-hero__title {
+    font-size: clamp(2rem, 1.4rem + 1.6vw, 3.25rem);
+    line-height: 1.05;
+  }
+
+  .app.app--web .home-neon-hero__tagline,
+  .app.app--web .home-light-hero__tagline,
+  .app.app--web .home-sunset-hero__tagline,
+  .app.app--web .home-calm-hero__tagline {
+    font-size: clamp(1rem, 0.9rem + 0.35vw, 1.25rem);
+    margin-top: 0.65rem;
+  }
+
+  .app.app--web .home-neon-hero__cta,
+  .app.app--web .home-light-hero__cta,
+  .app.app--web .home-sunset-hero__cta,
+  .app.app--web .home-calm-hero__cta {
+    margin-top: 1.25rem;
+    min-height: 3rem;
+    padding-inline: 1.35rem;
+  }
+
+  /* Quick actions + themes in a row band */
+  .app.app--web .home-neon-quick,
+  .app.app--web .home-light-quick,
+  .app.app--web .home-sunset-quick,
+  .app.app--web .home-calm-quick {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  html[data-theme] .app.app--web .home-neon-quick__card,
+  html[data-theme] .app.app--web .home-light-quick__card,
+  html[data-theme] .app.app--web .home-sunset-quick__card,
+  html[data-theme] .app.app--web .home-calm-quick__card {
+    /* Kill 422/260 stretch that made hundreds of empty pixels */
+    aspect-ratio: auto;
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.4rem;
+    padding: 0.85rem 0.75rem 0.8rem;
+    transition: transform 180ms ease, box-shadow 220ms ease, border-color 180ms ease;
+  }
+
+  .app.app--web .home-neon-quick__text,
+  .app.app--web .home-light-quick__text,
+  .app.app--web .home-sunset-quick__text,
+  .app.app--web .home-calm-quick__text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .app.app--web .home-neon-quick__chev-img,
+  .app.app--web .home-light-quick__chev-img,
+  .app.app--web .home-sunset-quick__chev-img,
+  .app.app--web .home-calm-quick__chev-img {
+    display: none;
+  }
+
+  .app.app--web .home-neon-quick__card:hover,
+  .app.app--web .home-light-quick__card:hover,
+  .app.app--web .home-sunset-quick__card:hover,
+  .app.app--web .home-calm-quick__card:hover {
+    transform: var(--web-card-lift);
+  }
+
+  .app.app--web .home-premium-banner__card {
+    min-height: 6.25rem;
+    padding: 0.85rem 1.15rem 0.85rem 0.55rem;
+    border-radius: 1.35rem;
+  }
+
+  .app.app--web .home-premium-banner__gem-wrap {
+    width: 6rem;
+  }
+
+  .app.app--web .home-premium-banner__gem {
+    max-height: 5.75rem;
+  }
+
+  .app.app--web .home-premium-banner__title {
+    font-size: clamp(1.15rem, 1rem + 0.4vw, 1.45rem);
+  }
+
+  /* Picks → card grid (override TG 869/100 strip rows) */
+  .app.app--web .home-neon-picks__list,
+  .app.app--web .home-light-picks__list,
+  .app.app--web .home-sunset-picks__list,
+  .app.app--web .home-calm-picks__list,
+  .app.app--web .home-web-picks__list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  html[data-theme] .app.app--web .home-neon-picks__row,
+  html[data-theme] .app.app--web .home-light-picks__row,
+  html[data-theme] .app.app--web .home-sunset-picks__row,
+  html[data-theme] .app.app--web .home-calm-picks__row,
+  html[data-theme] .app.app--web .home-web-picks__card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    width: 100%;
+    min-height: 0;
+    height: auto;
+  /* Force-kill Mini App strip ratio on WEB (all themes) */
+  html[data-theme] .app.app--web .home-neon-picks__row,
+  html[data-theme] .app.app--web .home-light-picks__row,
+  html[data-theme] .app.app--web .home-sunset-picks__row,
+  html[data-theme] .app.app--web .home-calm-picks__row {
+    aspect-ratio: auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+    /* Critical: TG Home.css uses 869/100 which collapses covers into strips */
+    aspect-ratio: auto;
+    padding: 0.75rem;
+    border-radius: 1.1rem;
+    text-align: left;
+    overflow: hidden;
+    transition: transform 180ms ease, box-shadow 220ms ease;
+  }
+
+  .app.app--web .home-neon-picks__row:hover,
+  .app.app--web .home-light-picks__row:hover,
+  .app.app--web .home-sunset-picks__row:hover,
+  .app.app--web .home-calm-picks__row:hover,
+  .app.app--web .home-web-picks__card:hover {
+    transform: var(--web-card-lift);
+  }
+
+  .app.app--web .home-picks__thumb-wrap {
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    align-self: stretch;
+    /* Catalog thumbs are portrait (~3:4 / 4:5); 16/10 cropped them into a thin band */
+    aspect-ratio: 4 / 5;
+    border-radius: 0.85rem;
+    overflow: hidden;
+    line-height: 0;
+    background: #050816;
+  }
+
+  .app.app--web .home-picks__thumb-wrap picture {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .app.app--web .home-picks__thumb {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  .app.app--web .home-neon-picks__name,
+  .app.app--web .home-light-picks__name,
+  .app.app--web .home-sunset-picks__name,
+  .app.app--web .home-calm-picks__name,
+  .app.app--web .home-web-picks__name {
+    flex: 1;
+    font-size: 0.98rem;
+    font-weight: 650;
+  }
+
+  .app.app--web .home-picks__play {
+    align-self: flex-end;
+  }
+
+  .app.app--web .home-web-picks__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .app.app--web .home-web-picks__more {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--neonCyan, #3b82ff);
+    text-decoration: none;
+  }
+
+  .app.app--web .home-web-picks__more:hover,
+  .app.app--web .home-web-picks__more:focus-visible {
+    text-decoration: underline;
+    outline: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app.app--web .home-page--neon,
+  .app.app--web .home-page--light,
+  .app.app--web .home-page--sunset,
+  .app.app--web .home-page--calm {
+    grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 0.95fr);
+    grid-template-areas:
+      "welcome welcome"
+      "nav nav"
+      "themes themes"
+      "hero premium"
+      "quick quick"
+      "picks picks"
+      "new new";
+    align-items: start;
+  }
+
+  .app.app--web .home-welcome-top {
+    grid-area: welcome;
+  }
+
+  .app.app--web .home-web-nav {
+    grid-area: nav;
+  }
+
+  .app.app--web .home-neon-themes,
+  .app.app--web .home-light-themes,
+  .app.app--web .home-sunset-themes,
+  .app.app--web .home-calm-themes {
+    grid-area: themes;
+  }
+
+  .app.app--web .home-neon-hero,
+  .app.app--web .home-light-hero,
+  .app.app--web .home-sunset-hero,
+  .app.app--web .home-calm-hero {
+    grid-area: hero;
+  }
+
+  /* Unwrap side wrapper so quick + premium can sit in separate grid areas */
+  .app.app--web .home-web-side {
+    display: contents;
+  }
+
+  .app.app--web .home-neon-quick,
+  .app.app--web .home-light-quick,
+  .app.app--web .home-sunset-quick,
+  .app.app--web .home-calm-quick {
+    grid-area: quick;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .app.app--web .home-premium-banner {
+    grid-area: premium;
+    width: 100%;
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .app.app--web .home-premium-banner__card {
+    height: 100%;
+    min-height: 100%;
+    align-content: center;
+  }
+
+  .app.app--web .home-web-picks--popular {
+    grid-area: picks;
+  }
+
+  .app.app--web .home-web-picks--new {
+    grid-area: new;
+  }
+
+  .app.app--web .home-neon-hero__card,
+  .app.app--web .home-light-hero__card,
+  .app.app--web .home-sunset-hero__card,
+  .app.app--web .home-calm-hero__card {
+    min-height: clamp(14.5rem, 24vw, 20rem);
+  }
+
+  .app.app--web .home-neon-quick__card,
+  .app.app--web .home-light-quick__card,
+  .app.app--web .home-sunset-quick__card,
+  .app.app--web .home-calm-quick__card {
+    max-width: 22rem;
+    justify-self: center;
+    width: 100%;
+  }
+
+  .app.app--web .home-neon-quick,
+  .app.app--web .home-light-quick,
+  .app.app--web .home-sunset-quick,
+  .app.app--web .home-calm-quick {
+    justify-items: center;
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
+  /* If Premium banner is absent, hero uses the full row */
+  .app.app--web .home-page--web:not(:has(.home-premium-banner)) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "welcome"
+      "nav"
+      "themes"
+      "hero"
+      "quick"
+      "picks"
+      "new";
+  }
+}
+
+@media (min-width: 1440px) {
+  .app.app--web .home-web-picks__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .app.app--web .home-web-picks--popular .home-web-picks__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Mobile WEB: hide desktop chrome; fix strip covers + compact quick tiles */
+@media (max-width: 767px) {
+  .app.app--web .home-web-nav {
+    display: none !important;
+  }
+
+  .app.app--web .home-web-side {
+    display: contents;
+  }
+
+  .app.app--web .home-neon-hero__card,
+  .app.app--web .home-light-hero__card,
+  .app.app--web .home-sunset-hero__card,
+  .app.app--web .home-calm-hero__card {
+    min-height: 0;
+  }
+
+  .app.app--web .home-neon-hero__shade,
+  .app.app--web .home-light-hero__shade,
+  .app.app--web .home-sunset-hero__shade,
+  .app.app--web .home-calm-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(5, 8, 22, 0.32) 0%, rgba(5, 8, 22, 0.1) 42%, transparent 68%),
+      linear-gradient(180deg, transparent 58%, rgba(5, 8, 22, 0.16) 100%);
+  }
+
+  .app.app--web .home-neon-hero__content,
+  .app.app--web .home-light-hero__content,
+  .app.app--web .home-sunset-hero__content,
+  .app.app--web .home-calm-hero__content {
+    max-width: 72%;
+    padding: 0.95rem 0.75rem 0.95rem 0.9rem;
+    background: linear-gradient(
+      105deg,
+      rgba(5, 8, 22, 0.5) 0%,
+      rgba(5, 8, 22, 0.22) 62%,
+      rgba(5, 8, 22, 0) 100%
+    );
+  }
+
+  .app.app--web .home-neon-quick,
+  .app.app--web .home-light-quick,
+  .app.app--web .home-sunset-quick,
+  .app.app--web .home-calm-quick {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    width: 100%;
+  }
+
+  html[data-theme] .app.app--web .home-neon-quick__card,
+  html[data-theme] .app.app--web .home-light-quick__card,
+  html[data-theme] .app.app--web .home-sunset-quick__card,
+  html[data-theme] .app.app--web .home-calm-quick__card {
+    aspect-ratio: auto;
+    height: auto;
+    min-height: 0;
+    flex: unset;
+    flex-basis: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.35rem;
+    padding: 0.75rem 0.55rem 0.7rem;
+  }
+
+  .app.app--web .home-neon-quick__text,
+  .app.app--web .home-light-quick__text,
+  .app.app--web .home-sunset-quick__text,
+  .app.app--web .home-calm-quick__text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .app.app--web .home-neon-quick__chev-img,
+  .app.app--web .home-light-quick__chev-img,
+  .app.app--web .home-sunset-quick__chev-img,
+  .app.app--web .home-calm-quick__chev-img {
+    display: none;
+  }
+
+  .app.app--web .home-web-picks__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .app.app--web .home-web-picks__more {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--neonCyan, #3b82ff);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  /* Horizontal rows with real square-ish covers (not 869/100 strips) */
+  .app.app--web .home-neon-picks__list,
+  .app.app--web .home-light-picks__list,
+  .app.app--web .home-sunset-picks__list,
+  .app.app--web .home-calm-picks__list,
+  .app.app--web .home-web-picks__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  html[data-theme] .app.app--web .home-neon-picks__row,
+  html[data-theme] .app.app--web .home-light-picks__row,
+  html[data-theme] .app.app--web .home-sunset-picks__row,
+  html[data-theme] .app.app--web .home-calm-picks__row,
+  html[data-theme] .app.app--web .home-web-picks__card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    min-height: 4.85rem;
+    height: auto;
+    aspect-ratio: auto;
+    padding: 0.35rem 0.55rem 0.35rem 0.35rem;
+    overflow: hidden;
+  }
+
+  .app.app--web .home-picks__thumb-wrap {
+    position: relative;
+    flex: 0 0 4.35rem;
+    width: 4.35rem;
+    height: 4.35rem;
+    min-height: 4.35rem;
+    margin: 0;
+    align-self: center;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .app.app--web .home-picks__thumb-wrap picture,
+  .app.app--web .home-picks__thumb {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  .app.app--web .home-web-picks__name,
+  .app.app--web .home-neon-picks__name,
+  .app.app--web .home-light-picks__name,
+  .app.app--web .home-sunset-picks__name,
+  .app.app--web .home-calm-picks__name {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Parallax helper class (JS sets --parallax-y) */
+@media (min-width: 1024px) {
+  .app.app--web .home-hero-parallax {
+    transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.05);
+  }
+}
+
+/* ========== GAMES CATALOG ========== */
+@media (min-width: 768px) {
+  .app.app--web .games-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.85rem, 1.8vw, 1.15rem);
+  }
+
+  .app.app--web .hero-game-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .app.app--web .hero-game-card .hero-game-card__media {
+    min-height: 12rem;
+    height: 100%;
+  }
+
+  .app.app--web .hero-game-card__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.1rem 1.25rem;
+  }
+
+  .app.app--web .hero-game-card__title {
+    font-size: clamp(1.15rem, 1rem + 0.5vw, 1.55rem);
+  }
+
+  .app.app--web .games-grid__card:focus-visible,
+  .app.app--web .hero-game-card:focus-visible {
+    outline: 2px solid rgba(139, 77, 255, 0.75);
+    outline-offset: 3px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .app.app--web .games-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .app.app--web .games-page-header__title {
+    font-size: clamp(1.6rem, 1.2rem + 1vw, 2.2rem);
+  }
+
+  .app.app--web .games-grid__card-body {
+    padding: 0.7rem 0.8rem 0.85rem;
+    min-height: 3.6rem;
+  }
+
+  .app.app--web .games-grid__title {
+    font-size: 0.98rem;
+  }
+}
+
+/* ========== PROFILE ========== */
+@media (min-width: 1024px) {
+  .app.app--web .profile-page {
+    max-width: var(--web-shell-max);
+  }
+
+  .app.app--web .profile-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 1.15rem 1.5rem;
+    align-items: start;
+  }
+
+  .app.app--web .profile-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    grid-column: 2;
+    grid-row: 1 / span 4;
+  }
+}
+
+@media (min-width: 1440px) {
+  .app.app--web .profile-shell {
+    grid-template-columns: minmax(18rem, 0.95fr) minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 1.25rem 1.5rem;
+  }
+
+  .app.app--web .profile-identity,
+  .app.app--web .profile-pass,
+  .app.app--web .profile-alert {
+    grid-column: 1;
+  }
+
+  .app.app--web .profile-aside {
+    grid-column: 2 / span 2;
+    grid-row: 1 / span 4;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    align-content: start;
+  }
+
+  .app.app--web .profile-menu--support {
+    margin-top: 0;
+  }
+}
+
+/* Profile compact composition (desktop) */
+@media (min-width: 1024px) {
+  .app.app--web .profile-identity,
+  .app.app--web .profile-pass,
+  .app.app--web .profile-menu,
+  .app.app--web .profile-alert {
+    padding: 1rem 1.1rem;
+    min-height: 0;
+  }
+
+  .app.app--web .profile-pass__desc {
+    max-width: 42ch;
+  }
+
+  .app.app--web .profile-pass__email-input {
+    max-width: 100%;
+    min-height: 2.75rem;
+  }
+
+  .app.app--web .profile-pass__restore,
+  .app.app--web .profile-pass__cta {
+    min-height: 2.65rem;
+  }
+
+  .app.app--web .profile-pass__tg-code {
+    letter-spacing: 0.18em;
+    font-size: 1.35rem;
+  }
+}
+
+/* ========== PREMIUM ========== */
+@media (min-width: 768px) {
+  .app.app--web .premium-overlay__card {
+    max-width: min(36rem, 92vw);
+    padding: 1.6rem 1.6rem 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app.app--web .premium-overlay__card {
+    max-width: min(42rem, 70vw);
+  }
+
+  .app.app--web .premium-page .premium-overlay__card {
+    max-width: min(48rem, 100%);
+  }
+}
+
+/* ========== GAME SHELLS ========== */
+@media (min-width: 768px) {
+  .app.app--web .game-page__scroll,
+  .app.app--web .mafia-page,
+  .app.app--web .alias-page {
+    font-size: 1.02rem;
+  }
+
+  .app.app--web .game-page__nav-btn,
+  .app.app--web .mafia-page__nav-btn,
+  .app.app--web .alias-page__nav-btn {
+    min-height: 2.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app.app--web .game-page,
+  .app.app--web .mafia-page,
+  .app.app--web .alias-page,
+  .app.app--web .play-page {
+    max-width: min(var(--web-shell-max), 56rem);
+  }
+
+  /* Party / room UIs can use a bit more width */
+  .app.app--web .game-page:has(.sled-root),
+  .app.app--web .game-page:has(.doubles-root),
+  .app.app--web .game-page:has(.infected-root),
+  .app.app--web .game-page:has(.who-is-who) {
+    max-width: var(--web-shell-max);
+  }
+}
+
+/* Modals readable on desktop */
+@media (min-width: 768px) {
+  .app.app--web .document-modal__panel,
+  .app.app--web .adult-confirm-modal__card,
+  .app.app--web .mafia-exit-confirm-modal__card {
+    max-width: min(36rem, 92vw);
+  }
+}
+
+/* Prefer reduced motion — kill parallax/hover lifts */
 @media (prefers-reduced-motion: reduce) {
+  .app.app--web .home-neon-hero__bg,
+  .app.app--web .home-light-hero__bg,
+  .app.app--web .home-sunset-hero__bg,
+  .app.app--web .home-calm-hero__bg,
+  .app.app--web .home-hero-parallax,
+  .app.app--web .home-neon-quick__card,
+  .app.app--web .home-light-quick__card,
+  .app.app--web .home-sunset-quick__card,
+  .app.app--web .home-calm-quick__card,
+  .app.app--web .home-neon-picks__row,
+  .app.app--web .home-light-picks__row,
+  .app.app--web .home-sunset-picks__row,
+  .app.app--web .home-calm-picks__row,
+  .app.app--web .home-web-picks__card {
+    transition: none !important;
+    transform: none !important;
+  }
+
   .app.app--web::after {
     animation: none !important;
   }
+}
+
+/* ========== PLAY / QUESTION (desktop compact) ========== */
+@media (min-width: 1024px) {
+  .app.app--web .play-page {
+    max-width: min(42rem, 92vw);
+    min-height: min(100dvh, 48rem);
+    justify-content: flex-start;
+    padding-top: 0.35rem;
+    padding-bottom: 1rem;
+  }
+
+  .app.app--web .play-page__header {
+    margin-bottom: 0.35rem;
+  }
+
+  .app.app--web .play-page__title {
+    font-size: clamp(1.15rem, 1rem + 0.5vw, 1.45rem);
+  }
+
+  .app.app--web .play-page__progress-wrap {
+    margin-bottom: 0.35rem;
+  }
+
+  .app.app--web .play-card-wrap {
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: 38rem;
+    min-height: 0;
+    margin: 0.55rem auto 0.85rem;
+    align-self: center;
+  }
+
+  .app.app--web .play-card {
+    min-height: 0;
+    height: auto;
+  }
+
+  .app.app--web .play-card__inner {
+    padding: clamp(1.1rem, 1.8vw, 1.55rem) clamp(1.1rem, 2vw, 1.85rem);
+  }
+
+  .app.app--web .play-card__text {
+    font-size: clamp(1.85rem, 1.55rem + 1.15vw, 2.375rem); /* ~30–38px */
+    line-height: 1.32;
+    max-width: 26ch;
+    margin-inline: auto;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+
+  .app.app--web .play-card__text--long {
+    font-size: clamp(1.4rem, 1.2rem + 0.75vw, 1.8rem);
+    line-height: 1.38;
+    max-width: 32ch;
+  }
+
+  .app.app--web .play-page__actions,
+  .app.app--web .play-page__state-actions {
+    width: 100%;
+    max-width: 28rem;
+    margin-inline: auto;
+    gap: 0.45rem;
+  }
+
+  .app.app--web .play-page__cta {
+    min-height: 2.85rem;
+  }
+
+  .app.app--web .play-page__fav-btn,
+  .app.app--web .play-page__prev {
+    min-height: 2.55rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 820px) {
+  .app.app--web .play-page {
+    min-height: auto;
+  }
+
+  .app.app--web .play-card__text {
+    font-size: clamp(1.55rem, 1.3rem + 0.8vw, 2rem);
+  }
+
+  .app.app--web .play-card-wrap {
+    margin-block: 0.35rem 0.55rem;
+  }
+}
+
+
+/* ========== WEB mobile safe-area polish ========== */
+.app.app--web {
+  padding-bottom: max(var(--pad), env(safe-area-inset-bottom, 0px));
+}
+
+.app.app--web .premium-overlay,
+.app.app--web .document-modal {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.app.app--web .premium-overlay__card {
+  max-height: min(92dvh, 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+.app.app--web .profile-page {
+  width: 100%;
+  max-width: min(100%, var(--web-shell-max));
+  overflow-x: hidden;
+}
+
+.app.app--web .profile-pass__email-input,
+.app.app--web input[type="email"],
+.app.app--web input[type="text"] {
+  font-size: 16px; /* iOS Safari: avoid zoom-on-focus */
+}
+
+@media (max-width: 767px) {
+  .app.app--web .profile-shell,
+  .app.app--web .favorites-page {
+    gap: 0.75rem;
+  }
+
+  .app.app--web .profile-pass,
+  .app.app--web .profile-identity,
+  .app.app--web .profile-menu {
+    min-height: 0;
+  }
+
+  .app.app--web .home-neon-picks__list,
+  .app.app--web .home-light-picks__list,
+  .app.app--web .home-sunset-picks__list,
+  .app.app--web .home-calm-picks__list,
+  .app.app--web .home-web-picks__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  html[data-theme] .app.app--web .home-neon-picks__row,
+  html[data-theme] .app.app--web .home-light-picks__row,
+  html[data-theme] .app.app--web .home-sunset-picks__row,
+  html[data-theme] .app.app--web .home-calm-picks__row {
+    aspect-ratio: auto !important;
+    flex-direction: column;
+    min-height: 0;
+    height: auto;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .app.app--web .home-neon-picks__thumb,
+  .app.app--web .home-light-picks__thumb,
+  .app.app--web .home-sunset-picks__thumb,
+  .app.app--web .home-calm-picks__thumb {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 0;
+  }
+}
+
+
+/* profile email theme contrast */
+.app.app--web .profile-pass__email-label {
+  color: var(--web-ink-muted, var(--muted));
+}
+
+.app.app--web .profile-pass__email-input {
+  color: var(--web-ink, var(--text));
+  background: color-mix(in srgb, var(--web-surface-elevated, var(--panel)) 90%, transparent);
+  border-color: var(--web-border, var(--border));
+}
+
+html[data-theme="neon-light"] .app.app--web .profile-pass__email-input,
+html[data-theme="sunset"] .app.app--web .profile-pass__email-input,
+html[data-theme="minimal-calm"] .app.app--web .profile-pass__email-input {
+  background: rgba(255, 255, 255, 0.88);
 }

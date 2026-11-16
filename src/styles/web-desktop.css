@@ -6,7 +6,7 @@
 .app.app--web {
   --web-shell-max: 29.375rem;
   --web-pad-x: clamp(0.875rem, 2.4vw, 1.25rem);
-  --web-section-gap: clamp(0.75rem, 2vw, 1.25rem);
+  --web-section-gap: clamp(0.55rem, 1.6vw, 0.95rem);
   --web-hero-radius: 1.35rem;
   --web-card-lift: translateY(-3px);
   --layout-phone-max: var(--web-shell-max);
@@ -27,7 +27,7 @@
   .app.app--web {
     --web-shell-max: min(100% - 2rem, 46rem);
     --web-pad-x: clamp(1rem, 3vw, 1.75rem);
-    --web-section-gap: clamp(1rem, 2.2vw, 1.75rem);
+    --web-section-gap: clamp(0.7rem, 1.6vw, 1.15rem);
     --layout-pad: clamp(1rem, 2.5vw, 1.5rem);
   }
 }
@@ -36,7 +36,7 @@
   .app.app--web {
     --web-shell-max: min(100% - 2.5rem, 64rem);
     --web-pad-x: clamp(1.25rem, 3.5vw, 2.25rem);
-    --web-section-gap: clamp(1.25rem, 2.4vw, 2rem);
+    --web-section-gap: clamp(0.8rem, 1.5vw, 1.25rem);
   }
 }
 
@@ -110,13 +110,13 @@
     justify-content: space-between;
     gap: 1rem;
     margin: 0 0 var(--web-section-gap);
-    padding: 0.65rem 0.85rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 1rem;
-    background: color-mix(in srgb, var(--panel, rgba(255, 255, 255, 0.06)) 88%, transparent);
-    border: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.12)) 80%, transparent);
+    background: color-mix(in srgb, var(--neon-home-card-dark, rgba(12, 16, 36, 0.82)) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--neon-home-border, rgba(180, 90, 255, 0.28)) 85%, transparent);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
   }
 
   .app.app--web .home-web-nav__brand {
@@ -144,18 +144,18 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 2.35rem;
-    padding: 0.4rem 0.9rem;
+    min-height: 2.2rem;
+    padding: 0.35rem 0.85rem;
     border-radius: 999px;
     border: 1px solid transparent;
     background: transparent;
-    color: var(--text, #f5f7ff);
+    color: var(--neon-home-text, var(--text, #f5f7ff));
     font: inherit;
     font-size: 0.88rem;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
-    transition: background 180ms ease, border-color 180ms ease, transform 160ms ease;
+    transition: background 180ms ease, border-color 180ms ease, transform 160ms ease, color 160ms ease;
   }
 
   .app.app--web .home-web-nav__link:hover,
@@ -175,6 +175,78 @@
   .app.app--web .home-web-nav__link--cta:focus-visible {
     transform: translateY(-1px);
     border-color: transparent;
+    color: #fff;
+  }
+
+  /* Light / Sunset / Calm — readable nav on themed panels */
+  [data-theme="neon-light"] .app.app--web .home-web-nav {
+    background: color-mix(in srgb, var(--light-home-card, rgba(255, 255, 255, 0.86)) 94%, transparent);
+    border-color: color-mix(in srgb, var(--light-home-border, rgba(142, 99, 255, 0.22)) 90%, transparent);
+    box-shadow: 0 8px 22px rgba(47, 42, 91, 0.08);
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link {
+    color: var(--light-home-text, #181426);
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link:hover,
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link:focus-visible {
+    background: rgba(142, 99, 255, 0.12);
+    border-color: rgba(142, 99, 255, 0.28);
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link--cta,
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link--cta:hover,
+  [data-theme="neon-light"] .app.app--web .home-web-nav__link--cta:focus-visible {
+    color: #fff;
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav {
+    background: color-mix(in srgb, var(--sunset-home-card, rgba(255, 248, 242, 0.9)) 94%, transparent);
+    border-color: color-mix(in srgb, var(--sunset-home-border, rgba(255, 154, 139, 0.28)) 90%, transparent);
+    box-shadow: 0 8px 22px rgba(255, 120, 90, 0.1);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav__link {
+    color: var(--sunset-home-text, #1f1410);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav__link:hover,
+  [data-theme="sunset"] .app.app--web .home-web-nav__link:focus-visible {
+    background: rgba(255, 122, 92, 0.12);
+    border-color: rgba(255, 122, 92, 0.3);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-web-nav__link--cta,
+  [data-theme="sunset"] .app.app--web .home-web-nav__link--cta:hover,
+  [data-theme="sunset"] .app.app--web .home-web-nav__link--cta:focus-visible {
+    background: linear-gradient(135deg, #ff7a5c 0%, #ff9a8b 100%);
+    box-shadow: 0 6px 18px rgba(255, 122, 92, 0.28);
+    color: #fff;
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav {
+    background: color-mix(in srgb, var(--calm-home-card, rgba(245, 247, 244, 0.92)) 94%, transparent);
+    border-color: color-mix(in srgb, var(--calm-home-border, rgba(95, 127, 116, 0.22)) 90%, transparent);
+    box-shadow: 0 8px 22px rgba(80, 100, 90, 0.08);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link {
+    color: var(--calm-home-text, #232931);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link:hover,
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link:focus-visible {
+    background: rgba(95, 127, 116, 0.12);
+    border-color: rgba(95, 127, 116, 0.28);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link--cta,
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link--cta:hover,
+  [data-theme="minimal-calm"] .app.app--web .home-web-nav__link--cta:focus-visible {
+    background: linear-gradient(135deg, #5f7f74 0%, #7b89b8 100%);
+    box-shadow: 0 6px 18px rgba(95, 127, 116, 0.25);
+    color: #fff;
   }
 }
 
@@ -202,7 +274,7 @@
   .app.app--web .home-calm-hero__card {
     position: relative;
     display: block;
-    min-height: clamp(16rem, 32vw, 22rem);
+    min-height: clamp(13.5rem, 26vw, 18.5rem);
     aspect-ratio: auto;
     overflow: hidden;
     border-radius: var(--web-hero-radius);
@@ -218,6 +290,9 @@
     height: 100%;
     object-fit: cover;
     object-position: center right;
+    /* Keep portal vivid — no global dimming filter */
+    filter: none;
+    opacity: 1;
     transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.04);
     transition: transform 500ms ease;
     will-change: transform;
@@ -230,13 +305,34 @@
     transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.07);
   }
 
+  /* Soft edge veil only — illustration stays bright */
   .app.app--web .home-neon-hero__shade,
   .app.app--web .home-light-hero__shade,
   .app.app--web .home-sunset-hero__shade,
   .app.app--web .home-calm-hero__shade {
     background:
-      linear-gradient(90deg, rgba(5, 8, 22, 0.82) 0%, rgba(5, 8, 22, 0.45) 48%, rgba(5, 8, 22, 0.12) 100%),
-      linear-gradient(180deg, rgba(5, 8, 22, 0.15) 0%, rgba(5, 8, 22, 0.55) 100%);
+      linear-gradient(90deg, rgba(5, 8, 22, 0.28) 0%, rgba(5, 8, 22, 0.08) 38%, transparent 62%),
+      linear-gradient(180deg, transparent 55%, rgba(5, 8, 22, 0.18) 100%);
+    opacity: 1;
+    mix-blend-mode: normal;
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-light-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 40%, transparent 65%),
+      linear-gradient(180deg, transparent 60%, rgba(47, 42, 91, 0.08) 100%);
+  }
+
+  [data-theme="sunset"] .app.app--web .home-sunset-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(255, 244, 236, 0.3) 0%, rgba(255, 244, 236, 0.08) 40%, transparent 65%),
+      linear-gradient(180deg, transparent 60%, rgba(80, 40, 30, 0.1) 100%);
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-calm-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(245, 247, 244, 0.32) 0%, rgba(245, 247, 244, 0.08) 40%, transparent 65%),
+      linear-gradient(180deg, transparent 60%, rgba(35, 41, 49, 0.08) 100%);
   }
 
   .app.app--web .home-neon-hero__content,
@@ -251,8 +347,43 @@
     justify-content: center;
     text-align: left;
     min-height: inherit;
-    padding: clamp(1.25rem, 3vw, 2.5rem);
+    padding: clamp(1rem, 2.4vw, 1.75rem);
     max-width: min(34rem, 58%);
+    border-radius: 1rem;
+    /* Local readable scrim under copy only */
+    background: linear-gradient(
+      105deg,
+      rgba(5, 8, 22, 0.55) 0%,
+      rgba(5, 8, 22, 0.28) 58%,
+      rgba(5, 8, 22, 0) 100%
+    );
+  }
+
+  [data-theme="neon-light"] .app.app--web .home-light-hero__content {
+    background: linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.38) 58%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+
+  [data-theme="sunset"] .app.app--web .home-sunset-hero__content {
+    background: linear-gradient(
+      105deg,
+      rgba(255, 248, 242, 0.72) 0%,
+      rgba(255, 248, 242, 0.35) 58%,
+      rgba(255, 248, 242, 0) 100%
+    );
+  }
+
+  [data-theme="minimal-calm"] .app.app--web .home-calm-hero__content {
+    background: linear-gradient(
+      105deg,
+      rgba(245, 247, 244, 0.75) 0%,
+      rgba(245, 247, 244, 0.36) 58%,
+      rgba(245, 247, 244, 0) 100%
+    );
   }
 
   .app.app--web .home-neon-hero__title,
@@ -290,12 +421,36 @@
     gap: 0.85rem;
   }
 
-  .app.app--web .home-neon-quick__card,
-  .app.app--web .home-light-quick__card,
-  .app.app--web .home-sunset-quick__card,
-  .app.app--web .home-calm-quick__card {
-    min-height: 5.25rem;
+  html[data-theme] .app.app--web .home-neon-quick__card,
+  html[data-theme] .app.app--web .home-light-quick__card,
+  html[data-theme] .app.app--web .home-sunset-quick__card,
+  html[data-theme] .app.app--web .home-calm-quick__card {
+    /* Kill 422/260 stretch that made hundreds of empty pixels */
+    aspect-ratio: auto;
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.4rem;
+    padding: 0.85rem 0.75rem 0.8rem;
     transition: transform 180ms ease, box-shadow 220ms ease, border-color 180ms ease;
+  }
+
+  .app.app--web .home-neon-quick__text,
+  .app.app--web .home-light-quick__text,
+  .app.app--web .home-sunset-quick__text,
+  .app.app--web .home-calm-quick__text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .app.app--web .home-neon-quick__chev-img,
+  .app.app--web .home-light-quick__chev-img,
+  .app.app--web .home-sunset-quick__chev-img,
+  .app.app--web .home-calm-quick__chev-img {
+    display: none;
   }
 
   .app.app--web .home-neon-quick__card:hover,
@@ -323,7 +478,7 @@
     font-size: clamp(1.15rem, 1rem + 0.4vw, 1.45rem);
   }
 
-  /* Picks → card grid (not stretched mobile rows) */
+  /* Picks → card grid (override TG 869/100 strip rows) */
   .app.app--web .home-neon-picks__list,
   .app.app--web .home-light-picks__list,
   .app.app--web .home-sunset-picks__list,
@@ -334,20 +489,24 @@
     gap: 0.85rem;
   }
 
-  .app.app--web .home-neon-picks__row,
-  .app.app--web .home-light-picks__row,
-  .app.app--web .home-sunset-picks__row,
-  .app.app--web .home-calm-picks__row,
-  .app.app--web .home-web-picks__card {
+  html[data-theme] .app.app--web .home-neon-picks__row,
+  html[data-theme] .app.app--web .home-light-picks__row,
+  html[data-theme] .app.app--web .home-sunset-picks__row,
+  html[data-theme] .app.app--web .home-calm-picks__row,
+  html[data-theme] .app.app--web .home-web-picks__card {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 0.65rem;
     width: 100%;
-    min-height: 100%;
+    min-height: 0;
+    height: auto;
+    /* Critical: TG Home.css uses 869/100 which collapses covers into strips */
+    aspect-ratio: auto;
     padding: 0.75rem;
     border-radius: 1.1rem;
     text-align: left;
+    overflow: hidden;
     transition: transform 180ms ease, box-shadow 220ms ease;
   }
 
@@ -360,16 +519,37 @@
   }
 
   .app.app--web .home-picks__thumb-wrap {
+    position: relative;
     width: 100%;
-    aspect-ratio: 16 / 10;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    align-self: stretch;
+    /* Catalog thumbs are portrait (~3:4 / 4:5); 16/10 cropped them into a thin band */
+    aspect-ratio: 4 / 5;
     border-radius: 0.85rem;
     overflow: hidden;
+    line-height: 0;
+    background: #050816;
+  }
+
+  .app.app--web .home-picks__thumb-wrap picture {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
   .app.app--web .home-picks__thumb {
+    position: absolute;
+    inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
+    max-width: none;
     object-fit: cover;
+    object-position: center center;
   }
 
   .app.app--web .home-neon-picks__name,
@@ -486,7 +666,25 @@
   .app.app--web .home-light-hero__card,
   .app.app--web .home-sunset-hero__card,
   .app.app--web .home-calm-hero__card {
-    min-height: clamp(18rem, 28vw, 26rem);
+    min-height: clamp(14.5rem, 24vw, 20rem);
+  }
+
+  .app.app--web .home-neon-quick__card,
+  .app.app--web .home-light-quick__card,
+  .app.app--web .home-sunset-quick__card,
+  .app.app--web .home-calm-quick__card {
+    max-width: 22rem;
+    justify-self: center;
+    width: 100%;
+  }
+
+  .app.app--web .home-neon-quick,
+  .app.app--web .home-light-quick,
+  .app.app--web .home-sunset-quick,
+  .app.app--web .home-calm-quick {
+    justify-items: center;
+    max-width: 46rem;
+    margin-inline: auto;
   }
 
   /* If Premium banner is absent, hero uses the full row */
@@ -513,7 +711,7 @@
   }
 }
 
-/* Mobile WEB: hide desktop-only chrome, keep compact home */
+/* Mobile WEB: hide desktop chrome; fix strip covers + compact quick tiles */
 @media (max-width: 767px) {
   .app.app--web .home-web-nav {
     display: none !important;
@@ -521,6 +719,77 @@
 
   .app.app--web .home-web-side {
     display: contents;
+  }
+
+  .app.app--web .home-neon-hero__card,
+  .app.app--web .home-light-hero__card,
+  .app.app--web .home-sunset-hero__card,
+  .app.app--web .home-calm-hero__card {
+    min-height: 0;
+  }
+
+  .app.app--web .home-neon-hero__shade,
+  .app.app--web .home-light-hero__shade,
+  .app.app--web .home-sunset-hero__shade,
+  .app.app--web .home-calm-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(5, 8, 22, 0.32) 0%, rgba(5, 8, 22, 0.1) 42%, transparent 68%),
+      linear-gradient(180deg, transparent 58%, rgba(5, 8, 22, 0.16) 100%);
+  }
+
+  .app.app--web .home-neon-hero__content,
+  .app.app--web .home-light-hero__content,
+  .app.app--web .home-sunset-hero__content,
+  .app.app--web .home-calm-hero__content {
+    max-width: 72%;
+    padding: 0.95rem 0.75rem 0.95rem 0.9rem;
+    background: linear-gradient(
+      105deg,
+      rgba(5, 8, 22, 0.5) 0%,
+      rgba(5, 8, 22, 0.22) 62%,
+      rgba(5, 8, 22, 0) 100%
+    );
+  }
+
+  .app.app--web .home-neon-quick,
+  .app.app--web .home-light-quick,
+  .app.app--web .home-sunset-quick,
+  .app.app--web .home-calm-quick {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    width: 100%;
+  }
+
+  html[data-theme] .app.app--web .home-neon-quick__card,
+  html[data-theme] .app.app--web .home-light-quick__card,
+  html[data-theme] .app.app--web .home-sunset-quick__card,
+  html[data-theme] .app.app--web .home-calm-quick__card {
+    aspect-ratio: auto;
+    height: auto;
+    min-height: 0;
+    flex: unset;
+    flex-basis: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.35rem;
+    padding: 0.75rem 0.55rem 0.7rem;
+  }
+
+  .app.app--web .home-neon-quick__text,
+  .app.app--web .home-light-quick__text,
+  .app.app--web .home-sunset-quick__text,
+  .app.app--web .home-calm-quick__text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .app.app--web .home-neon-quick__chev-img,
+  .app.app--web .home-light-quick__chev-img,
+  .app.app--web .home-sunset-quick__chev-img,
+  .app.app--web .home-calm-quick__chev-img {
+    display: none;
   }
 
   .app.app--web .home-web-picks__head {
@@ -537,6 +806,66 @@
     color: var(--neonCyan, #3b82ff);
     text-decoration: none;
     white-space: nowrap;
+  }
+
+  /* Horizontal rows with real square-ish covers (not 869/100 strips) */
+  .app.app--web .home-neon-picks__list,
+  .app.app--web .home-light-picks__list,
+  .app.app--web .home-sunset-picks__list,
+  .app.app--web .home-calm-picks__list,
+  .app.app--web .home-web-picks__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  html[data-theme] .app.app--web .home-neon-picks__row,
+  html[data-theme] .app.app--web .home-light-picks__row,
+  html[data-theme] .app.app--web .home-sunset-picks__row,
+  html[data-theme] .app.app--web .home-calm-picks__row,
+  html[data-theme] .app.app--web .home-web-picks__card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    min-height: 4.85rem;
+    height: auto;
+    aspect-ratio: auto;
+    padding: 0.35rem 0.55rem 0.35rem 0.35rem;
+    overflow: hidden;
+  }
+
+  .app.app--web .home-picks__thumb-wrap {
+    position: relative;
+    flex: 0 0 4.35rem;
+    width: 4.35rem;
+    height: 4.35rem;
+    min-height: 4.35rem;
+    margin: 0;
+    align-self: center;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .app.app--web .home-picks__thumb-wrap picture,
+  .app.app--web .home-picks__thumb {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  .app.app--web .home-web-picks__name,
+  .app.app--web .home-neon-picks__name,
+  .app.app--web .home-light-picks__name,
+  .app.app--web .home-sunset-picks__name,
+  .app.app--web .home-calm-picks__name {
+    flex: 1;
+    min-width: 0;
   }
 }
 
@@ -733,5 +1062,92 @@
 
   .app.app--web::after {
     animation: none !important;
+  }
+}
+
+/* ========== PLAY / QUESTION (desktop compact) ========== */
+@media (min-width: 1024px) {
+  .app.app--web .play-page {
+    max-width: min(42rem, 92vw);
+    min-height: min(100dvh, 48rem);
+    justify-content: flex-start;
+    padding-top: 0.35rem;
+    padding-bottom: 1rem;
+  }
+
+  .app.app--web .play-page__header {
+    margin-bottom: 0.35rem;
+  }
+
+  .app.app--web .play-page__title {
+    font-size: clamp(1.15rem, 1rem + 0.5vw, 1.45rem);
+  }
+
+  .app.app--web .play-page__progress-wrap {
+    margin-bottom: 0.35rem;
+  }
+
+  .app.app--web .play-card-wrap {
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: 38rem;
+    min-height: 0;
+    margin: 0.55rem auto 0.85rem;
+    align-self: center;
+  }
+
+  .app.app--web .play-card {
+    min-height: 0;
+    height: auto;
+  }
+
+  .app.app--web .play-card__inner {
+    padding: clamp(1.1rem, 1.8vw, 1.55rem) clamp(1.1rem, 2vw, 1.85rem);
+  }
+
+  .app.app--web .play-card__text {
+    font-size: clamp(1.85rem, 1.55rem + 1.15vw, 2.375rem); /* ~30–38px */
+    line-height: 1.32;
+    max-width: 26ch;
+    margin-inline: auto;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+
+  .app.app--web .play-card__text--long {
+    font-size: clamp(1.4rem, 1.2rem + 0.75vw, 1.8rem);
+    line-height: 1.38;
+    max-width: 32ch;
+  }
+
+  .app.app--web .play-page__actions,
+  .app.app--web .play-page__state-actions {
+    width: 100%;
+    max-width: 28rem;
+    margin-inline: auto;
+    gap: 0.45rem;
+  }
+
+  .app.app--web .play-page__cta {
+    min-height: 2.85rem;
+  }
+
+  .app.app--web .play-page__fav-btn,
+  .app.app--web .play-page__prev {
+    min-height: 2.55rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 820px) {
+  .app.app--web .play-page {
+    min-height: auto;
+  }
+
+  .app.app--web .play-card__text {
+    font-size: clamp(1.55rem, 1.3rem + 0.8vw, 2rem);
+  }
+
+  .app.app--web .play-card-wrap {
+    margin-block: 0.35rem 0.55rem;
   }
 }

@@ -102,6 +102,37 @@ test.describe('WEB desktop layout', () => {
     }
   })
 
+  test('desktop popular covers are full portrait tiles not strips', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await waitForHomeReady(page)
+    const metrics = await page.evaluate(() => {
+      const thumbs = [...document.querySelectorAll('.home-web-picks--popular .home-picks__thumb-wrap')].map((el) => {
+        const r = el.getBoundingClientRect()
+        const row = el.closest('button')
+        return {
+          w: Math.round(r.width),
+          h: Math.round(r.height),
+          rowAspect: row ? getComputedStyle(row).aspectRatio : null,
+        }
+      })
+      const quick = [...document.querySelectorAll('[class*="-quick__card"]')].map((el) =>
+        Math.round(el.getBoundingClientRect().height),
+      )
+      return { thumbs, quick }
+    })
+    expect(metrics.thumbs.length).toBeGreaterThanOrEqual(3)
+    for (const t of metrics.thumbs) {
+      expect(t.h).toBeGreaterThan(180)
+      expect(t.w / Math.max(t.h, 1)).toBeLessThan(1.1)
+      expect(t.rowAspect === 'auto' || t.rowAspect === 'none' || !t.rowAspect).toBeTruthy()
+    }
+    for (const h of metrics.quick) {
+      expect(h).toBeLessThan(180)
+      expect(h).toBeGreaterThan(70)
+    }
+  })
+
   test('desktop home shows nav and popular/new sections', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')

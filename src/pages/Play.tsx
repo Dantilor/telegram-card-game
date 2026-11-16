@@ -55,6 +55,8 @@ type GameState =
 
 const ANIMATION_NAME_LEAVE = 'cardLeave'
 const ANIMATION_NAME_ENTER = 'cardEnter'
+/** Questions longer than this get the compact type step so the card stays within one desktop screen. */
+const LONG_QUESTION_CHARS = 110
 
 export default function Play() {
   const nav = useNavigate()
@@ -530,7 +532,11 @@ export default function Play() {
         >
           <div className="play-card__inner">
             {cardPrompt && <p className="play-card__prompt">{cardPrompt}</p>}
-            <p className="play-card__text">{current?.text ?? ''}</p>
+            <p
+              className={`play-card__text${(current?.text.length ?? 0) > LONG_QUESTION_CHARS ? ' play-card__text--long' : ''}`}
+            >
+              {current?.text ?? ''}
+            </p>
           </div>
         </div>
       </div>

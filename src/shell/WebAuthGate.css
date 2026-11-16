@@ -1,4 +1,4 @@
-/* Premium WEB login — locked dark canvas for contrast across app themes. */
+/* WEB bootstrap gate — follows active app theme when available. */
 
 .web-auth-gate {
   --wag-ink: #07060f;
@@ -94,39 +94,45 @@
 
 .web-auth-crystal {
   position: relative;
-  width: clamp(112px, 28vw, 148px);
-  height: clamp(140px, 34vw, 184px);
+  /* Reserved box so the crystal never shifts the loader caption */
+  width: 160px;
+  height: 200px;
   display: grid;
   place-items: center;
-  perspective: 700px;
 }
 
 .web-auth-crystal__glow {
   position: absolute;
   inset: 18% 8% 8%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(124, 92, 255, 0.55) 0%, rgba(34, 211, 238, 0.2) 42%, transparent 70%);
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.45) 0%, rgba(34, 211, 238, 0.16) 42%, transparent 70%);
   filter: blur(18px);
   animation: wag-glow 4.5s ease-in-out infinite alternate;
   will-change: opacity, transform;
+  pointer-events: none;
 }
 
-.web-auth-crystal__spin {
+.web-auth-crystal__float {
   position: relative;
-  transform-style: preserve-3d;
-  animation: wag-crystal 9s ease-in-out infinite;
+  width: 160px;
+  height: 200px;
+  animation: wag-crystal-bob 3.6s ease-in-out infinite;
   will-change: transform;
-  filter: drop-shadow(0 18px 28px rgba(79, 70, 229, 0.45));
+  filter: drop-shadow(0 18px 28px rgba(79, 70, 229, 0.4));
 }
 
-.web-auth-crystal__svg {
-  width: 100%;
-  height: auto;
+.web-auth-crystal__img {
   display: block;
+  width: 160px;
+  height: 200px;
+  object-fit: contain;
+  object-position: center;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.web-auth-gate__crystal--pulse .web-auth-crystal__spin {
-  animation: wag-crystal 4.5s ease-in-out infinite, wag-pulse 1.8s ease-in-out infinite;
+.web-auth-gate__crystal--pulse .web-auth-crystal__float {
+  animation: wag-crystal-bob 3.6s ease-in-out infinite, wag-pulse 1.8s ease-in-out infinite;
 }
 
 .web-auth-gate__eyebrow {
@@ -281,6 +287,48 @@
   letter-spacing: 0.02em;
 }
 
+html[data-theme="neon-light"] .web-auth-gate {
+  --wag-text: #181426;
+  --wag-muted: rgba(24, 20, 38, 0.72);
+  --wag-lilac: #8e63ff;
+  background:
+    radial-gradient(90% 70% at 50% -15%, rgba(255, 101, 216, 0.18), transparent 58%),
+    radial-gradient(70% 55% at 110% 90%, rgba(85, 183, 255, 0.14), transparent 50%),
+    linear-gradient(165deg, #fbfaff 0%, #f0ecff 45%, #e8f4ff 100%);
+}
+
+html[data-theme="neon-light"] .web-auth-gate__veil {
+  background: radial-gradient(circle at 50% 28%, transparent 0%, rgba(255, 255, 255, 0.2) 50%, rgba(240, 236, 255, 0.55) 100%);
+}
+
+html[data-theme="sunset"] .web-auth-gate {
+  --wag-text: #1f1410;
+  --wag-muted: rgba(31, 20, 16, 0.72);
+  --wag-lilac: #ff7a5c;
+  background:
+    radial-gradient(90% 70% at 50% -15%, rgba(255, 154, 139, 0.28), transparent 58%),
+    radial-gradient(70% 55% at 110% 90%, rgba(255, 179, 71, 0.16), transparent 50%),
+    linear-gradient(165deg, #fff8f2 0%, #ffe8dc 45%, #ffd8c8 100%);
+}
+
+html[data-theme="sunset"] .web-auth-gate__veil {
+  background: radial-gradient(circle at 50% 28%, transparent 0%, rgba(255, 248, 242, 0.25) 50%, rgba(255, 232, 220, 0.55) 100%);
+}
+
+html[data-theme="minimal-calm"] .web-auth-gate {
+  --wag-text: #232931;
+  --wag-muted: rgba(35, 41, 49, 0.7);
+  --wag-lilac: #5f7f74;
+  background:
+    radial-gradient(90% 70% at 50% -15%, rgba(139, 168, 150, 0.22), transparent 58%),
+    radial-gradient(70% 55% at 110% 90%, rgba(123, 137, 184, 0.12), transparent 50%),
+    linear-gradient(165deg, #f7f8f5 0%, #eef1ec 45%, #e4ebe6 100%);
+}
+
+html[data-theme="minimal-calm"] .web-auth-gate__veil {
+  background: radial-gradient(circle at 50% 28%, transparent 0%, rgba(247, 248, 245, 0.25) 50%, rgba(228, 235, 230, 0.55) 100%);
+}
+
 .web-auth-gate__enter {
   opacity: 0;
   transform: translate3d(0, 16px, 0);
@@ -300,10 +348,9 @@
   100% { transform: translate3d(-1%, 3%, 0) scale(1.06) rotate(-1deg); opacity: 0.9; }
 }
 
-@keyframes wag-crystal {
-  0% { transform: rotateY(-18deg) rotateX(8deg) translate3d(0, 0, 0); }
-  50% { transform: rotateY(18deg) rotateX(4deg) translate3d(0, -8px, 0); }
-  100% { transform: rotateY(-18deg) rotateX(8deg) translate3d(0, 0, 0); }
+@keyframes wag-crystal-bob {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
 }
 
 @keyframes wag-glow {
@@ -343,11 +390,16 @@
 @media (prefers-reduced-motion: reduce) {
   .web-auth-gate__aurora,
   .web-auth-gate__particles span,
-  .web-auth-crystal__spin,
+  .web-auth-crystal__float,
   .web-auth-crystal__glow,
   .web-auth-gate__cta-sheen,
   .web-auth-gate__enter {
     animation: none !important;
+  }
+
+  .web-auth-crystal__float {
+    transform: none !important;
+    filter: drop-shadow(0 12px 22px rgba(79, 70, 229, 0.35));
   }
 
   .web-auth-gate__enter {

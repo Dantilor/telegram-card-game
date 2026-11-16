@@ -36,6 +36,7 @@ import heroCalm from '../assets/optimized/home-hero-calm.webp'
 import iconCalmFavorite from '../assets/icons/gnh-calm-pro/calm-favorite-star-pro.svg'
 import iconCalmProfile from '../assets/icons/gnh-calm-pro/calm-profile-user-pro.svg'
 import iconCalmChevronRight from '../assets/icons/gnh-calm-pro/calm-chevron-right-pro.svg'
+import HomeWeb from './HomeWeb'
 import './Home.css'
 
 const APP_FEATURES = [
@@ -241,6 +242,10 @@ function Home() {
     haptic('light')
     navigate(to)
   }, [navigate])
+
+  if (web) {
+    return <HomeWeb />
+  }
 
   const legacyPremiumBlock = (!isPremium || loading) ? (
     <section className="home-premium-cta">

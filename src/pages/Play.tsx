@@ -15,6 +15,7 @@ import PremiumOverlay from '../components/PremiumOverlay'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import AdultConfirmModal from '../components/AdultConfirmModal'
+import { isWebShell } from '../config/shell'
 import './Play.css'
 
 type Card = { id: string; text: string }
@@ -377,7 +378,7 @@ export default function Play() {
 
   if (state.status === 'loading') {
     return (
-      <div className="play-page">
+      <div className={`play-page${isWebShell() ? ' play-page--web' : ''}`}>
         <div className="play-page__state">
           <div className="play-page__loader" aria-hidden />
           <p className="play-page__state-title">Загрузка игры…</p>

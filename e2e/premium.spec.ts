@@ -1,14 +1,16 @@
 import { test, expect } from '@playwright/test'
-import { API_URL, DEV_SECRET, USERS, isPremiumPayload } from './helpers'
+import { API_URL, DEV_SECRET, isPremiumPayload } from './helpers'
 
 test.describe('Premium mock YooKassa', () => {
   test('create mock payment, return_url alone does not grant, webhook grants', async ({
     playwright,
   }) => {
     const api = await playwright.request.newContext({ baseURL: API_URL })
+    // Fresh telegram buyer each run so leftover local subscriptions do not flake the pretest.
+    const buyerTelegramId = 910_000 + (Date.now() % 50_000)
     const login = await api.post('/api/web/auth/dev-login', {
       data: {
-        telegramId: USERS.free,
+        telegramId: buyerTelegramId,
         secret: DEV_SECRET,
         displayName: 'E2E Free Buyer',
       },
@@ -64,17 +66,15 @@ test.describe('Premium mock YooKassa', () => {
     const before = await api.get('/api/premium-status')
     expect(isPremiumPayload(await before.json())).toBe(false)
 
+    // Standard YooKassa notifications have no Authorization Bearer.
     const webhook = await api.post('/api/yookassa/webhook', {
-      headers: {
-        Authorization: `Bearer ${process.env.YOOKASSA_WEBHOOK_SECRET || 'local-mock-webhook'}`,
-      },
       data: {
         event: 'payment.succeeded',
         object: {
           id: created.paymentId,
           status: 'succeeded',
           metadata: {
-            telegram_id: String(USERS.free),
+            telegram_id: String(buyerTelegramId),
             plan_id: 'premium_1m',
           },
         },

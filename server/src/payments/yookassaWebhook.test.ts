@@ -43,6 +43,18 @@ test('fetchYookassaPayment uses Basic auth and rejects non-OK', async () => {
   assert.equal(fail, null)
 })
 
+test('fetchYookassaPayment throws on provider 5xx for webhook retry', async () => {
+  await assert.rejects(
+    () =>
+      fetchYookassaPayment('pay-5xx', {
+        shopId: 'shop',
+        secretKey: 'secret',
+        fetchImpl: async () => new Response('boom', { status: 503 }),
+      }),
+    /yookassa_payment_lookup_503/
+  )
+})
+
 test('resolveTelegramIdForGrant prefers DB row over body/metadata', () => {
   assert.equal(
     resolveTelegramIdForGrant({
@@ -146,12 +158,14 @@ test('YOOKASSA_MOCK is refused in production-like environments', async () => {
   assert.equal(yookassaMockEnabled({ YOOKASSA_MOCK: '0', NODE_ENV: 'development' }), false)
 })
 
-test('empty YOOKASSA_WEBHOOK_SECRET does not skip API verification', () => {
+test('webhook accepts standard notifications without Bearer and still API-verifies', () => {
   const route = fs.readFileSync(path.join(serverRoot, 'src/routes/yookassa.ts'), 'utf8')
   const webhook = route.slice(route.indexOf('async function handleWebhook'), route.indexOf('async function handleConfirm'))
-  // Optional Authorization secret must never be the only gate.
-  assert.match(webhook, /relying on authenticated payment lookup|fetchYookassaPayment/)
-  assert.match(webhook, /YOOKASSA_WEBHOOK_REQUIRE_SECRET/)
-  // Default path with empty secret still reaches API verify before grant.
-  assert.ok(webhook.indexOf('fetchYookassaPayment') > webhook.indexOf('webhook secret empty') || webhook.includes('fetchYookassaPayment'))
+  assert.match(webhook, /evaluateYookassaWebhookAuth/)
+  assert.match(webhook, /evaluateYookassaWebhookIp/)
+  assert.match(webhook, /Standard YooKassa HTTP notifications do NOT send/)
+  assert.match(webhook, /fetchYookassaPayment/)
+  assert.match(webhook, /Never grant from unverified webhook body/)
+  // Must not hard-require Authorization when a secret env is merely present.
+  assert.equal(/if \(secret\) \{\s*const authRaw/.test(webhook), false)
 })

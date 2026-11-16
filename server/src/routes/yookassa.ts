@@ -25,6 +25,10 @@ import {
   parseYookassaAmountRub,
 } from '../payments/yookassaClient.js'
 import { yookassaMockEnabled } from '../payments/yookassaMock.js'
+import {
+  evaluateYookassaWebhookAuth,
+  evaluateYookassaWebhookIp,
+} from '../payments/yookassaWebhookSecurity.js'
 import { grantWebEntitlement, revokeWebPurchaseEntitlements } from '../auth/webAccounts.js'
 
 const mockPayments = new Map<
@@ -636,34 +640,25 @@ async function handleWebhook(req: Request, res: Response) {
     status: req.body?.object?.status,
   })
 
-  const secret = String(process.env.YOOKASSA_WEBHOOK_SECRET ?? '').trim()
-  const requireSecret =
-    process.env.YOOKASSA_WEBHOOK_REQUIRE_SECRET === '1' ||
-    process.env.YOOKASSA_WEBHOOK_REQUIRE_SECRET === 'true'
-
-  if (secret) {
-    const authRaw = String(req.headers['authorization'] ?? '').trim()
-    const auth =
-      authRaw.toLowerCase().startsWith('bearer ') ? authRaw.slice(7).trim() : authRaw
-
-    const authPreview =
-      authRaw.length > 0
-        ? `${authRaw.length} chars, starts: ${authRaw.slice(0, 6)}...`
-        : 'absent'
-    console.log('[YooKassa] webhook authorization', authPreview)
-
-    if (auth !== secret) {
-      console.warn('[YooKassa] webhook: invalid secret')
-      res.status(200).json({ ok: true })
-      return
-    }
-  } else if (requireSecret) {
-    console.warn('[YooKassa] webhook: secret required but empty — rejecting grant path')
+  // Standard YooKassa HTTP notifications do NOT send a custom Authorization Bearer.
+  // Optional Bearer is only for local mock / custom proxy (REQUIRE_SECRET=1).
+  // Premium is never granted without authenticated API verification below.
+  const authDecision = evaluateYookassaWebhookAuth(req)
+  if (!authDecision.ok) {
+    console.warn('[YooKassa] webhook: auth gate rejected', { reason: authDecision.reason })
     res.status(200).json({ ok: true })
     return
-  } else {
-    // Secret optional: premium is still only granted after authenticated API verification below.
-    console.log('[YooKassa] webhook secret empty — relying on authenticated payment lookup')
+  }
+  console.log('[YooKassa] webhook auth mode', authDecision.mode)
+
+  const ipDecision = evaluateYookassaWebhookIp(req)
+  if (!ipDecision.ok) {
+    console.warn('[YooKassa] webhook: IP not in YooKassa allowlist', { ip: ipDecision.ip })
+    res.status(200).json({ ok: true })
+    return
+  }
+  if (ipDecision.checked) {
+    console.log('[YooKassa] webhook IP allowlist ok', { ip: ipDecision.ip })
   }
 
   const body = req.body as {
@@ -711,7 +706,14 @@ async function handleWebhook(req: Request, res: Response) {
         if (newStatus === 'canceled' || newStatus === 'failed') {
           let verifiedCancel: { status?: string } | null = null
           if (yookassaMockEnabled() && pid.startsWith('mock_')) {
-            verifiedCancel = mockPayments.get(pid) ?? { status: newStatus }
+            const mock = mockPayments.get(pid)
+            if (mock) {
+              mock.status = newStatus
+              mockPayments.set(pid, mock)
+              verifiedCancel = mock
+            } else {
+              verifiedCancel = { status: newStatus }
+            }
           } else {
             verifiedCancel = await fetchYookassaPayment(pid)
           }

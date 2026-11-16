@@ -132,11 +132,11 @@ Production Login Widget URLs **не изменять**.
 1. В личном кабинете ЮKassa создайте / используйте **тестовый** магазин.
 2. Укажите webhook URL: `https://STAGING-DOMAIN/api/yookassa/webhook`.
 3. В env staging — test `SHOP_ID` / `SECRET_KEY`.
-4. Важно: у ЮKassa **нет** универсального HMAC secret в каждом уведомлении.  
-   `YOOKASSA_WEBHOOK_SECRET` — опциональный custom `Authorization`, если вы сами его настроите на стороне прокси.  
-   Для staging оставьте пустым и `YOOKASSA_WEBHOOK_REQUIRE_SECRET=0`.  
-   Premium выдаётся только после `GET /v3/payments/{id}` с Basic auth магазина + сверки суммы/валюты/записи в БД + идемпотентности `premium_granted_at`.
-5. Не создавать реальные (live) платежи.
+4. Важно: у ЮKassa **нет** универсального HMAC/Bearer в стандартных HTTP-уведомлениях.  
+   `YOOKASSA_WEBHOOK_SECRET` / `YOOKASSA_WEBHOOK_REQUIRE_SECRET` оставьте пустым / `0`.  
+   Опционально: `YOOKASSA_WEBHOOK_IP_CHECK=1` + `TRUST_PROXY=1` (официальные IP ЮKassa).  
+   Premium выдаётся только после `GET /v3/payments/{id}` с Basic auth магазина + сверки paymentId / webAccountId / суммы / валюты / плана + идемпотентности `premium_granted_at`.
+5. Не создавать реальные (live) платежи и не подставлять LIVE-ключи.
 
 ---
 

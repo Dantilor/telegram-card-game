@@ -43,6 +43,10 @@ export async function fetchYookassaPayment(
       Accept: 'application/json',
     },
   })
+  // Transient provider failures must bubble so webhook returns 5xx and YooKassa retries.
+  if (res.status >= 500) {
+    throw new Error(`yookassa_payment_lookup_${res.status}`)
+  }
   if (!res.ok) return null
   const json = (await res.json()) as YookassaPaymentSnapshot
   if (!json?.id || typeof json.status !== 'string') return null

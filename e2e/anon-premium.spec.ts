@@ -66,10 +66,8 @@ test.describe('Anonymous WEB Premium', () => {
     expect(confirmEarly.ok()).toBeTruthy()
     expect((await confirmEarly.json()).ok).toBeFalsy()
 
+    // Standard YooKassa notifications have no Authorization Bearer.
     const webhook = await api.post('/api/yookassa/webhook', {
-      headers: {
-        Authorization: `Bearer ${process.env.YOOKASSA_WEBHOOK_SECRET || 'local-mock-webhook'}`,
-      },
       data: {
         event: 'payment.succeeded',
         object: {
@@ -105,9 +103,6 @@ test.describe('Anonymous WEB Premium', () => {
     expect(lateBody.alreadyDone === true || lateBody.webAccountId).toBeTruthy()
 
     const webhook2 = await api.post('/api/yookassa/webhook', {
-      headers: {
-        Authorization: `Bearer ${process.env.YOOKASSA_WEBHOOK_SECRET || 'local-mock-webhook'}`,
-      },
       data: {
         event: 'payment.succeeded',
         object: {
@@ -122,6 +117,133 @@ test.describe('Anonymous WEB Premium', () => {
       },
     })
     expect(webhook2.ok()).toBeTruthy()
+
+    // Still premium after idempotent replay + session refresh.
+    const afterReplay = await api.get('/api/premium-status')
+    expect(isPremiumPayload(await afterReplay.json())).toBe(true)
+
+    await api.dispose()
+  })
+
+  test('mock WEB cancel does not grant; full refund revokes purchase entitlement', async ({ playwright }) => {
+    const api = await playwright.request.newContext({ baseURL: API_URL })
+    const ensure = await api.post('/api/web/session/ensure')
+    expect(ensure.ok()).toBeTruthy()
+    const ensured = await ensure.json()
+    const csrf = (await api.storageState()).cookies.find((c) => c.name === 'gnh_csrf')?.value
+
+    const offerDoc = await api.get('/api/legal/documents/offer')
+    const offer = await offerDoc.json()
+    const accept = await api.post('/api/legal/offer-acceptances', {
+      headers: { 'X-CSRF-Token': csrf! },
+      data: {
+        requestId: `e2e-anon-cancel-${Date.now()}`,
+        planId: 'premium_1m',
+        priceRub: 259,
+        durationDays: 30,
+        currency: 'RUB',
+        statement: 'Принимаю Публичную оферту Premium',
+        version: offer.version,
+        sha256: offer.sha256,
+      },
+    })
+    expect(accept.ok(), await accept.text()).toBeTruthy()
+    const evidenceId = (await accept.json()).evidenceId
+
+    const createCanceled = await api.post('/api/payments/yookassa/create', {
+      headers: { 'X-CSRF-Token': csrf! },
+      data: {
+        planId: 'premium_1m',
+        email: 'anon.cancel@example.test',
+        offerAcceptanceId: evidenceId,
+      },
+    })
+    expect(createCanceled.ok(), await createCanceled.text()).toBeTruthy()
+    const canceledPay = await createCanceled.json()
+    expect(String(canceledPay.confirmationUrl || '')).toContain('payment=return')
+
+    const cancelHook = await api.post('/api/yookassa/webhook', {
+      data: {
+        event: 'payment.canceled',
+        object: {
+          id: canceledPay.paymentId,
+          status: 'canceled',
+          metadata: {
+            web_account_id: ensured.webAccountId,
+            plan_id: 'premium_1m',
+          },
+        },
+      },
+    })
+    expect(cancelHook.ok()).toBeTruthy()
+    expect(isPremiumPayload(await (await api.get('/api/premium-status')).json())).toBe(false)
+
+    const accept2 = await api.post('/api/legal/offer-acceptances', {
+      headers: { 'X-CSRF-Token': csrf! },
+      data: {
+        requestId: `e2e-anon-refund-${Date.now()}`,
+        planId: 'premium_1m',
+        priceRub: 259,
+        durationDays: 30,
+        currency: 'RUB',
+        statement: 'Принимаю Публичную оферту Premium',
+        version: offer.version,
+        sha256: offer.sha256,
+      },
+    })
+    expect(accept2.ok(), await accept2.text()).toBeTruthy()
+    const evidence2 = (await accept2.json()).evidenceId
+
+    const createOk = await api.post('/api/payments/yookassa/create', {
+      headers: { 'X-CSRF-Token': csrf! },
+      data: {
+        planId: 'premium_1m',
+        email: 'anon.refund@example.test',
+        offerAcceptanceId: evidence2,
+      },
+    })
+    expect(createOk.ok(), await createOk.text()).toBeTruthy()
+    const paid = await createOk.json()
+
+    const successHook = await api.post('/api/yookassa/webhook', {
+      data: {
+        event: 'payment.succeeded',
+        object: {
+          id: paid.paymentId,
+          status: 'succeeded',
+          amount: { value: '259.00', currency: 'RUB' },
+          metadata: {
+            web_account_id: ensured.webAccountId,
+            plan_id: 'premium_1m',
+          },
+        },
+      },
+    })
+    expect(successHook.ok()).toBeTruthy()
+    await expect
+      .poll(async () => isPremiumPayload(await (await api.get('/api/premium-status')).json()), {
+        timeout: 10_000,
+      })
+      .toBe(true)
+
+    const refundHook = await api.post('/api/yookassa/webhook', {
+      data: {
+        event: 'refund.succeeded',
+        object: {
+          id: `mock_refund_${Date.now()}`,
+          payment_id: paid.paymentId,
+          status: 'succeeded',
+          amount: { value: '259.00', currency: 'RUB' },
+        },
+      },
+    })
+    expect(refundHook.ok()).toBeTruthy()
+
+    await expect
+      .poll(async () => isPremiumPayload(await (await api.get('/api/premium-status')).json()), {
+        timeout: 10_000,
+      })
+      .toBe(false)
 
     await api.dispose()
   })

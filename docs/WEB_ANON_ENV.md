@@ -7,10 +7,12 @@
 | `WEB_FEATURE_ENABLED` / runtime flag | Enable WEB auth routes |
 | `WEB_PUBLIC_ORIGIN` | Public site origin for redirects / return URLs |
 | `DATABASE_URL` | Must point to `gnh_web_staging` or local — never `gnh_supabase` on staging |
-| `YOOKASSA_SHOP_ID` / `YOOKASSA_SECRET_KEY` | Mock placeholders on staging |
-| `YOOKASSA_MOCK` / mock mode flag | Enable mock payments (no real charges) |
-| `YOOKASSA_WEBHOOK_SECRET` | Bearer for webhook |
-| `YOOKASSA_RETURN_URL` or WEB origin | Payment return |
+| `YOOKASSA_SHOP_ID` / `YOOKASSA_SECRET_KEY` | TEST shop keys on staging (never LIVE) |
+| `YOOKASSA_MOCK` | `0` on Timeweb; `1` only for local mock |
+| `YOOKASSA_WEBHOOK_SECRET` | Optional custom Bearer (leave empty for standard YooKassa HTTP notifications) |
+| `YOOKASSA_WEBHOOK_REQUIRE_SECRET` | Keep `0` for official cabinet webhooks |
+| `YOOKASSA_WEBHOOK_IP_CHECK` | Optional official IP allowlist (`1` on staging with `TRUST_PROXY`) |
+| `YOOKASSA_RETURN_URL_WEB` | WEB payment return URL |
 
 ## Anonymous session
 

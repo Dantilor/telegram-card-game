@@ -98,6 +98,43 @@ export async function startTelegramLinkRestore(): Promise<{
   return (await res.json()) as { ok: boolean; expiresAt?: string; instruction?: string; code?: string }
 }
 
+/** Complete WEB↔Telegram link from Mini App (initData + 8-digit code). */
+export async function completeTelegramLink(code: string): Promise<{
+  ok: boolean
+  premium?: boolean
+  activeUntil?: string | null
+}> {
+  const { getInitData } = await import('./telegram')
+  const initData = getInitData()
+  if (!initData) {
+    const err = new Error('telegram_init_required') as Error & { status?: number }
+    err.status = 401
+    throw err
+  }
+  const res = await fetch(`${apiBase()}/api/web/telegram-link/complete`, {
+    method: 'POST',
+    credentials: 'omit',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'x-telegram-init-data': initData,
+    },
+    body: JSON.stringify({ code: code.trim() }),
+  })
+  if (!res.ok) {
+    const err = new Error('telegram_link_complete_failed') as Error & { status?: number; code?: string }
+    err.status = res.status
+    try {
+      const body = (await res.json()) as { code?: string }
+      if (typeof body.code === 'string') err.code = body.code
+    } catch {
+      /* ignore */
+    }
+    throw err
+  }
+  return (await res.json()) as { ok: boolean; premium?: boolean; activeUntil?: string | null }
+}
+
 export async function startEmailBind(email: string): Promise<{
   ok: boolean
   expiresAt?: string

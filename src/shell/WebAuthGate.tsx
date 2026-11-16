@@ -52,6 +52,7 @@ export function WebAuthGate({ children }: { children: ReactNode }) {
         // re-sync after anonymous ensure so first paint does not stick on 401/free.
         if (session) {
           window.dispatchEvent(new Event('tcg_premium_sync'))
+          window.dispatchEvent(new Event('tcg_legal_sync'))
         }
       } catch {
         // Soft-fail: still allow browsing free UI; APIs enforce auth where needed.

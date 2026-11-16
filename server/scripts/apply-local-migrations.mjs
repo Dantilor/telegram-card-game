@@ -60,6 +60,7 @@ const steps = [
   { label: '016-local-subs', file: 'db/local/016_subscriptions_telegram_unique.sql' },
   { label: '017', file: 'db/migrations/017_web_anonymous_accounts.sql' },
   { label: '018', file: 'db/migrations/018_web_rate_buckets.sql' },
+  { label: '019', file: 'db/migrations/019_web_legal_subjects.sql' },
 ]
 
 if (wantSeed) {

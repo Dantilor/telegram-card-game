@@ -412,7 +412,7 @@ router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedR
       code,
       expiresAt: expiresAt.toISOString(),
       instruction:
-        'Откройте GameNight Host в Telegram Mini App → Привязать WEB и введите этот код. Код действует 10 минут.',
+        'Откройте GameNight Host в Telegram Mini App → раздел «Привязать WEB» (/link-web) и введите этот код. Код действует 10 минут.',
     })
   } catch (e) {
     const { status, body } = errorPayload(e)

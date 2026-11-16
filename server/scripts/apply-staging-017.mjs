@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Apply ONLY migrations 017 + 018 + grants subset to gnh_web_staging.
- * All three steps run in a single BEGIN/COMMIT transaction; errors ROLLBACK.
+ * Apply ONLY migrations 017 + 018 + 019 + grants subset to gnh_web_staging.
+ * All steps run in a single BEGIN/COMMIT transaction; errors ROLLBACK.
  * Does NOT re-run 001вЂ“015. Never touches gnh_supabase.
  *
  * Usage (from server/, after `npm run build:api`):
@@ -32,6 +32,7 @@ const APP_ROLE = 'gnh_web_stage'
 const steps = [
   { label: '017', file: 'db/migrations/017_web_anonymous_accounts.sql' },
   { label: '018', file: 'db/migrations/018_web_rate_buckets.sql' },
+  { label: '019', file: 'db/migrations/019_web_legal_subjects.sql' },
   { label: 'grants-017-018', file: 'db/staging/02_grants_017_018_only.sql' },
 ]
 

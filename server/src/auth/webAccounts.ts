@@ -216,3 +216,25 @@ export async function revokeTelegramLinkEntitlements(input: {
   )
   return result.rows.length
 }
+
+/**
+ * Expire web_purchase entitlements tied to a YooKassa payment after cancel/refund.
+ */
+export async function revokeWebPurchaseEntitlements(input: {
+  paymentId: string
+  db?: Queryable
+}): Promise<number> {
+  const paymentId = input.paymentId.trim()
+  if (!paymentId) return 0
+  const result = await db(input.db).query<{ id: string }>(
+    `UPDATE web_entitlements
+        SET active_until = LEAST(active_until, now()),
+            updated_at = now()
+      WHERE source = 'web_purchase'
+        AND payment_id = $1
+        AND active_until > now()
+      RETURNING id`,
+    [paymentId]
+  )
+  return result.rows.length
+}

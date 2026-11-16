@@ -10,6 +10,7 @@ import {
   withConfirmationSource,
   withdrawConsent,
 } from '../legal/consents.js'
+import { acceptWebAgreement, acceptWebOffer, readOwnWebRecords } from '../legal/webConsents.js'
 import { confirmationSourceForAuth } from '../legal/constants.js'
 import {
   listActiveDocuments,
@@ -120,18 +121,23 @@ function readInitData(req: Request): unknown {
   return null
 }
 
+type LegalSubject =
+  | { kind: 'telegram'; telegramId: number; authSource: string }
+  | { kind: 'web'; webAccountId: string; authSource: string }
+
 async function subjectFromRequest(
   req: Request,
   deps: LegalRouterDeps,
   res: Response
-): Promise<{ telegramId: number; authSource: string } | null> {
-  // Dual-auth: Mini App initData or WEB session cookie. Never trust body telegram_id.
+): Promise<LegalSubject | null> {
+  // Dual-auth: Mini App initData, WEB anonymous cookie, or OIDC WEB session. Never trust body ids.
   try {
     const auth = await resolveAuth(req, {
       botToken: deps.getBotToken(),
       requireCsrfForWeb: req.method !== 'GET' && req.method !== 'HEAD',
     })
-    if (auth?.telegramId) return { telegramId: auth.telegramId, authSource: auth.source }
+    if (auth?.telegramId) return { kind: 'telegram', telegramId: auth.telegramId, authSource: auth.source }
+    if (auth?.webAccountId) return { kind: 'web', webAccountId: auth.webAccountId, authSource: auth.source }
   } catch {
     /* fall through */
   }
@@ -143,6 +149,7 @@ async function subjectFromRequest(
   }
   try {
     return {
+      kind: 'telegram',
       telegramId: deps.verifyInitData(initData, deps.getBotToken()).telegram_id,
       authSource: 'telegram_init_data',
     }
@@ -237,6 +244,13 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   router.post('/account', async (req, res) => {
     const subject = await subjectFromRequest(req, deps, res)
     if (subject == null) return
+    if (subject.kind === 'web') {
+      res.status(400).json({
+        error: 'telegram_required',
+        message: 'Регистрация аккаунта с PD-согласиями доступна в Telegram Mini App.',
+      })
+      return
+    }
     const { telegramId, authSource } = subject
     const parsed = accountRegistrationSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -256,16 +270,19 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   router.post('/agreement', async (req, res) => {
     const subject = await subjectFromRequest(req, deps, res)
     if (subject == null) return
-    const { telegramId, authSource } = subject
     const parsed = AgreementSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
       return
     }
     try {
+      if (subject.kind === 'web') {
+        res.status(201).json(await acceptWebAgreement(deps.withTransaction, subject.webAccountId, parsed.data))
+        return
+      }
       res.status(201).json(
-        await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
-          acceptAgreement(deps.withTransaction, telegramId, parsed.data)
+        await withConfirmationSource(confirmationSourceForAuth(subject.authSource), () =>
+          acceptAgreement(deps.withTransaction, subject.telegramId, parsed.data)
         )
       )
     } catch (error) {
@@ -276,7 +293,6 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   router.post('/offer-acceptances', async (req, res) => {
     const subject = await subjectFromRequest(req, deps, res)
     if (subject == null) return
-    const { telegramId, authSource } = subject
     const parsed = OfferSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
       invalidBody(res)
@@ -288,9 +304,15 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
         res.status(400).json({ error: 'plan_not_found', message: 'Тариф не найден или выключен.' })
         return
       }
+      if (subject.kind === 'web') {
+        res.status(201).json(
+          await acceptWebOffer(deps.withTransaction, subject.webAccountId, { ...parsed.data, plan })
+        )
+        return
+      }
       res.status(201).json(
-        await withConfirmationSource(confirmationSourceForAuth(authSource), () =>
-          acceptOffer(deps.withTransaction, telegramId, { ...parsed.data, plan })
+        await withConfirmationSource(confirmationSourceForAuth(subject.authSource), () =>
+          acceptOffer(deps.withTransaction, subject.telegramId, { ...parsed.data, plan })
         )
       )
     } catch (error) {
@@ -301,6 +323,13 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   router.post('/consents', async (req, res) => {
     const subject = await subjectFromRequest(req, deps, res)
     if (subject == null) return
+    if (subject.kind === 'web') {
+      res.status(501).json({
+        error: 'web_consents_not_ready',
+        message: 'Опциональные согласия для анонимного WEB пока недоступны. Соглашение и оферта работают.',
+      })
+      return
+    }
     const { telegramId, authSource } = subject
     const parsed = GrantSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -321,6 +350,13 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   router.post('/consents/decline', async (req, res) => {
     const subject = await subjectFromRequest(req, deps, res)
     if (subject == null) return
+    if (subject.kind === 'web') {
+      res.status(501).json({
+        error: 'web_consents_not_ready',
+        message: 'Опциональные согласия для анонимного WEB пока недоступны.',
+      })
+      return
+    }
     const { telegramId, authSource } = subject
     const parsed = ChannelActionSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -341,6 +377,13 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
   router.post('/consents/withdraw', async (req, res) => {
     const subject = await subjectFromRequest(req, deps, res)
     if (subject == null) return
+    if (subject.kind === 'web') {
+      res.status(501).json({
+        error: 'web_consents_not_ready',
+        message: 'Опциональные согласия для анонимного WEB пока недоступны.',
+      })
+      return
+    }
     const { telegramId, authSource } = subject
     const parsed = ChannelActionSchema.safeParse(actionBody(req.body))
     if (!parsed.success) {
@@ -362,6 +405,11 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
     const subject = await subjectFromRequest(req, deps, res)
     if (subject == null) return
     try {
+      if (subject.kind === 'web') {
+        const records = await readOwnWebRecords(deps.query, subject.webAccountId)
+        res.json({ webAccountId: subject.webAccountId, ...records })
+        return
+      }
       const records = await readOwnRecords(deps.query, subject.telegramId)
       res.json({ telegramId: subject.telegramId, ...records })
     } catch (error) {

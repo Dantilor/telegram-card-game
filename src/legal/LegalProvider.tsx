@@ -112,12 +112,17 @@ export function LegalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshRecords()
+    const onLegalSync = () => {
+      void refreshRecords()
+    }
+    window.addEventListener('tcg_legal_sync', onLegalSync)
     // Тексты документов не нужны для первого кадра Home: сначала hero, затем idle.
     let cancelIdle: (() => void) | null = null
     const cancelWait = afterCriticalImages(() => {
       cancelIdle = scheduleWhenIdle(() => preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id)), 5000)
     })
     return () => {
+      window.removeEventListener('tcg_legal_sync', onLegalSync)
       cancelWait()
       cancelIdle?.()
     }

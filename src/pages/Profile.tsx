@@ -269,6 +269,11 @@ function Profile() {
                   Восстановить покупку из Telegram
                 </button>
               )}
+              {!web && (
+                <Link to="/link-web" className="profile-pass__restore" onClick={() => haptic('light')}>
+                  Привязать WEB (код)
+                </Link>
+              )}
               {restoreStatus && (
                 <span className="profile-pass__toast">{restoreStatus}</span>
               )}
@@ -321,6 +326,11 @@ function Profile() {
                 >
                   Восстановить покупку из Telegram
                 </button>
+              )}
+              {!web && (
+                <Link to="/link-web" className="profile-pass__restore" onClick={() => haptic('light')}>
+                  Привязать WEB (код)
+                </Link>
               )}
               {restoreStatus && (
                 <span className="profile-pass__toast">{restoreStatus}</span>

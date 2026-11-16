@@ -72,6 +72,7 @@ const steps = [
   { label: '015', file: 'db/migrations/015_infected_rooms_code_digits.sql' },
   { label: '017', file: 'db/migrations/017_web_anonymous_accounts.sql' },
   { label: '018', file: 'db/migrations/018_web_rate_buckets.sql' },
+  { label: '019', file: 'db/migrations/019_web_legal_subjects.sql' },
   { label: 'grants-stage', file: 'db/staging/01_grants_gnh_web_stage.sql' },
 ]
 

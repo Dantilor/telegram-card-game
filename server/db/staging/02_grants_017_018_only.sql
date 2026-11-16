@@ -22,7 +22,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
   web_telegram_link_challenges,
   web_email_otps,
   web_payments,
-  web_rate_buckets
+  web_rate_buckets,
+  web_legal_evidence,
+  web_legal_preferences
 TO gnh_web_stage;
 
 -- web_sessions already granted historically; ensure UPDATE for web_account_id column use.
@@ -36,7 +38,8 @@ BEGIN
     'web_entitlements_id_seq',
     'web_telegram_links_id_seq',
     'web_telegram_link_challenges_id_seq',
-    'web_email_otps_id_seq'
+    'web_email_otps_id_seq',
+    'web_legal_evidence_id_seq'
   ]
   LOOP
     IF to_regclass(seq) IS NOT NULL THEN

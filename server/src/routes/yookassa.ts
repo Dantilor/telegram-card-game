@@ -645,6 +645,7 @@ async function handleWebhook(req: Request, res: Response) {
     event?: string
     object?: {
       id?: string
+      payment_id?: string
       status?: string
       metadata?: { telegram_id?: string; plan_id?: string; telegramId?: string; planId?: string; userId?: string }
     }
@@ -677,6 +678,28 @@ async function handleWebhook(req: Request, res: Response) {
             `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
             [newStatus, pid]
           ).catch(() => {})
+          await query(`UPDATE web_payments SET status = $1 WHERE id = $2`, [newStatus, pid]).catch(() => {})
+          if (newStatus === 'canceled' || newStatus === 'failed') {
+            const { revokeWebPurchaseEntitlements } = await import('../auth/webAccounts.js')
+            const revoked = await revokeWebPurchaseEntitlements({ paymentId: pid }).catch(() => 0)
+            if (revoked > 0) {
+              console.log(`[YooKassa] webhook: revoked ${revoked} WEB purchase entitlement(s) for ${pid} (${newStatus})`)
+            }
+          }
+        }
+        // YooKassa refund.succeeded — revoke WEB purchase for the original payment_id.
+        if (eventType === 'refund.succeeded') {
+          const originalPaymentId = typeof obj.payment_id === 'string' ? obj.payment_id.trim() : pid
+          const { revokeWebPurchaseEntitlements } = await import('../auth/webAccounts.js')
+          await query(`UPDATE web_payments SET status = 'refunded' WHERE id = $1`, [originalPaymentId]).catch(
+            () => {}
+          )
+          const revoked = await revokeWebPurchaseEntitlements({ paymentId: originalPaymentId }).catch(() => 0)
+          if (revoked > 0) {
+            console.log(
+              `[YooKassa] webhook: refund revoked ${revoked} WEB purchase entitlement(s) for ${originalPaymentId}`
+            )
+          }
         }
         return
       }

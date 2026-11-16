@@ -38,6 +38,8 @@ const REQUIRED_TABLES = [
   'web_email_otps',
   'web_payments',
   'web_rate_buckets',
+  'web_legal_evidence',
+  'web_legal_preferences',
   'legal_document_versions',
   'legal_document_activations',
   'legal_evidence',
@@ -126,6 +128,11 @@ const STAGE_PRIVILEGES = [
   ['web_rate_buckets', 'INSERT'],
   ['web_rate_buckets', 'UPDATE'],
   ['web_rate_buckets', 'DELETE'],
+  ['web_legal_evidence', 'SELECT'],
+  ['web_legal_evidence', 'INSERT'],
+  ['web_legal_preferences', 'SELECT'],
+  ['web_legal_preferences', 'INSERT'],
+  ['web_legal_preferences', 'UPDATE'],
 ]
 
 const STAGE_SEQUENCE_USAGE = [
@@ -133,6 +140,7 @@ const STAGE_SEQUENCE_USAGE = [
   'web_telegram_links_id_seq',
   'web_telegram_link_challenges_id_seq',
   'web_email_otps_id_seq',
+  'web_legal_evidence_id_seq',
 ]
 
 function die(message) {

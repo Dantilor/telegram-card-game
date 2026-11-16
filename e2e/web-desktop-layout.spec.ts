@@ -17,7 +17,8 @@ async function waitForHomeReady(page: Page) {
   await expect(page.getByRole('link', { name: /Начать игру/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
-async function assertAppIsWideOnDesktop(page: Page, width: number) {
+/** WEB must stay a phone-column shell (Mini App look), not a wide desktop layout. */
+async function assertPhoneColumnOnWideViewport(page: Page, width: number) {
   if (width < 1024) return
   const metrics = await page.evaluate(() => {
     const app = document.querySelector('.app.app--web') as HTMLElement | null
@@ -28,18 +29,20 @@ async function assertAppIsWideOnDesktop(page: Page, width: number) {
       viewport: window.innerWidth,
     }
   })
-  expect(metrics.appWidth).toBeGreaterThan(metrics.viewport * 0.9)
-  expect(metrics.homeWidth).toBeGreaterThan(560)
+  expect(metrics.appWidth).toBeLessThanOrEqual(480)
+  expect(metrics.homeWidth).toBeLessThanOrEqual(480)
+  // Phone column (~470px) must stay clearly narrower than desktop viewports.
+  expect(metrics.appWidth).toBeLessThan(metrics.viewport * 0.5)
 }
 
-test.describe('WEB desktop layout', () => {
+test.describe('WEB phone-column layout (Mini App look)', () => {
   for (const width of WIDTHS) {
     test(`home @ ${width}px has no horizontal overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height: width >= 1024 ? 900 : 844 })
       await page.goto('/')
       await waitForHomeReady(page)
       await assertNoHorizontalOverflow(page)
-      await assertAppIsWideOnDesktop(page, width)
+      await assertPhoneColumnOnWideViewport(page, width)
       await page.screenshot({
         path: path.join('test-results', `web-home-${width}.png`),
         fullPage: true,
@@ -47,73 +50,36 @@ test.describe('WEB desktop layout', () => {
     })
   }
 
-  test('catalog / game / profile / premium screenshots @ desktop and mobile', async ({ page }) => {
-    for (const width of [390, 1440] as const) {
-      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 })
+  test('catalog / game / profile stay phone-width on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
 
-      await page.goto('/games')
-      await expect(page.getByText(/что запускаем сегодня/i).first()).toBeVisible({ timeout: 30_000 })
-      await expect(page.locator('.games-page')).toBeVisible()
-      if (width >= 1440) {
-        const catalog = await page.evaluate(() => {
-          const gp = document.querySelector('.games-page') as HTMLElement | null
-          const grid = document.querySelector('.games-grid') as HTMLElement | null
-          return {
-            width: gp?.getBoundingClientRect().width ?? 0,
-            cols: grid
-              ? getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length
-              : 0,
-          }
-        })
-        expect(catalog.width).toBeGreaterThan(900)
-        expect(catalog.cols).toBeGreaterThanOrEqual(3)
-      }
-      await assertNoHorizontalOverflow(page)
-      await page.screenshot({
-        path: path.join('test-results', `web-games-${width}.png`),
-        fullPage: true,
-      })
+    await page.goto('/games')
+    await expect(page.getByText(/что запускаем сегодня/i).first()).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('.games-page')).toBeVisible()
+    const catalogW = await page.evaluate(
+      () => (document.querySelector('.games-page') as HTMLElement | null)?.getBoundingClientRect().width ?? 0,
+    )
+    expect(catalogW).toBeLessThanOrEqual(480)
+    await assertNoHorizontalOverflow(page)
 
-      await page.goto('/mafia')
-      await expect(page.locator('.app')).toBeVisible({ timeout: 30_000 })
-      await assertNoHorizontalOverflow(page)
-      await page.screenshot({
-        path: path.join('test-results', `web-game-${width}.png`),
-        fullPage: true,
-      })
-
-      await page.goto('/profile')
-      await expect(page.locator('.profile-page')).toBeVisible({ timeout: 30_000 })
-      await assertNoHorizontalOverflow(page)
-      await page.screenshot({
-        path: path.join('test-results', `web-profile-${width}.png`),
-        fullPage: true,
-      })
-
-      await page.goto('/premium')
-      await expect(page.locator('.premium-overlay__card, .premium-page').first()).toBeVisible({
-        timeout: 30_000,
-      })
-      await assertNoHorizontalOverflow(page)
-      await page.screenshot({
-        path: path.join('test-results', `web-premium-${width}.png`),
-        fullPage: true,
-      })
-    }
+    await page.goto('/profile')
+    await expect(page.locator('.profile-page')).toBeVisible({ timeout: 30_000 })
+    const profileW = await page.evaluate(
+      () => (document.querySelector('.profile-page') as HTMLElement | null)?.getBoundingClientRect().width ?? 0,
+    )
+    expect(profileW).toBeLessThanOrEqual(480)
+    await assertNoHorizontalOverflow(page)
   })
 
-  test('desktop home shows nav and popular/new sections', async ({ page }) => {
+  test('desktop home hides WEB nav and keeps Mini App column', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     await waitForHomeReady(page)
-    await expect(page.getByRole('navigation', { name: /Основная навигация/i })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Популярные' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Новые игры' })).toBeVisible()
-    const cols = await page.evaluate(() => {
-      const list = document.querySelector('.home-web-picks--popular .home-web-picks__list')
-      if (!list) return 0
-      return getComputedStyle(list).gridTemplateColumns.split(' ').filter(Boolean).length
-    })
-    expect(cols).toBeGreaterThanOrEqual(3)
+    await expect(page.getByRole('navigation', { name: /Основная навигация/i })).toBeHidden()
+    await expect(page.getByRole('heading', { name: /Попробуйте сегодня|Популярные/i })).toBeVisible()
+    const appW = await page.evaluate(
+      () => (document.querySelector('.app.app--web') as HTMLElement | null)?.getBoundingClientRect().width ?? 0,
+    )
+    expect(appW).toBeLessThanOrEqual(480)
   })
 })

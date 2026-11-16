@@ -78,7 +78,7 @@
     --tg-header-offset: 3rem;
   }
 
-  /* Telegram Mini App keeps the centered phone/tablet column. WEB uses web-desktop.css. */
+  /* Telegram Mini App + WEB both stay a centered phone column (WEB via web-desktop.css). */
   .app:not(.app--web) {
     max-width: min(var(--layout-content-max), 100%);
     margin-inline: auto;

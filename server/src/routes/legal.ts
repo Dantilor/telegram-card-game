@@ -143,7 +143,13 @@ function sendFailure(res: Response, error: unknown): void {
     })
     return
   }
-  console.error('[legal]', error instanceof Error ? error.message : 'request failed')
+  const message = error instanceof Error ? error.message : 'request failed'
+  console.error('[legal]', message)
+  if (/permission denied for table users/i.test(message)) {
+    console.error(
+      '[legal] users privilege failure uses shared pool from server/src/db.ts via legal/runtime withTransaction; check [DB] privilege-diag on startup'
+    )
+  }
   res.status(500).json({ error: 'internal_error' })
 }
 

@@ -421,6 +421,54 @@ router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedR
 })
 
 /**
+ * GET /api/web/telegram-link/status — poll link + Premium after WEB restore code.
+ */
+router.get('/web/telegram-link/status', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const auth = req.auth!
+    if (!auth.webAccountId) {
+      res.status(400).json({ error: 'Anonymous WEB account required', code: 'web_account_required' })
+      return
+    }
+    const link = await query<{ telegram_id: string; linked_at: Date }>(
+      `SELECT telegram_id::text AS telegram_id, linked_at
+         FROM web_telegram_links
+        WHERE web_account_id = $1::uuid AND revoked_at IS NULL
+        ORDER BY linked_at DESC NULLS LAST, id DESC
+        LIMIT 1`,
+      [auth.webAccountId]
+    )
+    const pending = await query<{ expires_at: Date }>(
+      `SELECT expires_at
+         FROM web_telegram_link_challenges
+        WHERE web_account_id = $1::uuid
+          AND consumed_at IS NULL
+          AND expires_at > now()
+        ORDER BY id DESC
+        LIMIT 1`,
+      [auth.webAccountId]
+    )
+    const premium = await getWebAccountPremium(auth.webAccountId)
+    const row = link.rows[0]
+    res.status(200).json({
+      ok: true,
+      linked: Boolean(row),
+      telegramId: row?.telegram_id ?? null,
+      linkedAt: row?.linked_at ? new Date(row.linked_at).toISOString() : null,
+      pendingChallengeExpiresAt: pending.rows[0]?.expires_at
+        ? new Date(pending.rows[0].expires_at).toISOString()
+        : null,
+      isPremium: premium.isPremium,
+      activeUntil: premium.activeUntil,
+      sources: premium.sources,
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
  * Complete Telegram link from Mini App initData + code.
  * POST /api/web/telegram-link/complete  (initData auth, body: { code })
  */

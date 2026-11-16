@@ -668,6 +668,40 @@ html:has(.profile-page) #root {
   color: var(--prof-muted);
 }
 
+.profile-pass__tg-restore {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 12px;
+  background: var(--prof-restore-hover-bg, rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-pass__tg-code-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.profile-pass__tg-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--prof-text);
+}
+
+.profile-pass__desc--ok {
+  color: var(--prof-text);
+  font-weight: 600;
+}
+
 .profile-pass__inactive {
   display: flex;
   flex-direction: column;

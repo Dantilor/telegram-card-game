@@ -17,6 +17,13 @@ export type YookassaPaymentSnapshot = {
   }
 }
 
+async function yookassaAuthHeader(deps: { shopId?: string; secretKey?: string }): Promise<string | null> {
+  const shopId = deps.shopId ?? process.env.YOOKASSA_SHOP_ID ?? ''
+  const secretKey = deps.secretKey ?? process.env.YOOKASSA_SECRET_KEY ?? ''
+  if (!shopId || !secretKey) return null
+  return 'Basic ' + Buffer.from(`${shopId}:${secretKey}`).toString('base64')
+}
+
 export async function fetchYookassaPayment(
   paymentId: string,
   deps: {
@@ -25,21 +32,57 @@ export async function fetchYookassaPayment(
     fetchImpl?: typeof fetch
   } = {}
 ): Promise<YookassaPaymentSnapshot | null> {
-  const shopId = deps.shopId ?? process.env.YOOKASSA_SHOP_ID ?? ''
-  const secretKey = deps.secretKey ?? process.env.YOOKASSA_SECRET_KEY ?? ''
-  if (!shopId || !secretKey || !paymentId.trim()) return null
+  const auth = await yookassaAuthHeader(deps)
+  if (!auth || !paymentId.trim()) return null
 
   const fetchImpl = deps.fetchImpl ?? fetch
   const res = await fetchImpl(`https://api.yookassa.ru/v3/payments/${encodeURIComponent(paymentId.trim())}`, {
     method: 'GET',
     headers: {
-      Authorization: 'Basic ' + Buffer.from(`${shopId}:${secretKey}`).toString('base64'),
+      Authorization: auth,
       Accept: 'application/json',
     },
   })
   if (!res.ok) return null
   const json = (await res.json()) as YookassaPaymentSnapshot
   if (!json?.id || typeof json.status !== 'string') return null
+  return json
+}
+
+export type YookassaRefundSnapshot = {
+  id: string
+  status: string
+  payment_id: string
+  amount?: { value?: string; currency?: string }
+}
+
+/** Authenticated refund lookup — never trust webhook body alone for revoke. */
+export async function fetchYookassaRefund(
+  refundId: string,
+  deps: {
+    shopId?: string
+    secretKey?: string
+    fetchImpl?: typeof fetch
+  } = {}
+): Promise<YookassaRefundSnapshot | null> {
+  const auth = await yookassaAuthHeader(deps)
+  if (!auth || !refundId.trim()) return null
+
+  const fetchImpl = deps.fetchImpl ?? fetch
+  const res = await fetchImpl(`https://api.yookassa.ru/v3/refunds/${encodeURIComponent(refundId.trim())}`, {
+    method: 'GET',
+    headers: {
+      Authorization: auth,
+      Accept: 'application/json',
+    },
+  })
+  // Transient provider/network failures must bubble so webhook returns 5xx and YooKassa retries.
+  if (res.status >= 500) {
+    throw new Error(`yookassa_refund_lookup_${res.status}`)
+  }
+  if (!res.ok) return null
+  const json = (await res.json()) as YookassaRefundSnapshot
+  if (!json?.id || typeof json.status !== 'string' || typeof json.payment_id !== 'string') return null
   return json
 }
 

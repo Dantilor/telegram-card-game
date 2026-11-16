@@ -17,11 +17,41 @@ test.describe('Anonymous WEB Premium', () => {
     expect(before.ok()).toBeTruthy()
     expect(isPremiumPayload(await before.json())).toBe(false)
 
+    const createBlocked = await api.post('/api/payments/yookassa/create', {
+      headers: { 'X-CSRF-Token': csrf! },
+      data: {
+        planId: 'premium_1m',
+        email: 'anon.buyer@example.test',
+      },
+    })
+    expect(createBlocked.ok()).toBeFalsy()
+
+    const offerDoc = await api.get('/api/legal/documents/offer')
+    expect(offerDoc.ok(), `offer ${offerDoc.status()}`).toBeTruthy()
+    const offer = await offerDoc.json()
+    const accept = await api.post('/api/legal/offer-acceptances', {
+      headers: { 'X-CSRF-Token': csrf! },
+      data: {
+        requestId: `e2e-anon-offer-${Date.now()}`,
+        planId: 'premium_1m',
+        priceRub: 259,
+        durationDays: 30,
+        currency: 'RUB',
+        statement: 'Принимаю Публичную оферту Premium',
+        version: offer.version,
+        sha256: offer.sha256,
+      },
+    })
+    expect(accept.ok(), await accept.text()).toBeTruthy()
+    const evidenceId = (await accept.json()).evidenceId
+    expect(evidenceId).toBeTruthy()
+
     const create = await api.post('/api/payments/yookassa/create', {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
         planId: 'premium_1m',
         email: 'anon.buyer@example.test',
+        offerAcceptanceId: evidenceId,
       },
     })
     expect(create.ok(), await create.text()).toBeTruthy()
@@ -64,6 +94,15 @@ test.describe('Anonymous WEB Premium', () => {
         { timeout: 10_000 }
       )
       .toBe(true)
+
+    const confirmLate = await api.post('/api/yookassa/confirm', {
+      headers: { 'X-CSRF-Token': csrf! },
+      data: { paymentId: created.paymentId },
+    })
+    expect(confirmLate.ok()).toBeTruthy()
+    const lateBody = await confirmLate.json()
+    expect(lateBody.ok).toBeTruthy()
+    expect(lateBody.alreadyDone === true || lateBody.webAccountId).toBeTruthy()
 
     const webhook2 = await api.post('/api/yookassa/webhook', {
       headers: {

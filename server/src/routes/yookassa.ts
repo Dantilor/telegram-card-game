@@ -9,7 +9,7 @@ import {
 } from '../services/subscriptions.js'
 import { getActivePlanById, getPlanDurationDays, planReceiptDescription } from '../services/plans.js'
 import { resolvePlanIdForGrant, resolveTelegramIdForGrant } from '../utils/telegramId.js'
-import { assertCheckout, customerForNewYookassaReceipt } from '../legal/checkout.js'
+import { assertCheckout, assertWebCheckout, customerForNewYookassaReceipt } from '../legal/checkout.js'
 import { LegalError, legalErrorBody } from '../legal/errors.js'
 import {
   CLAIM_PREMIUM_GRANT_SQL,
@@ -19,9 +19,13 @@ import {
 } from '../payments/premiumGrantSql.js'
 import { resolveAuth, type AuthSource } from '../auth/resolveAuth.js'
 import { webPublicOrigin } from '../auth/config.js'
-import { fetchYookassaPayment, parseYookassaAmountRub } from '../payments/yookassaClient.js'
+import {
+  fetchYookassaPayment,
+  fetchYookassaRefund,
+  parseYookassaAmountRub,
+} from '../payments/yookassaClient.js'
 import { yookassaMockEnabled } from '../payments/yookassaMock.js'
-import { grantWebEntitlement } from '../auth/webAccounts.js'
+import { grantWebEntitlement, revokeWebPurchaseEntitlements } from '../auth/webAccounts.js'
 
 const mockPayments = new Map<
   string,
@@ -218,13 +222,34 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     // Anonymous / email-bound WEB account checkout — never invents telegram_id.
     if (webAccountId) {
-      if (!receiptCustomer.email) {
-        res.status(400).json({
-          ok: false,
-          error: 'email required for WEB receipt',
-          code: 'receipt_email_required',
-        })
-        return
+      let webCheckout: { evidenceId: number }
+      try {
+        webCheckout = await assertWebCheckout(
+          {
+            async query<T>(sql: string, params?: unknown[]) {
+              const result = await query(sql, params)
+              return { rows: result.rows as T[] }
+            },
+          },
+          {
+            webAccountId,
+            plan: {
+              planId: plan.plan_id,
+              title: plan.title,
+              priceRub: plan.price_rub,
+              durationDays: plan.duration_days,
+            },
+            offerAcceptanceId: req.body?.offerAcceptanceId,
+            email: receiptCustomer.email,
+            phone: null,
+          }
+        )
+      } catch (e) {
+        if (e instanceof LegalError) {
+          res.status(e.status).json(legalErrorBody(e))
+          return
+        }
+        throw e
       }
       const idempotenceKey = randomUUID()
       const amount = `${plan.price_rub}.00`
@@ -233,6 +258,7 @@ async function handleCreatePayment(req: Request, res: Response) {
         plan_id: plan.plan_id,
         planId: plan.plan_id,
         auth_source: source,
+        offer_acceptance_id: String(webCheckout.evidenceId),
       }
       const description = `GameNight Host WEB: ${plan.title} (${plan.plan_id})`
       const receipt = buildReceipt({
@@ -673,33 +699,129 @@ async function handleWebhook(req: Request, res: Response) {
       if (!pid) return
 
       if (!claimsSucceeded) {
-        if (newStatus) {
+        // Telegram payments: status-only update (no WEB revoke from unverified body).
+        if (newStatus && eventType !== 'refund.succeeded') {
           await query(
             `UPDATE payments SET status = $1 WHERE provider_payment_charge_id = $2`,
             [newStatus, pid]
           ).catch(() => {})
-          await query(`UPDATE web_payments SET status = $1 WHERE id = $2`, [newStatus, pid]).catch(() => {})
-          if (newStatus === 'canceled' || newStatus === 'failed') {
-            const { revokeWebPurchaseEntitlements } = await import('../auth/webAccounts.js')
-            const revoked = await revokeWebPurchaseEntitlements({ paymentId: pid }).catch(() => 0)
+        }
+
+        // WEB cancel/failed: verify payment status via API before touching entitlements.
+        if (newStatus === 'canceled' || newStatus === 'failed') {
+          let verifiedCancel: { status?: string } | null = null
+          if (yookassaMockEnabled() && pid.startsWith('mock_')) {
+            verifiedCancel = mockPayments.get(pid) ?? { status: newStatus }
+          } else {
+            verifiedCancel = await fetchYookassaPayment(pid)
+          }
+          const apiStatus = verifiedCancel?.status ?? null
+          if (apiStatus !== 'canceled' && apiStatus !== 'failed') {
+            console.warn('[YooKassa] webhook: skip WEB cancel revoke — API status mismatch', {
+              paymentId: pid,
+              claimed: newStatus,
+              apiStatus,
+            })
+          } else {
+            await query(`UPDATE web_payments SET status = $1 WHERE id = $2`, [apiStatus, pid])
+            const revoked = await revokeWebPurchaseEntitlements({ paymentId: pid })
             if (revoked > 0) {
-              console.log(`[YooKassa] webhook: revoked ${revoked} WEB purchase entitlement(s) for ${pid} (${newStatus})`)
+              console.log(
+                `[YooKassa] webhook: revoked ${revoked} WEB purchase entitlement(s) for ${pid} (${apiStatus})`
+              )
             }
           }
         }
-        // YooKassa refund.succeeded — revoke WEB purchase for the original payment_id.
+
+        // Refund: verify refund object via API; full vs partial rules.
         if (eventType === 'refund.succeeded') {
-          const originalPaymentId = typeof obj.payment_id === 'string' ? obj.payment_id.trim() : pid
-          const { revokeWebPurchaseEntitlements } = await import('../auth/webAccounts.js')
-          await query(`UPDATE web_payments SET status = 'refunded' WHERE id = $1`, [originalPaymentId]).catch(
-            () => {}
-          )
-          const revoked = await revokeWebPurchaseEntitlements({ paymentId: originalPaymentId }).catch(() => 0)
-          if (revoked > 0) {
-            console.log(
-              `[YooKassa] webhook: refund revoked ${revoked} WEB purchase entitlement(s) for ${originalPaymentId}`
-            )
+          const refundId = pid
+          let verifiedRefund: {
+            id: string
+            status: string
+            payment_id: string
+            amount?: { value?: string; currency?: string }
+          } | null = null
+
+          if (yookassaMockEnabled() && refundId.startsWith('mock_refund_')) {
+            const paymentIdFromBody =
+              typeof obj.payment_id === 'string' ? obj.payment_id.trim() : ''
+            verifiedRefund = {
+              id: refundId,
+              status: 'succeeded',
+              payment_id: paymentIdFromBody,
+              amount: (obj as { amount?: { value?: string; currency?: string } }).amount,
+            }
+          } else {
+            verifiedRefund = await fetchYookassaRefund(refundId)
           }
+
+          if (!verifiedRefund || verifiedRefund.status !== 'succeeded') {
+            console.warn('[YooKassa] webhook: refund not confirmed by API', {
+              refundId,
+              apiStatus: verifiedRefund?.status ?? null,
+            })
+            return
+          }
+
+          const originalPaymentId = verifiedRefund.payment_id.trim()
+          if (!originalPaymentId) {
+            console.error('[YooKassa] webhook: refund missing payment_id', { refundId })
+            return
+          }
+
+          const refundRub = parseYookassaAmountRub(verifiedRefund.amount?.value)
+          const currency = verifiedRefund.amount?.currency ?? 'RUB'
+          if (currency !== 'RUB' || refundRub == null || refundRub <= 0) {
+            console.error('[YooKassa] webhook: refund amount/currency invalid', {
+              refundId,
+              refundRub,
+              currency,
+            })
+            return
+          }
+
+          await withTransaction(async (tx) => {
+            const webPay = await tx.query<{
+              id: string
+              amount_rub: number
+              status: string
+            }>(
+              `SELECT id, amount_rub, status FROM web_payments WHERE id = $1 LIMIT 1 FOR UPDATE`,
+              [originalPaymentId]
+            )
+            const row = webPay.rows[0]
+            if (!row) {
+              // Not a WEB payment — leave Telegram flow untouched.
+              return
+            }
+            if (row.status === 'refunded') {
+              console.log('[YooKassa] webhook: WEB refund already processed', originalPaymentId)
+              return
+            }
+
+            const paidRub = Number(row.amount_rub)
+            if (!Number.isFinite(paidRub) || paidRub <= 0) {
+              throw new Error(`web_payments amount invalid for ${originalPaymentId}`)
+            }
+
+            if (refundRub + 0.001 < paidRub) {
+              // Partial refund: record status, do NOT revoke full Premium rights.
+              await tx.query(`UPDATE web_payments SET status = 'partially_refunded' WHERE id = $1`, [
+                originalPaymentId,
+              ])
+              console.log(
+                `[YooKassa] webhook: partial WEB refund recorded paymentId=${originalPaymentId} refundRub=${refundRub} paidRub=${paidRub} (entitlement kept)`
+              )
+              return
+            }
+
+            await tx.query(`UPDATE web_payments SET status = 'refunded' WHERE id = $1`, [originalPaymentId])
+            await revokeWebPurchaseEntitlements({ paymentId: originalPaymentId, db: tx })
+            console.log(
+              `[YooKassa] webhook: full WEB refund revoked entitlements paymentId=${originalPaymentId} refundId=${refundId}`
+            )
+          })
         }
         return
       }
@@ -832,16 +954,23 @@ async function handleWebhook(req: Request, res: Response) {
       })
     } catch (e) {
       logPgError('[YooKassa] webhook error', e)
+      throw e
     }
   }
 
-  setImmediate(run)
-  res.status(200).json({ ok: true })
+  // Await processing so provider retries on failure (do not ACK then drop work).
+  try {
+    await run()
+    res.status(200).json({ ok: true })
+  } catch (e) {
+    logPgError('[YooKassa] webhook failed — returning 500 for retry', e)
+    res.status(500).json({ ok: false, error: 'webhook_processing_failed' })
+  }
 }
 
 async function handleConfirm(req: Request, res: Response) {
   // Confirm is a status refresh after return_url — still requires dual-auth.
-  // Never trusts client telegramId; only authenticated YooKassa payment + DB row.
+  // return_url alone is never treated as success; provider API must confirm.
   const auth = await verifyAuth(req, res)
   if (auth == null) return
 
@@ -854,9 +983,10 @@ async function handleConfirm(req: Request, res: Response) {
   }
 
   try {
-    // return_url confirm must not invent success: mock stays pending until webhook.
+    // return_url confirm must not invent success: mock stays pending until webhook (or API).
     let payment: {
       status?: string
+      amount?: { value?: string; currency?: string }
       metadata?: Record<string, string>
     } | null = null
     if (yookassaMockEnabled() && paymentId.startsWith('mock_')) {
@@ -871,7 +1001,105 @@ async function handleConfirm(req: Request, res: Response) {
 
     const status = payment.status ?? null
     if (status !== 'succeeded') {
-      res.status(200).json({ ok: false, status })
+      res.status(200).json({ ok: false, status, paymentId })
+      return
+    }
+
+    // ——— WEB account confirm ———
+    if (auth.webAccountId) {
+      const webRow = await query<{
+        web_account_id: string
+        plan_id: string
+        amount_rub: number
+        premium_granted_at: Date | null
+        status: string
+      }>(
+        `SELECT web_account_id::text AS web_account_id, plan_id, amount_rub, premium_granted_at, status
+           FROM web_payments WHERE id = $1 LIMIT 1`,
+        [paymentId]
+      )
+      const row = webRow.rows[0]
+      if (!row) {
+        res.status(404).json({ ok: false, error: 'web_payment_not_found', paymentId })
+        return
+      }
+      if (row.web_account_id !== auth.webAccountId) {
+        res.status(403).json({ ok: false, error: 'payment_owner_mismatch' })
+        return
+      }
+
+      const meta = payment.metadata ?? {}
+      const metaAccount = (meta.web_account_id || '').trim()
+      if (metaAccount && metaAccount !== auth.webAccountId) {
+        res.status(403).json({ ok: false, error: 'payment_owner_mismatch' })
+        return
+      }
+
+      const apiAmount = parseYookassaAmountRub(payment.amount?.value)
+      if (payment.amount?.currency && payment.amount.currency !== 'RUB') {
+        res.status(400).json({ ok: false, error: 'currency_mismatch' })
+        return
+      }
+      if (apiAmount == null || apiAmount !== Number(row.amount_rub)) {
+        res.status(400).json({ ok: false, error: 'amount_mismatch' })
+        return
+      }
+
+      const planId = (meta.plan_id || meta.planId || row.plan_id || '').trim()
+      if (!planId || planId !== row.plan_id) {
+        res.status(400).json({ ok: false, error: 'plan_mismatch' })
+        return
+      }
+      const catalogPlan = await getActivePlanById(planId)
+      if (!catalogPlan || catalogPlan.price_rub !== Number(row.amount_rub)) {
+        res.status(400).json({ ok: false, error: 'plan_catalog_mismatch' })
+        return
+      }
+
+      const grant = await grantWebAccountPremiumFromPayment({
+        paymentId,
+        webAccountId: auth.webAccountId,
+        planId,
+        amountRub: Number(row.amount_rub),
+        currency: 'RUB',
+      })
+
+      if (grant.granted || grant.alreadyDone) {
+        const premium = await query<{ active_until: Date | null }>(
+          `SELECT active_until FROM web_entitlements
+            WHERE web_account_id = $1::uuid AND active_until > now()
+            ORDER BY active_until DESC LIMIT 1`,
+          [auth.webAccountId]
+        )
+        console.log(
+          `[YooKassa] confirm WEB paymentId=${paymentId} webAccountId=${auth.webAccountId} granted=${Boolean(grant.granted)} alreadyDone=${Boolean(grant.alreadyDone)}`
+        )
+        res.status(200).json({
+          ok: true,
+          status,
+          paymentId,
+          webAccountId: auth.webAccountId,
+          planId,
+          alreadyDone: Boolean(grant.alreadyDone),
+          activeUntil: premium.rows[0]?.active_until
+            ? new Date(premium.rows[0].active_until).toISOString()
+            : null,
+        })
+        return
+      }
+
+      res.status(400).json({
+        ok: false,
+        error: grant.reason ?? 'web_grant_failed',
+        paymentId,
+        status,
+      })
+      return
+    }
+
+    // ——— Telegram confirm (unchanged ownership rules) ———
+    if (!auth.telegramId) {
+      res.status(401).json({ ok: false, error: 'Unauthorized', code: 'unauthorized' })
       return
     }
 

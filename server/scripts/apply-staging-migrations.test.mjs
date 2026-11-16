@@ -9,6 +9,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const serverRoot = path.resolve(here, '..')
 const script = path.join(here, 'apply-staging-migrations.mjs')
 const script017 = path.join(here, 'apply-staging-017.mjs')
+const script019 = path.join(here, 'apply-staging-019.mjs')
 
 function run(env, args = [], target = script) {
   return spawnSync(process.execPath, [target, ...args], {
@@ -53,6 +54,45 @@ test('017-only dry-run lists 017+018+grants and mentions single transaction', ()
   assert.match(result.stdout, /DRY grants-017-018/)
   assert.equal(/DRY schema/.test(result.stdout), false)
   assert.equal(/postgres(?:ql)?:\/\/\S+/i.test(result.stdout + result.stderr), false)
+})
+
+test('019-only dry-run lists 019 + grants-019 and never 017/018', () => {
+  const result = run({}, ['--dry-run'], script019)
+  assert.equal(result.status, 0, result.stderr || result.stdout)
+  assert.match(result.stdout, /019 pack only|019 \+ grants-019/i)
+  assert.match(result.stdout, /DRY 019_web_legal_subjects/)
+  assert.match(result.stdout, /DRY grants_019_only/)
+  assert.equal(/DRY 017/.test(result.stdout), false)
+  assert.equal(/DRY 018/.test(result.stdout), false)
+  assert.equal(/DRY schema/.test(result.stdout), false)
+  assert.equal(/postgres(?:ql)?:\/\/\S+/i.test(result.stdout + result.stderr), false)
+})
+
+test('019-only preflight refuses app role and production DB name', () => {
+  const appRole = run(
+    {
+      STAGING_DATABASE_URL:
+        'postgresql://gnh_web_stage:x@db.example:5432/gnh_web_staging?sslmode=verify-full',
+      STAGING_EXPECT_HOST: 'db.example',
+      STAGING_MIGRATE_USER: 'gnh_web_stage',
+    },
+    ['--preflight'],
+    script019
+  )
+  assert.notEqual(appRole.status, 0)
+  assert.match(`${appRole.stdout}\n${appRole.stderr}`, /gnh_web_stage|Refusing/i)
+
+  const prodDb = run(
+    {
+      STAGING_DATABASE_URL:
+        'postgresql://migrate:x@db.example:5432/gnh_supabase?sslmode=verify-full',
+      STAGING_EXPECT_HOST: 'db.example',
+    },
+    ['--preflight'],
+    script019
+  )
+  assert.notEqual(prodDb.status, 0)
+  assert.match(`${prodDb.stdout}\n${prodDb.stderr}`, /gnh_supabase|Refusing/i)
 })
 
 test('017-only preflight refuses app role before connect', () => {

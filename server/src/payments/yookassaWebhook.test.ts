@@ -71,6 +71,33 @@ test('webhook route always verifies via API before grant (source audit)', () => 
   assert.match(webhook, /amount mismatch/)
 })
 
+test('refund.succeeded verifies refund via API and splits partial vs full', () => {
+  const route = fs.readFileSync(path.join(serverRoot, 'src/routes/yookassa.ts'), 'utf8')
+  const webhook = route.slice(route.indexOf('async function handleWebhook'), route.indexOf('async function handleConfirm'))
+  assert.match(webhook, /fetchYookassaRefund/)
+  assert.match(webhook, /refund\.succeeded/)
+  assert.match(webhook, /partially_refunded/)
+  assert.match(webhook, /entitlement kept/)
+  assert.match(webhook, /FOR UPDATE/)
+  assert.match(webhook, /returning 500 for retry/)
+  assert.match(route, /auth\.webAccountId/)
+  assert.match(route, /payment_owner_mismatch/)
+  assert.match(route, /assertWebCheckout/)
+})
+
+test('fetchYookassaRefund throws on provider 5xx for webhook retry', async () => {
+  const { fetchYookassaRefund } = await import('./yookassaClient.js')
+  await assert.rejects(
+    () =>
+      fetchYookassaRefund('rf-1', {
+        shopId: 'shop',
+        secretKey: 'secret',
+        fetchImpl: async () => new Response('boom', { status: 503 }),
+      }),
+    /yookassa_refund_lookup_503/
+  )
+})
+
 test('grantPremiumByPaymentId is idempotent for already granted payment', async () => {
   const pg = new PGlite()
   await pg.exec(readSql('db/schema.sql'))

@@ -128,6 +128,58 @@ psql 'postgresql://gnh_web_stage:...@HOST/gnh_supabase?sslmode=verify-full' -c '
 
 Не выдаёт: членство в `gnh_app`, DDL, права на другие БД.
 
+## Миграция 019 only (`web_legal_*`) — после уже применённых 017/018
+
+На `gnh_web_staging` миграции **017 и 018 уже применены**. Повторно их **не** запускать. Для legal subjects (`web_legal_evidence`, `web_legal_preferences`) используйте отдельный пакет:
+
+| Шаг | Команда (из `server/`) |
+|-----|------------------------|
+| Dry-run (файлы) | `npm run migrate:staging:019:dry` |
+| Preflight TLS/URL | `npm run migrate:staging:019:preflight` |
+| Connection + probe | `npm run migrate:staging:019:check` |
+| Apply 019 + grants | `npm run migrate:staging:019` |
+
+Скрипт: `server/scripts/apply-staging-019.mjs` + `db/staging/03_grants_019_only.sql`.
+
+- Целевая БД строго `gnh_web_staging`; отказ на `gnh_supabase`.
+- Роль migrate ≠ `gnh_web_stage`; TLS `rejectUnauthorized=true`.
+- Требует, чтобы таблицы 017/018 уже существовали.
+- Одна транзакция: DDL 019 → grants 019 → verify tables → `COMMIT`; при ошибке `ROLLBACK`.
+- **Не** запускает 017/018 и **не** трогает production.
+
+```powershell
+Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+$env:STAGING_DATABASE_URL = 'postgresql://CLUSTER_ADMIN:PASSWORD@HOST.twc1.net:5432/gnh_web_staging?sslmode=verify-full'
+$env:STAGING_EXPECT_HOST = 'HOST.twc1.net'
+$env:STAGING_MIGRATE_USER = 'CLUSTER_ADMIN'
+$env:DATABASE_TLS_CA_FILE = 'C:\path\to\timeweb-ca.crt'
+
+cd server
+npm run build:api
+npm run migrate:staging:019:dry
+npm run migrate:staging:019:preflight
+npm run migrate:staging:019:check   # до apply: MISSING ожидаемо; после — PRESENT + grants
+# Backup панели Timeweb / pg_dump gnh_web_staging BEFORE apply
+npm run migrate:staging:019
+npm run migrate:staging:019:check
+```
+
+### Backup / verify / restore (019)
+
+1. **Backup** (панель Timeweb или admin dump **только** `gnh_web_staging`):
+   `pg_dump "postgresql://…/gnh_web_staging?sslmode=verify-full" -Fc -f gnh_web_staging_pre019.dump`
+2. **Apply** — команды выше.
+3. **Verify**:
+   ```sql
+   SELECT current_database(); -- gnh_web_staging
+   SELECT to_regclass('public.web_legal_evidence'), to_regclass('public.web_legal_preferences');
+   SELECT has_table_privilege('gnh_web_stage', 'web_legal_evidence', 'INSERT');
+   SELECT has_table_privilege('gnh_web_stage', 'web_legal_preferences', 'SELECT');
+   ```
+4. **Rollback**: восстановить dump в `gnh_web_staging` через панель / `pg_restore` (не на `gnh_supabase`). Самостоятельный SQL на Timeweb без dump — запрещён этим runbook.
+
+Никакого merge в `main`, деплоя Timeweb app и LIVE-платежей из этого шага нет.
+
 ## Блокеры
 
 1. Нет Timeweb root CA → TLS handshake fail.
@@ -136,3 +188,4 @@ psql 'postgresql://gnh_web_stage:...@HOST/gnh_supabase?sslmode=verify-full' -c '
 4. `gnh_web_stage` уже состоит в `gnh_app` → grants SQL остановится; membership нужно снять admin-ом **вне** `gnh_supabase` (кластерный `ALTER`/`REVOKE`, не наши prod-скрипты).
 5. `DATABASE_URL` из production `.env` в shell — скрипт откажется.
 6. PUBLIC CONNECT на все БД кластера — ручная настройка Timeweb.
+7. 019 без 017/018 → скрипт остановится на prerequisite tables.

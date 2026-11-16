@@ -114,3 +114,72 @@ export async function assertCheckout(
   }
   return { evidenceId, contact }
 }
+
+type WebEvidenceRow = {
+  id: string | number
+  subject_web_account_id: string
+  action: string
+  document_id: string
+  document_version: string
+  document_sha256: string
+  context: unknown
+}
+
+/** WEB anonymous checkout: offer evidence must belong to the same web_account_id. */
+export async function assertWebCheckout(
+  queryable: Queryable,
+  input: {
+    webAccountId: string
+    plan: LegalPlan
+    offerAcceptanceId: unknown
+    email: unknown
+    phone: unknown
+  }
+): Promise<{ evidenceId: number; contact: ReceiptContact }> {
+  const contact = parseReceiptContact(input.email, input.phone)
+  const rawId = input.offerAcceptanceId
+  const evidenceId =
+    typeof rawId === 'number'
+      ? rawId
+      : typeof rawId === 'string' && /^\d+$/.test(rawId)
+        ? Number(rawId)
+        : NaN
+  if (!Number.isSafeInteger(evidenceId) || evidenceId <= 0) {
+    throw new LegalError('offer_acceptance_not_found', 404, 'Нет подтверждённого принятия оферты для этого заказа.')
+  }
+  const active = await readActiveDocument(queryable, 'offer', true)
+  if (!active) {
+    throw new LegalError(
+      'document_unavailable',
+      503,
+      'Утверждённый текст оферты недоступен. Заказ и принятие не созданы.'
+    )
+  }
+  const found = await queryable.query<WebEvidenceRow>(
+    `SELECT id, subject_web_account_id, action, document_id, document_version, document_sha256, context
+       FROM web_legal_evidence
+      WHERE id = $1`,
+    [evidenceId]
+  )
+  const row = found.rows[0]
+  if (
+    !row ||
+    String(row.subject_web_account_id) !== String(input.webAccountId) ||
+    row.action !== 'accept_offer'
+  ) {
+    throw new LegalError('offer_acceptance_not_found', 404, 'Нет подтверждённого принятия оферты для этого заказа.')
+  }
+  if (row.document_version !== active.version || !sameHash(row.document_sha256, active.sha256)) {
+    throw new LegalError('offer_version_inactive', 409, 'Нужно принять действующую оферту для этого заказа.')
+  }
+  const context = parseContext(row.context)
+  if (
+    context.planId !== input.plan.planId ||
+    context.priceRub !== input.plan.priceRub ||
+    context.durationDays !== input.plan.durationDays ||
+    context.currency !== 'RUB'
+  ) {
+    throw new LegalError('order_mismatch', 400, 'Принятие оферты относится к другим параметрам заказа.')
+  }
+  return { evidenceId, contact }
+}

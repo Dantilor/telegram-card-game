@@ -98,6 +98,38 @@ export async function startTelegramLinkRestore(): Promise<{
   return (await res.json()) as { ok: boolean; expiresAt?: string; instruction?: string; code?: string }
 }
 
+export async function fetchTelegramLinkStatus(): Promise<{
+  ok: boolean
+  linked: boolean
+  telegramId: string | null
+  linkedAt: string | null
+  pendingChallengeExpiresAt: string | null
+  isPremium: boolean
+  activeUntil: string | null
+  sources: string[]
+}> {
+  const res = await fetch(`${apiBase()}/api/web/telegram-link/status`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  })
+  if (!res.ok) {
+    const err = new Error('telegram_link_status_failed') as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as {
+    ok: boolean
+    linked: boolean
+    telegramId: string | null
+    linkedAt: string | null
+    pendingChallengeExpiresAt: string | null
+    isPremium: boolean
+    activeUntil: string | null
+    sources: string[]
+  }
+}
+
 /** Complete WEB↔Telegram link from Mini App (initData + 8-digit code). */
 export async function completeTelegramLink(code: string): Promise<{
   ok: boolean

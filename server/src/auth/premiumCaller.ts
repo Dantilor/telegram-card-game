@@ -1,7 +1,6 @@
 import type { Request } from 'express'
-import { getUserPremiumWithDb } from '../premiumStore.js'
 import { resolveAuth } from './resolveAuth.js'
-import { getWebAccountPremium } from './webAccounts.js'
+import { getTelegramPremium, getWebAccountPremium } from './webAccounts.js'
 
 /**
  * Premium host check for party rooms.
@@ -18,8 +17,8 @@ export async function callerIsPremium(req: Request): Promise<boolean> {
       return status.isPremium
     }
     if (auth.telegramId) {
-      const status = await getUserPremiumWithDb(auth.telegramId)
-      return status.premium
+      const status = await getTelegramPremium(auth.telegramId)
+      return status.isPremium
     }
     return false
   } catch {

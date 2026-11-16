@@ -472,6 +472,7 @@ test('migrations 012+013 are additive and keep session profile columns', async (
 test('premiumCaller rejects unauthenticated callers (source audit)', () => {
   const src = fs.readFileSync(path.join(serverRoot, 'src/auth/premiumCaller.ts'), 'utf8')
   assert.match(src, /resolveAuth/)
-  assert.match(src, /getUserPremiumWithDb/)
+  assert.match(src, /getTelegramPremium/)
+  assert.match(src, /getWebAccountPremium/)
   assert.equal(src.includes('req.body'), false)
 })

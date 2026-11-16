@@ -20,6 +20,7 @@ import {
 import {
   countRecentAnonAccounts,
   createAnonymousWebAccountSession,
+  getTelegramPremium,
   getWebAccountPremium,
   grantWebEntitlement,
   revokeTelegramLinkEntitlements,
@@ -633,6 +634,7 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         })
       }
       return {
+        webAccountId: row.web_account_id,
         premiumRestored: Boolean(sub.rows[0]),
         activeUntil: sub.rows[0]?.active_until
           ? new Date(sub.rows[0].active_until).toISOString()
@@ -640,12 +642,25 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       }
     })
 
+    const webPremium = await getWebAccountPremium(result.webAccountId)
+    const tgPremium = await getTelegramPremium(auth.telegramId!)
+    const activeUntil =
+      webPremium.activeUntil && tgPremium.activeUntil
+        ? new Date(webPremium.activeUntil) > new Date(tgPremium.activeUntil)
+          ? webPremium.activeUntil
+          : tgPremium.activeUntil
+        : webPremium.activeUntil || tgPremium.activeUntil
+    const sources = [...new Set([...webPremium.sources, ...tgPremium.sources])]
     res.status(200).json({
       ok: true,
       linked: true,
-      telegramId: auth.telegramId,
-      premiumRestored: result.premiumRestored,
-      activeUntil: result.activeUntil,
+      telegramId: auth.telegramId!,
+      premiumRestored: result.premiumRestored || webPremium.sources.includes('web_purchase'),
+      isPremium: Boolean(activeUntil && new Date(activeUntil) > new Date()),
+      activeUntil,
+      sources,
+      webPremium,
+      telegramPremium: tgPremium,
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -726,14 +741,25 @@ router.post('/web/telegram-link/complete-mock', async (req: Request, res: Respon
         linkedTelegramId: telegramId,
       })
     }
+    const webPremium = await getWebAccountPremium(row.web_account_id)
+    const tgPremium = await getTelegramPremium(telegramId)
+    const activeUntil =
+      webPremium.activeUntil && tgPremium.activeUntil
+        ? new Date(webPremium.activeUntil) > new Date(tgPremium.activeUntil)
+          ? webPremium.activeUntil
+          : tgPremium.activeUntil
+        : webPremium.activeUntil || tgPremium.activeUntil
+    const sources = [...new Set([...webPremium.sources, ...tgPremium.sources])]
     res.status(200).json({
       ok: true,
       linked: true,
-      telegramId,
-      premiumRestored: Boolean(sub.rows[0]),
-      activeUntil: sub.rows[0]?.active_until
-        ? new Date(sub.rows[0].active_until).toISOString()
-        : null,
+      telegramId: telegramId,
+      premiumRestored: Boolean(sub.rows[0]) || webPremium.sources.includes('web_purchase'),
+      isPremium: Boolean(activeUntil && new Date(activeUntil) > new Date()),
+      activeUntil,
+      sources,
+      webPremium,
+      telegramPremium: tgPremium,
     })
   } catch (e) {
     const { status, body } = errorPayload(e)

@@ -1,0 +1,4 @@
+/* Visibility and layout for .home-web-nav live in styles/web-desktop.css (.app.app--web). */
+.home-web-nav {
+  display: none;
+}

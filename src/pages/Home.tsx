@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
@@ -8,11 +8,14 @@ import { isFavoritesLocked } from '../utils/access'
 import { apiGet } from '../lib/api'
 import { formatPlansFromPrice, type PlanOption } from '../utils/planLabel'
 import { useTheme } from '../hooks/useTheme'
+import { useWebHeroParallax } from '../hooks/useWebHeroParallax'
+import { isWebShell } from '../config/shell'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeWelcomeTop from '../components/HomeWelcomeTop'
+import HomeWebNav from '../components/HomeWebNav'
 import HomePremiumBanner from '../components/HomePremiumBanner'
 import PremiumOverlay from '../components/PremiumOverlay'
-import { HOME_PICK_THUMBS } from '../assets/images'
+import { HOME_PICK_THUMBS, IMAGES } from '../assets/images'
 import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
 import pickMafiaShadowsAvif from '../assets/optimized/home-pick-mafia-shadows.avif'
 import pickDoublesAvif from '../assets/optimized/home-pick-doubles.avif'
@@ -52,7 +55,23 @@ const HOME_PICKS = [
   { title: 'Заражённые', image: HOME_PICK_THUMBS.infected, avif: pickInfectedAvif, gameId: 'infected', to: '/infected' },
 ] as const
 
-function HomePickThumb({ image, avif }: { image: string; avif: string }) {
+type HomePickItem = {
+  title: string
+  image: string
+  avif?: string
+  to: string
+}
+
+const HOME_NEW_PICKS: HomePickItem[] = [
+  { title: 'Кто тут кто?', image: IMAGES.whoIsWho.png, to: '/who-is-who' },
+  { title: 'Путешествие по России', image: IMAGES.russiaTravel.png, to: '/russia-travel' },
+  { title: 'Заражённые', image: HOME_PICK_THUMBS.infected, avif: pickInfectedAvif, to: '/infected' },
+]
+
+function HomePickThumb({ image, avif }: { image: string; avif?: string }) {
+  if (!avif) {
+    return <img src={image} alt="" className="home-picks__thumb" decoding="async" loading="lazy" />
+  }
   return (
     <picture>
       <source type="image/avif" srcSet={avif} />
@@ -69,12 +88,105 @@ function HomePlayIcon({ size = 'picks' }: { size?: 'picks' | 'cta' }) {
   )
 }
 
+type HomeThemePrefix = 'neon' | 'light' | 'sunset' | 'calm'
+
+function HomePicksSections({
+  prefix,
+  onPick,
+  web,
+}: {
+  prefix: HomeThemePrefix
+  onPick: (to: string) => void
+  web: boolean
+}) {
+  const popularTitle = web ? 'Популярные' : 'Попробуйте сегодня'
+  const rowClass = `home-${prefix}-picks__row`
+  const nameClass = `home-${prefix}-picks__name`
+  const titleClass = `home-${prefix}-picks__title`
+  const listClass = `home-${prefix}-picks__list`
+
+  const popular = (
+    <section
+      className={`home-${prefix}-picks home-web-picks home-web-picks--popular`}
+      aria-labelledby={`home-${prefix}-picks-title`}
+    >
+      <div className="home-web-picks__head">
+        <h2 id={`home-${prefix}-picks-title`} className={titleClass}>
+          {popularTitle}
+        </h2>
+        {web ? (
+          <Link to="/games" className="home-web-picks__more" onClick={() => haptic('light')}>
+            Весь каталог
+          </Link>
+        ) : null}
+      </div>
+      <ul className={`${listClass} home-web-picks__list`}>
+        {HOME_PICKS.map(({ title, image, avif, to }) => (
+          <li key={title}>
+            <button type="button" className={`${rowClass} home-web-picks__card`} onClick={() => onPick(to)}>
+              <span className="home-picks__thumb-wrap" aria-hidden>
+                <HomePickThumb image={image} avif={avif} />
+              </span>
+              <span className={`${nameClass} home-web-picks__name`}>{title}</span>
+              <span className="home-picks__play" aria-hidden>
+                <HomePlayIcon size="picks" />
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+
+  if (!web) return popular
+
+  return (
+    <>
+      {popular}
+      <section
+        className={`home-${prefix}-picks home-web-picks home-web-picks--new`}
+        aria-labelledby={`home-${prefix}-new-title`}
+      >
+        <div className="home-web-picks__head">
+          <h2 id={`home-${prefix}-new-title`} className={titleClass}>
+            Новые игры
+          </h2>
+          <Link to="/games" className="home-web-picks__more" onClick={() => haptic('light')}>
+            Смотреть все
+          </Link>
+        </div>
+        <ul className={`${listClass} home-web-picks__list`}>
+          {HOME_NEW_PICKS.map(({ title, image, avif, to }) => (
+            <li key={`new-${title}`}>
+              <button type="button" className={`${rowClass} home-web-picks__card`} onClick={() => onPick(to)}>
+                <span className="home-picks__thumb-wrap" aria-hidden>
+                  <HomePickThumb image={image} avif={avif} />
+                </span>
+                <span className={`${nameClass} home-web-picks__name`}>{title}</span>
+                <span className="home-picks__play" aria-hidden>
+                  <HomePlayIcon size="picks" />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  )
+}
+
+function HomeWebSide({ children }: { children: ReactNode }) {
+  return <div className="home-web-side">{children}</div>
+}
+
 function Home() {
   const [theme] = useTheme()
   const isNeonDark = theme === 'neon-dark'
   const isNeonLight = theme === 'neon-light'
   const isSunset = theme === 'sunset'
   const isCalm = theme === 'minimal-calm'
+  const web = isWebShell()
+  const heroParallaxRef = useWebHeroParallax<HTMLDivElement>()
   const { isPremium, loading } = usePremium()
   const navigate = useNavigate()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
@@ -168,19 +280,20 @@ function Home() {
 
   if (isCalm) {
     return (
-      <div className="home-page home-page--calm">
+      <div className={`home-page home-page--calm${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
+        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
 
         <div className="home-calm-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
         </div>
 
         <section className="home-calm-hero" aria-labelledby="home-calm-hero-title">
-          <div className="home-calm-hero__card">
+          <div className="home-calm-hero__card" ref={heroParallaxRef}>
             <img
               src={heroCalm}
               alt=""
-              className="home-calm-hero__bg"
+              className="home-calm-hero__bg home-hero-parallax"
               decoding="async"
               loading="eager"
               {...HIGH_FETCH_PRIORITY}
@@ -208,61 +321,41 @@ function Home() {
           </div>
         </section>
 
-        <div className="home-calm-quick">
-          <button
-            type="button"
-            className="home-calm-quick__card"
-            onClick={handleFavoritesClick}
-          >
-            <span className="home-calm-quick__icon-wrap" aria-hidden>
-              <img src={iconCalmFavorite} alt="" className="home-calm-quick__icon-img" decoding="async" />
-            </span>
-            <span className="home-calm-quick__text">
-              <span className="home-calm-quick__label">Избранное</span>
-              <span className="home-calm-quick__sub">Любимые игры</span>
-            </span>
-            <img src={iconCalmChevronRight} alt="" className="home-calm-quick__chev-img" decoding="async" />
-          </button>
-          <Link
-            to="/profile"
-            className="home-calm-quick__card home-calm-quick__card--link"
-            onClick={() => haptic('light')}
-          >
-            <span className="home-calm-quick__icon-wrap home-calm-quick__icon-wrap--user" aria-hidden>
-              <img src={iconCalmProfile} alt="" className="home-calm-quick__icon-img home-calm-quick__icon-img--user" decoding="async" />
-            </span>
-            <span className="home-calm-quick__text">
-              <span className="home-calm-quick__label">Профиль</span>
-              <span className="home-calm-quick__sub">Настройки</span>
-            </span>
-            <img src={iconCalmChevronRight} alt="" className="home-calm-quick__chev-img" decoding="async" />
-          </Link>
-        </div>
+        <HomeWebSide>
+          <div className="home-calm-quick">
+            <button
+              type="button"
+              className="home-calm-quick__card"
+              onClick={handleFavoritesClick}
+            >
+              <span className="home-calm-quick__icon-wrap" aria-hidden>
+                <img src={iconCalmFavorite} alt="" className="home-calm-quick__icon-img" decoding="async" />
+              </span>
+              <span className="home-calm-quick__text">
+                <span className="home-calm-quick__label">Избранное</span>
+                <span className="home-calm-quick__sub">Любимые игры</span>
+              </span>
+              <img src={iconCalmChevronRight} alt="" className="home-calm-quick__chev-img" decoding="async" />
+            </button>
+            <Link
+              to="/profile"
+              className="home-calm-quick__card home-calm-quick__card--link"
+              onClick={() => haptic('light')}
+            >
+              <span className="home-calm-quick__icon-wrap home-calm-quick__icon-wrap--user" aria-hidden>
+                <img src={iconCalmProfile} alt="" className="home-calm-quick__icon-img home-calm-quick__icon-img--user" decoding="async" />
+              </span>
+              <span className="home-calm-quick__text">
+                <span className="home-calm-quick__label">Профиль</span>
+                <span className="home-calm-quick__sub">Настройки</span>
+              </span>
+              <img src={iconCalmChevronRight} alt="" className="home-calm-quick__chev-img" decoding="async" />
+            </Link>
+          </div>
+          {themedPremiumBlock}
+        </HomeWebSide>
 
-        {themedPremiumBlock}
-
-        <section className="home-calm-picks" aria-labelledby="home-calm-picks-title">
-          <h2 id="home-calm-picks-title" className="home-calm-picks__title">Попробуйте сегодня</h2>
-          <ul className="home-calm-picks__list">
-            {HOME_PICKS.map(({ title, image, avif, to }) => (
-              <li key={title}>
-                <button
-                  type="button"
-                  className="home-calm-picks__row"
-                  onClick={() => handlePickClick(to)}
-                >
-                  <span className="home-picks__thumb-wrap" aria-hidden>
-                    <HomePickThumb image={image} avif={avif} />
-                  </span>
-                  <span className="home-calm-picks__name">{title}</span>
-                  <span className="home-picks__play" aria-hidden>
-                    <HomePlayIcon size="picks" />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <HomePicksSections prefix="calm" onPick={handlePickClick} web={web} />
 
         <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
@@ -271,19 +364,20 @@ function Home() {
 
   if (isSunset) {
     return (
-      <div className="home-page home-page--sunset">
+      <div className={`home-page home-page--sunset${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
+        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
 
         <div className="home-sunset-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
         </div>
 
         <section className="home-sunset-hero" aria-labelledby="home-sunset-hero-title">
-          <div className="home-sunset-hero__card">
+          <div className="home-sunset-hero__card" ref={heroParallaxRef}>
             <img
               src={heroSunset}
               alt=""
-              className="home-sunset-hero__bg"
+              className="home-sunset-hero__bg home-hero-parallax"
               decoding="async"
               loading="eager"
               {...HIGH_FETCH_PRIORITY}
@@ -311,61 +405,41 @@ function Home() {
           </div>
         </section>
 
-        <div className="home-sunset-quick">
-          <button
-            type="button"
-            className="home-sunset-quick__card"
-            onClick={handleFavoritesClick}
-          >
-            <span className="home-sunset-quick__icon-wrap" aria-hidden>
-              <img src={iconSunsetFavorite} alt="" className="home-sunset-quick__icon-img" decoding="async" />
-            </span>
-            <span className="home-sunset-quick__text">
-              <span className="home-sunset-quick__label">Избранное</span>
-              <span className="home-sunset-quick__sub">Любимые игры</span>
-            </span>
-            <img src={iconSunsetChevronRight} alt="" className="home-sunset-quick__chev-img" decoding="async" />
-          </button>
-          <Link
-            to="/profile"
-            className="home-sunset-quick__card home-sunset-quick__card--link"
-            onClick={() => haptic('light')}
-          >
-            <span className="home-sunset-quick__icon-wrap home-sunset-quick__icon-wrap--user" aria-hidden>
-              <img src={iconSunsetProfile} alt="" className="home-sunset-quick__icon-img home-sunset-quick__icon-img--user" decoding="async" />
-            </span>
-            <span className="home-sunset-quick__text">
-              <span className="home-sunset-quick__label">Профиль</span>
-              <span className="home-sunset-quick__sub">Настройки</span>
-            </span>
-            <img src={iconSunsetChevronRight} alt="" className="home-sunset-quick__chev-img" decoding="async" />
-          </Link>
-        </div>
+        <HomeWebSide>
+          <div className="home-sunset-quick">
+            <button
+              type="button"
+              className="home-sunset-quick__card"
+              onClick={handleFavoritesClick}
+            >
+              <span className="home-sunset-quick__icon-wrap" aria-hidden>
+                <img src={iconSunsetFavorite} alt="" className="home-sunset-quick__icon-img" decoding="async" />
+              </span>
+              <span className="home-sunset-quick__text">
+                <span className="home-sunset-quick__label">Избранное</span>
+                <span className="home-sunset-quick__sub">Любимые игры</span>
+              </span>
+              <img src={iconSunsetChevronRight} alt="" className="home-sunset-quick__chev-img" decoding="async" />
+            </button>
+            <Link
+              to="/profile"
+              className="home-sunset-quick__card home-sunset-quick__card--link"
+              onClick={() => haptic('light')}
+            >
+              <span className="home-sunset-quick__icon-wrap home-sunset-quick__icon-wrap--user" aria-hidden>
+                <img src={iconSunsetProfile} alt="" className="home-sunset-quick__icon-img home-sunset-quick__icon-img--user" decoding="async" />
+              </span>
+              <span className="home-sunset-quick__text">
+                <span className="home-sunset-quick__label">Профиль</span>
+                <span className="home-sunset-quick__sub">Настройки</span>
+              </span>
+              <img src={iconSunsetChevronRight} alt="" className="home-sunset-quick__chev-img" decoding="async" />
+            </Link>
+          </div>
+          {themedPremiumBlock}
+        </HomeWebSide>
 
-        {themedPremiumBlock}
-
-        <section className="home-sunset-picks" aria-labelledby="home-sunset-picks-title">
-          <h2 id="home-sunset-picks-title" className="home-sunset-picks__title">Попробуйте сегодня</h2>
-          <ul className="home-sunset-picks__list">
-            {HOME_PICKS.map(({ title, image, avif, to }) => (
-              <li key={title}>
-                <button
-                  type="button"
-                  className="home-sunset-picks__row"
-                  onClick={() => handlePickClick(to)}
-                >
-                  <span className="home-picks__thumb-wrap" aria-hidden>
-                    <HomePickThumb image={image} avif={avif} />
-                  </span>
-                  <span className="home-sunset-picks__name">{title}</span>
-                  <span className="home-picks__play" aria-hidden>
-                    <HomePlayIcon size="picks" />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <HomePicksSections prefix="sunset" onPick={handlePickClick} web={web} />
 
         <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
@@ -374,19 +448,20 @@ function Home() {
 
   if (isNeonLight) {
     return (
-      <div className="home-page home-page--light">
+      <div className={`home-page home-page--light${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
+        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
 
         <div className="home-light-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
         </div>
 
         <section className="home-light-hero" aria-labelledby="home-light-hero-title">
-          <div className="home-light-hero__card">
+          <div className="home-light-hero__card" ref={heroParallaxRef}>
             <img
               src={lightHeroExact}
               alt=""
-              className="home-light-hero__bg"
+              className="home-light-hero__bg home-hero-parallax"
               decoding="async"
               loading="eager"
               {...HIGH_FETCH_PRIORITY}
@@ -414,61 +489,41 @@ function Home() {
           </div>
         </section>
 
-        <div className="home-light-quick">
-          <button
-            type="button"
-            className="home-light-quick__card"
-            onClick={handleFavoritesClick}
-          >
-            <span className="home-light-quick__icon-wrap" aria-hidden>
-              <img src={iconLightFavorite} alt="" className="home-light-quick__icon-img" decoding="async" />
-            </span>
-            <span className="home-light-quick__text">
-              <span className="home-light-quick__label">Избранное</span>
-              <span className="home-light-quick__sub">Любимые игры</span>
-            </span>
-            <img src={iconLightChevronRight} alt="" className="home-light-quick__chev-img" decoding="async" />
-          </button>
-          <Link
-            to="/profile"
-            className="home-light-quick__card home-light-quick__card--link"
-            onClick={() => haptic('light')}
-          >
-            <span className="home-light-quick__icon-wrap home-light-quick__icon-wrap--user" aria-hidden>
-              <img src={iconLightProfile} alt="" className="home-light-quick__icon-img home-light-quick__icon-img--user" decoding="async" />
-            </span>
-            <span className="home-light-quick__text">
-              <span className="home-light-quick__label">Профиль</span>
-              <span className="home-light-quick__sub">Настройки</span>
-            </span>
-            <img src={iconLightChevronRight} alt="" className="home-light-quick__chev-img" decoding="async" />
-          </Link>
-        </div>
+        <HomeWebSide>
+          <div className="home-light-quick">
+            <button
+              type="button"
+              className="home-light-quick__card"
+              onClick={handleFavoritesClick}
+            >
+              <span className="home-light-quick__icon-wrap" aria-hidden>
+                <img src={iconLightFavorite} alt="" className="home-light-quick__icon-img" decoding="async" />
+              </span>
+              <span className="home-light-quick__text">
+                <span className="home-light-quick__label">Избранное</span>
+                <span className="home-light-quick__sub">Любимые игры</span>
+              </span>
+              <img src={iconLightChevronRight} alt="" className="home-light-quick__chev-img" decoding="async" />
+            </button>
+            <Link
+              to="/profile"
+              className="home-light-quick__card home-light-quick__card--link"
+              onClick={() => haptic('light')}
+            >
+              <span className="home-light-quick__icon-wrap home-light-quick__icon-wrap--user" aria-hidden>
+                <img src={iconLightProfile} alt="" className="home-light-quick__icon-img home-light-quick__icon-img--user" decoding="async" />
+              </span>
+              <span className="home-light-quick__text">
+                <span className="home-light-quick__label">Профиль</span>
+                <span className="home-light-quick__sub">Настройки</span>
+              </span>
+              <img src={iconLightChevronRight} alt="" className="home-light-quick__chev-img" decoding="async" />
+            </Link>
+          </div>
+          {themedPremiumBlock}
+        </HomeWebSide>
 
-        {themedPremiumBlock}
-
-        <section className="home-light-picks" aria-labelledby="home-light-picks-title">
-          <h2 id="home-light-picks-title" className="home-light-picks__title">Попробуйте сегодня</h2>
-          <ul className="home-light-picks__list">
-            {HOME_PICKS.map(({ title, image, avif, to }) => (
-              <li key={title}>
-                <button
-                  type="button"
-                  className="home-light-picks__row"
-                  onClick={() => handlePickClick(to)}
-                >
-                  <span className="home-picks__thumb-wrap" aria-hidden>
-                    <HomePickThumb image={image} avif={avif} />
-                  </span>
-                  <span className="home-light-picks__name">{title}</span>
-                  <span className="home-picks__play" aria-hidden>
-                    <HomePlayIcon size="picks" />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <HomePicksSections prefix="light" onPick={handlePickClick} web={web} />
 
         <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
@@ -477,19 +532,20 @@ function Home() {
 
   if (isNeonDark) {
     return (
-      <div className="home-page home-page--neon">
+      <div className={`home-page home-page--neon${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
+        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
 
         <div className="home-neon-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
         </div>
 
         <section className="home-neon-hero" aria-labelledby="home-neon-hero-title">
-          <div className="home-neon-hero__card">
+          <div className="home-neon-hero__card" ref={heroParallaxRef}>
             <img
               src={heroPortal}
               alt=""
-              className="home-neon-hero__bg"
+              className="home-neon-hero__bg home-hero-parallax"
               decoding="async"
               loading="eager"
               {...HIGH_FETCH_PRIORITY}
@@ -517,61 +573,41 @@ function Home() {
           </div>
         </section>
 
-        <div className="home-neon-quick">
-          <button
-            type="button"
-            className="home-neon-quick__card"
-            onClick={handleFavoritesClick}
-          >
-            <span className="home-neon-quick__icon-wrap" aria-hidden>
-              <img src={iconFavoriteStar} alt="" className="home-neon-quick__icon-img" decoding="async" />
-            </span>
-            <span className="home-neon-quick__text">
-              <span className="home-neon-quick__label">Избранное</span>
-              <span className="home-neon-quick__sub">Любимые игры</span>
-            </span>
-            <img src={iconChevronRight} alt="" className="home-neon-quick__chev-img" decoding="async" />
-          </button>
-          <Link
-            to="/profile"
-            className="home-neon-quick__card home-neon-quick__card--link"
-            onClick={() => haptic('light')}
-          >
-            <span className="home-neon-quick__icon-wrap home-neon-quick__icon-wrap--user" aria-hidden>
-              <img src={iconProfileUser} alt="" className="home-neon-quick__icon-img home-neon-quick__icon-img--user" decoding="async" />
-            </span>
-            <span className="home-neon-quick__text">
-              <span className="home-neon-quick__label">Профиль</span>
-              <span className="home-neon-quick__sub">Настройки</span>
-            </span>
-            <img src={iconChevronRight} alt="" className="home-neon-quick__chev-img" decoding="async" />
-          </Link>
-        </div>
+        <HomeWebSide>
+          <div className="home-neon-quick">
+            <button
+              type="button"
+              className="home-neon-quick__card"
+              onClick={handleFavoritesClick}
+            >
+              <span className="home-neon-quick__icon-wrap" aria-hidden>
+                <img src={iconFavoriteStar} alt="" className="home-neon-quick__icon-img" decoding="async" />
+              </span>
+              <span className="home-neon-quick__text">
+                <span className="home-neon-quick__label">Избранное</span>
+                <span className="home-neon-quick__sub">Любимые игры</span>
+              </span>
+              <img src={iconChevronRight} alt="" className="home-neon-quick__chev-img" decoding="async" />
+            </button>
+            <Link
+              to="/profile"
+              className="home-neon-quick__card home-neon-quick__card--link"
+              onClick={() => haptic('light')}
+            >
+              <span className="home-neon-quick__icon-wrap home-neon-quick__icon-wrap--user" aria-hidden>
+                <img src={iconProfileUser} alt="" className="home-neon-quick__icon-img home-neon-quick__icon-img--user" decoding="async" />
+              </span>
+              <span className="home-neon-quick__text">
+                <span className="home-neon-quick__label">Профиль</span>
+                <span className="home-neon-quick__sub">Настройки</span>
+              </span>
+              <img src={iconChevronRight} alt="" className="home-neon-quick__chev-img" decoding="async" />
+            </Link>
+          </div>
+          {themedPremiumBlock}
+        </HomeWebSide>
 
-        {themedPremiumBlock}
-
-        <section className="home-neon-picks" aria-labelledby="home-neon-picks-title">
-          <h2 id="home-neon-picks-title" className="home-neon-picks__title">Попробуйте сегодня</h2>
-          <ul className="home-neon-picks__list">
-            {HOME_PICKS.map(({ title, image, avif, to }) => (
-              <li key={title}>
-                <button
-                  type="button"
-                  className="home-neon-picks__row"
-                  onClick={() => handlePickClick(to)}
-                >
-                  <span className="home-picks__thumb-wrap" aria-hidden>
-                    <HomePickThumb image={image} avif={avif} />
-                  </span>
-                  <span className="home-neon-picks__name">{title}</span>
-                  <span className="home-picks__play" aria-hidden>
-                    <HomePlayIcon size="picks" />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <HomePicksSections prefix="neon" onPick={handlePickClick} web={web} />
 
         <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
@@ -579,7 +615,8 @@ function Home() {
   }
 
   return (
-    <div className="home-page">
+    <div className={`home-page${web ? ' home-page--web' : ''}`}>
+      {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
       <div className="home-page__top-row">
         <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>

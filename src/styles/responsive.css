@@ -78,7 +78,8 @@
     --tg-header-offset: 3rem;
   }
 
-  .app {
+  /* Telegram Mini App keeps the centered phone/tablet column. WEB uses web-desktop.css. */
+  .app:not(.app--web) {
     max-width: min(var(--layout-content-max), 100%);
     margin-inline: auto;
   }
@@ -90,7 +91,7 @@
 }
 
 @media (min-width: 1024px) {
-  html:not([data-tg-mobile="1"]) .app {
+  html:not([data-tg-mobile="1"]):not([data-gnh-shell="web"]) .app:not(.app--web) {
     border-inline: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.08)) 55%, transparent);
   }
 }

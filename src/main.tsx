@@ -18,6 +18,12 @@ try {
 
 const web = isWebShell()
 
+if (web) {
+  document.documentElement.dataset.gnhShell = 'web'
+} else {
+  document.documentElement.dataset.gnhShell = 'telegram'
+}
+
 if (!web) {
   parseAndCacheFromHash()
   try {

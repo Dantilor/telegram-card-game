@@ -167,6 +167,38 @@ export async function completeTelegramLink(code: string): Promise<{
   return (await res.json()) as { ok: boolean; premium?: boolean; activeUntil?: string | null }
 }
 
+export async function unlinkTelegramLink(): Promise<{
+  ok: boolean
+  linked: boolean
+  revoked: boolean
+  isPremium?: boolean
+  activeUntil?: string | null
+  sources?: string[]
+}> {
+  const csrf = readCsrfToken()
+  const res = await fetch(`${apiBase()}/api/web/telegram-link/unlink`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+  })
+  if (!res.ok) {
+    const err = new Error('telegram_link_unlink_failed') as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as {
+    ok: boolean
+    linked: boolean
+    revoked: boolean
+    isPremium?: boolean
+    activeUntil?: string | null
+    sources?: string[]
+  }
+}
+
 export async function startEmailBind(email: string): Promise<{
   ok: boolean
   expiresAt?: string

@@ -16,6 +16,7 @@ import {
   fetchTelegramLinkStatus,
   startEmailBind,
   startTelegramLinkRestore,
+  unlinkTelegramLink,
   verifyEmailBind,
 } from '../lib/webAuth'
 import { LIFETIME_DURATION_DAYS } from '../utils/planLabel'
@@ -85,6 +86,7 @@ function Profile() {
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [tgRestore, setTgRestore] = useState<TgRestorePanel | null>(null)
   const [tgCopyDone, setTgCopyDone] = useState(false)
+  const [tgLinked, setTgLinked] = useState(false)
   const [logoutBusy, setLogoutBusy] = useState(false)
   const [emailDraft, setEmailDraft] = useState('')
   const [emailCode, setEmailCode] = useState('')
@@ -164,6 +166,32 @@ function Profile() {
     }
   }, [web, stopTgPoll])
 
+  const handleUnlinkTelegram = useCallback(async () => {
+    if (!web) return
+    haptic('medium')
+    setRestoreLoading(true)
+    try {
+      const result = await unlinkTelegramLink()
+      setTgLinked(false)
+      setTgRestore(null)
+      await refreshPremium()
+      setRestoreStatus(
+        result.revoked
+          ? 'Привязка Telegram отключена. WEB-покупки сохранены.'
+          : 'Активной привязки не найдено'
+      )
+    } catch {
+      setRestoreStatus('Не удалось отвязать Telegram')
+    } finally {
+      setRestoreLoading(false)
+      if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current)
+      restoreTimerRef.current = setTimeout(() => {
+        setRestoreStatus(null)
+        restoreTimerRef.current = null
+      }, 2500)
+    }
+  }, [web, refreshPremium])
+
   const handleCopyTgCode = useCallback(async () => {
     if (!tgRestore?.code) return
     haptic('light')
@@ -202,6 +230,7 @@ function Profile() {
         if (cancelled) return
         if (status.linked) {
           stopTgPoll()
+          setTgLinked(true)
           await refreshPremium()
           setTgRestore((prev) =>
             prev
@@ -229,6 +258,19 @@ function Profile() {
       stopTgPoll()
     }
   }, [web, tgRestore?.phase, tgRestore?.code, tgRestore?.expiresAt, refreshPremium, stopTgPoll])
+
+  useEffect(() => {
+    if (!web) return
+    let cancelled = false
+    void fetchTelegramLinkStatus()
+      .then((status) => {
+        if (!cancelled) setTgLinked(Boolean(status.linked))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [web])
 
   useEffect(() => {
     return () => {
@@ -443,6 +485,16 @@ function Profile() {
                 </button>
               )}
               {tgRestorePanel}
+              {web && tgLinked && !tgRestore && (
+                <button
+                  type="button"
+                  className="profile-pass__restore"
+                  onClick={() => void handleUnlinkTelegram()}
+                  disabled={restoreLoading}
+                >
+                  Отвязать Telegram
+                </button>
+              )}
               {!web && (
                 <Link to="/link-web" className="profile-pass__restore" onClick={() => haptic('light')}>
                   Привязать WEB (код)
@@ -504,6 +556,16 @@ function Profile() {
                 </button>
               )}
               {tgRestorePanel}
+              {web && tgLinked && !tgRestore && (
+                <button
+                  type="button"
+                  className="profile-pass__restore"
+                  onClick={() => void handleUnlinkTelegram()}
+                  disabled={restoreLoading}
+                >
+                  Отвязать Telegram
+                </button>
+              )}
               {!web && (
                 <Link to="/link-web" className="profile-pass__restore" onClick={() => haptic('light')}>
                   Привязать WEB (код)

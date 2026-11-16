@@ -12,7 +12,6 @@ import { useWebHeroParallax } from '../hooks/useWebHeroParallax'
 import { isWebShell } from '../config/shell'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeWelcomeTop from '../components/HomeWelcomeTop'
-import HomeWebNav from '../components/HomeWebNav'
 import HomePremiumBanner from '../components/HomePremiumBanner'
 import PremiumOverlay from '../components/PremiumOverlay'
 import { HOME_PICK_THUMBS, IMAGES } from '../assets/images'
@@ -36,7 +35,6 @@ import heroCalm from '../assets/optimized/home-hero-calm.webp'
 import iconCalmFavorite from '../assets/icons/gnh-calm-pro/calm-favorite-star-pro.svg'
 import iconCalmProfile from '../assets/icons/gnh-calm-pro/calm-profile-user-pro.svg'
 import iconCalmChevronRight from '../assets/icons/gnh-calm-pro/calm-chevron-right-pro.svg'
-import HomeWeb from './HomeWeb'
 import './Home.css'
 
 const APP_FEATURES = [
@@ -243,9 +241,6 @@ function Home() {
     navigate(to)
   }, [navigate])
 
-  if (web) {
-    return <HomeWeb />
-  }
 
   const legacyPremiumBlock = (!isPremium || loading) ? (
     <section className="home-premium-cta">
@@ -287,7 +282,7 @@ function Home() {
     return (
       <div className={`home-page home-page--calm${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
-        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
+        {null}
 
         <div className="home-calm-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
@@ -371,7 +366,7 @@ function Home() {
     return (
       <div className={`home-page home-page--sunset${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
-        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
+        {null}
 
         <div className="home-sunset-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
@@ -455,7 +450,7 @@ function Home() {
     return (
       <div className={`home-page home-page--light${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
-        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
+        {null}
 
         <div className="home-light-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
@@ -539,7 +534,7 @@ function Home() {
     return (
       <div className={`home-page home-page--neon${web ? ' home-page--web' : ''}`}>
         <HomeWelcomeTop />
-        {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
+        {null}
 
         <div className="home-neon-themes">
           <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
@@ -621,7 +616,7 @@ function Home() {
 
   return (
     <div className={`home-page${web ? ' home-page--web' : ''}`}>
-      {web ? <HomeWebNav onPremium={handlePremiumOpen} /> : null}
+      {null}
       <div className="home-page__top-row">
         <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
       </div>

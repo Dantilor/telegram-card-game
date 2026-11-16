@@ -395,7 +395,7 @@ function Profile() {
     ) : null
 
   return (
-    <div className={`profile-page${web ? ' profile-page--web' : ''}`} aria-label="Профиль">
+    <div className="profile-page" aria-label="Профиль">
       <div className="profile-page__header">
         <HomeButton className="profile-page__nav-btn" />
         <BackButton onClick={handleBack} className="profile-page__nav-btn profile-page__back" />

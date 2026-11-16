@@ -37,17 +37,15 @@
 /* WEB-only atmosphere (does not affect Telegram Mini App shell). */
 .app.app--web {
   --tg-header-offset: 0px;
-  /* gnh-web-nebula-ref */
-  background-color: #070814;
-  background-image:
-    radial-gradient(ellipse 80% 55% at 8% -8%, rgba(255, 79, 216, 0.28) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 95% 5%, rgba(76, 201, 255, 0.18) 0%, transparent 52%),
-    radial-gradient(ellipse 75% 50% at 70% 100%, rgba(139, 92, 255, 0.22) 0%, transparent 55%),
-    linear-gradient(165deg, #070814 0%, #0f1230 42%, #090b18 100%);
-  background-attachment: fixed;
+  /* Match Mini App page atmosphere; themed pages supply their own surfaces */
+  background-color: var(--app-page-bg-color, #050816);
+  background-image: var(--app-page-bg-image, none);
+  background-attachment: scroll;
 }
 
 .app.app--web::after {
+  /* gnh-web-miniapp-parity */
+  display: none;
   content: '';
   position: fixed;
   inset: -20%;

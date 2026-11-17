@@ -126,6 +126,7 @@ function App() {
     <PremiumProvider>
       <LegalProvider>
       <div className={`app${isReady ? ' is-ready' : ''}`}>
+        <PlayErrorBoundary>
         <Suspense
           fallback={
             <DelayedFallback delayMs={250}>
@@ -217,6 +218,7 @@ function App() {
         <Route path="/legal/premium" element={<LegalDocumentPage documentId="offer" />} />
         </Routes>
         </Suspense>
+        </PlayErrorBoundary>
       </div>
       <FirstUseSheet />
       </LegalProvider>

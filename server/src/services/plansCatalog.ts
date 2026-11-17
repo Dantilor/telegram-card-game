@@ -14,7 +14,8 @@ export type PlansCatalogPayload = {
   plans: PublicPlan[]
 }
 
-const TTL_MS = 30_000
+/** In-process only: cuts repeat SQL under VPN reconnect storms. Checkout never reads this. */
+const TTL_MS = 15_000
 const cache = createPublicTtlCache<PlansCatalogPayload>(TTL_MS)
 
 export function clearPlansCatalogCache(): void {

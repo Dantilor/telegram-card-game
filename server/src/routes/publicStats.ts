@@ -7,7 +7,8 @@ router.get('/public-stats', async (_req: Request, res: Response) => {
   try {
     const { payload, cacheHit } = await getPublicStats()
     // Decorative count only — short public cache is safe; never put personal fields here.
-    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+    // Decorative counter only — short public cache is fine (not used for payments).
+    res.setHeader('Cache-Control', 'public, max-age=60')
     res.setHeader('X-GNH-Cache', cacheHit ? 'HIT' : 'MISS')
     res.status(200).json(payload)
   } catch (e) {

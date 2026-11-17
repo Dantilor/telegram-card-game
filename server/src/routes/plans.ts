@@ -6,7 +6,10 @@ const router = Router()
 router.get('/plans', async (req: Request, res: Response) => {
   try {
     const { payload, etag, cacheHit, sqlMs } = await getPlansCatalog()
-    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+    // no-cache + ETag: clients must revalidate before reuse so a UI price cannot linger
+    // after a tariff change. Checkout still reads the live row via getActivePlanById (DB),
+    // never this catalog cache. Priced plans must not be served stale from intermediaries.
+    res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('ETag', etag)
     res.setHeader('X-GNH-Cache', cacheHit ? 'HIT' : 'MISS')
     if (sqlMs != null) res.setHeader('Server-Timing', `sql;dur=${Math.round(sqlMs)}`)

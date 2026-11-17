@@ -148,7 +148,9 @@ app.use('/legal', createLegalHtmlRouter({ query: db }))
 const server = app.listen(port, '0.0.0.0', () => {
   console.log(`[TCG] HTTP server listening on port ${port}`)
 })
-// Keep sockets warm behind Caddy so VPN clients pay TLS less often on sequential GETs.
+// Behind Timeweb Caddy: keepAlive must exceed the proxy idle timeout (commonly ~60s)
+// so upstream sockets are reused. headersTimeout must stay above keepAliveTimeout.
+// requestTimeout covers YooKassa create/verify and room GETs (short polls, not long-poll).
 server.keepAliveTimeout = 65_000
 server.headersTimeout = 66_000
-server.requestTimeout = 30_000
+server.requestTimeout = 120_000

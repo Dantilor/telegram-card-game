@@ -1,5 +1,6 @@
 import { resolveApiBase } from './apiBase'
 import { getInitData } from './telegram'
+import { waitForInitData } from './waitForInitData'
 import { fetchGetWithRetry, parseRetryAfterMs, type FetchGetRetryOptions, type GetRetryProfile } from './fetchWithRetry'
 
 const API_TIMEOUT_MS = 7000
@@ -28,9 +29,12 @@ async function request<T>(
   const baseUrl = getBaseUrl()
   const isGet = (options.method ?? 'GET').toUpperCase() === 'GET'
   const publicRead = isGet && PUBLIC_GET_PATHS.has(path)
-  const initData = publicRead ? null : getInitData()
-  // Never send a protected request with an empty/unconfirmed Telegram session.
-  if (isGet && !publicRead && !initData) {
+  // The Telegram SDK is intentionally async. A game can be tapped before
+  // initData arrives; wait for the signed session instead of returning a false
+  // 401 or sending an anonymous room/payment POST. Public reads stay instant.
+  const initData = publicRead ? null : (getInitData() || await waitForInitData(3_500))
+  // No protected request (GET or POST) is sent without Telegram auth.
+  if (!publicRead && !initData) {
     const err = new Error('API 401: initData required') as ApiError
     err.status = 401
     throw err

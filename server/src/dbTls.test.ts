@@ -34,8 +34,24 @@ try {
 const caFile = path.join(temp, 'ca.crt')
 const otherCaFile = path.join(temp, 'other.crt')
 const corruptCaFile = path.join(temp, 'corrupt.crt')
-pemFromPowerShell('gnh-unit.local', caFile)
-pemFromPowerShell('gnh-other.local', otherCaFile)
+if (process.platform === 'win32') {
+  pemFromPowerShell('gnh-unit.local', caFile)
+  pemFromPowerShell('gnh-other.local', otherCaFile)
+} else {
+  // CI runners are Linux and do not provide powershell.exe.
+  // Generate the same throwaway certificate fixtures with OpenSSL.
+  for (const [dns, file] of [
+    ['gnh-unit.local', caFile],
+    ['gnh-other.local', otherCaFile],
+  ]) {
+    execFileSync('openssl', [
+      'req', '-x509', '-newkey', 'rsa:2048', '-nodes',
+      '-keyout', path.join(temp, dns + '.key'),
+      '-out', file, '-days', '2', '-subj', '/CN=' + dns,
+      '-addext', 'basicConstraints=critical,CA:TRUE',
+    ], { stdio: 'pipe' })
+  }
+}
 fs.writeFileSync(corruptCaFile, '-----BEGIN CERTIFICATE-----\nnot-a-certificate\n-----END CERTIFICATE-----\n')
 
 function sslOf(client: pg.Client): ConnectionOptions {

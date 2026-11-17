@@ -39,6 +39,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          # Preserve previous hashed JS chunks for clients still running an older WebView bundle.
+          keep_files: true
 
   deploy-timeweb-static:
     runs-on: ubuntu-latest
@@ -68,4 +70,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: timeweb-static
           publish_dir: ./dist
+          # Preserve previous hashed JS chunks for clients still running an older WebView bundle.
+          keep_files: true
           commit_message: "Deploy Timeweb static from ${{ github.sha }}"

@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
-import { parseAndCacheFromHash } from './utils/telegramInitCache'
+import { normalizeHash, parseAndCacheFromHash } from './utils/telegramInitCache'
 import { initTheme, type ThemeId } from './hooks/useTheme'
 import { initTelegramUI, applyTelegramColorsRetry } from './lib/telegramTheme'
 import { ensureTelegramSdkLoaded, isTelegramSdkReady, whenTelegramSdkReady, subscribeTelegramSdkReady } from './lib/telegramSdk'
@@ -52,7 +52,11 @@ let mounted = false
 function mountApp(): void {
   if (mounted) return
   mounted = true
-  parseAndCacheFromHash()
+  // Preserve Telegram's launch parameters before starting the async SDK.
+  // If the SDK has already executed but storage was unavailable, it is now
+  // safe to normalize the original hash for HashRouter.
+  const captured = parseAndCacheFromHash()
+  if (!captured && isTelegramSdkReady()) normalizeHash()
   ensureTelegramSdkLoaded().catch(() => undefined)
 
   applyTelegramWhenReady()
@@ -71,12 +75,13 @@ function mountApp(): void {
   publishLoadTimingReport()
 }
 
-// If the local defer script failed or has not run yet, preserve the original
-// launch hash until a retry of the official SDK has read it. This rare path
-// may wait briefly; the ordinary path mounts React immediately.
+// The local SDK is fetched asynchronously instead of blocking module execution.
+// Seed the SDK's own sessionStorage launch cache before HashRouter rewrites #.
+// For storage-restricted WebViews, retain the previous safe wait as a fallback.
 const hasTelegramLaunchHash = typeof window !== 'undefined' && window.location.hash.includes('tgWebAppData=')
-if (hasTelegramLaunchHash && !isTelegramSdkReady()) {
-  void whenTelegramSdkReady(3500).then(mountApp, mountApp)
-} else {
+const launchCaptured = !hasTelegramLaunchHash || isTelegramSdkReady() || Boolean(parseAndCacheFromHash())
+if (launchCaptured) {
   mountApp()
+} else {
+  void whenTelegramSdkReady(3500).then(mountApp, mountApp)
 }

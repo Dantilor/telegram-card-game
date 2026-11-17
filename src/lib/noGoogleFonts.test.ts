@@ -10,15 +10,20 @@ describe('cold-start fonts', () => {
     expect(html).not.toMatch(/telegram\.org\/js\/telegram-web-app\.js/i)
   })
 
-  it('initializes local Telegram SDK before clearing launch hash for HashRouter', () => {
+  it('preserves the signed Telegram launch for asynchronous SDK loading before HashRouter', () => {
     const html = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8')
-    // Vite replaces BASE_URL in both GitHub Pages and Timeweb static builds.
-    expect(html).toMatch(/<script defer src="%BASE_URL%telegram-web-app\.js"><\/script>/)
+    // Never block the first React module on an external deferred SDK.
+    expect(html).not.toMatch(/<script defer[^>]*telegram-web-app\.js/)
     const entry = readFileSync(resolve(process.cwd(), 'src/main.tsx'), 'utf8')
-    expect(entry).toMatch(/hasTelegramLaunchHash && !isTelegramSdkReady\(\)/)
+    expect(entry).toMatch(/Boolean\(parseAndCacheFromHash\(\)\)/)
+    expect(entry).toMatch(/if \(launchCaptured\)/)
+    // Preserve the SDK-first fallback if Telegram WebView storage is disabled.
     expect(entry).toMatch(/whenTelegramSdkReady\(3500\)/)
     const sdk = readFileSync(resolve(process.cwd(), 'public/telegram-web-app.js'), 'utf8')
-    expect(sdk).toMatch(/locationHash = location\.hash\.toString\(\)/)
+    const cache = readFileSync(resolve(process.cwd(), 'src/utils/telegramInitCache.ts'), 'utf8')
+    expect(sdk).toMatch(/sessionStorageGet\('initParams'\)/)
+    expect(cache).toContain('__telegram__initParams')
+    expect(cache).toContain('primeTelegramSdkInitParams(params)')
   })
 
   it('loads only latin and cyrillic @fontsource subsets from main', () => {

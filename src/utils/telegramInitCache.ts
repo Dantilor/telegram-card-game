@@ -4,6 +4,9 @@
  * normalize hash to #/ so HashRouter works. All reads: tg > cache > parse.
  */
 const TG_INIT_CACHE = 'TG_INIT_CACHE'
+// Cache key used by the vendored official Telegram WebApp SDK on this origin.
+// Seed it before normalizing the hash, so async SDK execution still sees the launch params.
+const TG_SDK_INIT_CACHE = '__telegram__initParams'
 
 export type CachedInitData = {
   source: 'hash'
@@ -17,16 +20,17 @@ export type CachedInitData = {
 
 function parseTgWebAppData(raw: string): Omit<CachedInitData, 'source'> | null {
   try {
-    const decoded = decodeURIComponent(raw)
-    const initParams = new URLSearchParams(decoded)
+    // URLSearchParams on the outer hash already decoded tgWebAppData once.
+    // Decoding again can turn encoded & or % inside signed user fields into new params.
+    const initParams = new URLSearchParams(raw)
     const userStr = initParams.get('user')
     let user: CachedInitData['user']
     if (userStr) {
       try {
-        user = JSON.parse(decodeURIComponent(userStr)) as CachedInitData['user']
+        user = JSON.parse(userStr) as CachedInitData['user']
       } catch {
         try {
-          user = JSON.parse(userStr) as CachedInitData['user']
+          user = JSON.parse(decodeURIComponent(userStr)) as CachedInitData['user']
         } catch {
           // ignore
         }
@@ -40,10 +44,47 @@ function parseTgWebAppData(raw: string): Omit<CachedInitData, 'source'> | null {
       user,
       chatInstance: initParams.get('chat_instance') ?? undefined,
       chatType: initParams.get('chat_type') ?? undefined,
-      initDataRaw: decoded,
+      initDataRaw: raw,
     }
   } catch {
     return null
+  }
+}
+
+/**
+ * The bundled Telegram SDK reads #tgWebAppData on execution and saves the full
+ * launch parameters in sessionStorage under __telegram__initParams. When loaded
+ * asynchronously after React, it can restore those same params from this key.
+ *
+ * Never fabricate an identity: preserve the exact Telegram-supplied signed
+ * initData and launch metadata. The server continues validating each request.
+ * If storage is blocked, leave the launch hash untouched until SDK execution.
+ */
+function primeTelegramSdkInitParams(params: URLSearchParams): boolean {
+  try {
+    const signedData = params.get('tgWebAppData')
+    if (!signedData) return false
+
+    let previous: Record<string, string> = {}
+    try {
+      const raw = sessionStorage.getItem(TG_SDK_INIT_CACHE)
+      const parsed: unknown = raw ? JSON.parse(raw) : null
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        previous = Object.fromEntries(
+          Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+        )
+      }
+    } catch {
+      // Malformed previous state must not prevent a fresh, signed launch.
+    }
+
+    // Match the SDK's urlParseHashParams output (it decodes values once).
+    // Preserve version, platform, theme, start parameter and any future tg keys.
+    const launchParams = Object.fromEntries(params.entries())
+    sessionStorage.setItem(TG_SDK_INIT_CACHE, JSON.stringify({ ...previous, ...launchParams }))
+    return true
+  } catch {
+    return false
   }
 }
 
@@ -74,7 +115,6 @@ export function parseAndCacheFromHash(): CachedInitData | null {
     const tgWebAppData = params.get('tgWebAppData')
     if (!tgWebAppData) return null
 
-    const decoded = decodeURIComponent(tgWebAppData)
     const parsed = parseTgWebAppData(tgWebAppData)
     if (!parsed) return null
 
@@ -82,7 +122,7 @@ export function parseAndCacheFromHash(): CachedInitData | null {
     let themeParams: Record<string, string> | undefined
     if (themeParamsStr) {
       try {
-        themeParams = JSON.parse(decodeURIComponent(themeParamsStr)) as Record<string, string>
+        themeParams = JSON.parse(themeParamsStr) as Record<string, string>
       } catch {
         // ignore
       }
@@ -94,9 +134,11 @@ export function parseAndCacheFromHash(): CachedInitData | null {
       user: parsed.user,
       chatInstance: parsed.chatInstance,
       chatType: parsed.chatType,
-      initDataRaw: parsed.initDataRaw ?? decoded,
+      initDataRaw: parsed.initDataRaw ?? tgWebAppData,
       themeParams,
     }
+    // Both caches must be committed before HashRouter removes the launch hash.
+    if (!primeTelegramSdkInitParams(params)) return null
     sessionStorage.setItem(TG_INIT_CACHE, JSON.stringify(cached))
     normalizeHash()
     return cached

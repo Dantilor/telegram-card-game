@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getTgUser } from '../utils/telegram'
 import { useTheme } from '../hooks/useTheme'
 import { apiGet } from '../lib/api'
+import { readPublicSnapshot, writePublicSnapshot, isPublicUserCount } from '../lib/publicSnapshot'
 import iconHostCrown from '../assets/icons/gnh/host-crown.svg'
 import iconLightHostCrown from '../assets/icons/gnh-light-pro/light-host-crown-pro.svg'
 import iconSunsetHostCrown from '../assets/icons/gnh-sunset-pro/sunset-host-crown-pro.svg'
@@ -27,7 +28,9 @@ function getInitials(firstName?: string, lastName?: string): string {
 
 function HomeWelcomeTop() {
   const [theme] = useTheme()
-  const [usersCount, setUsersCount] = useState<number | null>(null)
+  const [usersCount, setUsersCount] = useState<number | null>(() =>
+    readPublicSnapshot('user-count', 10 * 60_000, isPublicUserCount)
+  )
   const user = getTgUser()
   const crownIcon = CROWN_BY_THEME[theme]
   const formattedCount = usersCount === null ? '—' : formatUsersCount(usersCount)
@@ -42,6 +45,7 @@ function HomeWelcomeTop() {
       .then((data) => {
         if (!cancelled && Number.isSafeInteger(data.usersCount) && data.usersCount >= 0) {
           setUsersCount(data.usersCount)
+          writePublicSnapshot('user-count', data.usersCount)
         }
       })
       .catch(() => {

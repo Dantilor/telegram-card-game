@@ -13,12 +13,12 @@ describe('cold-start fonts', () => {
   it('initializes local Telegram SDK before clearing launch hash for HashRouter', () => {
     const html = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8')
     // Vite replaces BASE_URL in both GitHub Pages and Timeweb static builds.
-    expect(html).toMatch(/<script defer src="%BASE_URL%telegram-web-app\\.js"><\\/script>/)
+    expect(html).toMatch(/<script defer src="%BASE_URL%telegram-web-app\.js"><\/script>/)
     const entry = readFileSync(resolve(process.cwd(), 'src/main.tsx'), 'utf8')
-    expect(entry).toMatch(/hasTelegramLaunchHash && !isTelegramSdkReady\\(\\)/)
-    expect(entry).toMatch(/whenTelegramSdkReady\\(3500\\)/)
+    expect(entry).toMatch(/hasTelegramLaunchHash && !isTelegramSdkReady\(\)/)
+    expect(entry).toMatch(/whenTelegramSdkReady\(3500\)/)
     const sdk = readFileSync(resolve(process.cwd(), 'public/telegram-web-app.js'), 'utf8')
-    expect(sdk).toMatch(/locationHash = location\\.hash\\.toString\\(\\)/)
+    expect(sdk).toMatch(/locationHash = location\.hash\.toString\(\)/)
   })
 
   it('loads only latin and cyrillic @fontsource subsets from main', () => {

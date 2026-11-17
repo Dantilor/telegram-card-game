@@ -4,7 +4,7 @@ import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { LegalProvider } from './legal/LegalProvider'
-import { FirstUseSheet } from './components/LegalChoices'
+import { DeferredFirstUseSheet } from './components/DeferredFirstUseSheet'
 import { readyAndExpand } from './utils/telegram'
 import { scheduleIdleImports } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
@@ -220,7 +220,7 @@ function App() {
         </Suspense>
         </PlayErrorBoundary>
       </div>
-      <FirstUseSheet />
+      <DeferredFirstUseSheet />
       </LegalProvider>
     </PremiumProvider>
   )

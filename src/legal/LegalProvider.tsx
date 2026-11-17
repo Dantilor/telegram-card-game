@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { LegalDocumentModal } from '../components/LegalDocumentView'
+import LazyLegalDocumentModal from '../components/LazyLegalDocumentModal'
 import { blockAnalyticsTransport } from './analyticsGate'
 import { LegalClientError, legalApiBase } from './client'
 import { preloadDocuments } from './documentCache'
@@ -134,7 +134,7 @@ export function LegalProvider({ children }: { children: ReactNode }) {
     <LegalContext.Provider value={value}>
       {children}
       {viewer && (
-        <LegalDocumentModal
+        <LazyLegalDocumentModal
           key={`${viewer.id}:${viewer.version ?? 'active'}`}
           documentId={viewer.id}
           version={viewer.version}

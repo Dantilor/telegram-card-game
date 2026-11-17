@@ -11,7 +11,7 @@ import { useTheme } from '../hooks/useTheme'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeWelcomeTop from '../components/HomeWelcomeTop'
 import HomePremiumBanner from '../components/HomePremiumBanner'
-import PremiumOverlay from '../components/PremiumOverlay'
+import LazyPremiumOverlay, { prefetchPremiumOverlay } from '../components/LazyPremiumOverlay'
 import { HOME_PICK_THUMBS } from '../assets/images'
 import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
 import { markLoadTiming } from '../lib/loadTiming'
@@ -126,19 +126,24 @@ function Home() {
     }
   }, [])
 
+  const openPremiumOverlay = useCallback(() => {
+    prefetchPremiumOverlay()
+    setPremiumOverlayOpen(true)
+  }, [])
+
   const handleFavoritesClick = useCallback(() => {
     haptic('light')
     if (favoritesLocked) {
-      setPremiumOverlayOpen(true)
+      openPremiumOverlay()
     } else {
       navigate('/favorites')
     }
-  }, [favoritesLocked, navigate])
+  }, [favoritesLocked, navigate, openPremiumOverlay])
 
   const handlePremiumOpen = useCallback(() => {
     hapticImpact('light')
-    setPremiumOverlayOpen(true)
-  }, [])
+    openPremiumOverlay()
+  }, [openPremiumOverlay])
 
   const handlePickClick = useCallback((to: string) => {
     haptic('light')
@@ -187,7 +192,7 @@ function Home() {
         <HomeWelcomeTop />
 
         <div className="home-calm-themes">
-          <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
+          <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
         <section className="home-calm-hero" aria-labelledby="home-calm-hero-title">
@@ -279,7 +284,7 @@ function Home() {
           </ul>
         </section>
 
-        <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+        <LazyPremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
     )
   }
@@ -290,7 +295,7 @@ function Home() {
         <HomeWelcomeTop />
 
         <div className="home-sunset-themes">
-          <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
+          <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
         <section className="home-sunset-hero" aria-labelledby="home-sunset-hero-title">
@@ -382,7 +387,7 @@ function Home() {
           </ul>
         </section>
 
-        <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+        <LazyPremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
     )
   }
@@ -393,7 +398,7 @@ function Home() {
         <HomeWelcomeTop />
 
         <div className="home-light-themes">
-          <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
+          <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
         <section className="home-light-hero" aria-labelledby="home-light-hero-title">
@@ -485,7 +490,7 @@ function Home() {
           </ul>
         </section>
 
-        <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+        <LazyPremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
     )
   }
@@ -496,7 +501,7 @@ function Home() {
         <HomeWelcomeTop />
 
         <div className="home-neon-themes">
-          <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
+          <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
         <section className="home-neon-hero" aria-labelledby="home-neon-hero-title">
@@ -588,7 +593,7 @@ function Home() {
           </ul>
         </section>
 
-        <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+        <LazyPremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
       </div>
     )
   }
@@ -596,7 +601,7 @@ function Home() {
   return (
     <div className="home-page">
       <div className="home-page__top-row">
-        <ThemeToggle onPremiumRequired={() => setPremiumOverlayOpen(true)} />
+        <ThemeToggle onPremiumRequired={openPremiumOverlay} />
       </div>
 
       <section className="home-hero">
@@ -648,7 +653,7 @@ function Home() {
           Выбирай игру → настрой режим → играй.
         </p>
       </section>
-      <PremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
+      <LazyPremiumOverlay isOpen={premiumOverlayOpen} onClose={() => setPremiumOverlayOpen(false)} />
     </div>
   )
 }

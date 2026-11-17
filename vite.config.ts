@@ -23,6 +23,12 @@ export default defineConfig({
         assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
+        manualChunks(id) {
+          // Match the paywall module itself — not LazyPremiumOverlay.tsx.
+          if (/[/\\]PremiumOverlay\.(tsx|css)$/.test(id)) return 'premium-overlay'
+          if (/[/\\](LegalChoices|LegalDocumentView)\.(tsx|css)$/.test(id)) return 'legal-ui'
+          return undefined
+        },
       },
     },
   },

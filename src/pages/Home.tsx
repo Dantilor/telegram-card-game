@@ -15,6 +15,7 @@ import PremiumOverlay from '../components/PremiumOverlay'
 import { HOME_PICK_THUMBS } from '../assets/images'
 import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
 import { markLoadTiming } from '../lib/loadTiming'
+import { readPublicSnapshot, writePublicSnapshot, isPublicPlansLabel } from '../lib/publicSnapshot'
 import pickMafiaShadowsAvif from '../assets/optimized/home-pick-mafia-shadows.avif'
 import pickDoublesAvif from '../assets/optimized/home-pick-doubles.avif'
 import pickInfectedAvif from '../assets/optimized/home-pick-infected.avif'
@@ -80,7 +81,9 @@ function Home() {
   const navigate = useNavigate()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   // Цена показывается только из ответа сервера, без зашитого значения.
-  const [plansPriceLabel, setPlansPriceLabel] = useState('Тарифы')
+  const [plansPriceLabel, setPlansPriceLabel] = useState(() =>
+    readPublicSnapshot('plans-label', 5 * 60_000, isPublicPlansLabel) ?? 'Тарифы'
+  )
   const favoritesLocked = isFavoritesLocked(isPremium)
 
   useEffect(() => {
@@ -99,7 +102,9 @@ function Home() {
         .then((res) => {
           if (cancelled) return
           if (res.ok && Array.isArray(res.plans)) {
-            setPlansPriceLabel(formatPlansFromPrice(res.plans))
+            const label = formatPlansFromPrice(res.plans)
+            setPlansPriceLabel(label)
+            if (isPublicPlansLabel(label)) writePublicSnapshot('plans-label', label)
           }
         })
         .catch(() => {})
@@ -107,9 +112,9 @@ function Home() {
     let idleId: number | undefined
     let timeoutId: number | undefined
     if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(loadPlans, { timeout: 4000 })
+      idleId = window.requestIdleCallback(loadPlans, { timeout: 1500 })
     } else {
-      timeoutId = window.setTimeout(loadPlans, 1500)
+      timeoutId = window.setTimeout(loadPlans, 300)
     }
     return () => {
       cancelled = true

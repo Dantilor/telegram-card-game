@@ -5,6 +5,8 @@ import { LegalClientError, legalApiBase } from './client'
 import { preloadDocuments } from './documentCache'
 import { PROFILE_DOCUMENTS } from './catalog'
 import { getInitData } from '../lib/telegram'
+import { waitForInitData } from '../lib/waitForInitData'
+import { subscribeTelegramSdkReady } from '../lib/telegramSdk'
 import { afterCriticalImages, scheduleWhenIdle } from '../utils/scheduleWhenIdle'
 import type { OwnLegalRecords } from './types'
 
@@ -75,7 +77,9 @@ export function LegalProvider({ children }: { children: ReactNode }) {
   const refreshRecords = useCallback(async () => {
     // Collection is disabled in this product flow, including older grants.
     blockAnalyticsTransport()
-    if (!getInitData()) {
+    // Wait briefly for async SDK; never invent a Telegram identity.
+    const initData = (await waitForInitData(3000)) || getInitData()
+    if (!initData) {
       blockAnalyticsTransport()
       setRecords(null)
       setStatus('anonymous')
@@ -96,12 +100,16 @@ export function LegalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshRecords()
+    const unsubscribeSdk = subscribeTelegramSdkReady(() => {
+      void refreshRecords()
+    })
     // Тексты документов не нужны для первого кадра Home: сначала hero, затем idle.
     let cancelIdle: (() => void) | null = null
     const cancelWait = afterCriticalImages(() => {
       cancelIdle = scheduleWhenIdle(() => preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id)), 5000)
     })
     return () => {
+      unsubscribeSdk()
       cancelWait()
       cancelIdle?.()
     }

@@ -1,6 +1,6 @@
 import { resolveApiBase } from './apiBase'
 import { getInitData } from './telegram'
-import { fetchGetWithRetry, parseRetryAfterMs } from './fetchWithRetry'
+import { fetchGetWithRetry, parseRetryAfterMs, type FetchGetRetryOptions, type GetRetryProfile } from './fetchWithRetry'
 
 const API_TIMEOUT_MS = 7000
 const isDev = import.meta.env.DEV
@@ -8,17 +8,34 @@ const isDev = import.meta.env.DEV
 /** Public reads: sent as CORS-simple GETs (no Telegram header), so no preflight. */
 const PUBLIC_GET_PATHS = new Set(['/api/plans', '/api/public-stats'])
 
+/** Authenticated cold-start reads that should fail fast on a dead VPN path. */
+const CRITICAL_GET_PATHS = new Set(['/api/me', '/api/legal/me'])
+
 export type ApiError = Error & { status?: number; retryAfterMs?: number }
 
 export function getBaseUrl(): string {
   return resolveApiBase(import.meta.env)
 }
 
-async function request<T>(path: string, options: RequestInit & { method?: string; body?: string } = {}): Promise<T> {
+function defaultProfileFor(path: string): GetRetryProfile {
+  return CRITICAL_GET_PATHS.has(path) ? 'critical' : 'background'
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit & { method?: string; body?: string; retry?: FetchGetRetryOptions } = {}
+): Promise<T> {
   const baseUrl = getBaseUrl()
   const isGet = (options.method ?? 'GET').toUpperCase() === 'GET'
   const publicRead = isGet && PUBLIC_GET_PATHS.has(path)
   const initData = publicRead ? null : getInitData()
+  // Never send a protected request with an empty/unconfirmed Telegram session.
+  if (isGet && !publicRead && !initData) {
+    const err = new Error('API 401: initData required') as ApiError
+    err.status = 401
+    throw err
+  }
+
   const headers: Record<string, string> = {
     // A GET has no body; Content-Type on it would only force a CORS preflight.
     ...(isGet ? { Accept: 'application/json' } : { 'Content-Type': 'application/json' }),
@@ -39,16 +56,23 @@ async function request<T>(path: string, options: RequestInit & { method?: string
       credentials: 'omit',
     }
     if (isGet) {
-      // Public data loads can fail transiently when Telegram starts through a VPN.
-      res = await fetchGetWithRetry(url, init)
+      const retry = {
+        profile: defaultProfileFor(path),
+        ...options.retry,
+      }
+      res = await fetchGetWithRetry(url, init, fetch, retry)
     } else {
       // Never retry POST: it can create a payment or record legal consent.
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+      const external = options.signal
+      const forwardAbort = () => controller.abort()
+      external?.addEventListener('abort', forwardAbort, { once: true })
       try {
         res = await fetch(url, { ...init, signal: controller.signal })
       } finally {
         clearTimeout(timeoutId)
+        external?.removeEventListener('abort', forwardAbort)
       }
     }
   } catch (e) {
@@ -68,8 +92,11 @@ async function request<T>(path: string, options: RequestInit & { method?: string
   return res.json() as Promise<T>
 }
 
-export async function apiGet<T = unknown>(path: string, options: { signal?: AbortSignal } = {}): Promise<T> {
-  return request<T>(path, { method: 'GET', signal: options.signal })
+export async function apiGet<T = unknown>(
+  path: string,
+  options: { signal?: AbortSignal; retry?: FetchGetRetryOptions } = {}
+): Promise<T> {
+  return request<T>(path, { method: 'GET', signal: options.signal, retry: options.retry })
 }
 
 export async function apiPost<T = unknown>(path: string, body: unknown): Promise<T> {

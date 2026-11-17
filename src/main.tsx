@@ -6,6 +6,7 @@ import { initTheme, type ThemeId } from './hooks/useTheme'
 import { initTelegramUI, applyTelegramColorsRetry } from './lib/telegramTheme'
 import { ensureTelegramSdkLoaded, subscribeTelegramSdkReady } from './lib/telegramSdk'
 import { publishLoadTimingReport } from './lib/loadTiming'
+import { installChunkRecovery } from './lib/chunkRecovery'
 // Only latin + cyrillic subsets — avoid greek/vietnamese download on cold start.
 import '@fontsource/manrope/latin-400.css'
 import '@fontsource/manrope/latin-500.css'
@@ -33,6 +34,9 @@ try {
 }
 
 parseAndCacheFromHash()
+
+// Install before React and lazy routes, so old game chunks do not blank the app.
+installChunkRecovery()
 
 // Kick SDK download immediately without blocking module evaluation on telegram.org.
 ensureTelegramSdkLoaded().catch(() => undefined)

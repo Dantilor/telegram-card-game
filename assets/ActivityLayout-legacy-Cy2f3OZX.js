@@ -1,0 +1,1 @@
+System.register(["./index-legacy-4DsBTzCK.js","./ActivityStateContext-legacy-Bl9vbyge.js","./GamePageShell-legacy-BmOGXbHQ.js"],function(e,t){"use strict";var n,c,s;return{setters:[e=>{n=e.j,c=e.O},e=>{s=e.A},null],execute:function(){e("default",function(){return n.jsx(s,{children:n.jsx(c,{})})})}}});

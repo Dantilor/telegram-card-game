@@ -8,25 +8,14 @@
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#e8e6f5" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap"
-      as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
-    />
-    <noscript>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap"
-        rel="stylesheet"
-      />
-    </noscript>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Fonts: self-hosted @fontsource (latin + cyrillic only). No Google Fonts. -->
+    <!-- Self-hosted deferred SDK: parses Telegram launch hash BEFORE React normalizes it.
+         Local same-origin file, not the slow blocking telegram.org request. -->
+    <script defer src="%BASE_URL%telegram-web-app.js"></script>
     <title>GameNight Host</title>
   </head>
   <body>
-    <!-- Раннее применение фона и цветов Telegram. Retry — некоторые клиенты инициализируются позже. -->
+    <!-- Theme paint before React. Telegram colors applied again when SDK becomes ready. -->
     <script>
       (function() {
         var theme = localStorage.getItem('tcg_theme');
@@ -42,20 +31,20 @@
         document.documentElement.style.backgroundColor = bg;
         document.body.style.backgroundColor = bg;
 
-        function run() {
+        function applyTelegramChrome() {
           var tg = window.Telegram && window.Telegram.WebApp;
           if (!tg) return;
           try { tg.ready(); tg.expand(); } catch (e) {}
           var v = parseFloat(tg.version || '0');
           if (v > 6) {
             try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); } catch (e) {}
-            /* requestFullscreen только по user gesture — вызывается в кнопке "Начать игру" */
           }
         }
 
-        run();
-        document.addEventListener('DOMContentLoaded', run);
-        setTimeout(run, 300);
+        applyTelegramChrome();
+        document.addEventListener('DOMContentLoaded', applyTelegramChrome);
+        window.addEventListener('gnh:telegram-sdk-ready', applyTelegramChrome);
+        setTimeout(applyTelegramChrome, 300);
       })();
     </script>
     <div id="root"></div>

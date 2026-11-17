@@ -108,7 +108,7 @@ export default function Play() {
   const [transitionPhase, setTransitionPhase] = useState<TransitionPhase>('idle')
   const animationPhaseRef = useRef<TransitionPhase>('idle')
   const [localState, setLocalState] = useLocalState<UserState>('tcg_state', defaultUserState)
-  const { isPremium } = usePremium()
+  const { isPremium, loading: premiumLoading } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [adultGatePassed, setAdultGatePassed] = useState(() =>
     (location.state as PlayNavState | null)?.adultConfirmed === true
@@ -133,6 +133,9 @@ export default function Play() {
         }
         const deckEntry = getDeckFromIndex(deckId)
         if (deckEntry && !canOpenDeck(deckEntry, isPremium)) {
+          // Do not display a false paywall while Telegram SDK / Premium is pending.
+          // Free decks continue to load without waiting for a slow API.
+          if (premiumLoading) return
           if (!cancelled) setState({ status: 'paywall' })
           return
         }
@@ -234,7 +237,7 @@ export default function Play() {
       cancelled = true
       clearTimeout(id)
     }
-  }, [deckId, isPremium, fromFavorites, favoriteQuestionIndex])
+  }, [deckId, isPremium, premiumLoading, fromFavorites, favoriteQuestionIndex])
 
   const handleAdultConfirm = () => {
     setAdultGatePassed(true)

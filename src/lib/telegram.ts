@@ -1,6 +1,6 @@
 /**
  * Safe access to Telegram WebApp SDK.
- * Requires script: https://telegram.org/js/telegram-web-app.js
+ * Script is loaded async from same-origin `telegram-web-app.js` via `telegramSdk.ts`.
  */
 
 import { getCachedInitData } from '../utils/telegramInitCache'

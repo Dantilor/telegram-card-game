@@ -5,6 +5,7 @@ import { LegalClientError, legalApiBase } from './client'
 import { preloadDocuments } from './documentCache'
 import { PROFILE_DOCUMENTS } from './catalog'
 import { getInitData } from '../lib/telegram'
+import { waitForInitData } from '../lib/waitForInitData'
 import { afterCriticalImages, scheduleWhenIdle } from '../utils/scheduleWhenIdle'
 import type { OwnLegalRecords } from './types'
 
@@ -75,7 +76,9 @@ export function LegalProvider({ children }: { children: ReactNode }) {
   const refreshRecords = useCallback(async () => {
     // Collection is disabled in this product flow, including older grants.
     blockAnalyticsTransport()
-    if (!getInitData()) {
+    // Brief wait: same-origin SDK is sync, but some WebViews populate initData slightly later.
+    const initData = (await waitForInitData(1500)) || getInitData()
+    if (!initData) {
       blockAnalyticsTransport()
       setRecords(null)
       setStatus('anonymous')

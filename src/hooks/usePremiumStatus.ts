@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getInitData } from '../lib/telegram'
+import { waitForInitData } from '../lib/waitForInitData'
 import { getMe, ApiAuthError } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 import { devLog, devWarn } from '../utils/devLog'
@@ -118,7 +119,8 @@ export function usePremiumStatus(): {
   }, [])
 
   const fetchStatus = useCallback(async (bypassCache = false): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
-    const initData = getInitData()
+    // Do not block Home shell; only wait briefly so a late WebApp init still binds Premium.
+    const initData = (await waitForInitData(1500)) || getInitData()
 
     if (!initData) {
       devLog('[TCG] Premium: no initData (open in Telegram)')

@@ -14,6 +14,7 @@ import HomePremiumBanner from '../components/HomePremiumBanner'
 import PremiumOverlay from '../components/PremiumOverlay'
 import { HOME_PICK_THUMBS } from '../assets/images'
 import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
+import { markLoadTiming } from '../lib/loadTiming'
 import pickMafiaShadowsAvif from '../assets/optimized/home-pick-mafia-shadows.avif'
 import pickDoublesAvif from '../assets/optimized/home-pick-doubles.avif'
 import pickInfectedAvif from '../assets/optimized/home-pick-infected.avif'
@@ -81,6 +82,10 @@ function Home() {
   // Цена показывается только из ответа сервера, без зашитого значения.
   const [plansPriceLabel, setPlansPriceLabel] = useState('Тарифы')
   const favoritesLocked = isFavoritesLocked(isPremium)
+
+  useEffect(() => {
+    markLoadTiming('home-visible')
+  }, [])
 
   useEffect(() => {
     // Цена планов не блокирует первый экран: грузим после простоя / с небольшой задержкой.

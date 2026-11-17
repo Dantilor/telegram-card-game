@@ -10,7 +10,8 @@ export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>
 
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504])
 const MAX_ATTEMPTS = 3
-const ATTEMPT_TIMEOUT_MS = 9_000
+/** Per-attempt budget. 9s×3 made dead VPN exits feel hung; 6s still covers slow Timeweb paths. */
+const ATTEMPT_TIMEOUT_MS = 6_000
 const RETRY_DELAY_MS = [450, 1_100]
 /** A longer server-requested pause is left to the caller's recovery schedule. */
 const MAX_INLINE_RETRY_AFTER_MS = 3_000

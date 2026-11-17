@@ -23,6 +23,7 @@ import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
 
 import { buildAllowedCorsOrigins, isOriginAllowed } from './corsOrigins.js'
+import { attachRequestTiming } from './middleware/requestTiming.js'
 
 const port = Number(process.env.PORT || 3001)
 const allowedOrigins = buildAllowedCorsOrigins({
@@ -35,6 +36,7 @@ const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3
 
 console.log('[TCG] ENV PORT =', process.env.PORT)
 console.log('[TCG] CORS allow-list origins =', allowedOrigins.join(', '))
+console.log('[TCG] PUBLIC_API_ORIGIN hint =', (process.env.PUBLIC_API_ORIGIN || '').trim() || '(unset — clients use VITE_API_URL)')
 
 if (process.env.DATABASE_URL) {
   const u = new URL(process.env.DATABASE_URL)
@@ -42,6 +44,11 @@ if (process.env.DATABASE_URL) {
 }
 
 const app = express()
+// Trust Timeweb/Caddy so req.ip / secure cookies see the real client when enabled later.
+if ((process.env.TRUST_PROXY || '').trim() === '1') {
+  app.set('trust proxy', 1)
+}
+app.use(attachRequestTiming)
 app.use(cors({
   origin: (origin, cb) => {
     if (isOriginAllowed(origin, allowedOrigins)) return cb(null, true)
@@ -53,10 +60,18 @@ app.use(cors({
   },
   // Lets the WebView skip repeating the preflight for authorized GETs on a slow link.
   maxAge: 600,
-  exposedHeaders: ['Retry-After'],
+  exposedHeaders: ['Retry-After', 'ETag', 'X-GNH-Cache', 'Server-Timing'],
 }))
-// Legal documents are ~60–110 KB of JSON; the Timeweb proxy passes them uncompressed.
-app.use(compression({ threshold: 1024 }))
+// Compress JSON/legal docs earlier: catalog payloads are often <1KB and skipped at 1024.
+app.use(
+  compression({
+    threshold: 256,
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) return false
+      return compression.filter(req, res)
+    },
+  })
+)
 app.use(express.json({ limit: '2mb' }))
 
 app.use('/public', express.static(path.join(process.cwd(), 'public'), {
@@ -130,6 +145,12 @@ app.use(
 app.use('/legal', createLegalHtmlRouter({ query: db }))
 
 // HTTP server (webhook mode — no bot.launch/polling)
-app.listen(port, '0.0.0.0', () => {
+const server = app.listen(port, '0.0.0.0', () => {
   console.log(`[TCG] HTTP server listening on port ${port}`)
 })
+// Behind Timeweb Caddy: keepAlive must exceed the proxy idle timeout (commonly ~60s)
+// so upstream sockets are reused. headersTimeout must stay above keepAliveTimeout.
+// requestTimeout covers YooKassa create/verify and room GETs (short polls, not long-poll).
+server.keepAliveTimeout = 65_000
+server.headersTimeout = 66_000
+server.requestTimeout = 120_000

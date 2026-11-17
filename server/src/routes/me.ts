@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { verifyInitData } from '../telegram/verifyInitData.js'
 import { getLatestActiveUntil } from '../services/subscriptions.js'
+import { sqlTimingLog } from '../middleware/requestTiming.js'
 
 function toInitDataString(v: unknown): string {
   if (typeof v === 'string') return v
@@ -34,7 +35,13 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 
   try {
+    const started = process.hrtime.bigint()
     const activeUntilDate = await getLatestActiveUntil(telegramId)
+    const sqlMs = Number(process.hrtime.bigint() - started) / 1e6
+    sqlTimingLog('me.subscription', sqlMs)
+    res.setHeader('Cache-Control', 'no-store')
+    res.setHeader('Server-Timing', `sql;dur=${Math.round(sqlMs)}`)
+
     const now = new Date()
     const premium = activeUntilDate != null && activeUntilDate > now
     const activeUntil = activeUntilDate ? activeUntilDate.toISOString() : null
@@ -47,9 +54,10 @@ router.get('/me', async (req: Request, res: Response) => {
       activeUntil,
     })
   } catch (e) {
-    console.error('[API] /api/me DB error:', e)
+    console.error('[API] /api/me DB error:', e instanceof Error ? e.message : 'error')
+    res.setHeader('Cache-Control', 'no-store')
     res.status(500).json({
-      error: e instanceof Error ? e.message : String(e),
+      error: 'me_unavailable',
     })
   }
 })

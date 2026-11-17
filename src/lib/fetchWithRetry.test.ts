@@ -57,8 +57,22 @@ describe('fetchGetWithRetry', () => {
       .mockResolvedValueOnce(new Response('bad gateway', { status: 502 }))
       .mockResolvedValueOnce(new Response('{"ok":true}', { status: 200 }))
 
-    const response = await fetchGetWithRetry('https://example.com/api/plans', {}, fetchImpl)
+    const response = await fetchGetWithRetry('https://example.com/api/plans', {}, fetchImpl, {
+      profile: 'background',
+    })
     expect(response.status).toBe(200)
     expect(fetchImpl).toHaveBeenCalledTimes(3)
+  })
+
+  it('uses a shorter critical budget for cold-start auth GETs', async () => {
+    const fetchImpl = vi.fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(new Response('{}', { status: 200 }))
+
+    await expect(
+      fetchGetWithRetry('https://example.com/api/me', {}, fetchImpl, { profile: 'critical' })
+    ).rejects.toThrow()
+    expect(fetchImpl).toHaveBeenCalledTimes(2)
   })
 })

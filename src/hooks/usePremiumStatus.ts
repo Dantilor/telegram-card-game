@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getInitData } from '../lib/telegram'
 import { waitForInitData } from '../lib/waitForInitData'
+import { subscribeTelegramSdkReady } from '../lib/telegramSdk'
 import { getMe, ApiAuthError } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 import { devLog, devWarn } from '../utils/devLog'
@@ -119,11 +120,12 @@ export function usePremiumStatus(): {
   }, [])
 
   const fetchStatus = useCallback(async (bypassCache = false): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
-    // Do not block Home shell; only wait briefly so a late WebApp init still binds Premium.
-    const initData = (await waitForInitData(1500)) || getInitData()
+    // Do not block Home shell; wait for late SDK/initData, then confirm with the server.
+    const initData = (await waitForInitData(3000)) || getInitData()
 
     if (!initData) {
       devLog('[TCG] Premium: no initData (open in Telegram)')
+      // No signed session → cannot claim Premium. Keep UI usable (not an infinite spinner).
       doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false, serverError503: false })
       return null
     }
@@ -133,6 +135,7 @@ export function usePremiumStatus(): {
       if (cached) {
         updateTcgState(cached.isPremium)
         doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false, serverError503: false })
+        // Still refresh in background below? Cold path returns cache first; visibility/sdk will refresh.
         return cached
       }
     }
@@ -155,11 +158,24 @@ export function usePremiumStatus(): {
     } catch (e) {
       devWarn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
       const err = e as Error & { status?: number }
+      const authError401 = e instanceof ApiAuthError || err.status === 401
+      // Transient network/5xx must not wipe a recently confirmed Premium cache.
+      const cached = !authError401 ? readCache() : null
+      if (cached) {
+        doneLoading({
+          isPremium: cached.isPremium,
+          activeUntil: cached.activeUntil,
+          authError: true,
+          authError401: false,
+          serverError503: err.status === 503,
+        })
+        return cached
+      }
       doneLoading({
         isPremium: false,
         activeUntil: null,
         authError: true,
-        authError401: e instanceof ApiAuthError,
+        authError401,
         serverError503: err.status === 503,
       })
       return null
@@ -174,7 +190,14 @@ export function usePremiumStatus(): {
   }, [])
 
   useEffect(() => {
-    fetchStatus()
+    void fetchStatus()
+  }, [fetchStatus])
+
+  useEffect(() => {
+    // Late SDK: re-bind Premium once signed initData becomes available (no loading flash).
+    return subscribeTelegramSdkReady(() => {
+      void fetchStatus(false)
+    })
   }, [fetchStatus])
 
   const premiumPollingRef = useRef(false)

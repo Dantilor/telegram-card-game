@@ -88,10 +88,14 @@ function Home() {
   }, [])
 
   useEffect(() => {
-    // Цена планов не блокирует первый экран: грузим после простоя / с небольшой задержкой.
+    // Цена планов не блокирует первый экран: background retry, abort on leave.
     let cancelled = false
+    const controller = new AbortController()
     const loadPlans = () => {
-      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
+      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans', {
+        signal: controller.signal,
+        retry: { profile: 'background' },
+      })
         .then((res) => {
           if (cancelled) return
           if (res.ok && Array.isArray(res.plans)) {
@@ -109,6 +113,7 @@ function Home() {
     }
     return () => {
       cancelled = true
+      controller.abort()
       if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
         window.cancelIdleCallback(idleId)
       }

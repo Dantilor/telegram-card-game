@@ -9,9 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#e8e6f5" />
     <!-- Fonts: self-hosted @fontsource (latin + cyrillic only). No Google Fonts. -->
-    <!-- Self-hosted deferred SDK: parses Telegram launch hash BEFORE React normalizes it.
-         Local same-origin file, not the slow blocking telegram.org request. -->
-    <script defer src="%BASE_URL%telegram-web-app.js"></script>
+    <!-- Telegram launch params are preserved by main.tsx before hash normalization.
+         The self-hosted SDK loads asynchronously, without delaying the first React paint. -->
     <title>GameNight Host</title>
   </head>
   <body>

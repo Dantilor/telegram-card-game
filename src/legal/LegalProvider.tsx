@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, lazy, Suspense, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import LazyLegalDocumentModal from '../components/LazyLegalDocumentModal'
 import { blockAnalyticsTransport } from './analyticsGate'
 import { LegalClientError, legalApiBase } from './client'
 import { preloadDocuments } from './documentCache'
@@ -10,10 +11,6 @@ import { afterCriticalImages, scheduleWhenIdle } from '../utils/scheduleWhenIdle
 import type { OwnLegalRecords } from './types'
 
 type Viewer = { id: string; version?: string }
-
-const LegalDocumentModal = lazy(() =>
-  import('../components/LegalDocumentView').then((module) => ({ default: module.LegalDocumentModal })),
-)
 
 type LegalContextValue = {
   records: OwnLegalRecords | null
@@ -137,14 +134,12 @@ export function LegalProvider({ children }: { children: ReactNode }) {
     <LegalContext.Provider value={value}>
       {children}
       {viewer && (
-        <Suspense fallback={null}>
-          <LegalDocumentModal
-            key={`${viewer.id}:${viewer.version ?? 'active'}`}
-            documentId={viewer.id}
-            version={viewer.version}
-            onClose={closeDocument}
-          />
-        </Suspense>
+        <LazyLegalDocumentModal
+          key={`${viewer.id}:${viewer.version ?? 'active'}`}
+          documentId={viewer.id}
+          version={viewer.version}
+          onClose={closeDocument}
+        />
       )}
     </LegalContext.Provider>
   )

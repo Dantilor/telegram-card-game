@@ -7,24 +7,30 @@ import { initTelegramUI, applyTelegramColorsRetry } from './lib/telegramTheme'
 import { ensureTelegramSdkLoaded, isTelegramSdkReady, whenTelegramSdkReady, subscribeTelegramSdkReady } from './lib/telegramSdk'
 import { publishLoadTimingReport } from './lib/loadTiming'
 import { installChunkRecovery } from './lib/chunkRecovery'
-// Only latin + cyrillic subsets — avoid greek/vietnamese download on cold start.
+import { scheduleWhenIdle } from './utils/scheduleWhenIdle'
+// Critical path fonts only (latin + cyrillic). Extra weights load after idle.
 import '@fontsource/manrope/latin-400.css'
-import '@fontsource/manrope/latin-500.css'
 import '@fontsource/manrope/latin-600.css'
 import '@fontsource/manrope/latin-700.css'
 import '@fontsource/manrope/cyrillic-400.css'
-import '@fontsource/manrope/cyrillic-500.css'
 import '@fontsource/manrope/cyrillic-600.css'
 import '@fontsource/manrope/cyrillic-700.css'
-import '@fontsource/unbounded/latin-500.css'
-import '@fontsource/unbounded/latin-600.css'
 import '@fontsource/unbounded/latin-700.css'
-import '@fontsource/unbounded/cyrillic-500.css'
-import '@fontsource/unbounded/cyrillic-600.css'
 import '@fontsource/unbounded/cyrillic-700.css'
 import './index.css'
 import './styles/tg.css'
 import App from './App.tsx'
+
+function loadDeferredFonts(): void {
+  void Promise.all([
+    import('@fontsource/manrope/latin-500.css'),
+    import('@fontsource/manrope/cyrillic-500.css'),
+    import('@fontsource/unbounded/latin-500.css'),
+    import('@fontsource/unbounded/latin-600.css'),
+    import('@fontsource/unbounded/cyrillic-500.css'),
+    import('@fontsource/unbounded/cyrillic-600.css'),
+  ]).catch(() => undefined)
+}
 
 // Capture Telegram launch parameters in the SDK before HashRouter normalizes
 // #tgWebAppData=... to #/. The deferred same-origin script in index.html
@@ -73,6 +79,8 @@ function mountApp(): void {
 
   // Opt-in VPN/cold-start report. Does not include Telegram identity.
   publishLoadTimingReport()
+  // Secondary weights must not compete with first paint / hero image.
+  scheduleWhenIdle(loadDeferredFonts, 3500)
 }
 
 // The local SDK is fetched asynchronously instead of blocking module execution.

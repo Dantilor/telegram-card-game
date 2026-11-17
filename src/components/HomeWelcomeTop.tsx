@@ -36,24 +36,39 @@ function HomeWelcomeTop() {
   const formattedCount = usersCount === null ? '—' : formatUsersCount(usersCount)
 
   useEffect(() => {
+    // Snapshot paints immediately; network refresh waits for idle so it does not
+    // compete with hero image / first interaction on cold start.
     let cancelled = false
     const controller = new AbortController()
-    apiGet<{ usersCount: number }>('/api/public-stats', {
-      signal: controller.signal,
-      retry: { profile: 'background' },
-    })
-      .then((data) => {
-        if (!cancelled && Number.isSafeInteger(data.usersCount) && data.usersCount >= 0) {
-          setUsersCount(data.usersCount)
-          writePublicSnapshot('user-count', data.usersCount)
-        }
+    const loadStats = () => {
+      apiGet<{ usersCount: number }>('/api/public-stats', {
+        signal: controller.signal,
+        retry: { profile: 'background' },
       })
-      .catch(() => {
-        /* An unavailable count must not be replaced by an invented number. */
-      })
+        .then((data) => {
+          if (!cancelled && Number.isSafeInteger(data.usersCount) && data.usersCount >= 0) {
+            setUsersCount(data.usersCount)
+            writePublicSnapshot('user-count', data.usersCount)
+          }
+        })
+        .catch(() => {
+          /* An unavailable count must not be replaced by an invented number. */
+        })
+    }
+    let idleId: number | undefined
+    let timeoutId: number | undefined
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(loadStats, { timeout: 2000 })
+    } else {
+      timeoutId = window.setTimeout(loadStats, 400)
+    }
     return () => {
       cancelled = true
       controller.abort()
+      if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
   }, [])
 

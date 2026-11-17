@@ -7,6 +7,8 @@
  * Never logs initData, tokens, cookies, or personal fields.
  */
 
+import { getInitData } from './telegram'
+
 export type LoadTimingBucket = 'network_wait' | 'resource_download' | 'js_parse' | 'api_wait' | 'other'
 
 export type LoadTimingEntry = {
@@ -42,8 +44,11 @@ export type LoadTimingReport = {
   marks: {
     firstPaintMs: number | null
     firstContentfulPaintMs: number | null
+    largestContentfulPaintMs: number | null
     reactRootMs: number | null
     homeVisibleMs: number | null
+    uiInteractiveMs: number | null
+    telegramAuthReadyMs: number | null
   }
   resources: LoadTimingEntry[]
   totals: {
@@ -125,6 +130,17 @@ function navTiming(): LoadTimingReport['navigation'] {
 function paintMs(name: string): number | null {
   const entry = performance.getEntriesByName(name)[0]
   return entry ? round(entry.startTime) : null
+}
+
+function largestContentfulPaintMs(): number | null {
+  if (typeof performance === 'undefined') return null
+  try {
+    const entries = performance.getEntriesByType('largest-contentful-paint')
+    const last = entries[entries.length - 1]
+    return last ? round(last.startTime) : null
+  } catch {
+    return null
+  }
 }
 
 function markMs(name: string): number | null {
@@ -238,8 +254,11 @@ export function buildLoadTimingReport(): LoadTimingReport {
       marks: {
         firstPaintMs: null,
         firstContentfulPaintMs: null,
+        largestContentfulPaintMs: null,
         reactRootMs: null,
         homeVisibleMs: null,
+        uiInteractiveMs: null,
+        telegramAuthReadyMs: null,
       },
       resources: [],
       totals: {
@@ -281,8 +300,11 @@ export function buildLoadTimingReport(): LoadTimingReport {
     marks: {
       firstPaintMs: paintMs('first-paint'),
       firstContentfulPaintMs: paintMs('first-contentful-paint'),
+      largestContentfulPaintMs: largestContentfulPaintMs(),
       reactRootMs: markMs('react-root'),
       homeVisibleMs: markMs('home-visible'),
+      uiInteractiveMs: markMs('ui-interactive'),
+      telegramAuthReadyMs: markMs('telegram-auth-ready'),
     },
     resources,
     totals: {
@@ -296,11 +318,48 @@ export function buildLoadTimingReport(): LoadTimingReport {
   }
 }
 
+function watchAuthAndInteractiveMarks(): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (window.__GNH_PERF_MARKS__?.['ui-interactive'] == null) {
+      const onInteractive = () => markLoadTiming('ui-interactive')
+      // First input opportunity after Home paint; does not wait for Premium/API.
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => requestAnimationFrame(onInteractive))
+      } else {
+        window.setTimeout(onInteractive, 0)
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  try {
+    const markAuth = () => {
+      try {
+        if (getInitData()) {
+          markLoadTiming('telegram-auth-ready')
+          window.removeEventListener('gnh:telegram-sdk-ready', markAuth)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    markAuth()
+    window.addEventListener('gnh:telegram-sdk-ready', markAuth)
+    window.setTimeout(markAuth, 500)
+    window.setTimeout(markAuth, 1500)
+  } catch {
+    // ignore
+  }
+}
+
 export function publishLoadTimingReport(delayMs = 2500): () => void {
   if (typeof window === 'undefined' || !isLoadTimingEnabled()) {
     return () => undefined
   }
   markLoadTiming('react-root')
+  watchAuthAndInteractiveMarks()
   const timer = window.setTimeout(() => {
     try {
       const report = buildLoadTimingReport()

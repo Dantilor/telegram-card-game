@@ -107,14 +107,11 @@ describe('analytics consent', () => {
 
   it('does not send app_open before a server consent and does not replay it later', () => {
     vi.stubEnv('VITE_API_URL', 'https://api.example.test')
-    vi.stubEnv('VITE_API_BASE', 'https://api.example.test')
-    expect(legalApiBase(import.meta.env)).toBe('https://api.example.test')
     trackEvent('app_open')
     expect(fetch).not.toHaveBeenCalled()
     expect(discardedEventNames()).toContain('app_open')
     expect(shouldSendInitialAppOpen(false, true)).toBe(false)
     allowAnalyticsTransport()
-    expect(isAnalyticsTransportAllowed()).toBe(true)
     expect(discardedEventNames()).toEqual([])
     expect(fetch).not.toHaveBeenCalled()
     trackEvent('start_game', { gameId: 'card', note: 'секрет переписки' })

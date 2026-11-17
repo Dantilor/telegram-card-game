@@ -14,7 +14,6 @@ import HomePremiumBanner from '../components/HomePremiumBanner'
 import PremiumOverlay from '../components/PremiumOverlay'
 import { HOME_PICK_THUMBS } from '../assets/images'
 import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
-import { markLoadTiming } from '../lib/loadTiming'
 import pickMafiaShadowsAvif from '../assets/optimized/home-pick-mafia-shadows.avif'
 import pickDoublesAvif from '../assets/optimized/home-pick-doubles.avif'
 import pickInfectedAvif from '../assets/optimized/home-pick-infected.avif'
@@ -84,18 +83,10 @@ function Home() {
   const favoritesLocked = isFavoritesLocked(isPremium)
 
   useEffect(() => {
-    markLoadTiming('home-visible')
-  }, [])
-
-  useEffect(() => {
-    // Цена планов не блокирует первый экран: background retry, abort on leave.
+    // Цена планов не блокирует первый экран: грузим после простоя / с небольшой задержкой.
     let cancelled = false
-    const controller = new AbortController()
     const loadPlans = () => {
-      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans', {
-        signal: controller.signal,
-        retry: { profile: 'background' },
-      })
+      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
         .then((res) => {
           if (cancelled) return
           if (res.ok && Array.isArray(res.plans)) {
@@ -113,7 +104,6 @@ function Home() {
     }
     return () => {
       cancelled = true
-      controller.abort()
       if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
         window.cancelIdleCallback(idleId)
       }

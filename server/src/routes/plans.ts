@@ -1,27 +1,25 @@
 import { Router, Request, Response } from 'express'
-import { getPlansCatalog } from '../services/plansCatalog.js'
+import { query } from '../db.js'
 
 const router = Router()
 
-router.get('/plans', async (req: Request, res: Response) => {
+router.get('/plans', async (_req: Request, res: Response) => {
   try {
-    const { payload, etag, cacheHit, sqlMs } = await getPlansCatalog()
-    // no-cache + ETag: clients must revalidate before reuse so a UI price cannot linger
-    // after a tariff change. Checkout still reads the live row via getActivePlanById (DB),
-    // never this catalog cache. Priced plans must not be served stale from intermediaries.
-    res.setHeader('Cache-Control', 'no-cache')
-    res.setHeader('ETag', etag)
-    res.setHeader('X-GNH-Cache', cacheHit ? 'HIT' : 'MISS')
-    if (sqlMs != null) res.setHeader('Server-Timing', `sql;dur=${Math.round(sqlMs)}`)
-    if (req.headers['if-none-match'] === etag) {
-      res.status(304).end()
-      return
-    }
-    res.status(200).json(payload)
+    const r = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
+      `SELECT plan_id, title, price_rub, duration_days
+       FROM plans WHERE is_active = true
+       ORDER BY duration_days ASC, price_rub ASC`
+    )
+    const plans = r.rows.map((row) => ({
+      id: row.plan_id,
+      title: row.title,
+      priceRub: row.price_rub,
+      durationDays: row.duration_days,
+    }))
+    res.status(200).json({ ok: true, plans })
   } catch (e) {
-    console.error('[API] GET /api/plans error:', e instanceof Error ? e.message : 'error')
-    res.setHeader('Cache-Control', 'no-store')
-    res.status(500).json({ ok: false, error: 'plans_unavailable' })
+    console.error('[API] GET /api/plans error:', e)
+    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }
 })
 

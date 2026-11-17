@@ -161,7 +161,7 @@ export async function fetchPublicDocument(
   })
   let response: Response
   try {
-    response = await fetchGetWithRetry(request.url, request.init, fetchImpl, { profile: 'background' })
+    response = await fetchGetWithRetry(request.url, request.init, fetchImpl)
   } catch {
     throw new LegalClientError('network', 0, 'Нет соединения. Утверждённый текст не загружен.')
   }

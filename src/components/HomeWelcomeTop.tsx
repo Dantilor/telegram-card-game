@@ -34,11 +34,7 @@ function HomeWelcomeTop() {
 
   useEffect(() => {
     let cancelled = false
-    const controller = new AbortController()
-    apiGet<{ usersCount: number }>('/api/public-stats', {
-      signal: controller.signal,
-      retry: { profile: 'background' },
-    })
+    apiGet<{ usersCount: number }>('/api/public-stats')
       .then((data) => {
         if (!cancelled && Number.isSafeInteger(data.usersCount) && data.usersCount >= 0) {
           setUsersCount(data.usersCount)
@@ -49,7 +45,6 @@ function HomeWelcomeTop() {
       })
     return () => {
       cancelled = true
-      controller.abort()
     }
   }, [])
 

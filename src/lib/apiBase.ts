@@ -14,11 +14,7 @@ function clean(value: string | undefined): string {
   return (value ?? '').trim().replace(/\/$/, '')
 }
 
-/**
- * One public API origin for profile, game, consent, analytics, purchase, and restore.
- * Switch hosts only via identical VITE_API_URL + VITE_API_BASE at build time
- * (e.g. future https://api.gamenighthost.ru). Never fan-out POSTs to mirrors.
- */
+/** One public API origin for profile, game, consent, analytics, purchase, and restore. */
 export function resolveApiBase(env: { VITE_API_URL?: string; VITE_API_BASE?: string }): string {
   const url = clean(env.VITE_API_URL)
   const base = clean(env.VITE_API_BASE)

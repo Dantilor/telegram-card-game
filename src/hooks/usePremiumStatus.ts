@@ -95,12 +95,12 @@ export function usePremiumStatus(): {
         serverError503: false,
       }
     }
-    // Без кэша не блокируем UI «вечной» проверкой: показываем free-состояние,
-    // а фактический статус догружается в фоне (ошибка API тоже снимает loading).
+    // Home can render immediately, but games must know that Premium is
+    // *unverified*, not free, until the first signed /api/me result or timeout.
     return {
       isPremium: false,
       activeUntil: null,
-      loading: false,
+      loading: true,
       authError: false,
       authError401: false,
       serverError503: false,

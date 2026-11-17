@@ -49,6 +49,8 @@ export type LoadTimingReport = {
     largestContentfulPaintMs: number | null
     reactRootMs: number | null
     homeVisibleMs: number | null
+    firstInputAfterHomeMs: number | null
+    /** @deprecated alias of firstInputAfterHomeMs — not full app readiness */
     uiInteractiveMs: number | null
     telegramAuthReadyMs: number | null
   }
@@ -251,7 +253,8 @@ function emptyMarks(): LoadTimingReport['marks'] {
     largestContentfulPaintMs: null,
     reactRootMs: null,
     homeVisibleMs: null,
-    uiInteractiveMs: null,
+    firstInputAfterHomeMs: null,
+        uiInteractiveMs: null,
     telegramAuthReadyMs: null,
   }
 }
@@ -327,7 +330,8 @@ export function buildLoadTimingReport(
       largestContentfulPaintMs: largestContentfulPaintMs(),
       reactRootMs: markMs('react-root'),
       homeVisibleMs: markMs('home-visible'),
-      uiInteractiveMs: markMs('ui-interactive'),
+      firstInputAfterHomeMs: markMs('first-input-after-home'),
+      uiInteractiveMs: markMs('first-input-after-home'),
       telegramAuthReadyMs: markMs('telegram-auth-ready'),
     },
     interactiveSource: typeof window !== 'undefined' ? window.__GNH_PERF_META__?.interactiveSource ?? null : null,
@@ -403,14 +407,14 @@ function watchAuthReady(): () => void {
 }
 
 /**
- * ui-interactive = first real user input after Home has painted.
+ * first-input-after-home = first real user input after Home has painted (not full feature readiness).
  * Never inferred from rAF alone (that only proves a frame was scheduled).
  */
 function watchFirstInputInteractive(): () => void {
   const onInput = () => {
     if (window.__GNH_PERF_MARKS__?.['home-visible'] == null) return
-    if (window.__GNH_PERF_MARKS__?.['ui-interactive'] != null) return
-    markLoadTiming('ui-interactive')
+    if (window.__GNH_PERF_MARKS__?.['first-input-after-home'] != null) return
+    markLoadTiming('first-input-after-home')
     window.__GNH_PERF_META__ = {
       ...(window.__GNH_PERF_META__ ?? {}),
       interactiveSource: 'first-input',

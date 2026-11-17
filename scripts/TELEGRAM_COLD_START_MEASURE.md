@@ -14,7 +14,7 @@ Use this when Playwright Chromium is unavailable. Do **not** invent timings.
 copy(JSON.stringify(window.__GNH_PERF__, null, 2))
 ```
 
-`window.__GNH_PERF__.snapshot` is `early` (~2.5s), `mid` (~6s), `late` (~10s), or `final` (after load / first input). Prefer `late` or `final` for 5–10s cold starts. `uiInteractiveMs` is set only after Home is marked visible **and** the user makes a real pointer/key/touch input (`interactiveSource: "first-input"`).
+`window.__GNH_PERF__.snapshot` is `early` (~2.5s), `mid` (~6s), `late` (~10s), or `final` (after load / first input). Prefer `late` or `final` for 5–10s cold starts. `firstInputAfterHomeMs` (and deprecated alias `uiInteractiveMs`) is set only after Home is marked visible **and** the user makes a real pointer/key/touch input (`interactiveSource: "first-input"`). It is **not** full app readiness.
 
 5. Record separately (from DevTools Network, cache disabled):
    - document TTFB

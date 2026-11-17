@@ -55,16 +55,16 @@ describe('loadTiming', () => {
     stop()
   })
 
-  it('marks ui-interactive only after home-visible and a real user input', () => {
+  it('marks first-input-after-home only after home-visible and a real user input', () => {
     vi.useFakeTimers()
     localStorage.setItem('gnh_perf', '1')
     const stop = publishLoadTimingReport([10_000])
-    expect(window.__GNH_PERF_MARKS__?.['ui-interactive']).toBeUndefined()
+    expect(window.__GNH_PERF_MARKS__?.['first-input-after-home']).toBeUndefined()
     window.dispatchEvent(new Event('pointerdown', { bubbles: true }))
-    expect(window.__GNH_PERF_MARKS__?.['ui-interactive']).toBeUndefined()
+    expect(window.__GNH_PERF_MARKS__?.['first-input-after-home']).toBeUndefined()
     markLoadTiming('home-visible')
     window.dispatchEvent(new Event('pointerdown', { bubbles: true }))
-    expect(window.__GNH_PERF_MARKS__?.['ui-interactive']).toEqual(expect.any(Number))
+    expect(window.__GNH_PERF_MARKS__?.['first-input-after-home']).toEqual(expect.any(Number))
     expect(window.__GNH_PERF_META__?.interactiveSource).toBe('first-input')
     stop()
   })

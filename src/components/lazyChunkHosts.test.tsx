@@ -39,6 +39,20 @@ const loaders = vi.hoisted(() => ({
   document: vi.fn(),
 }))
 
+const recovery = vi.hoisted(() => ({
+  safeReloadForStaleLazyChunk: vi.fn(() => true),
+  isChunkLoadError: vi.fn((reason: unknown) =>
+    /Failed to fetch dynamically imported module|Loading chunk/i.test(
+      String(reason instanceof Error ? reason.message : reason),
+    ),
+  ),
+}))
+
+vi.mock('./lazyChunkRecovery', () => ({
+  safeReloadForStaleLazyChunk: (...args: unknown[]) => recovery.safeReloadForStaleLazyChunk(...args),
+  isChunkLoadError: (...args: unknown[]) => recovery.isChunkLoadError(...args),
+}))
+
 vi.mock('./lazyChunkLoaders', () => ({
   importPremiumOverlay: () => loaders.premium(),
   importFirstUseSheet: () => loaders.firstUse(),
@@ -81,6 +95,14 @@ beforeEach(() => {
   loaders.premium.mockReset()
   loaders.firstUse.mockReset()
   loaders.document.mockReset()
+  recovery.safeReloadForStaleLazyChunk.mockClear()
+  recovery.isChunkLoadError.mockClear()
+  recovery.safeReloadForStaleLazyChunk.mockReturnValue(true)
+  recovery.isChunkLoadError.mockImplementation((reason: unknown) =>
+    /Failed to fetch dynamically imported module|Loading chunk/i.test(
+      String(reason instanceof Error ? reason.message : reason),
+    ),
+  )
   loaders.premium.mockResolvedValue({ default: PremiumStub })
   loaders.firstUse.mockResolvedValue({ default: FirstUseStub })
   loaders.document.mockResolvedValue({ default: DocumentStub })
@@ -140,6 +162,15 @@ describe('LazyPremiumOverlay', () => {
     expect(await screen.findByLabelText('premium-ready')).toBeTruthy()
   })
 
+
+  it('offers a guarded app reload for stale chunk 404s without closing legal gates elsewhere', async () => {
+    loaders.premium.mockRejectedValue(new Error('Failed to fetch dynamically imported module: /assets/PremiumOverlay-dead.js'))
+    render(<LazyPremiumOverlay isOpen onClose={() => undefined} />)
+    expect(await screen.findByRole('button', { name: 'Обновить приложение' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Обновить приложение' }))
+    expect(recovery.safeReloadForStaleLazyChunk).toHaveBeenCalled()
+  })
+
   it('allows closing from the error shell without granting Premium', async () => {
     loaders.premium.mockRejectedValue(new Error('chunk failed'))
     const onClose = vi.fn()
@@ -180,6 +211,16 @@ describe('DeferredFirstUseSheet', () => {
       resolveImport?.({ default: FirstUseStub })
     })
     expect(await screen.findByLabelText('first-use-ready')).toBeTruthy()
+  })
+
+
+  it('offers reload on stale legal chunk without a close bypass', async () => {
+    loaders.firstUse.mockRejectedValue(new Error('Failed to fetch dynamically imported module'))
+    render(<DeferredFirstUseSheet />)
+    expect(await screen.findByRole('button', { name: 'Обновить приложение' })).toBeTruthy()
+    expect(screen.queryByText('Закрыть')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Обновить приложение' }))
+    expect(recovery.safeReloadForStaleLazyChunk).toHaveBeenCalled()
   })
 
   it('keeps a blocking retry shell on chunk failure (no close bypass)', async () => {

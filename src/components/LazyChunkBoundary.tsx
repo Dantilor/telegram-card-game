@@ -46,6 +46,8 @@ type ShellProps = {
   title: string
   message: string
   onRetry: () => void
+  /** Guarded app reload for stale hashed chunks (preserves Telegram launch). */
+  onReload?: () => void
   onClose?: () => void
   /** When true, backdrop/close cannot dismiss — used for required consent. */
   blocking?: boolean
@@ -69,6 +71,7 @@ export function LazyChunkStatusShell({
   title,
   message,
   onRetry,
+  onReload,
   onClose,
   blocking = false,
   busy = false,
@@ -125,6 +128,23 @@ export function LazyChunkStatusShell({
           >
             Повторить
           </button>
+          {onReload ? (
+            <button
+              type="button"
+              onClick={onReload}
+              style={{
+                border: '1px solid rgba(255,255,255,0.35)',
+                borderRadius: '0.75rem',
+                padding: '0.55rem 1rem',
+                background: 'rgba(255,255,255,0.08)',
+                color: '#fff',
+                font: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Обновить приложение
+            </button>
+          ) : null}
           {!blocking && onClose ? (
             <button
               type="button"

@@ -4,7 +4,7 @@ import { HashRouter } from 'react-router-dom'
 import { parseAndCacheFromHash } from './utils/telegramInitCache'
 import { initTheme, type ThemeId } from './hooks/useTheme'
 import { initTelegramUI, applyTelegramColorsRetry } from './lib/telegramTheme'
-import { ensureTelegramSdkLoaded, subscribeTelegramSdkReady } from './lib/telegramSdk'
+import { ensureTelegramSdkLoaded, isTelegramSdkReady, whenTelegramSdkReady, subscribeTelegramSdkReady } from './lib/telegramSdk'
 import { publishLoadTimingReport } from './lib/loadTiming'
 import { installChunkRecovery } from './lib/chunkRecovery'
 // Only latin + cyrillic subsets — avoid greek/vietnamese download on cold start.
@@ -26,6 +26,9 @@ import './index.css'
 import './styles/tg.css'
 import App from './App.tsx'
 
+// Capture Telegram launch parameters in the SDK before HashRouter normalizes
+// #tgWebAppData=... to #/. The deferred same-origin script in index.html
+// normally finishes before the Vite module executes.
 let theme: ThemeId
 try {
   theme = initTheme()
@@ -33,34 +36,47 @@ try {
   theme = 'neon-light'
 }
 
-parseAndCacheFromHash()
-
-// Install before React and lazy routes, so old game chunks do not blank the app.
+// Install before React and lazy routes, so old chunks do not blank the app.
 installChunkRecovery()
-
-// Kick SDK download immediately without blocking module evaluation on telegram.org.
-ensureTelegramSdkLoaded().catch(() => undefined)
 
 function applyTelegramWhenReady(): void {
   try {
     initTelegramUI()
     applyTelegramColorsRetry(theme)
   } catch {
-    // no-op: вне Telegram / браузер
+    // Outside Telegram / unsupported WebView.
   }
 }
 
-applyTelegramWhenReady()
-subscribeTelegramSdkReady(applyTelegramWhenReady)
+let mounted = false
+function mountApp(): void {
+  if (mounted) return
+  mounted = true
+  parseAndCacheFromHash()
+  ensureTelegramSdkLoaded().catch(() => undefined)
 
-const rootEl = document.getElementById('root')!
-createRoot(rootEl).render(
-  <StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
-  </StrictMode>,
-)
+  applyTelegramWhenReady()
+  subscribeTelegramSdkReady(applyTelegramWhenReady)
 
-// Opt-in VPN/cold-start report: ?gnh_perf=1 or localStorage.gnh_perf=1 → window.__GNH_PERF__
-publishLoadTimingReport()
+  const rootEl = document.getElementById('root')!
+  createRoot(rootEl).render(
+    <StrictMode>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </StrictMode>,
+  )
+
+  // Opt-in VPN/cold-start report. Does not include Telegram identity.
+  publishLoadTimingReport()
+}
+
+// If the local defer script failed or has not run yet, preserve the original
+// launch hash until a retry of the official SDK has read it. This rare path
+// may wait briefly; the ordinary path mounts React immediately.
+const hasTelegramLaunchHash = typeof window !== 'undefined' && window.location.hash.includes('tgWebAppData=')
+if (hasTelegramLaunchHash && !isTelegramSdkReady()) {
+  void whenTelegramSdkReady(3500).then(mountApp, mountApp)
+} else {
+  mountApp()
+}

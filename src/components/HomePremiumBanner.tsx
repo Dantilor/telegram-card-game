@@ -39,7 +39,7 @@ function HomePremiumBanner({ loading, plansPriceLabel, onOpen }: HomePremiumBann
         </div>
         <div className="home-premium-banner__aside">
           <span className="home-premium-banner__price">
-            {loading ? 'Проверяем…' : plansPriceLabel}
+            {loading && plansPriceLabel === 'Тарифы' ? 'Проверяем…' : plansPriceLabel}
           </span>
           <span className="home-play-btn home-play-btn--picks" aria-hidden>
             <span className="home-play-btn__triangle" />

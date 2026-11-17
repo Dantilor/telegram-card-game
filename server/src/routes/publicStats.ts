@@ -1,17 +1,18 @@
 import { Router, Request, Response } from 'express'
-import { query } from '../db.js'
+import { getPublicStats } from '../services/publicStatsCache.js'
 
 const router = Router()
 
 router.get('/public-stats', async (_req: Request, res: Response) => {
   try {
-    const r = await query<{ users_count: number }>(
-      'SELECT COUNT(*)::int AS users_count FROM users',
-    )
-    const usersCount = r.rows[0]?.users_count ?? 0
-    res.status(200).json({ usersCount })
+    const { payload, cacheHit } = await getPublicStats()
+    // Decorative count only — short public cache is safe; never put personal fields here.
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+    res.setHeader('X-GNH-Cache', cacheHit ? 'HIT' : 'MISS')
+    res.status(200).json(payload)
   } catch (e) {
-    console.error('[API] GET /api/public-stats error:', e)
+    console.error('[API] GET /api/public-stats error:', e instanceof Error ? e.message : 'error')
+    res.setHeader('Cache-Control', 'no-store')
     res.status(500).json({ error: 'Failed to load public stats' })
   }
 })

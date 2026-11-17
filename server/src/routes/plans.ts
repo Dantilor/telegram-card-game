@@ -1,25 +1,24 @@
 import { Router, Request, Response } from 'express'
-import { query } from '../db.js'
+import { getPlansCatalog } from '../services/plansCatalog.js'
 
 const router = Router()
 
-router.get('/plans', async (_req: Request, res: Response) => {
+router.get('/plans', async (req: Request, res: Response) => {
   try {
-    const r = await query<{ plan_id: string; title: string; price_rub: number; duration_days: number }>(
-      `SELECT plan_id, title, price_rub, duration_days
-       FROM plans WHERE is_active = true
-       ORDER BY duration_days ASC, price_rub ASC`
-    )
-    const plans = r.rows.map((row) => ({
-      id: row.plan_id,
-      title: row.title,
-      priceRub: row.price_rub,
-      durationDays: row.duration_days,
-    }))
-    res.status(200).json({ ok: true, plans })
+    const { payload, etag, cacheHit, sqlMs } = await getPlansCatalog()
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+    res.setHeader('ETag', etag)
+    res.setHeader('X-GNH-Cache', cacheHit ? 'HIT' : 'MISS')
+    if (sqlMs != null) res.setHeader('Server-Timing', `sql;dur=${Math.round(sqlMs)}`)
+    if (req.headers['if-none-match'] === etag) {
+      res.status(304).end()
+      return
+    }
+    res.status(200).json(payload)
   } catch (e) {
-    console.error('[API] GET /api/plans error:', e)
-    res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
+    console.error('[API] GET /api/plans error:', e instanceof Error ? e.message : 'error')
+    res.setHeader('Cache-Control', 'no-store')
+    res.status(500).json({ ok: false, error: 'plans_unavailable' })
   }
 })
 

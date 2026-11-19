@@ -1,0 +1,57 @@
+/* Add gnh-home-stage to the existing outer home wrapper, not a card. */
+.gnh-home-stage {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.gnh-home-background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  background-color: var(--gnh-home-background-base, #060a1b);
+}
+
+/* Existing precise project tokens should be mapped to these local values. */
+.gnh-home-background--neon {
+  --gnh-home-background-base: #060a1b;
+}
+
+.gnh-home-background--light {
+  --gnh-home-background-base: #f6f4ff;
+}
+
+.gnh-home-background--sunset {
+  --gnh-home-background-base: #fff5f0;
+}
+
+.gnh-home-background--calm {
+  --gnh-home-background-base: #f5f7f6;
+}
+
+.gnh-home-background__art {
+  position: absolute;
+  left: 0;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gnh-home-background__art--top {
+  top: 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 72%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 72%);
+}
+
+.gnh-home-background__art--bottom {
+  bottom: 0;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 58%, #000 85%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, transparent 58%, #000 85%, #000 100%);
+}

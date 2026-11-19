@@ -9,8 +9,10 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-web
 dist-ssr
 server/dist
+server/web-dist
 preview-serve
 *.local
 
@@ -27,8 +29,15 @@ preview-serve
 
 .env
 .env.local
+.env.web.local
 .env.production
 server/.env
+server/.env.web-local
+server/.local-pg/
+deploy/staging/.env.staging
+playwright-report/
+test-results/
+blob-report/
 
 /_private_legal_import/
 /GNH_Legal_Cursor_2026-10-20.zip

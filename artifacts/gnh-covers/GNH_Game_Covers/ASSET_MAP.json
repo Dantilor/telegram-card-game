@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "brand": "GameNight Host",
+  "assetCount": 15,
+  "generation": "15 separate built-in image_gen generations; no atlas extraction or upscaling",
+  "embeddedTitles": false,
+  "aspectRatio": "3:2",
+  "entries": [
+    {
+      "key": "gamenight-cards",
+      "title": "GameNight Cards",
+      "aliases": [
+        "Cards",
+        "Game Night Cards"
+      ],
+      "image": "assets/gamenight-cards.webp",
+      "original": "originals/gamenight-cards.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 492928,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "mafia-lite",
+      "title": "Мафия Lite",
+      "aliases": [
+        "Mafia Lite"
+      ],
+      "image": "assets/mafia-lite.webp",
+      "original": "originals/mafia-lite.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 498408,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "associations",
+      "title": "Ассоциации",
+      "aliases": [
+        "Ассоциация",
+        "Alias"
+      ],
+      "image": "assets/associations.webp",
+      "original": "originals/associations.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 424154,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "activitus",
+      "title": "Активитус",
+      "aliases": [
+        "Активный",
+        "Activity"
+      ],
+      "image": "assets/activitus.webp",
+      "original": "originals/activitus.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 422530,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "sabotage",
+      "title": "Саботаж",
+      "aliases": [
+        "Sabotage"
+      ],
+      "image": "assets/sabotage.webp",
+      "original": "originals/sabotage.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 497282,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "brain-battle",
+      "title": "Битва умов",
+      "aliases": [
+        "Битва умов"
+      ],
+      "image": "assets/brain-battle.webp",
+      "original": "originals/brain-battle.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 474762,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "truth-or-dare",
+      "title": "Правда или действие",
+      "aliases": [
+        "Truth or Dare"
+      ],
+      "image": "assets/truth-or-dare.webp",
+      "original": "originals/truth-or-dare.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 432890,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "phrase-translator",
+      "title": "Переводчик фраз",
+      "aliases": [
+        "Переводчик"
+      ],
+      "image": "assets/phrase-translator.webp",
+      "original": "originals/phrase-translator.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 463572,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "free-stuff",
+      "title": "Фигня, но бесплатно",
+      "aliases": [
+        "Фигня но бесплатно"
+      ],
+      "image": "assets/free-stuff.webp",
+      "original": "originals/free-stuff.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 350408,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "trace",
+      "title": "След",
+      "aliases": [
+        "След"
+      ],
+      "image": "assets/trace.webp",
+      "original": "originals/trace.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 419782,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "mafia-city",
+      "title": "Мафия: Тени города",
+      "aliases": [
+        "Мафия Тени города",
+        "Мафия: Тень города"
+      ],
+      "image": "assets/mafia-city.webp",
+      "original": "originals/mafia-city.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 470098,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "doubles",
+      "title": "Двойники",
+      "aliases": [
+        "Двойники"
+      ],
+      "image": "assets/doubles.webp",
+      "original": "originals/doubles.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 334612,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "infected",
+      "title": "Заражённые",
+      "aliases": [
+        "Зараженные"
+      ],
+      "image": "assets/infected.webp",
+      "original": "originals/infected.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 435410,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "whoswho",
+      "title": "Кто тут кто?",
+      "aliases": [
+        "Кто тут кто"
+      ],
+      "image": "assets/whoswho.webp",
+      "original": "originals/whoswho.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 624440,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    },
+    {
+      "key": "where-are-we",
+      "title": "Где мы?",
+      "aliases": [
+        "Где мы"
+      ],
+      "image": "assets/where-are-we.webp",
+      "original": "originals/where-are-we.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 731468,
+      "objectFit": "contain",
+      "objectPosition": "50% 50%"
+    }
+  ]
+}

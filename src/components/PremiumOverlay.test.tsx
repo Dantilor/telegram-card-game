@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import PremiumOverlay from './PremiumOverlay'
 import { LegalProvider } from '../legal/LegalProvider'
@@ -8,7 +9,10 @@ import type { PublicDocument } from '../legal/types'
 
 vi.mock('../lib/telegram', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/telegram')>()),
+  // Partial mock: ensureInitData keeps a binding to the real getInitData inside the module,
+  // so both exports must be stubbed for Mini App payment tests.
   getInitData: () => 'test-session',
+  ensureInitData: async () => 'test-session',
   getTelegramWebApp: () => null,
 }))
 
@@ -69,7 +73,13 @@ afterEach(() => {
 })
 
 function renderOverlay() {
-  return render(<LegalProvider><PremiumOverlay isOpen onClose={() => undefined} /></LegalProvider>)
+  return render(
+    <MemoryRouter>
+      <LegalProvider>
+        <PremiumOverlay isOpen onClose={() => undefined} />
+      </LegalProvider>
+    </MemoryRouter>
+  )
 }
 
 describe('PremiumOverlay recovery', () => {
@@ -79,8 +89,10 @@ describe('PremiumOverlay recovery', () => {
     offerFailures = 3
     renderOverlay()
 
-    await waitFor(() => expect(screen.getAllByText(/Восстанавливаем соединение/).length).toBe(2), { timeout: 5000 })
-    expect(screen.getAllByRole('button', { name: 'Повторить сейчас' })).toHaveLength(2)
+    await waitFor(() => expect(screen.getAllByText(/Восстанавливаем соединение/)).toHaveLength(1), { timeout: 5000 })
+    expect(screen.getByRole('button', { name: 'Повторить тарифы' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Повторить оферту' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Загрузка…' })).toBeNull()
 
     await screen.findByText('259', undefined, { timeout: 8000 })
     const checkbox = await screen.findByRole('checkbox', { name: STATEMENT }, { timeout: 8000 })

@@ -2,12 +2,17 @@ import { useEffect } from 'react'
 import { getInitData } from '../utils/telegram'
 import { getMe } from '../api/subscription'
 import { defaultUserState } from '../data/types'
+import { isWebShell } from '../config/shell'
 
 const STORAGE_KEY = 'tcg_state'
 
+function canSyncPremium(): boolean {
+  if (isWebShell()) return true
+  return Boolean(getInitData().initDataRaw)
+}
+
 function syncPremiumFromBackend(): void {
-  const init = getInitData()
-  if (!init.initDataRaw) return
+  if (!canSyncPremium()) return
 
   getMe()
     .then((data) => {
@@ -30,12 +35,12 @@ function syncPremiumFromBackend(): void {
 
 export function useSyncPremium(): void {
   useEffect(() => {
-    if (!getInitData().initDataRaw) return
+    if (!canSyncPremium()) return
 
     syncPremiumFromBackend()
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && getInitData().initDataRaw) syncPremiumFromBackend()
+      if (document.visibilityState === 'visible' && canSyncPremium()) syncPremiumFromBackend()
     }
     document.addEventListener('visibilitychange', onVisible)
 

@@ -11,6 +11,7 @@ export type Game = {
   status: GameStatus
   image?: string
   catalogBadge?: 'new' | 'hit'
+  playersLabel?: string
 }
 
 export const GAMES: Game[] = [
@@ -30,6 +31,7 @@ export const GAMES: Game[] = [
     icon: 'moon',
     description: 'Роли • Блеф\nРазоблачение',
     status: 'ready',
+    playersLabel: '4–12 игроков',
     image: IMAGES.mafia.png,
   },
   {
@@ -84,6 +86,7 @@ export const GAMES: Game[] = [
     icon: 'mask',
     description: 'Ситуации • Роли\nОправдания',
     status: 'ready',
+    playersLabel: '3–8 игроков',
     image: IMAGES.whoIsWho.png,
   },
   {
@@ -123,6 +126,7 @@ export const GAMES: Game[] = [
     icon: 'mask',
     description: 'Детектив • Кооператив\n10 дел',
     status: 'ready',
+    playersLabel: '3–8 игроков',
     image: IMAGES.sled.png,
     catalogBadge: 'new',
   },
@@ -133,6 +137,7 @@ export const GAMES: Game[] = [
     icon: 'moon',
     description: 'Роли • Телефоны\nНочь и суд',
     status: 'ready',
+    playersLabel: '4–14 игроков',
     image: IMAGES.mafiaShadows.png,
     catalogBadge: 'new',
   },
@@ -143,6 +148,7 @@ export const GAMES: Game[] = [
     icon: 'users',
     description: 'Личности • Досье\nКто настоящий',
     status: 'ready',
+    playersLabel: '4–12 игроков',
     image: IMAGES.doubles.png,
     catalogBadge: 'new',
   },
@@ -153,6 +159,7 @@ export const GAMES: Game[] = [
     icon: 'users',
     description: 'Станция • Недоверие\nКто внутри',
     status: 'ready',
+    playersLabel: '4–12 игроков',
     image: IMAGES.infected.png,
     catalogBadge: 'new',
   },

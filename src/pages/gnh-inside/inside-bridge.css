@@ -1,0 +1,993 @@
+/* Maps the approved interior materials onto existing screens. WEB shell only. */
+
+.app.app--web:has(.gnh-inside) {
+  padding: 0;
+  overflow: hidden;
+  background: #887099;
+}
+
+.app.app--web:has(.gnh-inside):has(.rt-page),
+.app.app--web:has(.gnh-inside):has(.rt-play) {
+  background: transparent;
+}
+
+.app.app--web:has(.gnh-inside) .gnh-theme-background {
+  visibility: hidden;
+}
+
+html:has(.gnh-inside)::before,
+html:has(.gnh-inside)::after,
+.app:has(.gnh-inside)::before,
+.app:has(.gnh-inside)::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+/* Restore «Где мы?» travel shell backdrop inside WEB. */
+html:has(.gnh-inside .rt-page)::before,
+html:has(.gnh-inside .rt-play)::before {
+  display: block !important;
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background-color: var(--rt-shell-bg, #1a1828) !important;
+  background-image: var(--rt-shell-bg-image, none) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+}
+
+.app.app--web > .gnh-inside {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #887099;
+  -webkit-overflow-scrolling: touch;
+  --layout-phone-max: none;
+  --layout-content-max: 100%;
+}
+
+.app.app--web .gnh-inside .ambient-layer {
+  position: fixed;
+  inset: 0;
+  min-height: 100%;
+  z-index: 0;
+}
+
+.app.app--web .gnh-inside .app-header,
+.app.app--web .gnh-inside .content {
+  position: relative;
+  z-index: 1;
+}
+
+.app.app--web .gnh-inside .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.app.app--web .gnh-inside .header-nav button {
+  font-size: 14px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 50px;
+  background: none;
+  color: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.app.app--web .gnh-inside .header-nav button.active {
+  background: linear-gradient(110deg, #c596ef73, #e4afde57);
+  border-color: #f2d5ff6e;
+  box-shadow: inset 0 1px 1px #fff3, 0 0 20px #ca91ec22;
+}
+
+.app.app--web .gnh-inside .header-nav button:hover {
+  background: #e7bfff20;
+}
+
+.app.app--web .gnh-inside .bottom-nav {
+  position: fixed;
+  z-index: 40;
+  border-color: #3a2a5288;
+  background: linear-gradient(145deg, #1a1228f2, #241832f0 55%, #1c142af5);
+  box-shadow: inset 0 1px 0 #ffffff14, 0 10px 28px #0a0618a6;
+}
+
+.app.app--web .gnh-inside .bottom-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 20%;
+  height: 100%;
+  color: #cbb6e0;
+  font-size: 10px;
+  background: none;
+  padding: 0;
+}
+
+.app.app--web .gnh-inside .bottom-nav button.active {
+  color: #e8c6ff;
+}
+
+.app.app--web .gnh-inside .bottom-nav button svg {
+  height: 22px;
+  width: 22px;
+}
+
+#root .app.app--web .gnh-inside a.home-btn {
+  display: none !important;
+}
+
+.app.app--web .gnh-inside .content > * {
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  color: #fff8ff;
+  box-shadow: none;
+}
+
+.app.app--web .gnh-inside .content > * {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.app.app--web .gnh-inside .games-page-header__title,
+.app.app--web .gnh-inside .favorites-page__title,
+.app.app--web .gnh-inside .premium-page__title,
+.app.app--web .gnh-inside .profile-identity__name {
+  background: linear-gradient(95deg, #e0b7ff, #fff1d6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app.app--web .gnh-inside .games-page-header__tagline,
+.app.app--web .gnh-inside .favorites-page__counter,
+.app.app--web .gnh-inside .profile-identity__username,
+.app.app--web .gnh-inside .profile-identity__guest,
+.app.app--web .gnh-inside .profile-pass__desc {
+  color: #f5eafa;
+}
+
+.app.app--web .gnh-inside .catalog-tabs__group {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: #54346833;
+  border: 1px solid #f0d4ff66;
+  border-radius: 50px;
+}
+
+.app.app--web .gnh-inside .catalog-tabs__btn {
+  min-width: 116px;
+  padding: 9px 22px;
+  border-radius: 40px;
+  background: none;
+  color: #eadbf1;
+  font-size: 14px;
+}
+
+.app.app--web .gnh-inside .catalog-tabs__btn--active {
+  background: linear-gradient(110deg, #cb9aed8c, #e3b7e76b);
+  color: white;
+  box-shadow: inset 0 1px 2px #fff4;
+}
+
+.app.app--web .gnh-inside .games-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.app.app--web .gnh-inside .comics-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.app.app--web .gnh-inside .games-grid__card,
+.app.app--web .gnh-inside .card-entry-page__card,
+.app.app--web .gnh-inside .hero-game-card {
+  border: 1px solid #f6dfffad !important;
+  border-radius: 21px !important;
+  background: #2c1e3c !important;
+  box-shadow: 0 8px 23px #442a5b2b !important;
+  overflow: hidden;
+  color: #fff8ff;
+}
+
+.app.app--web .gnh-inside .card-entry-page__card-image-wrap {
+  height: 161px;
+}
+
+.app.app--web .gnh-inside .card-entry-page__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.app.app--web .gnh-inside .card-entry-page__card-image-wrap {
+  height: 205px;
+}
+
+.app.app--web .gnh-inside .games-grid__title,
+.app.app--web .gnh-inside .card-entry-page__card-title {
+  color: #fff8ff;
+  font-size: clamp(16px, 1.35vw, 18px);
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
+  white-space: normal;
+}
+
+.app.app--web .gnh-inside .games-grid__desc,
+.app.app--web .gnh-inside .card-entry-page__card-desc {
+  color: #f5eafa;
+}
+
+.app.app--web .gnh-inside .card-entry-page__card-body {
+  background: linear-gradient(130deg, #3e2b4f, #2f233e);
+}
+
+.app.app--web .gnh-inside .games-grid:not(.comics-grid) .games-grid__card--image {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  aspect-ratio: auto;
+  height: auto;
+  min-height: 0;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 3 / 4;
+  height: auto;
+  min-height: 0;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__media {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  aspect-ratio: auto;
+  border-radius: inherit;
+}
+
+.app.app--web .gnh-inside .games-grid:not(.comics-grid) .games-grid__card-image-wrap {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  background: #2a1c3c;
+  border-radius: inherit;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.app.app--web .gnh-inside .games-grid:not(.comics-grid) .games-grid__card-image-wrap .smart-image__img {
+  object-fit: contain !important;
+  object-position: 50% 50% !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__media .smart-image__img {
+  object-fit: cover !important;
+  object-position: center 30%;
+}
+
+.app.app--web .gnh-inside .games-grid:not(.comics-grid) .games-grid__card-body {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(180deg, #2a1c3c 0%, #241832 100%) !important;
+  border-top: 0;
+  padding: 14px 12px 12px;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__body {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(180deg, transparent 0%, #160f22e6 46%) !important;
+  border-top: 0;
+  padding: 48px 12px 12px;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 48% 12px 12px;
+  background: linear-gradient(180deg, transparent 0%, transparent 40%, rgba(22, 15, 34, 0.35) 70%, rgba(22, 15, 34, 0.92) 100%) !important;
+}
+
+.app.app--web .gnh-inside .comics-page .comics-grid__media.games-grid__card-image-wrap::after {
+  background: none;
+}
+
+.app.app--web .gnh-inside .comics-grid__lock {
+  background: none;
+}
+
+.app.app--web .gnh-inside .comics-grid__lock-icon {
+  display: none;
+}
+
+.app.app--web .gnh-inside .games-grid:not(.comics-grid) .games-grid__desc,
+.app.app--web .gnh-inside .comics-grid .comics-grid__subtitle,
+.app.app--web .gnh-inside .comics-grid .comics-grid__pages {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__body::before,
+.app.app--web .gnh-inside .comics-grid .comics-grid__kind {
+  display: none;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__subtitle {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: #f5eafa;
+}
+
+.app.app--web .gnh-inside .comics-grid .comics-grid__cta {
+  align-self: flex-start;
+  width: auto;
+  margin-top: 8px;
+  padding: 4px 10px;
+}
+
+.app.app--web .gnh-inside .hero-game-card.games-grid__card--image {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: auto;
+}
+
+.app.app--web .gnh-inside .hero-game-card .hero-game-card__media {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  background: #2a1c3c;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  aspect-ratio: var(--gnh-aspect-desktop, 2098 / 749);
+}
+
+.app.app--web .gnh-inside .hero-game-card--responsive .hero-game-card__media {
+  height: auto;
+  max-height: none;
+  aspect-ratio: var(--gnh-aspect-desktop, 2098 / 749);
+}
+
+@media (max-width: 640px) {
+  .app.app--web .gnh-inside .hero-game-card--responsive .hero-game-card__media {
+    height: auto;
+    max-height: none;
+    aspect-ratio: var(--gnh-aspect-mobile, 1536 / 1024);
+  }
+}
+
+.app.app--web .gnh-inside .hero-game-card .hero-game-card__media .smart-image__img,
+.app.app--web .gnh-inside .hero-game-card--responsive .hero-game-card__responsive-art > img {
+  object-fit: contain !important;
+  object-position: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+.app.app--web .gnh-inside .hero-game-card--responsive .hero-game-card__responsive-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.app.app--web .gnh-inside .deck-select-page__list {
+  display: grid;
+  gap: 12px;
+}
+
+.app.app--web .gnh-inside .deck-select-page__card {
+  border: 1px solid #f4deff80 !important;
+  border-radius: 24px !important;
+  background: linear-gradient(140deg, #53346d7a, #5e3a7752) !important;
+  box-shadow: inset 0 1px 1px #fff3, 0 9px 28px #3c23551c !important;
+  backdrop-filter: blur(18px);
+}
+
+.app.app--web .gnh-inside .deck-select-page__card-link {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  width: 100%;
+  padding: 19px 21px;
+  text-align: left;
+  color: #fff8ff;
+  background: none;
+}
+
+.app.app--web .gnh-inside .deck-select-page__card-title,
+.app.app--web .gnh-inside .deck-select-page__card-desc,
+.app.app--web .gnh-inside .deck-select-page__count {
+  color: #fff8ff;
+}
+
+.app.app--web .gnh-inside .deck-select-page__card-desc {
+  color: #f5eafa;
+  white-space: normal;
+}
+
+.app.app--web .gnh-inside .deck-select-page__card-head,
+.app.app--web .gnh-inside .deck-select-page__card-body {
+  min-width: 0;
+}
+
+.app.app--web .gnh-inside .deck-select-page__card-title,
+.app.app--web .gnh-inside .deck-select-page__card-desc {
+  overflow-wrap: anywhere;
+  hyphens: none;
+  word-break: normal;
+}
+
+.app.app--web .gnh-inside .deck-select-page__card-meta {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.app.app--web .gnh-inside .profile-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.app.app--web .gnh-inside .profile-identity,
+.app.app--web .gnh-inside .profile-pass,
+.app.app--web .gnh-inside .profile-menu__panel,
+.app.app--web .gnh-inside .favorites-page__card,
+.app.app--web .gnh-inside .favorites-page__empty,
+.app.app--web .gnh-inside .premium-page__card,
+.app.app--web .gnh-inside [class*="__panel"],
+.app.app--web .gnh-inside .game-page__panel,
+.app.app--web .gnh-inside .alias-page__panel,
+.app.app--web .gnh-inside .mafia-page__panel {
+  border: 1px solid #f4deff80 !important;
+  border-radius: 24px !important;
+  background: linear-gradient(140deg, #53346d7a, #5e3a7752) !important;
+  box-shadow: inset 0 1px 1px #fff3, 0 9px 28px #3c23551c !important;
+  color: #fff8ff;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.app.app--web .gnh-inside .profile-identity {
+  text-align: center;
+  padding: 22px 18px;
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.app.app--web .gnh-inside .profile-pass:not(.profile-pass--email),
+.app.app--web .gnh-inside .profile-pass--email {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.app.app--web .gnh-inside .profile-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  grid-column: auto;
+  grid-row: auto;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .app.app--web .gnh-inside .profile-shell {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .app.app--web .gnh-inside .profile-identity {
+    text-align: center;
+    padding: 29px 25px;
+    grid-column: 1;
+    grid-row: 1 / span 4;
+  }
+
+  .app.app--web .gnh-inside .profile-pass:not(.profile-pass--email) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .app.app--web .gnh-inside .profile-pass--email {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .app.app--web .gnh-inside .profile-aside {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}
+
+.app.app--web .gnh-inside .profile-pass,
+.app.app--web .gnh-inside .profile-menu {
+  padding: 8px 4px;
+}
+
+.app.app--web .gnh-inside .profile-pass__cta,
+.app.app--web .gnh-inside .play-page__cta,
+.app.app--web .gnh-inside .game-page__btn:not(.game-page__btn--secondary),
+.app.app--web .gnh-inside .game-page__cta,
+.app.app--web .gnh-inside .premium-overlay__btn--buy,
+.app.app--web .gnh-inside .alias-home__start,
+.app.app--web .gnh-inside .btn--primary {
+  color: white !important;
+  border: 1px solid #ffe8ffad !important;
+  border-radius: 50px !important;
+  background: linear-gradient(110deg, #f0aef5, #c18aef 56%, #a98be9) !important;
+  box-shadow: inset 0 2px 4px #fff7, 0 4px 22px #e39ced5b !important;
+  min-height: 47px;
+}
+
+.app.app--web .gnh-inside .profile-pass__email-input,
+.app.app--web .gnh-inside .premium-offer__field input,
+.app.app--web .gnh-inside .field input,
+.app.app--web .gnh-inside .game-page__input,
+.app.app--web .gnh-inside .mafia-page__input,
+.app.app--web .gnh-inside input[type="text"],
+.app.app--web .gnh-inside input[type="email"],
+.app.app--web .gnh-inside input[type="search"],
+.app.app--web .gnh-inside textarea {
+  background: #533d6727 !important;
+  border: 1px solid #f4daff7a !important;
+  border-radius: 13px !important;
+  color: white !important;
+}
+
+.app.app--web .gnh-inside .premium-overlay__plan {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  border: 1px solid #f5deff72 !important;
+  border-radius: 17px !important;
+  background: #e4c6f014 !important;
+  color: #fff8ff !important;
+}
+
+.app.app--web .gnh-inside .premium-overlay__plan--selected,
+.gnh-inside-portal .premium-overlay__plan--selected {
+  background: linear-gradient(110deg, #e6b8f241, #dcb6f330) !important;
+  border-color: #fff1ffc9 !important;
+}
+.app.app--web .gnh-inside .premium-overlay__heading-text,
+.gnh-inside-portal .premium-overlay__heading-text {
+  background: linear-gradient(95deg, #e0b7ff, #fff1d6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 43px;
+}
+
+.app.app--web .gnh-inside .play-page {
+  max-width: 775px !important;
+  margin-inline: auto !important;
+}
+
+.app.app--web .gnh-inside .play-card,
+.app.app--web .gnh-inside .quiz-question__card,
+.app.app--web .gnh-inside .truth-dare-card {
+  min-height: 355px;
+  border-radius: 31px !important;
+  border: 1px solid #f4deff80 !important;
+  background:
+    radial-gradient(ellipse at 50% 0%, #f6deff2e, transparent 75%),
+    linear-gradient(135deg, #eed9ff33, #efddff13) !important;
+  box-shadow: inset 0 1px 2px #fff4, 0 10px 35px #5b36782b !important;
+}
+
+.app.app--web .gnh-inside .play-card__text,
+.app.app--web .gnh-inside .quiz-question__text,
+.app.app--web .gnh-inside .truth-dare-card__text,
+.app.app--web .gnh-inside .activity-play__prompt,
+.app.app--web .gnh-inside [class*="question__text"],
+.app.app--web .gnh-inside [class*="card__text"] {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  color: #fffbff;
+}
+
+.app.app--web .gnh-inside .play-card__text {
+  font-size: 33px;
+  line-height: 1.45;
+  letter-spacing: -1px;
+  font-weight: 500;
+  max-width: 640px;
+}
+
+.app.app--web .gnh-inside .play-page__progress-bar,
+.app.app--web .gnh-inside .quiz-question__progress {
+  height: 5px;
+  background: #f7e6ff38;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.app.app--web .gnh-inside .play-page__progress-fill {
+  background: linear-gradient(90deg, #f9c3f5, #d0a4ff, #d8d4ff) !important;
+}
+
+.app.app--web .gnh-inside .play-page__actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  max-width: none;
+  gap: 12px;
+}
+
+.app.app--web .gnh-inside .play-page__prev-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+  background: none;
+  color: #f3deff;
+}
+
+.app.app--web .gnh-inside .favorites-page__list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  list-style: none;
+  padding: 0;
+}
+
+.app.app--web .gnh-inside .favorites-page__card {
+  position: relative;
+  padding: 15px;
+}
+
+.app.app--web .gnh-inside .favorites-page__card-link {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  color: #fff8ff;
+}
+
+.app.app--web .gnh-inside .favorites-page__thumb-wrap {
+  width: 125px;
+  height: 126px;
+  flex-shrink: 0;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.app.app--web .gnh-inside .favorites-page__desc,
+.app.app--web .gnh-inside .favorites-page__empty-text,
+.app.app--web .gnh-inside .favorites-page__empty-hint {
+  color: #f5eafa;
+  hyphens: none;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.app.app--web .gnh-inside .favorites-page__empty {
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.app.app--web .gnh-inside .game-page__category-card.is-active,
+.app.app--web .gnh-inside .truth-dare-setup__category-card.is-active {
+.app.app--web .gnh-inside .is-active {
+  background: linear-gradient(115deg, #dca8ef79, #d7b4ee4d) !important;
+  border-color: #ffebffbf !important;
+  color: white !important;
+  box-shadow: 0 0 17px #e1b0f52b;
+}
+
+.app.app--web .gnh-inside .game-page__chip,
+.app.app--web .gnh-inside .alias-page__chip,
+.app.app--web .gnh-inside .mafia-page__chip,
+.app.app--web .gnh-inside .quiz-room-setup__count-btn {
+  min-width: 42px;
+  min-height: 41px;
+  border: 1px solid #eed4ff6e !important;
+  border-radius: 13px !important;
+  background: #d7b3f012 !important;
+  color: #fff8ff !important;
+}
+
+.app.app--web .gnh-inside .alias-home__actions,
+.app.app--web .gnh-inside .mafia-page__actions,
+.app.app--web .gnh-inside .game-page__actions,
+.app.app--web .gnh-inside .quiz-home__actions,
+.app.app--web .gnh-inside .activity-home__actions,
+.app.app--web .gnh-inside .truth-dare-setup__actions,
+.app.app--web .gnh-inside .sabotage-setup__actions {
+  position: static;
+  margin-top: 18px;
+  padding-bottom: 12px;
+}
+
+.app.app--web .gnh-inside [class$="__top"] {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.app.app--web .gnh-inside [class$="__back"],
+.app.app--web .gnh-inside .back-btn {
+  border: 1px solid #efd9fa60 !important;
+  border-radius: 30px !important;
+  background: #dac1ec12 !important;
+  color: #fff8ff !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: hidden;
+}
+
+@media (min-width: 901px) {
+  .app.app--web .gnh-inside .alias-home {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .app.app--web .gnh-inside .alias-home > .alias-page__top {
+    grid-column: 1 / -1;
+  }
+
+  .app.app--web .gnh-inside .alias-home > .alias-home__how {
+    grid-column: 1;
+    grid-row: 2 / span 8;
+    position: sticky;
+    top: 22px;
+  }
+
+  .app.app--web .gnh-inside .alias-home > :not(.alias-page__top):not(.alias-home__how) {
+    grid-column: 2;
+  }
+}
+
+  .app.app--web .gnh-inside .games-grid:not(.comics-grid),
+  .app.app--web .gnh-inside .comics-grid {
+  .app.app--web .gnh-inside .games-grid:not(.comics-grid) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app.app--web .gnh-inside .profile-shell {
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+}
+
+  .app.app--web .gnh-inside .premium-page__content,
+  .gnh-inside-portal .premium-overlay__card,
+  .app.app--web .gnh-inside .profile-shell,
+  .app.app--web .gnh-inside .alias-home {
+    display: block;
+    grid-template-columns: none;
+  }
+
+  .app.app--web .gnh-inside .card-entry-page__card-image-wrap {
+    height: 165px;
+  }
+}
+#root .app.app--web .gnh-inside .hero-game-card__content {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: 2;
+  padding: 14px 16px 16px;
+  background: linear-gradient(180deg, #2a1c3c 0%, #241832 100%) !important;
+  color: #fff8ff !important;
+}
+
+#root .app.app--web .gnh-inside .hero-game-card__title,
+#root .app.app--web .gnh-inside .hero-game-card__desc,
+#root .app.app--web .gnh-inside .alias-page__section-title,
+#root .app.app--web .gnh-inside .alias-home__category-title,
+#root .app.app--web .gnh-inside .alias-home__how-list,
+#root .app.app--web .gnh-inside .alias-home__section-hint,
+#root .app.app--web .gnh-inside .profile-menu__title,
+#root .app.app--web .gnh-inside .profile-menu__label-main,
+#root .app.app--web .gnh-inside .profile-menu__label-sub,
+#root .app.app--web .gnh-inside .profile-pass__eyebrow,
+#root .app.app--web .gnh-inside .profile-pass__title,
+#root .app.app--web .gnh-inside .profile-pass__desc,
+#root .app.app--web .gnh-inside .premium-overlay__include-text,
+#root .app.app--web .gnh-inside .premium-overlay__include-title {
+  color: #fff8ff !important;
+}
+
+#root .app.app--web .gnh-inside .deck-select-page__favorites {
+  display: inline-flex;
+  color: #fff8ff !important;
+  background: #dac1ec22 !important;
+  border: 1px solid #efd9fa60 !important;
+  border-radius: 30px;
+  padding: 8px 16px;
+}
+
+
+@media (max-width: 760px) {
+  .app.app--web .gnh-inside .header-nav button {
+    display: none;
+  }
+  .app.app--web .gnh-inside .games-grid:not(.comics-grid),
+  .app.app--web .gnh-inside .games-grid,
+  .app.app--web .gnh-inside .comics-grid,
+  .app.app--web .gnh-inside .card-entry-page__grid,
+  .app.app--web .gnh-inside .favorites-page__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .app.app--web .gnh-inside .favorites-page__list {
+    grid-template-columns: 1fr;
+    height: 132px;
+  }
+
+  .app.app--web .gnh-inside .card-entry-page__card-image-wrap {
+    height: 160px;
+  }
+
+  .app.app--web .gnh-inside .play-card__text {
+    font-size: 27px;
+    line-height: 1.48;
+    letter-spacing: -0.6px;
+  }
+
+  .app.app--web .gnh-inside .play-card {
+    min-height: 340px;
+    border-radius: 27px !important;
+  }
+
+  .app.app--web .gnh-inside .play-page__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .app.app--web .gnh-inside .deck-select-page__card-link {
+    padding: 17px 15px;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .app.app--web .gnh-inside .profile-identity {
+    text-align: left;
+  }
+}
+.app.app--web .gnh-inside .header-nav button {
+  font-size: 14px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 50px;
+  background: none;
+  color: inherit;
+}
+
+.app.app--web .gnh-inside .header-nav button.active {
+  background: linear-gradient(110deg, #c596ef73, #e4afde57);
+  border-color: #f2d5ff6e;
+  box-shadow: inset 0 1px 1px #fff3, 0 0 20px #ca91ec22;
+}
+
+.app.app--web .gnh-inside .premium-heading > div,
+.app.app--web .gnh-inside .heading-row > div {
+  min-width: 0;
+}
+
+.app.app--web .gnh-inside .page-title {
+  width: auto;
+  max-width: 100%;
+}
+
+.app.app--web .gnh-inside .identity-card .avatar {
+  overflow: hidden;
+}
+
+.app.app--web .gnh-inside .identity-card .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app.app--web .gnh-inside .plans-panel .field {
+  margin-bottom: 16px;
+}
+
+.app.app--web .gnh-inside .plans-panel .restore-link {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.app.app--web .gnh-inside .comic-reader__stage,
+.app.app--web .gnh-inside .comic-reader__frame {
+  flex: none;
+  width: 100%;
+  min-height: 0;
+}
+
+.app.app--web .gnh-inside .comic-reader__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app.app--web .gnh-inside .comic-reader__img {
+  width: auto;
+  height: auto;
+  max-width: min(100%, 640px);
+  max-height: min(72vh, 860px);
+  object-fit: contain;
+}
+
+.app.app--web .gnh-inside .document-list button {
+  display: block;
+  width: 100%;
+  padding: 2px 0;
+  background: none;
+  text-align: left;
+  color: #ebdcf2;
+  font-size: 13px;
+}
+
+.app.app--web .gnh-inside .premium-page__status,
+.app.app--web .gnh-inside .plans-panel .premium-overlay__error,
+.app.app--web .gnh-inside .plans-panel .premium-overlay__success,
+.app.app--web .gnh-inside .plans-panel .premium-overlay__toast,
+.app.app--web .gnh-inside .plans-panel .premium-offer__error,
+.app.app--web .gnh-inside .plans-panel .premium-overlay__plans-loading,
+.app.app--web .gnh-inside .profile-pass__toast {
+  color: #fff6ff;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .app.app--web .gnh-inside .crystal,
+  .app.app--web .gnh-inside .premium-overlay__diamond {
+    animation: none !important;
+  }
+}

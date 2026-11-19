@@ -67,9 +67,9 @@ body {
   overscroll-behavior: none;
 }
 
-/* Headings: Unbounded */
+/* Headings: system UI first so Cyrillic У stays normal (Unbounded has a long-stem У). */
 h1, h2, .font-heading {
-  font-family: "Unbounded", "Manrope", system-ui, sans-serif;
+  font-family: "Segoe UI", "Helvetica Neue", Manrope, system-ui, sans-serif;
 }
 
 /* Buttons: Manrope 600 */

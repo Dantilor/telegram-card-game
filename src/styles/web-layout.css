@@ -1,0 +1,2669 @@
+/* WEB layout scale. Home portal art and game logic stay as they are.
+   Tokens live on .app.app--web in web-tokens.css. */
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .wrap,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .header-inner,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .app-footer {
+  width: min(100%, var(--web-container));
+  max-width: var(--web-container);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--web-pad);
+  padding-right: var(--web-pad);
+  box-sizing: border-box;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside {
+  font-size: var(--web-text);
+  line-height: var(--web-line);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .app-header {
+  color: #fff8ff;
+  /* Same mauve as the lower page field under modes/catalog. */
+  background: linear-gradient(
+    110deg,
+    rgba(138, 115, 160, 0.94),
+    rgba(148, 124, 170, 0.9) 55%,
+    rgba(138, 115, 160, 0.94)
+  );
+  border-color: rgba(241, 222, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 22px rgba(48, 28, 72, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .header-inner {
+  height: var(--web-header-h);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header .header-inner {
+  width: min(100%, var(--web-container));
+  max-width: var(--web-container);
+  gap: 16px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .brand,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .brand {
+  gap: 12px;
+  font-size: 22px;
+  line-height: 1.15;
+  color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .brand img,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .brand img {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .desktop-nav,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .header-nav {
+  gap: 8px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .nav-link,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .header-nav a,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .header-nav button {
+  font-size: 16px;
+  line-height: 1.2;
+  color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .nav-link[data-nav="catalog"] {
+  min-width: 0;
+  padding: 10px 18px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .premium-button,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-nav {
+  padding: 10px 18px;
+  border: 1px solid #ffe3bf;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #f6d7b4 0%, #e7c0ee 100%);
+  color: #3a2148;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: 0 6px 16px rgba(120, 60, 110, 0.22);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .premium-button svg,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-nav svg {
+  color: #3a2148;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref :is(h1, h2, h3, h4, .game-title, .font-heading),
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
+  font-family: GNHHomeReference, "Segoe UI", Arial, sans-serif;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(h1, h2, h3, h4, .games-grid__title, .hero-game-card__title, .font-heading),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside {
+  font-family: GNHInsideReference, "Segoe UI", Arial, sans-serif;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero h1 {
+  font-size: var(--web-hero-title);
+  line-height: 1.12;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .section-heading h2,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading h2 {
+  font-size: var(--web-section-title);
+  line-height: 1.2;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .catalog-section,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .new-section,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-section {
+  padding-top: var(--web-section-gap);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-section {
+  padding-bottom: var(--web-section-gap);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-grid,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .new-grid,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-grid,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-grid {
+  gap: var(--web-card-gap);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-grid__card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-tile,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid article {
+  border-radius: var(--web-radius);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-open,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid article,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .tile-body {
+  padding: var(--web-card-pad);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-grid__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .hero-game-card__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .tile-heading,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__title {
+  font-size: var(--web-card-title);
+  line-height: 1.2;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-metadata,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span:not(.mood-lock),
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid p,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .premium-copy p,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-grid__desc,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .hero-game-card__desc,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .tile-description,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .breadcrumb,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .lead,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page-header__tagline,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__subtitle,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__pages {
+  font-size: var(--web-caption);
+  line-height: 1.4;
+  color: #fff6ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid article {
+  background: linear-gradient(180deg, rgba(54, 34, 76, 0.86), rgba(42, 26, 60, 0.8));
+  border-color: rgba(241, 222, 255, 0.45);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid h3 {
+  font-size: 20px;
+  line-height: 1.25;
+  color: #fff8ff;
+  background: none;
+  -webkit-text-fill-color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood {
+  background: linear-gradient(180deg, rgba(54, 34, 76, 0.78), rgba(42, 26, 60, 0.72));
+  border-color: rgba(241, 222, 255, 0.4);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span:not(.mood-lock) {
+  color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page-header__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .page-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .favorites-page__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page__title {
+  font-size: var(--web-hero-title);
+  line-height: 1.15;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .button {
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .button-small,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .filter,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .catalog-count {
+  font-size: var(--web-caption);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .glass {
+  background: linear-gradient(145deg, rgba(54, 34, 76, 0.78), rgba(42, 26, 60, 0.7));
+  border-color: rgba(244, 222, 255, 0.45);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content {
+  padding-top: var(--web-section-gap);
+}
+
+@media (min-width: 1024px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .brand,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .brand {
+    font-size: 26px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .brand img,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .brand img {
+    width: 48px;
+    height: 48px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .desktop-nav {
+    gap: 18px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1099px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-grid,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .new-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .desktop-nav {
+    display: none;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .menu-button {
+    display: grid;
+    place-items: center;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-menu {
+    top: calc(var(--web-header-h) + 8px);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-menu a,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-menu button.nav-link {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside h1,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .page-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page-header__title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .favorites-page__title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page__title {
+    font-size: 28px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-copy {
+    max-width: none;
+    width: 100%;
+    z-index: 2;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .gnh-asset-hero__visual {
+    max-height: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .gnh-asset-hero__visual .gnh-responsive-art {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .gnh-asset-hero__visual .gnh-responsive-art > img {
+    object-fit: contain !important;
+    object-position: center !important;
+    transform: none !important;
+  }
+
+  /* Popular / New section titles — light, not black uppercase slabs. */
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .section-heading {
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .section-heading h2 {
+    font-size: clamp(24px, 6.2vw, 28px) !important;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-transform: none !important;
+    color: #f7f0ff !important;
+    text-shadow: 0 1px 8px rgba(36, 16, 60, 0.28);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .all-games-link {
+    flex-shrink: 0;
+    gap: 4px;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #ead8ff;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .all-games-link svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav a,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav button,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav a,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button {
+    min-width: 0;
+    flex: 1 1 0;
+    font-size: 12px;
+    line-height: 1.15;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-grid {
+    gap: 12px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    margin: 0;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* Home: shorter hero so Popular starts on a normal desktop screen.
+   Portal art stays full width; copy sits on the left. */
+@media (min-width: 761px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) {
+    height: clamp(300px, 32vh, 380px);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero {
+    height: auto;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-art,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-shade {
+    bottom: 0;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-copy {
+    max-width: min(540px, 43%);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) .hero-copy {
+    max-width: min(520px, 48%);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero h1 {
+    font-size: clamp(44px, 3.5vw, 52px);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-play {
+    height: 52px;
+    min-width: 196px;
+    margin-top: 16px;
+    padding: 0 22px;
+    font-size: 18px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section {
+    align-items: flex-end;
+    margin-top: -48px;
+    padding-bottom: 4px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .moods {
+    flex-wrap: nowrap;
+    overflow: visible;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    height: 96px;
+    min-height: 96px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .catalog-section {
+    padding-top: 24px;
+  }
+}
+
+/* Games catalog only. Comics and other interiors keep their own cards. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) .games-grid__card--image {
+  aspect-ratio: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) .games-grid__card-image-wrap {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  flex: none;
+  background: #2a1c3c;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) .games-grid__card-image-wrap .smart-image__img {
+  object-fit: contain !important;
+  object-position: 50% 50% !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__card-image-wrap::after {
+  background: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) .games-grid__card-body {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 14px 16px;
+  background: linear-gradient(180deg, #2a1c3c 0%, #241832 100%) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__title {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  min-height: 0;
+  font-size: var(--web-card-title);
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__desc {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  min-height: 2.8em;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #f6eefc;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-card-badge {
+  padding: 3px 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card.games-grid__card--image {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: auto;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .hero-game-card__media {
+  position: relative !important;
+  inset: auto !important;
+  width: 100%;
+  overflow: hidden;
+  background: #2a1c3c;
+}
+
+/* Desktop: native wide art ratio (2098×749) — height follows file ratio. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .hero-game-card__media,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__media {
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  aspect-ratio: var(--gnh-aspect-desktop, 2098 / 749) !important;
+}
+
+@media (min-width: 768px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card {
+    display: flex !important;
+    grid-template-columns: none !important;
+    flex-direction: column !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .hero-game-card__media,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__media {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    aspect-ratio: var(--gnh-aspect-desktop, 2098 / 749) !important;
+  }
+}
+
+/* Phone: native mobile art ratio (1536×1024 / 3:2). */
+@media (max-width: 640px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__media {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    aspect-ratio: var(--gnh-aspect-mobile, 1536 / 1024) !important;
+  }
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__title {
+  font-size: clamp(28px, 2.5vw, 36px);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__responsive-art {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .hero-game-card__media .smart-image__img,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__responsive-art > img {
+  object-fit: contain !important;
+  object-position: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .games-page .hero-game-card__content {
+  position: relative;
+  padding: 10px 14px 12px;
+  background: linear-gradient(180deg, #2a1c3c 0%, #241832 100%) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card__title {
+  font-size: clamp(28px, 2.5vw, 36px);
+  line-height: 1.12;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
+}
+
+@media (max-width: 640px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card__title {
+    font-size: clamp(24px, 5.5vw, 28px);
+  }
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card__desc {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__card--ready,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__card--ready:hover,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card:hover {
+    transform: translateY(-4px);
+    border-color: #ffe6ff !important;
+    box-shadow: 0 14px 28px rgba(42, 20, 64, 0.28) !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .smart-image__img {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 1199px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Profile and Premium sales page. Other interiors keep their own layout. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page {
+  width: min(100%, 1200px);
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-grid {
+  align-items: start;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .access-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 6px 16px;
+  align-items: center;
+  padding: 22px 24px;
+  background: linear-gradient(125deg, rgba(228, 181, 244, 0.46), rgba(240, 201, 221, 0.18));
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .access-card .crystal {
+  grid-row: 1 / span 2;
+  width: 96px;
+  height: 96px;
+  margin: 0;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .access-card__status {
+  margin-top: 4px;
+  color: #ffe7b8;
+  font-size: 15px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .access-card__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .access-card__actions .button,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .email-row .button,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .telegram-card .button {
+  min-height: 48px;
+  margin-left: 0;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .email-bound__address {
+  margin-top: 14px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .email-bound__state {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #f6e7ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .telegram-card {
+  padding: 20px 24px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .telegram-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .telegram-card h2 {
+  font-size: 20px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .telegram-card__status {
+  margin-top: 4px;
+  font-size: 15px;
+  color: #eadcf4;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .telegram-card__status.is-on {
+  color: #ffe7b8;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff6ff;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-perks {
+  display: grid;
+  gap: 12px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-perks li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-perks li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f0c4ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-heading .crystal {
+  display: block;
+  width: 132px;
+  height: 132px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .plans-panel .plan {
+  min-height: 76px;
+  padding: 18px 16px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .plans-panel .plan-title {
+  font-size: 18px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .plans-panel .plan-note,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .plans-panel .consent {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .consent-links {
+  display: block;
+  margin-top: 6px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .plans-panel .plan-price {
+  font-size: 28px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .plans-panel .field input {
+  min-height: 48px;
+  font-size: 16px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-pay {
+  width: 100%;
+  min-height: 52px;
+  font-size: 18px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-pay:disabled {
+  opacity: 0.58;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-pay[aria-busy="true"] {
+  opacity: 0.9;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-catalog-status {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (min-width: 1024px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-grid {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .identity-card {
+    position: sticky;
+    top: 24px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-layout {
+    grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .plans-panel {
+    max-height: calc(100dvh - 140px);
+    overflow: auto;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-pay {
+    position: sticky;
+    bottom: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-grid,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Mode lists and game screens. Rules, cards and room state stay as they are. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .game-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .alias-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .mafia-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .sled-root,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .doubles,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .infected-game {
+  width: min(100%, 1160px) !important;
+  max-width: 1160px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page {
+  width: min(100%, 780px) !important;
+  max-width: 780px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  min-height: 0;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__list {
+  gap: 12px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card-link {
+  min-height: 96px;
+  padding: 16px 22px;
+  gap: 16px;
+  align-items: center;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__chip {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 28px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card-title {
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card-desc {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card-meta {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-items: flex-end;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__count {
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 15px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__badge {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__favorites {
+  min-height: 40px;
+  font-size: 15px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 236, 255, 0.95) !important;
+    box-shadow: 0 16px 34px rgba(42, 20, 64, 0.3) !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-card:hover,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-card:hover {
+    transform: translateY(-3px);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__fav-btn:hover:not(:disabled),
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__prev-btn:hover:not(:disabled) {
+    border-color: rgba(255, 236, 255, 0.95) !important;
+    background: rgba(255, 248, 255, 0.1) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__section-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-page__section-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__section-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__how-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__how-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__how-list,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__how-list,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__section-hint,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__section-hint,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-hint,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-hint,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-title {
+  color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__header {
+  margin-bottom: 10px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__title {
+  font-size: clamp(28px, 2.2vw, 36px);
+  background: linear-gradient(95deg, #e0b7ff, #fff1d6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__progress-bar,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__progress {
+  height: 10px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__progress-text {
+  font-size: 18px;
+  color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__progress-current {
+  font-size: 22px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card-wrap {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 8px auto 16px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card {
+  min-height: 240px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card__inner {
+  padding: 36px 48px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card__text {
+  max-width: none;
+  font-size: clamp(30px, 2.1vw, 38px) !important;
+  line-height: 1.32;
+  font-weight: 600;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card__text--long {
+  font-size: clamp(24px, 1.7vw, 30px) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px;
+  width: 100%;
+  max-width: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__cta {
+  grid-column: 1 / -1;
+  min-height: 52px;
+  font-size: 18px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__fav-btn,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__prev-btn,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__btn--secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 240, 255, 0.55) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #fff8ff !important;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+  isolation: auto;
+  filter: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__fav-btn::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__fav-btn::after,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__prev-btn::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__prev-btn::after {
+  content: none !important;
+  display: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__prev-btn {
+  grid-column: auto;
+  justify-self: stretch;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__fav-btn--active {
+  border-color: rgba(255, 224, 138, 0.95) !important;
+  background: rgba(255, 214, 120, 0.2) !important;
+  color: #ffe7a8 !important;
+  box-shadow: 0 0 18px rgba(255, 214, 120, 0.28) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__answers,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .truth-dare-card__card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .truth-dare-card__actions {
+  width: min(100%, 820px);
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .truth-dare-card__card {
+  flex: 0 0 auto;
+  min-height: 180px;
+  max-height: none;
+  padding: 28px 36px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__text,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .truth-dare-card__text,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .activity-play__prompt {
+  font-size: clamp(26px, 2vw, 34px);
+  line-height: 1.35;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__answer {
+  min-height: 52px;
+  font-size: 17px;
+  border-radius: 16px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__turn-name {
+  font-size: 22px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__cta,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__btn:not(.game-page__btn--secondary),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__start,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__cta {
+  min-height: 52px;
+  font-size: 18px;
+}
+
+@media (min-width: 761px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page .games-page-header__title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page .games-page-header__title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-page .games-page-header__title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page .games-page-header__title {
+    font-size: clamp(36px, 3vw, 44px);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page .games-page-header__tagline,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page .games-page-header__tagline,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-page .games-page-header__tagline,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page .games-page-header__tagline {
+    font-size: 18px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__section-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-page__section-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__section-title {
+    font-size: 20px;
+    color: #fff8ff;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card__text {
+    font-size: 36px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__how-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__how-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__how-list,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__how-list,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__section-hint,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__section-hint,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-hint,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-hint,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-title {
+    color: #fff8ff;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__how-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__how-title {
+    font-size: 18px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__how-list,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__how-list {
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__chip,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-page__chip,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__chip {
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+    font-size: 18px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__input,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-page__input,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__input {
+    min-height: 52px;
+    font-size: 17px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__participants-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home .game-page__actions,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__actions,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page.mafia-setup .mafia-page__actions {
+    width: min(100%, 520px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__categories,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__categories {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-card,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-card {
+    min-height: 108px;
+    gap: 8px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-emoji,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-emoji {
+    font-size: 30px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__category-title,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__category-title {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-home__categories,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__categories {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card-link {
+    min-height: 88px;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__chip {
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card-title {
+    font-size: 17px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page__card-desc {
+    font-size: 14px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .deck-select-page,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .game-page,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .alias-page,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .mafia-page {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card {
+    min-height: 200px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card__inner {
+    padding: 22px 18px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-card__text,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .quiz-question__text,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .truth-dare-card__text {
+    font-size: 24px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__cta,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__fav-btn,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__prev-btn {
+    grid-column: 1 / -1;
+    min-height: 48px;
+    font-size: 16px;
+  }
+}
+
+/* Point polish: modes, badges, card type, why-cards, back, primary CTA, wordmark. */
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section {
+  position: relative;
+  z-index: 2;
+  align-items: flex-end;
+  margin-top: -48px;
+  padding-top: 10px;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading {
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* Lift title to the mood label row («Вечер вдвоём»). */
+  padding-bottom: 28px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading h2 {
+  background: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  text-shadow: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading h2 {
+  line-height: 1.15;
+  margin: 0;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-shade {
+  inset: 0 0 -44px 0 !important;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 46%,
+    rgba(138, 115, 160, 0.45) 66%,
+    #8a73a0 82%,
+    #8a73a0 100%
+  ) !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  pointer-events: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-asset-hero__visual {
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 48%, rgba(0, 0, 0, 0.42) 68%, transparent 86%) !important;
+  mask-image: linear-gradient(180deg, #000 0%, #000 48%, rgba(0, 0, 0, 0.42) 68%, transparent 86%) !important;
+}
+
+@media (max-width: 640px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero {
+    height: auto !important;
+    min-height: 0 !important;
+    background: transparent !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-inner,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-copy {
+    display: contents !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-shade {
+    display: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 {
+    order: 1;
+    width: calc(100% - 32px) !important;
+    max-width: none !important;
+    margin: 4px auto 6px !important;
+    text-align: center;
+    font-size: clamp(32px, 8.5vw, 38px) !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.03em;
+    color: #f7f2ff;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:first-child,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:last-child {
+    background: linear-gradient(100deg, #ffffff 0%, #f4eaff 42%, #e8d4ff 78%, #fff6ff 100%) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 1px 8px rgba(40, 18, 72, 0.28));
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-subtitle {
+    order: 2;
+    width: calc(100% - 32px) !important;
+    max-width: none !important;
+    margin: 0 auto 10px !important;
+    text-align: center;
+    font-size: clamp(16px, 4.2vw, 18px) !important;
+    font-weight: 500;
+    line-height: 1.3;
+    color: #f3e9ff !important;
+    text-shadow: 0 1px 6px rgba(28, 12, 48, 0.35);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-asset-hero__visual {
+    order: 3;
+    width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    border-radius: 0 !important;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 10%,
+      #000 90%,
+      transparent 100%
+    ) !important;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 10%,
+      #000 90%,
+      transparent 100%
+    ) !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-play {
+    order: 4;
+    width: calc(100% - 40px) !important;
+    max-width: 340px !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    min-width: 0 !important;
+    margin: 8px auto 0 !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-player-count--mobile {
+    margin: 14px auto 0;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section {
+    margin-top: 26px !important;
+  }
+}
+
+/* Atmosphere: no dark upper wash that reads as a strip under modes. */
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .page-atmosphere {
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(138, 115, 160, 0.08) 0%,
+      rgba(186, 163, 207, 0.22) 42%,
+      rgba(237, 208, 232, 0.55) 100%
+    ),
+    url("../pages/gnh-home-ref/assets/ambient.webp") !important;
+  background-size: 100% 100% !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .page-atmosphere::after {
+  background: radial-gradient(ellipse at 94% 92%, rgba(255, 229, 255, 0.28), transparent 60%) !important;
+}
+
+/* Modes sit on the same page mauve — no plate, no border strip. */
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section.wrap,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .moods {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .moods {
+  background: none;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 14px;
+  padding: 4px 2px 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  height: 96px;
+  min-height: 96px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 236, 255, 0.38);
+  background: linear-gradient(180deg, rgba(255, 248, 255, 0.16), rgba(255, 232, 250, 0.07));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 10px 20px rgba(72, 36, 104, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 10px 8px 9px;
+  gap: 6px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood svg.icon {
+  width: 28px;
+  height: 28px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span:not(.mood-lock) {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span.mood-lock {
+  top: 8px;
+  right: 8px;
+  width: auto;
+  max-width: max-content;
+  height: 12px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 236, 255, 0.62);
+  font-size: 6.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fffafc;
+  background: linear-gradient(120deg, rgba(198, 150, 255, 0.72), rgba(138, 92, 220, 0.78));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 2px 8px rgba(96, 48, 150, 0.22);
+  opacity: 1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-card::after {
+  background: linear-gradient(180deg, transparent 46%, rgba(54, 28, 82, 0.18) 64%, rgba(28, 14, 44, 0.78) 100%);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-card {
+  display: flex;
+  flex-direction: column;
+  background: #20172c;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-card::after {
+  display: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-card:hover .game-cover,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-cover,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-cover img,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-cover picture {
+  transform: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-cover {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: #2a1c3c;
+  overflow: hidden;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-cover picture,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-cover img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  object-position: 50% 50%;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-open,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .new-games .game-open {
+  position: relative;
+  aspect-ratio: auto !important;
+  min-height: 0;
+  height: auto;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  padding: 12px 14px 14px;
+  background: linear-gradient(180deg, #2a1c3c 0%, #241832 100%);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.2;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
+  white-space: normal;
+  text-shadow: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-metadata {
+  color: rgba(255, 246, 255, 0.9);
+  text-shadow: none;
+  white-space: normal;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-existing-badges {
+  top: 4px;
+  left: 6px;
+  right: auto;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-card-badge,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-card-badge,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .hero-game-card__badge {
+  padding: 0 5px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  border-radius: 999px;
+  color: #fffaf6;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .all-games-link {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 232, 255, 0.48);
+  background: linear-gradient(160deg, rgba(255, 248, 255, 0.16), rgba(232, 196, 255, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 14px rgba(56, 28, 84, 0.12);
+  color: #fff6ff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  gap: 6px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .all-games-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .all-games-link:hover {
+  color: #ffffff;
+  border-color: rgba(255, 240, 255, 0.72);
+  background: linear-gradient(160deg, rgba(255, 248, 255, 0.24), rgba(236, 204, 255, 0.14));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 8px 18px rgba(96, 48, 150, 0.2);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-card-badge--premium,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-card-badge--premium {
+  background: linear-gradient(135deg, #9a64e2, #6d4bc8);
+  color: #fff8ff;
+  border: 1px solid rgba(255, 236, 255, 0.4);
+  box-shadow: 0 4px 10px rgba(40, 16, 64, 0.28);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-card-badge--new,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-card-badge--new,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .hero-game-card__badge--new {
+  background: linear-gradient(135deg, #1c9a62, #3cbe84);
+  color: #f6fff9;
+  border: 1px solid rgba(230, 255, 240, 0.35);
+  box-shadow: 0 4px 10px rgba(12, 40, 28, 0.22);
+  animation: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .hero-game-card__badge {
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #e2a85a, #c4843a);
+  color: #fffaf2;
+  border: 1px solid rgba(255, 236, 210, 0.4);
+  box-shadow: 0 4px 10px rgba(48, 24, 8, 0.22);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .hero-game-card .games-card-badge--premium {
+  top: 10px;
+  right: 10px;
+  left: auto;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__card-image-wrap .smart-image__img {
+  object-fit: contain !important;
+  object-position: 50% 50% !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .smart-image__img,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .gnh-responsive-art > img {
+  object-fit: contain !important;
+  object-position: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__title {
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 8px rgba(12, 6, 22, 0.35);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card__desc,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__desc {
+  color: #f4e9fb;
+  font-weight: 500;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-heading {
+  align-items: flex-end;
+  margin-bottom: 18px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-lead {
+  margin: 8px 0 0;
+  max-width: 36ch;
+  color: #f3e4ff;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  opacity: 0.92;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid {
+  gap: 18px;
+  align-items: stretch;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid article,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 20px 20px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 232, 255, 0.42);
+  background: linear-gradient(165deg, rgba(86, 50, 122, 0.7), rgba(48, 28, 74, 0.56));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 14px 28px rgba(48, 22, 72, 0.16);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid article::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-card::before {
+  content: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 236, 255, 0.42);
+  background: linear-gradient(145deg, rgba(255, 214, 255, 0.22), rgba(168, 120, 255, 0.16));
+  color: #ffe9ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 18px rgba(214, 148, 255, 0.28);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-card__icon .icon {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  filter: drop-shadow(0 0 8px rgba(255, 210, 255, 0.55));
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid h3 {
+  margin: 0;
+  font-size: clamp(18px, 1.45vw, 22px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: #fff8ff;
+  color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid p {
+  margin: 0;
+  max-width: 38ch;
+  color: #f4e9fb;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 240, 255, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 18px 30px rgba(96, 48, 150, 0.22);
+  }
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .back-btn,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .game-page__back,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .play-page__back-nav,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .play-page__nav-btn,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .games-page__back,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .deck-select-page__back,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .card-entry-page__back,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .alias-page__back,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .mafia-page__back,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .games-page__nav-btn,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .btn.btn--ghost.home-btn[class*="__back"],
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .btn.btn--ghost.home-btn[class*="__nav"] {
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 236, 255, 0.55) !important;
+  background: rgba(255, 248, 255, 0.14) !important;
+  background-image: none !important;
+  color: #fff8ff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+  isolation: auto;
+  filter: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__cta:not(.game-page__cta--premium-locked),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__cta,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__start:not(.alias-home__start--premium-locked),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__cta:not(.mafia-page__cta--premium-locked),
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .button-primary,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-play {
+  border: 1px solid rgba(255, 236, 255, 0.78) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(105deg, #f8c8ff 0%, #d392f6 46%, #9d7af0 100%) !important;
+  background-color: #d392f6 !important;
+  color: #fff !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 22px rgba(186, 110, 230, 0.36) !important;
+  gap: 10px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  isolation: isolate;
+  overflow: hidden !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-play::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-play::after,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .button-primary::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .button-primary::after {
+  content: none !important;
+  display: none !important;
+  width: 0 !important;
+  border: 0 !important;
+  background: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-play svg {
+  display: block;
+  flex-shrink: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__cta:focus-visible,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__cta:focus-visible,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-play:focus-visible {
+  outline: 2px solid #ffe7ff;
+  outline-offset: 3px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .brand > span,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .brand > span {
+  font-size: clamp(22px, 1.7vw, 28px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background-image: linear-gradient(100deg, #f7e9ff 0%, #e7b4ff 38%, #fff1d2 68%, #f7e9ff 100%);
+  background-size: 180% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 0 8px rgba(220, 160, 255, 0.32));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .brand > span,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .brand > span {
+    animation: gnh-wordmark-sheen 9s ease-in-out infinite;
+  }
+}
+
+@keyframes gnh-wordmark-sheen {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 236, 255, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 14px 26px rgba(92, 48, 128, 0.18);
+  }
+
+  html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .back-btn:hover,
+  html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .game-page__back:hover,
+  html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .play-page__back-nav:hover,
+  html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .games-page__back:hover,
+  html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .deck-select-page__back:hover {
+    border-color: rgba(255, 236, 255, 0.85) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 18px rgba(206, 146, 255, 0.4) !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__cta:not(.game-page__cta--premium-locked):hover:not(:disabled),
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page__cta:hover:not(:disabled),
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__start:not(.alias-home__start--premium-locked):hover:not(:disabled),
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-play:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 12px 26px rgba(196, 120, 240, 0.42) !important;
+  }
+}
+
+@media (min-width: 761px) {
+  /* Mild bleed + soft fade so the portal melts into modes without a flat mauve bar. */
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) .hero-art,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) .hero-shade {
+    bottom: -28px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) .hero-art {
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, rgba(0, 0, 0, 0.5) 78%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 52%, rgba(0, 0, 0, 0.5) 78%, transparent 100%);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) .hero-shade {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 58%,
+      rgba(138, 115, 160, 0.18) 80%,
+      rgba(138, 115, 160, 0) 100%
+    );
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section {
+    align-items: flex-end;
+    margin-top: -48px;
+    padding-top: 10px;
+    padding-bottom: 6px;
+    border: none;
+    box-shadow: none;
+    background: transparent !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section {
+    align-items: stretch;
+    margin-top: 26px;
+    padding-top: 0;
+    padding-bottom: 4px;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading {
+    display: block !important;
+    align-self: stretch;
+    padding-bottom: 10px;
+    margin: 0;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading h2 {
+    font-size: clamp(24px, 6.2vw, 28px) !important;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-transform: none !important;
+    color: #f7f0ff !important;
+    text-shadow: 0 1px 8px rgba(36, 16, 60, 0.28);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .moods {
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 8px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood {
+    flex: 0 0 calc((100% - 16px) / 3);
+    min-width: calc((100% - 16px) / 3);
+    max-width: calc((100% - 16px) / 3);
+    height: 84px;
+    min-height: 84px;
+    padding: 8px 4px 6px;
+  }
+
+  /* Profile: force single column on phone WEB. */
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page {
+    width: 100%;
+    max-width: none;
+    padding-inline: 14px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-shell {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-identity,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass--email,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-aside {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    width: 100%;
+    max-width: none;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-identity {
+    padding: 18px 16px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass__perks {
+    flex-wrap: wrap;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span:not(.mood-lock) {
+    font-size: 11px;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span.mood-lock {
+    top: 5px;
+    right: 5px;
+    height: 11px;
+    max-width: calc(100% - 8px);
+    padding: 0 4px;
+    font-size: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .why-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Kill rectangular backdrop plates behind pills / CTAs / catalog tabs. */
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .game-page__actions,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .alias-home__actions,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .mafia-page__actions,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .quiz-home__actions,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .activity-home__actions,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .truth-dare-setup__actions,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .sabotage-setup__actions {
+  background: transparent !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .catalog-tabs__group {
+  overflow: hidden !important;
+  isolation: isolate;
+  border-radius: 999px !important;
+  background: rgba(54, 32, 78, 0.72) !important;
+  border: 1px solid rgba(240, 212, 255, 0.45) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 8px 18px rgba(40, 18, 64, 0.18) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .catalog-tabs__btn {
+  overflow: hidden !important;
+  isolation: isolate;
+  border-radius: 999px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .game-page__cta,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .play-page__cta,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .alias-home__start,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .mafia-page__cta {
+  overflow: hidden !important;
+  isolation: isolate;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .games-page .games-page__top .games-page__nav-btn {
+  overflow: hidden !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  background: rgba(255, 248, 255, 0.14) !important;
+  background-image: none !important;
+  border: 1px solid rgba(255, 236, 255, 0.55) !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+  color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .game-page__cta--premium-locked,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .alias-home__start--premium-locked,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__cta--premium-locked {
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  background: linear-gradient(105deg, #d8a6f0 0%, #b07de8 48%, #8a6ad8 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 20px rgba(140, 80, 200, 0.28) !important;
+}
+
+/* Comics: badges live in the bottom body — keep the cover clear at the top. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__media::after,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-page .comics-grid__media.games-grid__card-image-wrap::after {
+  display: none !important;
+  background: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__body {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 100%;
+  padding: 56% 14px 14px !important;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(24, 14, 40, 0.35) 68%,
+    rgba(22, 12, 36, 0.94) 100%
+  ) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__body::before {
+  display: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__kind {
+  display: inline-flex !important;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 220, 255, 0.35);
+  background: rgba(255, 244, 255, 0.1);
+  color: #f6eaff;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-card-badge {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  height: 18px !important;
+  padding: 0 8px !important;
+  font-size: 10px !important;
+  letter-spacing: 0.04em;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  color: #f3e6fb !important;
+  font-weight: 600;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .smart-image__img {
+  object-fit: cover !important;
+  object-position: center top !important;
+  filter: brightness(1.05) contrast(1.02);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__card::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__card::after,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__media::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+}
+
+/* Hero banners: fill media edge-to-edge (no side letterbox). */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .hero-game-card__media::after {
+  background: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .smart-image__img,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card--responsive .gnh-responsive-art > img {
+  object-position: center !important;
+  object-fit: contain !important;
+  filter: none;
+}
+
+/* Home catalog cards — keep covers brighter, less top shade. */
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-card .smart-image__img,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-open .smart-image__img {
+  filter: brightness(1.06) contrast(1.03);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-card::after,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .game-open::after {
+  background: linear-gradient(180deg, transparent 45%, rgba(18, 10, 30, 0.55) 100%) !important;
+}
+
+/* Soften the leftover band under the portal / modes — no flat mauve plate. */
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section::after,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .catalog-section::before,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) .hero-shade {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 62%,
+    rgba(138, 115, 160, 0.12) 84%,
+    transparent 100%
+  ) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero) .hero-art {
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgba(0, 0, 0, 0.42) 82%, transparent 100%) !important;
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgba(0, 0, 0, 0.42) 82%, transparent 100%) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav {
+  border-color: #3a2a5288 !important;
+  background: linear-gradient(145deg, #1a1228f2, #241832f0 55%, #1c142af5) !important;
+  box-shadow: inset 0 1px 0 #ffffff14, 0 10px 28px #0a0618a6 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav a,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button {
+  color: #cbb6e0;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav a.active,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button.active {
+  color: #e8c6ff;
+}
+
+/* Kill residual rectangular chrome on every back/nav pill. */
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .btn.btn--ghost,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .home-btn,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside [class$="__back"],
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside [class$="__back-nav"],
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .play-page__nav-btn {
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-clip: padding-box !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .btn.btn--ghost::before,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .btn.btn--ghost::after,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .home-btn::before,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .home-btn::after,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside [class$="__back"]::before,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside [class$="__back"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* «Где мы?» — keep original travel postcard styling (pins, folds, shell). */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside:has(.rt-page),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside:has(.rt-play) {
+  background: transparent !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web:has(.gnh-inside .rt-page),
+html[data-gnh-shell="web"] .app.app--web:has(.gnh-inside .rt-play) {
+  background: transparent !important;
+}
+
+html[data-gnh-shell="web"]:has(.gnh-inside .rt-page)::before,
+html[data-gnh-shell="web"]:has(.gnh-inside .rt-play)::before {
+  display: block !important;
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background-color: var(--rt-shell-bg, #1a1828) !important;
+  background-image: var(--rt-shell-bg-image, none) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-play {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+  background-image: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-travel-card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-postcard {
+  background: var(--rt-paper) !important;
+  border: 1px solid var(--rt-paper-border) !important;
+  box-shadow: var(--rt-paper-shadow) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-travel-card::after,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-postcard::after {
+  content: "" !important;
+  display: block !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-page__deck-pin {
+  display: block !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-route-line {
+  opacity: 0.55;
+  height: 2px !important;
+}
+
+/* No transition flash — keep previous paint until the next route is ready. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > *,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-scroll {
+  animation: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .page-loading,
+html[data-gnh-shell="web"] .app.app--web .page-loading-skeleton {
+  display: none !important;
+}
+
+/* Premium overlay: one vertical card, full benefit text, no dark dock plate. */
+html[data-gnh-shell="web"] .premium-overlay__card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__card,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__card {
+  width: min(560px, 100%) !important;
+  max-width: 560px !important;
+  max-height: min(88vh, 920px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(138, 43, 226, 0.22) 0%, transparent 55%),
+    linear-gradient(165deg, rgba(32, 26, 52, 0.98) 0%, rgba(16, 14, 28, 0.99) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 24px !important;
+  color: #f5f7ff !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__description,
+html[data-gnh-shell="web"] .premium-overlay__plans,
+html[data-gnh-shell="web"] .premium-offer,
+html[data-gnh-shell="web"] .premium-overlay__bottom,
+html[data-gnh-shell="web"] .premium-overlay__dock,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__description,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__plans,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__bottom,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__description,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__plans,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__bottom {
+  grid-column: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__include-text,
+html[data-gnh-shell="web"] .premium-overlay__include-title,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .premium-overlay__include-text,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .premium-overlay__include-title {
+  display: block !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  -webkit-line-clamp: unset !important;
+  line-clamp: unset !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__dock,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__dock,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__dock {
+  position: static !important;
+  display: grid !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 14px 1.25rem 1.15rem !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy {
+  background: linear-gradient(105deg, #f8c8ff 0%, #d392f6 46%, #9d7af0 100%) !important;
+  border: 1px solid rgba(255, 236, 255, 0.7) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 20px rgba(160, 90, 220, 0.28) !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--restore {
+  background: transparent !important;
+  border: 1px solid rgba(214, 180, 255, 0.55) !important;
+  color: #fff8ff !important;
+  box-shadow: none !important;
+}
+
+/* Desktop home ≥1024: continuous bg, typography, modes grid, glass cards. */
+@media (min-width: 1024px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .page-atmosphere {
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(138, 115, 160, 0.02) 0%,
+        rgba(170, 148, 196, 0.08) 48%,
+        rgba(210, 188, 224, 0.22) 100%
+      ),
+      url("../pages/gnh-home-ref/assets/ambient.webp") !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-asset-hero__visual {
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      #000 0%,
+      #000 62%,
+      rgba(0, 0, 0, 0.7) 78%,
+      rgba(0, 0, 0, 0.32) 90%,
+      transparent 100%
+    ) !important;
+    mask-image: linear-gradient(
+      180deg,
+      #000 0%,
+      #000 62%,
+      rgba(0, 0, 0, 0.7) 78%,
+      rgba(0, 0, 0, 0.32) 90%,
+      transparent 100%
+    ) !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-shade {
+    inset: 0 0 -28px 0 !important;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 58%,
+      rgba(138, 115, 160, 0.06) 74%,
+      rgba(138, 115, 160, 0.16) 88%,
+      rgba(138, 115, 160, 0.06) 100%
+    ) !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .gnh-asset-hero__visual .gnh-responsive-art > img {
+    object-fit: contain !important;
+    object-position: center !important;
+    transform: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-copy {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: min(520px, 42%) !important;
+    width: min(520px, 42%) !important;
+    text-align: left;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 {
+    font-size: clamp(48px, 3.8vw, 56px) !important;
+    font-weight: 800;
+    line-height: 1.08 !important;
+    letter-spacing: -0.035em;
+    color: #f8f4ff;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:first-child,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:last-child {
+    background: linear-gradient(100deg, #ffffff 0%, #f3e8ff 40%, #e6d2ff 72%, #fff8ff 100%) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 2px 12px rgba(36, 14, 64, 0.28));
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-subtitle {
+    margin-top: 16px !important;
+    font-size: clamp(24px, 1.9vw, 28px) !important;
+    font-weight: 500;
+    line-height: 1.3;
+    color: #f4ecff !important;
+    text-shadow: 0 1px 8px rgba(28, 12, 48, 0.28);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-play {
+    margin-top: 24px !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    min-width: 210px;
+    padding: 0 26px !important;
+    font-size: 18px !important;
+    align-self: flex-start;
+  }
+
+  /* Modes: title above, six equal glass cards in one row. */
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section.wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    margin-top: -24px !important;
+    padding-top: 4px !important;
+    padding-bottom: 10px !important;
+    background: transparent !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading {
+    display: block !important;
+    flex: 0 0 auto !important;
+    align-self: stretch !important;
+    width: 100%;
+    max-width: none;
+    padding: 0 !important;
+    margin: 0;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading h2 {
+    font-size: clamp(28px, 2.2vw, 32px) !important;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-align: left;
+    color: #f7f0ff !important;
+    text-shadow: 0 1px 10px rgba(36, 16, 60, 0.25);
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .category-heading p {
+    display: none;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .moods {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+    justify-content: stretch;
+    width: 100%;
+    gap: 18px !important;
+    padding: 2px 0 8px !important;
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 108px;
+    min-height: 108px;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 240, 255, 0.48) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 252, 255, 0.22) 0%, rgba(255, 252, 255, 0) 42%),
+      linear-gradient(165deg, rgba(214, 186, 240, 0.28), rgba(168, 132, 206, 0.14) 58%, rgba(138, 115, 160, 0.1)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      0 10px 22px rgba(64, 32, 96, 0.14) !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    padding: 12px 10px 11px;
+    gap: 8px;
+    transition:
+      transform 220ms ease,
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      background 220ms ease;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood svg.icon {
+    width: 30px;
+    height: 30px;
+    transition: filter 220ms ease, opacity 220ms ease;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span:not(.mood-lock) {
+    font-size: 15.5px !important;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #fff8ff !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood > span.mood-lock {
+    top: 8px;
+    right: 8px;
+  }
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 244, 255, 0.78) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      0 14px 28px rgba(88, 44, 130, 0.2) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 252, 255, 0.3) 0%, rgba(255, 252, 255, 0) 46%),
+      linear-gradient(165deg, rgba(226, 198, 250, 0.36), rgba(176, 140, 214, 0.18) 58%, rgba(148, 120, 176, 0.12)) !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood:hover svg.icon {
+    filter: brightness(1.18) drop-shadow(0 0 8px rgba(240, 200, 255, 0.45));
+  }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood svg.icon {
+    transition: none !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood:hover {
+    transform: none !important;
+  }
+}

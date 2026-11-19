@@ -21,6 +21,8 @@ export function originFromUrl(value: string | undefined): string | null {
 export function buildAllowedCorsOrigins(env: {
   CORS_ORIGIN?: string
   WEBAPP_URL?: string
+  /** Standalone WEB shell public origin (cookie/OIDC). Same-origin /api needs no CORS, but local/dev split origins do. */
+  WEB_PUBLIC_ORIGIN?: string
 }): string[] {
   const fromCors = (env.CORS_ORIGIN || 'http://localhost:5173')
     .split(',')
@@ -28,6 +30,7 @@ export function buildAllowedCorsOrigins(env: {
     .filter((value): value is string => Boolean(value))
 
   const fromWebApp = originFromUrl(env.WEBAPP_URL)
+  const fromWebShell = originFromUrl(env.WEB_PUBLIC_ORIGIN)
 
   const defaults = [
     'http://localhost:4173',
@@ -38,7 +41,14 @@ export function buildAllowedCorsOrigins(env: {
     'https://dantilor.github.io',
   ]
 
-  return [...new Set([...fromCors, ...(fromWebApp ? [fromWebApp] : []), ...defaults])]
+  return [
+    ...new Set([
+      ...fromCors,
+      ...(fromWebApp ? [fromWebApp] : []),
+      ...(fromWebShell ? [fromWebShell] : []),
+      ...defaults,
+    ]),
+  ]
 }
 
 export function isOriginAllowed(origin: string | undefined, allowed: readonly string[]): boolean {

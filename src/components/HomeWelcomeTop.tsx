@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { getTgUser } from '../utils/telegram'
 import { useTheme } from '../hooks/useTheme'
 import { apiGet } from '../lib/api'
-import { readPublicSnapshot, writePublicSnapshot, isPublicUserCount } from '../lib/publicSnapshot'
+import { isWebShell } from '../config/shell'
+import { useWebSession } from '../shell/WebSessionContext'
 import iconHostCrown from '../assets/icons/gnh/host-crown.svg'
 import iconLightHostCrown from '../assets/icons/gnh-light-pro/light-host-crown-pro.svg'
 import iconSunsetHostCrown from '../assets/icons/gnh-sunset-pro/sunset-host-crown-pro.svg'
@@ -28,47 +29,35 @@ function getInitials(firstName?: string, lastName?: string): string {
 
 function HomeWelcomeTop() {
   const [theme] = useTheme()
-  const [usersCount, setUsersCount] = useState<number | null>(() =>
-    readPublicSnapshot('user-count', 10 * 60_000, isPublicUserCount)
-  )
-  const user = getTgUser()
+  const [usersCount, setUsersCount] = useState<number | null>(null)
+  const tgUser = getTgUser()
+  const webSession = useWebSession()
+  const user = isWebShell()
+    ? {
+        first_name:
+          webSession.session?.displayName?.split(/\s+/)[0] ||
+          (webSession.session?.webAccountId ? 'Игрок' : 'Host'),
+        last_name: webSession.session?.displayName?.split(/\s+/).slice(1).join(' ') || undefined,
+        username: webSession.session?.username ?? undefined,
+        photo_url: webSession.session?.pictureUrl ?? undefined,
+      }
+    : tgUser
   const crownIcon = CROWN_BY_THEME[theme]
   const formattedCount = usersCount === null ? '—' : formatUsersCount(usersCount)
 
   useEffect(() => {
-    // Snapshot paints immediately; network refresh waits for idle so it does not
-    // compete with hero image / first interaction on cold start.
     let cancelled = false
-    const controller = new AbortController()
-    const loadStats = () => {
-      apiGet<{ usersCount: number }>('/api/public-stats', {
-        signal: controller.signal,
-        retry: { profile: 'background' },
+    apiGet<{ usersCount: number }>('/api/public-stats')
+      .then((data) => {
+        if (!cancelled && Number.isSafeInteger(data.usersCount) && data.usersCount >= 0) {
+          setUsersCount(data.usersCount)
+        }
       })
-        .then((data) => {
-          if (!cancelled && Number.isSafeInteger(data.usersCount) && data.usersCount >= 0) {
-            setUsersCount(data.usersCount)
-            writePublicSnapshot('user-count', data.usersCount)
-          }
-        })
-        .catch(() => {
-          /* An unavailable count must not be replaced by an invented number. */
-        })
-    }
-    let idleId: number | undefined
-    let timeoutId: number | undefined
-    if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(loadStats, { timeout: 2000 })
-    } else {
-      timeoutId = window.setTimeout(loadStats, 400)
-    }
+      .catch(() => {
+        /* An unavailable count must not be replaced by an invented number. */
+      })
     return () => {
       cancelled = true
-      controller.abort()
-      if (idleId !== undefined && typeof window.cancelIdleCallback === 'function') {
-        window.cancelIdleCallback(idleId)
-      }
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
   }, [])
 

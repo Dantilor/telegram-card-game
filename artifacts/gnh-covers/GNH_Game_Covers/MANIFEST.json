@@ -1,0 +1,187 @@
+{
+  "files": [
+    {
+      "path": "ASSET_MAP.json",
+      "bytes": 5647,
+      "sha256": "d512ba59b628a7888b2c53bf368bd7c3910dc45ea221276215e7397a21ca09c3"
+    },
+    {
+      "path": "ASSET_MAP.md",
+      "bytes": 1991,
+      "sha256": "1b2b65f356ab9798590e960fc35b194ea265bca9f14afe4991b4e38959743eff"
+    },
+    {
+      "path": "CURSOR_TASK.md",
+      "bytes": 7752,
+      "sha256": "906b3402771707ca9507c3559391b2f01029785a8ad66efe3d93d526fbb5e589"
+    },
+    {
+      "path": "PREVIEW.html",
+      "bytes": 7224,
+      "sha256": "923e22663c955b946fba6870b5f4e9972859ccb604068e69ffa1bd28f0ceeaf0"
+    },
+    {
+      "path": "START_HERE.md",
+      "bytes": 1559,
+      "sha256": "c2704deb95140f5e2b079432b81a76417291a72af4653f85d140b25a2dc1a96e"
+    },
+    {
+      "path": "assets/activitus.webp",
+      "bytes": 422530,
+      "sha256": "670ddf0bb4daed9312d03b175f159580b347e86c952bfedec28b9b35438660ea"
+    },
+    {
+      "path": "assets/associations.webp",
+      "bytes": 424154,
+      "sha256": "040205765f5272c94b79c4f2f3e52d0d77553469ecdd327afe1912d7dd47de55"
+    },
+    {
+      "path": "assets/brain-battle.webp",
+      "bytes": 474762,
+      "sha256": "a02cbabd127b341d546dc428be97a3b52ffcb19ccb3a3ca052b3925fd0c8631e"
+    },
+    {
+      "path": "assets/doubles.webp",
+      "bytes": 334612,
+      "sha256": "1dc8633d7e4c3dc242a41d44b6cdabae46169e3ab5909724a5a3e6e96863f1f2"
+    },
+    {
+      "path": "assets/free-stuff.webp",
+      "bytes": 350408,
+      "sha256": "b55cfd45489a514ba63f88c7c766982f02370dcd82a17487e9592902e7599ad1"
+    },
+    {
+      "path": "assets/gamenight-cards.webp",
+      "bytes": 492928,
+      "sha256": "69726228ddf0df8fa58453d5a90f1ff2cd3439de05c1380b8a61bbe9d7fa3492"
+    },
+    {
+      "path": "assets/infected.webp",
+      "bytes": 435410,
+      "sha256": "7dfc7b2b066aab78ecbf211a77297fd0d07c7db8b288989e9ad2bc04f4061ab3"
+    },
+    {
+      "path": "assets/mafia-city.webp",
+      "bytes": 470098,
+      "sha256": "c7c42b63e8806e9eb6bfca85129478cfae3eb96f0428995cdd971a54a32c3aea"
+    },
+    {
+      "path": "assets/mafia-lite.webp",
+      "bytes": 498408,
+      "sha256": "6655c75e8d390dd58d777f27ebd7e08b6c17388f083b8ce63dc834df75fd0521"
+    },
+    {
+      "path": "assets/phrase-translator.webp",
+      "bytes": 463572,
+      "sha256": "f1030a2544357bd1ff03a9d32a368a565bdc7fbcc4433132155241f8f3e78be7"
+    },
+    {
+      "path": "assets/sabotage.webp",
+      "bytes": 497282,
+      "sha256": "30b61c79ec05bd998e18ea7478a77832ce0e0572ba8e3dbd35a122892290c3f8"
+    },
+    {
+      "path": "assets/trace.webp",
+      "bytes": 419782,
+      "sha256": "bbb67d5f316f35136d80aa0613dd044ebbd1afefab315e8fcd27dc5feaf97c3e"
+    },
+    {
+      "path": "assets/truth-or-dare.webp",
+      "bytes": 432890,
+      "sha256": "6fad6b7cfa5bdfaf9d62872a23277238513d01e73adfd524b782a7cb482cfade"
+    },
+    {
+      "path": "assets/where-are-we.webp",
+      "bytes": 731468,
+      "sha256": "5a2673b437f02dee559e8e846850776d200a393f8050f54af6a2292846de5378"
+    },
+    {
+      "path": "assets/whoswho.webp",
+      "bytes": 624440,
+      "sha256": "779b9772b5a520106fc0eb3999ed4850c3e6f6ea1ed3bc15d789b62338fb3da2"
+    },
+    {
+      "path": "build-prompts.json",
+      "bytes": 12935,
+      "sha256": "199e93dc653be589718ba8c8939c8bcd923c50028ab553946286c1217f08c72b"
+    },
+    {
+      "path": "originals/activitus.png",
+      "bytes": 2685789,
+      "sha256": "77dd20c8022576efdff3b1bc16443f492d6b1886d17833f71bfda71406ded932"
+    },
+    {
+      "path": "originals/associations.png",
+      "bytes": 2632937,
+      "sha256": "8d6a211e9e7505faeb5b08fde15ffeb74c2e890049adfd226778bff86d538b5c"
+    },
+    {
+      "path": "originals/brain-battle.png",
+      "bytes": 2805944,
+      "sha256": "e3ab24bdf6612a080c0bb776c37ff0bc6a5e2c9a78fdb00c6f4d60e86fcedeac"
+    },
+    {
+      "path": "originals/doubles.png",
+      "bytes": 2337714,
+      "sha256": "6b2eec385e8ed7a18b629981170cf50563e19f63db5ea3c85235ad87e8a1f863"
+    },
+    {
+      "path": "originals/free-stuff.png",
+      "bytes": 2447767,
+      "sha256": "8da6e0fd035adce8e2de0e9e8d8735f08ccaaa614fba082f6b831cf576fc84da"
+    },
+    {
+      "path": "originals/gamenight-cards.png",
+      "bytes": 2851902,
+      "sha256": "60ad4ae2266c8760681bb632c4dc9ff64c913ffd16cab1facd6839c7f52f1404"
+    },
+    {
+      "path": "originals/infected.png",
+      "bytes": 2673095,
+      "sha256": "3e5bec144cd15b59b24b2f13758d2e5d130d4ccbf3e37adc033c62884d626b8b"
+    },
+    {
+      "path": "originals/mafia-city.png",
+      "bytes": 2789509,
+      "sha256": "db215d3cbf099e2bfffd066c0de885fcb0094508fc322ba8322e82f097ea2bbf"
+    },
+    {
+      "path": "originals/mafia-lite.png",
+      "bytes": 2841365,
+      "sha256": "1cc5b63d4a809d14e430814d26dfc7c83712417c0c4bc34e85ce1e2822d5f6f4"
+    },
+    {
+      "path": "originals/phrase-translator.png",
+      "bytes": 2776676,
+      "sha256": "1696b080d6b2faa30eb53db4d66631c61efed9a7b22787c52f5e9284c368d2a7"
+    },
+    {
+      "path": "originals/sabotage.png",
+      "bytes": 2832252,
+      "sha256": "fc9ebda5aee2776cf21328d3bc9bc0ec0ddb94727356c8f33a52772ee5ed9b0a"
+    },
+    {
+      "path": "originals/trace.png",
+      "bytes": 2514585,
+      "sha256": "ec3984b300317c9bc8e52f6bdeb3884c985de3d621b45d2875435ab4325021f6"
+    },
+    {
+      "path": "originals/truth-or-dare.png",
+      "bytes": 2698871,
+      "sha256": "d78f1224a269dc4f28fb09fdeefb09621307a317d4b5a0ebfadb38ce023e8bbd"
+    },
+    {
+      "path": "originals/where-are-we.png",
+      "bytes": 3453813,
+      "sha256": "ed875081198b02ef2197ef94eae4d3bf181dcd2d60b78bc616791f62ad553495"
+    },
+    {
+      "path": "originals/whoswho.png",
+      "bytes": 3248009,
+      "sha256": "d2f30742a4121e142165b18078d0501432f7379ca16c50c5b71bf641d156449e"
+    }
+  ],
+  "assetCount": 15,
+  "verifiedDimensions": "1536x1024",
+  "sourceImages": "individually generated, native resolution, not upscaled"
+}

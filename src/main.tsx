@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
+import { BrowserRouter, HashRouter } from 'react-router-dom'
 import { normalizeHash, parseAndCacheFromHash } from './utils/telegramInitCache'
 import { initTheme, type ThemeId } from './hooks/useTheme'
 import { initTelegramUI, applyTelegramColorsRetry } from './lib/telegramTheme'
@@ -8,6 +8,7 @@ import { ensureTelegramSdkLoaded, isTelegramSdkReady, whenTelegramSdkReady, subs
 import { publishLoadTimingReport } from './lib/loadTiming'
 import { installChunkRecovery } from './lib/chunkRecovery'
 import { scheduleWhenIdle } from './utils/scheduleWhenIdle'
+import { isWebShell } from './config/shell'
 // Critical path fonts only (latin + cyrillic). Extra weights load after idle.
 import '@fontsource/manrope/latin-400.css'
 import '@fontsource/manrope/latin-600.css'
@@ -32,9 +33,6 @@ function loadDeferredFonts(): void {
   ]).catch(() => undefined)
 }
 
-// Capture Telegram launch parameters in the SDK before HashRouter normalizes
-// #tgWebAppData=... to #/. The deferred same-origin script in index.html
-// normally finishes before the Vite module executes.
 let theme: ThemeId
 try {
   theme = initTheme()
@@ -42,10 +40,13 @@ try {
   theme = 'neon-light'
 }
 
-// Install before React and lazy routes, so old chunks do not blank the app.
+const web = isWebShell()
+document.documentElement.dataset.gnhShell = web ? 'web' : 'telegram'
+
 installChunkRecovery()
 
 function applyTelegramWhenReady(): void {
+  if (web) return
   try {
     initTelegramUI()
     applyTelegramColorsRetry(theme)
@@ -58,38 +59,39 @@ let mounted = false
 function mountApp(): void {
   if (mounted) return
   mounted = true
-  // Preserve Telegram's launch parameters before starting the async SDK.
-  // If the SDK has already executed but storage was unavailable, it is now
-  // safe to normalize the original hash for HashRouter.
-  const captured = parseAndCacheFromHash()
-  if (!captured && isTelegramSdkReady()) normalizeHash()
-  ensureTelegramSdkLoaded().catch(() => undefined)
 
-  applyTelegramWhenReady()
-  subscribeTelegramSdkReady(applyTelegramWhenReady)
+  if (!web) {
+    const captured = parseAndCacheFromHash()
+    if (!captured && isTelegramSdkReady()) normalizeHash()
+    ensureTelegramSdkLoaded().catch(() => undefined)
+    applyTelegramWhenReady()
+    subscribeTelegramSdkReady(applyTelegramWhenReady)
+  }
 
+  const Router = web ? BrowserRouter : HashRouter
   const rootEl = document.getElementById('root')!
   createRoot(rootEl).render(
     <StrictMode>
-      <HashRouter>
+      <Router>
         <App />
-      </HashRouter>
+      </Router>
     </StrictMode>,
   )
 
-  // Opt-in VPN/cold-start report. Does not include Telegram identity.
-  publishLoadTimingReport()
-  // Secondary weights must not compete with first paint / hero image.
-  scheduleWhenIdle(loadDeferredFonts, 3500)
+  if (!web) {
+    publishLoadTimingReport()
+  }
+  scheduleWhenIdle(loadDeferredFonts, web ? 1200 : 3500)
 }
 
-// The local SDK is fetched asynchronously instead of blocking module execution.
-// Seed the SDK's own sessionStorage launch cache before HashRouter rewrites #.
-// For storage-restricted WebViews, retain the previous safe wait as a fallback.
-const hasTelegramLaunchHash = typeof window !== 'undefined' && window.location.hash.includes('tgWebAppData=')
-const launchCaptured = !hasTelegramLaunchHash || isTelegramSdkReady() || Boolean(parseAndCacheFromHash())
-if (launchCaptured) {
+if (web) {
   mountApp()
 } else {
-  void whenTelegramSdkReady(3500).then(mountApp, mountApp)
+  const hasTelegramLaunchHash = typeof window !== 'undefined' && window.location.hash.includes('tgWebAppData=')
+  const launchCaptured = !hasTelegramLaunchHash || isTelegramSdkReady() || Boolean(parseAndCacheFromHash())
+  if (launchCaptured) {
+    mountApp()
+  } else {
+    void whenTelegramSdkReady(3500).then(mountApp, mountApp)
+  }
 }

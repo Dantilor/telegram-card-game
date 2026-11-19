@@ -5,18 +5,43 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "node scripts/build-web-sidecar.mjs && node ./node_modules/typescript/bin/tsc",
+    "build:api": "node ./node_modules/typescript/bin/tsc",
+    "build:web-sidecar": "node scripts/build-web-sidecar.mjs",
     "start": "node dist/index.js",
-    "test": "tsx --test src/legal/legal.test.ts src/party/partyRules.test.ts src/services/publicCache.test.ts src/corsOrigins.test.ts src/routes/plans.cache.test.ts src/dbTls.test.ts"
+    "test": "tsx --test src/legal/legal.test.ts src/party/partyRules.test.ts src/auth/webAuth.test.ts src/auth/sharedPremium.test.ts src/auth/webEmailMagicLink.test.ts src/auth/telegramLinkDeepLink.test.ts src/auth/telegramLinkFlow.test.ts src/auth/gameSessionLeases.test.ts src/payments/yookassaWebhook.test.ts src/payments/yookassaWebhookSecurity.test.ts src/config/runtimeFlags.test.ts src/db/stagingMigrations.test.ts src/databaseUrlFormat.test.ts src/services/mailTransport.test.ts src/auth/rateLimit.test.ts scripts/build-web-sidecar.test.mjs scripts/apply-staging-migrations.test.mjs scripts/verify-staging.test.mjs src/services/publicCache.test.ts src/corsOrigins.test.ts src/routes/plans.cache.test.ts src/dbTls.test.ts scripts/apply-production-web-migrations.test.mjs",
+    "migrate:staging": "node scripts/apply-staging-migrations.mjs",
+    "migrate:staging:seed": "node scripts/apply-staging-migrations.mjs --seed",
+    "migrate:staging:dry": "node scripts/apply-staging-migrations.mjs --dry-run",
+    "migrate:staging:preflight": "node scripts/apply-staging-migrations.mjs --preflight",
+    "migrate:staging:check-connection": "node scripts/apply-staging-migrations.mjs --check-connection",
+    "migrate:staging:017": "node scripts/apply-staging-017.mjs",
+    "migrate:staging:017:dry": "node scripts/apply-staging-017.mjs --dry-run",
+    "migrate:staging:017:preflight": "node scripts/apply-staging-017.mjs --preflight",
+    "migrate:staging:017:check": "node scripts/apply-staging-017.mjs --check-connection",
+    "migrate:staging:019": "node scripts/apply-staging-019.mjs",
+    "migrate:staging:019:dry": "node scripts/apply-staging-019.mjs --dry-run",
+    "migrate:staging:019:preflight": "node scripts/apply-staging-019.mjs --preflight",
+    "migrate:staging:019:check": "node scripts/apply-staging-019.mjs --check-connection",
+    "verify:staging": "node scripts/verify-staging.mjs",
+    "migrate:local": "node scripts/apply-local-migrations.mjs",
+    "migrate:local:dry": "node scripts/apply-local-migrations.mjs --dry-run",
+    "local:pg:start": "node scripts/start-local-embedded-pg.mjs",
+    "local:pg:stop": "node scripts/start-local-embedded-pg.mjs --stop",
+    "dev:web-local": "node scripts/dev-web-local.mjs",
+    "migrate:production-web:dry": "node scripts/apply-production-web-migrations.mjs --dry-run",
+    "migrate:production-web": "node scripts/apply-production-web-migrations.mjs",
+    "migrate:production-web:preflight": "node scripts/apply-production-web-migrations.mjs --preflight"
   },
   "dependencies": {
     "compression": "^1.7.5",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.21.0",
     "pg": "^8.12.0",
     "telegraf": "^4.16.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "jose": "^6.2.15"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.10",
@@ -26,7 +51,8 @@
     "@types/node": "^20.14.10",
     "@types/pg": "^8.11.6",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "embedded-postgres": "^18.6.0-beta.19"
   },
   "engines": {
     "node": "20.x"

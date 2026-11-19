@@ -3,6 +3,32 @@ import { resolvePgPoolConfig } from './dbTls.js'
 
 const connectionString = process.env.DATABASE_URL
 
+/**
+ * Loopback-only plaintext Postgres for local WEB E2E (gnh_web_local).
+ * Never allowed for production, staging, Timeweb, or non-local DB names.
+ */
+export function allowLocalPlaintextDatabase(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (env.GNH_LOCAL_DATABASE !== '1' && env.GNH_LOCAL_DATABASE !== 'true') return false
+  if (env.NODE_ENV === 'production') return false
+  if (env.GNH_PRODUCTION === '1' || env.GNH_PRODUCTION === 'true') return false
+  if (env.GNH_STAGING === '1' || env.GNH_STAGING === 'true') return false
+  if (env.TIMEWEB === '1' || env.TIMEWEB === 'true') return false
+  if (env.RENDER === 'true' || Boolean(env.RENDER_EXTERNAL_URL)) return false
+  const raw = (env.DATABASE_URL || '').trim()
+  if (!raw) return false
+  try {
+    const u = new URL(raw)
+    const host = u.hostname
+    const database = decodeURIComponent(u.pathname.replace(/^\//, ''))
+    if (host !== '127.0.0.1' && host !== 'localhost' && host !== '::1') return false
+    if (database !== 'gnh_web_local') return false
+    if (/\.twc1\.net$/i.test(host) || /gnh_supabase/i.test(database)) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
 function poolConfig(): pg.PoolConfig {
   const limits = {
     max: 3,
@@ -16,6 +42,22 @@ function poolConfig(): pg.PoolConfig {
     return {
       ...limits,
       ssl: { rejectUnauthorized: true, minVersion: 'TLSv1.2' },
+    }
+  }
+  if (allowLocalPlaintextDatabase(process.env)) {
+    const parsed = new URL(connectionString)
+    console.log('[DB] config', {
+      host: parsed.hostname,
+      port: parsed.port || '5432',
+      database: decodeURIComponent(parsed.pathname.replace(/^\//, '')),
+      user: decodeURIComponent(parsed.username),
+      localPlaintext: true,
+      rejectUnauthorized: false,
+    })
+    return {
+      ...limits,
+      connectionString,
+      ssl: false,
     }
   }
   const resolved = resolvePgPoolConfig(process.env)

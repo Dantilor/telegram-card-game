@@ -201,13 +201,28 @@ export async function getUserPremiumWithDb(telegramId: number): Promise<{
   planId: string | null
 }> {
   const mem = getUser(telegramId)
-  if (mem?.premiumUntil) {
-    const premium = mem.premiumUntil > Date.now()
+  // Hot path: trust in-memory only while still active (Stars grants).
+  if (mem?.premiumUntil && mem.premiumUntil > Date.now()) {
     return {
-      premium,
+      premium: true,
       premiumUntil: new Date(mem.premiumUntil).toISOString(),
       planId: DEFAULT_PLAN_ID,
     }
+  }
+  try {
+    const { getTelegramPremium } = await import('./auth/webAccounts.js')
+    const shared = await getTelegramPremium(telegramId)
+    if (shared.isPremium && shared.activeUntil) {
+      const untilMs = new Date(shared.activeUntil).getTime()
+      if (Number.isFinite(untilMs)) setPremium(telegramId, untilMs)
+      return {
+        premium: true,
+        premiumUntil: shared.activeUntil,
+        planId: DEFAULT_PLAN_ID,
+      }
+    }
+  } catch (e) {
+    logDbError('[premiumStore] getTelegramPremium failed:', e)
   }
   const db = await getPremiumFromDb(telegramId)
   if (db) {

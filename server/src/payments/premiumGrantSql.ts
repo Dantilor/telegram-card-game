@@ -7,9 +7,9 @@ export const CLAIM_PREMIUM_GRANT_SQL = `UPDATE payments
 
 /** Checkout insert. Amount is the tariff price in rubles, the same unit as plans.price_rub. */
 export const INSERT_CHECKOUT_PAYMENT_SQL = `INSERT INTO payments (
-       telegram_id, plan_id, currency, total_amount, provider_payment_charge_id, status,
+       telegram_id, provider, plan_id, currency, total_amount, provider_payment_charge_id, status,
        offer_evidence_id, receipt_contact, receipt_contact_kind
-     ) VALUES ($1::bigint, $2, 'RUB', $3, $4, 'pending', $5, $6, $7)`
+     ) VALUES ($1::bigint, 'yookassa', $2, 'RUB', $3, $4, 'pending', $5, $6, $7)`
 
 /**
  * Recovery insert when a paid YooKassa id has no local row yet.

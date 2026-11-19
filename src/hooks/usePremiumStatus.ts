@@ -5,6 +5,7 @@ import { subscribeTelegramSdkReady } from '../lib/telegramSdk'
 import { getMe, ApiAuthError } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 import { devLog, devWarn } from '../utils/devLog'
+import { isWebShell } from '../config/shell'
 
 const CACHE_KEY = 'tcg_premium_status'
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
@@ -123,7 +124,7 @@ export function usePremiumStatus(): {
     // Do not block Home shell; wait for late SDK/initData, then confirm with the server.
     const initData = (await waitForInitData(3000)) || getInitData()
 
-    if (!initData) {
+    if (!initData && !isWebShell()) {
       devLog('[TCG] Premium: no initData (open in Telegram)')
       // No signed session → cannot claim Premium. Keep UI usable (not an infinite spinner).
       doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false, serverError503: false })

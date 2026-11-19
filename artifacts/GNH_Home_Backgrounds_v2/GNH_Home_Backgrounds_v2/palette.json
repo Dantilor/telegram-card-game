@@ -1,0 +1,81 @@
+{
+  "project": "GameNight Host",
+  "scope": "home background only",
+  "version": 2,
+  "note_ru": "Ориентиры измерены по внешнему фону скриншотов. Точные переменные темы из проекта имеют приоритет. Иллюстрации воссозданы, а не извлечены из CSS.",
+  "themes": {
+    "neon": {
+      "scheme": "dark",
+      "fallback_base": "#060A1B",
+      "reference": "references/current-theme-neon.png",
+      "sample_x_y": [
+        20,
+        540
+      ],
+      "sample_hex": "#060A1B",
+      "accents_approximate": [
+        "#E33BF1",
+        "#9957FF",
+        "#4F83FF"
+      ]
+    },
+    "light": {
+      "scheme": "light",
+      "fallback_base": "#F6F4FF",
+      "reference": "references/current-theme-light.png",
+      "sample_x_y": [
+        20,
+        350
+      ],
+      "sample_hex": "#F9F5FF",
+      "edge_samples": [
+        "#FBEFFD",
+        "#F0F6FF",
+        "#F4F2FF"
+      ],
+      "accents_approximate": [
+        "#E954DF",
+        "#A16AFF",
+        "#57AFFF"
+      ]
+    },
+    "sunset": {
+      "scheme": "light",
+      "fallback_base": "#FFF5F0",
+      "reference": "references/current-theme-sunset.png",
+      "sample_x_y": [
+        20,
+        336
+      ],
+      "sample_hex": "#FFF5F0",
+      "edge_samples": [
+        "#FFEFEA",
+        "#FFF1EB"
+      ],
+      "accents_approximate": [
+        "#FF708E",
+        "#FF8E91",
+        "#FFB341"
+      ]
+    },
+    "calm": {
+      "scheme": "light",
+      "fallback_base": "#F5F7F6",
+      "reference": "references/current-theme-calm.png",
+      "sample_x_y": [
+        20,
+        529
+      ],
+      "sample_hex": "#F6F8F7",
+      "edge_samples": [
+        "#F1F4F2",
+        "#F3F5F4"
+      ],
+      "accents_approximate": [
+        "#7C9B8C",
+        "#A3B4B2",
+        "#8492CA"
+      ]
+    }
+  }
+}

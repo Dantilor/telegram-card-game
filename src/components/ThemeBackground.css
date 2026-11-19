@@ -1,0 +1,153 @@
+/* Full-viewport theme atmosphere — art covers the whole PC screen, not only the phone column. */
+
+.gnh-theme-background {
+  --gnh-theme-glow-a: rgba(255, 79, 216, 0.34);
+  --gnh-theme-glow-b: rgba(139, 92, 255, 0.4);
+  --gnh-theme-glow-c: rgba(76, 201, 255, 0.28);
+
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  background-color: var(--gnh-theme-background-base, #060a1b);
+}
+
+.gnh-theme-background--neon {
+  --gnh-theme-background-base: #060a1b;
+  --gnh-theme-glow-a: rgba(255, 79, 216, 0.42);
+  --gnh-theme-glow-b: rgba(139, 92, 255, 0.48);
+  --gnh-theme-glow-c: rgba(76, 201, 255, 0.34);
+}
+
+.gnh-theme-background--light {
+  --gnh-theme-background-base: #f6f4ff;
+  --gnh-theme-glow-a: rgba(255, 101, 216, 0.26);
+  --gnh-theme-glow-b: rgba(142, 99, 255, 0.24);
+  --gnh-theme-glow-c: rgba(85, 183, 255, 0.2);
+}
+
+.gnh-theme-background--sunset {
+  --gnh-theme-background-base: #fff5f0;
+  --gnh-theme-glow-a: rgba(255, 106, 136, 0.32);
+  --gnh-theme-glow-b: rgba(255, 142, 122, 0.28);
+  --gnh-theme-glow-c: rgba(232, 121, 74, 0.22);
+}
+
+.gnh-theme-background--calm {
+  --gnh-theme-background-base: #f5f7f6;
+  --gnh-theme-glow-a: rgba(123, 137, 184, 0.22);
+  --gnh-theme-glow-b: rgba(95, 127, 116, 0.2);
+  --gnh-theme-glow-c: rgba(168, 181, 196, 0.18);
+}
+
+/* Extra aurora so side gutters never read as flat black bars */
+.gnh-theme-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 48% 42% at 8% 14%, var(--gnh-theme-glow-a), transparent 70%),
+    radial-gradient(ellipse 46% 44% at 92% 18%, var(--gnh-theme-glow-b), transparent 70%),
+    radial-gradient(ellipse 52% 40% at 12% 88%, var(--gnh-theme-glow-c), transparent 72%),
+    radial-gradient(ellipse 50% 42% at 88% 86%, var(--gnh-theme-glow-b), transparent 72%),
+    radial-gradient(ellipse 70% 36% at 50% -6%, var(--gnh-theme-glow-b), transparent 68%),
+    radial-gradient(ellipse 36% 60% at 0% 50%, var(--gnh-theme-glow-a), transparent 72%),
+    radial-gradient(ellipse 36% 60% at 100% 50%, var(--gnh-theme-glow-c), transparent 72%);
+  pointer-events: none;
+}
+
+.gnh-theme-background > picture {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  pointer-events: none;
+}
+
+.gnh-theme-background__art {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gnh-theme-background__art--top {
+  object-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 48%, transparent 92%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 48%, transparent 92%);
+}
+
+.gnh-theme-background__art--bottom {
+  object-position: center bottom;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 52%, transparent 92%);
+  mask-image: linear-gradient(to top, #000 0%, #000 52%, transparent 92%);
+}
+
+/* Desktop: brighter side aurora so PC gutters never look like black bars */
+@media (min-width: 768px) {
+  .gnh-theme-background::before {
+    opacity: 1;
+    background:
+      radial-gradient(ellipse 40% 48% at 6% 12%, var(--gnh-theme-glow-a), transparent 68%),
+      radial-gradient(ellipse 40% 48% at 94% 14%, var(--gnh-theme-glow-b), transparent 68%),
+      radial-gradient(ellipse 44% 42% at 10% 90%, var(--gnh-theme-glow-c), transparent 70%),
+      radial-gradient(ellipse 44% 42% at 90% 88%, var(--gnh-theme-glow-b), transparent 70%),
+      radial-gradient(ellipse 55% 32% at 50% -8%, var(--gnh-theme-glow-b), transparent 65%),
+      radial-gradient(ellipse 32% 70% at -2% 50%, var(--gnh-theme-glow-a), transparent 70%),
+      radial-gradient(ellipse 32% 70% at 102% 50%, var(--gnh-theme-glow-c), transparent 70%);
+  }
+}
+
+.app > :not(.gnh-theme-background) {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+html,
+body,
+#root {
+  background-color: var(--app-page-bg-color, #060a1b);
+}
+
+html[data-theme="neon-dark"] {
+  --app-page-bg-color: #060a1b;
+}
+
+html[data-theme="neon-light"] {
+  --app-page-bg-color: #f6f4ff;
+}
+
+html[data-theme="sunset"] {
+  --app-page-bg-color: #fff5f0;
+}
+
+html[data-theme="minimal-calm"] {
+  --app-page-bg-color: #f5f7f6;
+}
+
+.app,
+.app.app--web {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Home column must not paint opaque side panels over the theme */
+.app:has(.home-web-landing),
+.app.app--web:has(.home-web-landing) {
+  background: transparent !important;
+}

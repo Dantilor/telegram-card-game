@@ -1,0 +1,131 @@
+{
+  "assetCount": 8,
+  "scope": "New expanded approved illustrations plus full portal; no old screenshot artwork",
+  "files": [
+    {
+      "path": "ASSET_MAP.json",
+      "bytes": 2805,
+      "sha256": "88a5769afd3b8212e5c34973f19bdd91e77135e740eef29cae6ca893a1347b69"
+    },
+    {
+      "path": "ASSET_MAP.md",
+      "bytes": 1039,
+      "sha256": "7876992c8e74613888b143427b1e5a70fb7c5f72f7a0684b3e3aa96f5cb80922"
+    },
+    {
+      "path": "CURSOR_TASK.md",
+      "bytes": 8859,
+      "sha256": "34adedb20167bf8fbfab8874d6959897c3d8cceeaab4b7b7c310f0ade4d1d714"
+    },
+    {
+      "path": "GENERATION_PROMPTS.json",
+      "bytes": 9414,
+      "sha256": "b5cf8798f5a8ba22cbaa1763c14d903739b1dfbf700684515901f7f106f85af7"
+    },
+    {
+      "path": "PREVIEW.html",
+      "bytes": 2112,
+      "sha256": "158ad523f12b45432b4759d39a9a6c2fecffd536972f1a43e2bb202914c62500"
+    },
+    {
+      "path": "START_HERE.md",
+      "bytes": 1671,
+      "sha256": "146c88a56db8fd009032f3fc64f5e24db78562223b0d386b0bcfcb2aa2c947bf"
+    },
+    {
+      "path": "assets/gamenight-cards-desktop.webp",
+      "bytes": 603516,
+      "sha256": "e4b0672aa4f16721eedaa71388d2be988cb96f77f19f1e68d33d6f6f1a564832"
+    },
+    {
+      "path": "assets/gamenight-cards-mobile.webp",
+      "bytes": 492928,
+      "sha256": "69726228ddf0df8fa58453d5a90f1ff2cd3439de05c1380b8a61bbe9d7fa3492"
+    },
+    {
+      "path": "assets/portal-desktop.webp",
+      "bytes": 300736,
+      "sha256": "337317c75a4b3962cfefcdeaf142e8a50bfc5f9bbf904d3856971b801e1b0ba3"
+    },
+    {
+      "path": "assets/portal-mobile.webp",
+      "bytes": 344868,
+      "sha256": "f558fa389b43a6df18bc4b2bb5e61d071bd7fded2c2f89918f5cdfce0daf9ed5"
+    },
+    {
+      "path": "assets/where-are-we-desktop.webp",
+      "bytes": 719872,
+      "sha256": "6e791263dc22812387b88ddb43ba8518f9f3aa97d30ce00893dae4d709abd4dc"
+    },
+    {
+      "path": "assets/where-are-we-mobile.webp",
+      "bytes": 731468,
+      "sha256": "5a2673b437f02dee559e8e846850776d200a393f8050f54af6a2292846de5378"
+    },
+    {
+      "path": "assets/whoswho-desktop.webp",
+      "bytes": 752444,
+      "sha256": "f05ddf7ca00189ea41c824b4a55f41361f020968cd6cee3a98722bfe99e65ff0"
+    },
+    {
+      "path": "assets/whoswho-mobile.webp",
+      "bytes": 624440,
+      "sha256": "779b9772b5a520106fc0eb3999ed4850c3e6f6ea1ed3bc15d789b62338fb3da2"
+    },
+    {
+      "path": "components/ResponsiveArtwork.example.tsx",
+      "bytes": 1915,
+      "sha256": "c295f4354a10f10799e998d853dfd6336fa145965719788e9529e37672d9ff88"
+    },
+    {
+      "path": "originals/gamenight-cards-desktop.png",
+      "bytes": 3101002,
+      "sha256": "53d7b19eaf5a9fc2a83655f06c78f7a021ff714dff29511a02f8bc8b99a31fbd"
+    },
+    {
+      "path": "originals/gamenight-cards-mobile.png",
+      "bytes": 2851902,
+      "sha256": "60ad4ae2266c8760681bb632c4dc9ff64c913ffd16cab1facd6839c7f52f1404"
+    },
+    {
+      "path": "originals/portal-desktop.png",
+      "bytes": 2256743,
+      "sha256": "7bc8c08dbc742ed5ea085f86280ca105eb36c10d3d4c2fe87b14335c09f27682"
+    },
+    {
+      "path": "originals/portal-mobile.png",
+      "bytes": 2329295,
+      "sha256": "ea1ce94dd86ba94c79a385645cff44c15f78ba83a5db62314f9a65796ac3ea6a"
+    },
+    {
+      "path": "originals/where-are-we-desktop.png",
+      "bytes": 3372993,
+      "sha256": "7bbbb330671d43dec5dc3bfdb3c896026d0c19e866c97c064fcb128c43164c47"
+    },
+    {
+      "path": "originals/where-are-we-mobile.png",
+      "bytes": 3453813,
+      "sha256": "ed875081198b02ef2197ef94eae4d3bf181dcd2d60b78bc616791f62ad553495"
+    },
+    {
+      "path": "originals/whoswho-desktop.png",
+      "bytes": 3610907,
+      "sha256": "c6eab9f7418c88d039bc1c5c1c4a9591fc5279399a9e3d0eb3dfdba33b74e619"
+    },
+    {
+      "path": "originals/whoswho-mobile.png",
+      "bytes": 3248009,
+      "sha256": "d2f30742a4121e142165b18078d0501432f7379ca16c50c5b71bf641d156449e"
+    },
+    {
+      "path": "preview-screen.html",
+      "bytes": 3622,
+      "sha256": "4252d4e543a3781a96e7987deeab78dbd7ef4f800fae6b3ee41f442d96de5ba0"
+    },
+    {
+      "path": "styles/responsive-assets.css",
+      "bytes": 2255,
+      "sha256": "dc656c7e07cdf938afa79e421727482523052b5a18de316d4ed068d4690f8be5"
+    }
+  ]
+}

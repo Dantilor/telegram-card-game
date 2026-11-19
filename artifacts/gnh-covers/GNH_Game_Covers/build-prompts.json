@@ -1,0 +1,130 @@
+{
+  "tool": "image_gen built-in",
+  "base": "Use case: stylized-concept. Asset type: standalone game catalogue cover for GameNight Host, ONE single full-bleed LANDSCAPE image, 3:2 aspect ratio, high-resolution around 2048 x 1360. This is actual production illustration, NOT a website screenshot, poster sheet, contact sheet or physical box. Premium cinematic illustrated key art, exquisite semi-realistic digital painting with sophisticated animated-feature lighting, tactile materials, believable expressive adult characters, finely drawn hands, crisp controlled details, professional visual storytelling. Beautiful vibrant amethyst, rich cobalt blue, luminous cyan and radiant pink accents, tastefully contrasted with warm amber. COLORFUL and inviting, not muddy, monochrome, overly dark, grainy or generic. Scene must be visible at small card size. Compose a MEDIUM WIDE establishing scene with breathing room: main characters and decisive objects entirely within the central 65% of the image, complete heads and hands, meaningful surrounding environment visible. Keep 15% clear atmospheric padding on both sides; do not zoom into faces. Balance objects at multiple depths. Avoid crowded collages. The source must work as a landscape cover and central square crop. Natural luminosity and coherent color grading; elegant magic only when thematically appropriate. NO text, letters, numbers, title, logo, watermark, border, panel, UI, labels, typography or readable card faces.",
+  "jobs": [
+    {
+      "id": "gamenight-cards",
+      "name": "GameNight Cards",
+      "aliases": [
+        "Cards",
+        "Game Night Cards"
+      ],
+      "scene": "A warm, stylish living-room game evening. Three adult friends around a low round table, a couple at the foreground exchanging an affectionate amused look. Beautiful plain illustrated conversation cards fan across the table; restrained lilac luminous threads link the cards. Cozy velvet sofas, candlelight, houseplants, a rainy twilight window with violet skyline. Main couple seen waist-up at comfortable distance, whole hands and table visible. Warm coral/amber faces against enchanting lavender and cyan evening light. Emotional closeness, elegant intimate energy, no giant foreground face."
+    },
+    {
+      "id": "mafia-lite",
+      "name": "Мафия Lite",
+      "aliases": [
+        "Mafia Lite"
+      ],
+      "scene": "An approachable social deduction evening in an elegant old-city apartment at blue hour. Five adult players around a round table, sly smiles and mutually suspicious glances, one discreetly holds a single black role card close to their chest, another rests a small decorative masquerade mask beside their glass. Through a tall window a moonlit European-style old town. Medium-wide composition with seated full upper bodies, table, city visible. Rich sapphire and amethyst with small amber lamps, clever playful mystery. No firearms, no violence."
+    },
+    {
+      "id": "associations",
+      "name": "Ассоциации",
+      "aliases": [
+        "Ассоциация",
+        "Alias"
+      ],
+      "scene": "A playful intellectual party scene: two adult friends face one another across a table, laughing as one explains an idea using expressive complete hand gestures. A small imaginative constellation of clear pictorial associations floats between them: a tiny glowing fox, a sailing boat, a cloud and a key connected with a thin elegant cyan ribbon. These are magical visual metaphors, no speech text. A stylish violet room with bright coral and turquoise accents, joyful imaginative energy, medium-wide balanced scene, full heads and hands."
+    },
+    {
+      "id": "activitus",
+      "name": "Активитус",
+      "aliases": [
+        "Активный",
+        "Activity"
+      ],
+      "scene": "Dynamic improvisation game among four adult friends in a stylish party living room. One standing player in the center acts out an exaggerated balancing gesture, arms and hands fully visible, while a seated teammate sketches a simple non-letter pictogram on a drawing pad and two others laugh. Show bodies at least to knees, ample space around the standing actor. Glowing violet ambient light, hot pink curtain accent, bright warm faces, cyan reflections, physical motion with crisp characters. No words on drawing paper, no giant face closeups."
+    },
+    {
+      "id": "sabotage",
+      "name": "Саботаж",
+      "aliases": [
+        "Sabotage"
+      ],
+      "scene": "Clever covert sabotage at a beautiful tabletop strategy evening: three adult teammates lean over a geometric wooden model of a city, while a fourth stylish woman secretly moves a red game piece with one hand behind the others' attention. Her conspiratorial smile is visible but not oversized. A fine red thread connects the piece to a tiny suspicious clue. Medium-wide cinematic three-quarter view of table and team, richly detailed miniature rooftops, purple and indigo shadows, electric magenta highlights and warm golden table light. Suspense and mischief, no weapons or violence."
+    },
+    {
+      "id": "brain-battle",
+      "name": "Битва умов",
+      "aliases": [
+        "Битва умов"
+      ],
+      "scene": "A visually spectacular battle of wits: two adult rivals, a woman and a man, seated across a translucent chess-like quiz table, calmly confident, full upper bodies and hands visible. Between them floats an elegant faceted brain-shaped constellation of blue-violet light, small luminous geometric answer tokens on the table without lettering. Architectural futuristic salon, deep sapphire and amethyst, brilliant electric cyan with fuchsia highlights and subtle warm golden skin tones. Cerebral competition, symmetry with visual depth, sophisticated composition, do not zoom into faces."
+    },
+    {
+      "id": "truth-or-dare",
+      "name": "Правда или действие",
+      "aliases": [
+        "Truth or Dare"
+      ],
+      "scene": "A playful daring conversation among four adult friends at a chic evening party. Foreground young adult woman holds two plain luminous symbolic cards at comfortable waist height: a heart icon on one, a lightning-bolt icon on the other, with no words or numbers. Friends look amused and intrigued. Group medium shot with all heads and hands safely within center, table and room visible. Rich lilac, rose pink, turquoise highlights, cozy warm candles, bright expressive faces. Stylish social fun, no sexualized poses, no extreme closeup."
+    },
+    {
+      "id": "phrase-translator",
+      "name": "Переводчик фраз",
+      "aliases": [
+        "Переводчик"
+      ],
+      "scene": "A witty verbal party game in a vibrant cozy lounge. Three adult friends leaning over a table, one playfully trying to explain a bizarre idea with open hands. Above the table float three beautifully translucent lilac speech-bubble forms containing only small pictorial symbols: a small crocodile, a rain umbrella, a crown. Thin cyan light links the visual symbols into an absurd coherent sequence. Amused expressive people and complete hands, medium-wide comfortable camera distance. Premium comic wit, vivid lavender, cyan, pink and warm gold, detailed interior. Absolutely no letters or text."
+    },
+    {
+      "id": "free-stuff",
+      "name": "Фигня, но бесплатно",
+      "aliases": [
+        "Фигня но бесплатно"
+      ],
+      "scene": "A gorgeous humorous absurd still-life: an open luxurious violet gift chest on a small dark velvet pedestal reveals a shiny GOLDEN TOILET PLUNGER with a small ornate crown balanced on top. Tasteful magical sparkles, sumptuous satin ribbons, a tiny hovering price-tag shape WITHOUT any writing. In the background two adult friends at a party exchange delighted confused looks, shown as subtle contextual figures. Rich royal purple, jewel fuchsia, turquoise gleams and radiant gold, exquisite materials, whimsical elegant comedy rather than cheap meme art. Main gift and plunger entirely visible in central 60%, generous room around it."
+    },
+    {
+      "id": "trace",
+      "name": "След",
+      "aliases": [
+        "След"
+      ],
+      "scene": "Sophisticated mystery investigation. A thoughtful adult detective woman and her colleague examine a footprint trace on the floor of an atmospheric study. The detective crouches with a small magnifying lens; the partner holds an open evidence folder with abstract unlettered diagrams. The violet-lit footprint leads toward a half-open door glowing cyan. Warm desk lamp, old bookshelf, rain on tall windows, meticulously drawn room. Show people at medium-wide distance with full heads and hands, evidence clearly readable as imagery. Rich amethyst/cobalt and warm amber, intriguing rather than grim, no blood or violence."
+    },
+    {
+      "id": "mafia-city",
+      "name": "Мафия: Тени города",
+      "aliases": [
+        "Мафия Тени города",
+        "Мафия: Тень города"
+      ],
+      "scene": "Prestige cinematic noir in a rain-soaked contemporary metropolis at night, distinctly more urban and dramatic than Mafia Lite. Three stylish adult figures in elegant tailored suits and coats stand on a rooftop terrace, a confident woman at center, one man slightly behind on each side, all framed knees-up with complete heads and hands. Beneath them the city's wet streets glow with vivid cyan, violet and restrained crimson reflections; a huge architectural skyline recedes into purple mist. Quiet power, hidden alliances, polished premium ensemble key art. No firearms, violence, readable signs or letters. Bright enough to see figures and city, no crushed black shadows."
+    },
+    {
+      "id": "doubles",
+      "name": "Двойники",
+      "aliases": [
+        "Двойники"
+      ],
+      "scene": "A beautiful psychological mystery: TWO uncannily identical adult men in matching refined dark jackets face one another across a thin vertical fractured mirror, both seen from waist up, entire heads and hands visible. Their expressions differ: one calm, one subtly alarmed. Small floating mirror shards reflect slivers of a violet futuristic hall, never duplicate extra complete faces. Cobalt, luminous lilac, electric cyan edge light and restrained hot pink glow, exquisite crystalline reflections. Balanced symmetric composition, medium-wide camera with abundant surrounding air, sophisticated and readable, no close-up giant eyes."
+    },
+    {
+      "id": "infected",
+      "name": "Заражённые",
+      "aliases": [
+        "Зараженные"
+      ],
+      "scene": "Tense polished science-fiction social-deduction scene. Three adult space-station crew members in practical elegant jackets pause in a wide glass-walled research corridor. Foreground woman and man stand waist-up at comfortable distance with complete heads and hands; behind a glass door a third human silhouette carries a subtly luminous crimson vein-like trace on a sleeve. No monsters. Beautiful cobalt and violet architectural corridor, cyan holographic light WITHOUT writing, red emergency accents, distant stars through a window, detailed reflective surfaces. Suspense, distrust and team survival, vivid readable exposure, no gore or horror disfigurement."
+    },
+    {
+      "id": "whoswho",
+      "name": "Кто тут кто?",
+      "aliases": [
+        "Кто тут кто"
+      ],
+      "scene": "A warm hilarious character-driven ensemble at a beautiful country cottage at violet dusk. FIVE visually distinct adult friends gathered around a wooden outdoor table, each reacting differently to a playful accusation: amused shrug, theatrical shock, sly grin, innocent raised hands, laughter. Show group comfortably waist-up or knees-up, complete hands and heads, no foreground face dominating. Cozy cottage windows, fairy lights, pine trees, sunset lavender sky, cyan rim lights and warm honey lanterns. Rich colorful social storytelling, authentic friendship, stylish premium illustrated feature-film key art."
+    },
+    {
+      "id": "where-are-we",
+      "name": "Где мы?",
+      "aliases": [
+        "Где мы"
+      ],
+      "scene": "An exquisite cinematic travel illustration through Russian landscapes. A graceful railway curves around a vivid emerald-blue lake toward a distant colorful Saint Basil-inspired cathedral and a warm old town; snow-capped mountains and pine forests frame the scene, a small elegant passenger train follows the curve. Harmonious single imagined panoramic landscape rather than a collage or random pasted landmarks. Rich violet-pink sunset, radiant coral clouds, turquoise water, golden architectural highlights, crisp luminous atmosphere, beautiful layered depth. Main train and cathedral fit inside central 60% for square cropping, ample sky and scenery at the edges. No readable signs, no text, no maps with labels."
+    }
+  ]
+}

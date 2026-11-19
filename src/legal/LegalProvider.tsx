@@ -1,12 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import LazyLegalDocumentModal from '../components/LazyLegalDocumentModal'
+import { LegalDocumentModal } from '../components/LegalDocumentView'
 import { blockAnalyticsTransport } from './analyticsGate'
 import { LegalClientError, legalApiBase } from './client'
 import { preloadDocuments } from './documentCache'
 import { PROFILE_DOCUMENTS } from './catalog'
 import { getInitData } from '../lib/telegram'
-import { waitForInitData } from '../lib/waitForInitData'
-import { subscribeTelegramSdkReady } from '../lib/telegramSdk'
+import { isWebShell } from '../config/shell'
+import { csrfHeadersForMutation } from '../lib/csrf'
 import { afterCriticalImages, scheduleWhenIdle } from '../utils/scheduleWhenIdle'
 import type { OwnLegalRecords } from './types'
 
@@ -23,6 +23,11 @@ type LegalContextValue = {
 
 const LegalContext = createContext<LegalContextValue | null>(null)
 
+function hasLegalAuth(): boolean {
+  if (isWebShell()) return true
+  return Boolean(getInitData())
+}
+
 async function requestLegal(
   path: string,
   method: 'GET' | 'POST',
@@ -30,12 +35,16 @@ async function requestLegal(
 ): Promise<unknown> {
   const base = legalApiBase(import.meta.env)
   const initData = getInitData()
-  if (!initData) {
+  const web = isWebShell()
+  if (!web && !initData) {
     throw new LegalClientError('auth_required', 401, 'Откройте приложение внутри Telegram.')
   }
   const headers: Record<string, string> = {
     Accept: 'application/json',
-    'x-telegram-init-data': initData,
+    ...csrfHeadersForMutation(method),
+  }
+  if (!web && initData) {
+    headers['x-telegram-init-data'] = initData
   }
   if (body) headers['Content-Type'] = 'application/json'
   let response: Response
@@ -44,7 +53,7 @@ async function requestLegal(
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
-      credentials: 'omit',
+      credentials: web ? 'include' : 'omit',
     })
   } catch {
     throw new LegalClientError('network', 0, 'Нет соединения. Подтверждение не сохранено.')
@@ -75,11 +84,8 @@ export function LegalProvider({ children }: { children: ReactNode }) {
   const [viewer, setViewer] = useState<Viewer | null>(null)
 
   const refreshRecords = useCallback(async () => {
-    // Collection is disabled in this product flow, including older grants.
     blockAnalyticsTransport()
-    // Wait briefly for async SDK; never invent a Telegram identity.
-    const initData = (await waitForInitData(3000)) || getInitData()
-    if (!initData) {
+    if (!hasLegalAuth()) {
       blockAnalyticsTransport()
       setRecords(null)
       setStatus('anonymous')
@@ -93,6 +99,12 @@ export function LegalProvider({ children }: { children: ReactNode }) {
       setError(null)
     } catch (reason) {
       blockAnalyticsTransport()
+      if (reason instanceof LegalClientError && reason.status === 401 && isWebShell()) {
+        setRecords(null)
+        setStatus('anonymous')
+        setError(null)
+        return
+      }
       setStatus('error')
       setError(reason instanceof LegalClientError ? reason.message : 'Не удалось проверить согласия.')
     }
@@ -100,16 +112,17 @@ export function LegalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshRecords()
-    const unsubscribeSdk = subscribeTelegramSdkReady(() => {
+    const onLegalSync = () => {
       void refreshRecords()
-    })
+    }
+    window.addEventListener('tcg_legal_sync', onLegalSync)
     // Тексты документов не нужны для первого кадра Home: сначала hero, затем idle.
     let cancelIdle: (() => void) | null = null
     const cancelWait = afterCriticalImages(() => {
       cancelIdle = scheduleWhenIdle(() => preloadDocuments(PROFILE_DOCUMENTS.map((document) => document.id)), 5000)
     })
     return () => {
-      unsubscribeSdk()
+      window.removeEventListener('tcg_legal_sync', onLegalSync)
       cancelWait()
       cancelIdle?.()
     }
@@ -134,7 +147,7 @@ export function LegalProvider({ children }: { children: ReactNode }) {
     <LegalContext.Provider value={value}>
       {children}
       {viewer && (
-        <LazyLegalDocumentModal
+        <LegalDocumentModal
           key={`${viewer.id}:${viewer.version ?? 'active'}`}
           documentId={viewer.id}
           version={viewer.version}

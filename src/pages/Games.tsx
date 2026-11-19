@@ -1,10 +1,15 @@
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
+import { PRELOAD_GAMES_CATALOG_URLS, RESPONSIVE_ARTWORK } from '../assets/images'
 import { useBack } from '../hooks/useBack'
 import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
 import { usePremium } from '../contexts/PremiumContext'
+import { isWebShell } from '../config/shell'
 import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
+import { scheduleIdleImports, scheduleWhenIdle } from '../utils/scheduleWhenIdle'
+import { preloadImages } from '../utils/preloadImages'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import HeroGameCard from '../components/HeroGameCard'
@@ -43,8 +48,44 @@ function Games() {
   const handleBack = useBack('/')
   const { isPremium } = usePremium()
 
-  // Images use native lazy loading, and each game chunk loads on demand.
-  // Eager prefetch of every game used to saturate slow VPN connections.
+  useEffect(() => {
+    // Обложки каталога — сразу после входа на /games (пользователь уже видит сетку).
+    if (!isWebShell()) return
+    preloadImages(PRELOAD_GAMES_CATALOG_URLS)
+
+    // Чанки игр — последовательно в idle, чтобы не забивать сеть на 3G и не тормозить UI.
+    const cancelWarm = scheduleIdleImports(
+      [
+        () => import('./Comics'),
+        () => import('./RussiaTravel'),
+        () => import('./CardGameEntry'),
+        () => import('./AliasLayout'),
+        () => import('./ActivityLayout'),
+        () => import('./MafiaLayout'),
+        () => import('./QuizLayout'),
+        () => import('./TruthDareLayout'),
+        () => import('./SabotageLayout'),
+        () => import('./WhoIsWhoLayout'),
+        () => import('./PhraseTranslator'),
+        () => import('./FreebieTrashLayout'),
+        () => import('./SledLayout'),
+        () => import('./MafiaShadowsLayout'),
+        () => import('./DoublesLayout'),
+        () => import('./InfectedLayout'),
+      ],
+      { startDelayMs: 180, gapMs: 140, timeoutMs: 1800 }
+    )
+
+    const cancelCardWarm = scheduleWhenIdle(() => {
+      void import('./CardGameEntry')
+      void import('./Play')
+    }, 900)
+
+    return () => {
+      cancelWarm()
+      cancelCardWarm()
+    }
+  }, [])
 
   const heroGame = GAMES.find((g) => g.id === HERO_GAME_ID)
   const featuredHeroGame = GAMES.find((g) => g.id === FEATURED_HERO_GAME_ID)
@@ -72,7 +113,7 @@ function Games() {
               className="games-grid__card-img"
               priority={i < 6}
               aspectRatio=""
-              objectFit="cover"
+              objectFit="contain"
             />
             {game.catalogBadge === 'new' && !isLocked ? (
               <span className="games-card-badge games-card-badge--new">NEW</span>
@@ -98,6 +139,18 @@ function Games() {
           to={route}
           className={cardClass}
           style={{ animationDelay: `${i * 0.05}s` }}
+          onPointerEnter={() => {
+            const warm = READY_GAME_ROUTES[game.id]
+            if (game.id === 'card') void import('./CardGameEntry')
+            else if (game.id === 'russia-travel') void import('./RussiaTravel')
+            else if (warm?.startsWith('/play')) void import('./Play')
+            else if (warm === '/alias') void import('./AliasLayout')
+            else if (warm === '/activity') void import('./ActivityLayout')
+            else if (warm === '/mafia') void import('./MafiaLayout')
+            else if (warm === '/quiz') void import('./QuizLayout')
+            else if (warm === '/truth-dare') void import('./TruthDareLayout')
+            else if (warm === '/comics') void import('./Comics')
+          }}
           onClick={() => {
             hapticSelection()
             if (game.id === 'card') requestFullscreenOnUserGesture()
@@ -137,6 +190,7 @@ function Games() {
         <HeroGameCard
           game={heroGame}
           isLocked={isGameLocked(heroGame.id, isPremium)}
+          artwork={RESPONSIVE_ARTWORK.card}
         />
       )}
       <GamesGrid games={otherGames} renderCard={renderGameCard} />
@@ -148,6 +202,7 @@ function Games() {
           badge="NEW"
           badgeVariant="new"
           position="bottom"
+          artwork={RESPONSIVE_ARTWORK['who-is-who']}
         />
       )}
       {bottomHeroGame && (
@@ -158,6 +213,7 @@ function Games() {
           badge="NEW"
           badgeVariant="new"
           position="bottom"
+          artwork={RESPONSIVE_ARTWORK['russia-travel']}
         />
       )}
     </div>

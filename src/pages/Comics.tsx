@@ -74,22 +74,19 @@ function Comics() {
                   aspectRatio=""
                   objectFit="contain"
                 />
-                {series.isNew && !locked ? (
-                  <span className="games-card-badge games-card-badge--new comics-grid__badge--new">
-                    Новое
-                  </span>
-                ) : null}
-                {locked ? (
-                  <>
-                    <span className="games-card-badge games-card-badge--premium">Premium</span>
-                    <span className="comics-grid__lock" aria-hidden>
-                      <span className="comics-grid__lock-icon">✦</span>
-                    </span>
-                  </>
-                ) : null}
               </div>
               <div className="games-grid__card-body comics-grid__body">
-                <p className="comics-grid__kind">GNH-комикс</p>
+                <div className="comics-grid__meta-row">
+                  {series.isNew && !locked ? (
+                    <span className="games-card-badge games-card-badge--new comics-grid__badge--new">
+                      Новое
+                    </span>
+                  ) : null}
+                  {locked ? (
+                    <span className="games-card-badge games-card-badge--premium">Premium</span>
+                  ) : null}
+                  <p className="comics-grid__kind">GNH-комикс</p>
+                </div>
                 <h2 className="games-grid__title">{series.title}</h2>
                 <p className="comics-grid__subtitle">{series.subtitle}</p>
                 <p className="comics-grid__pages">{series.pagesCount} страниц</p>

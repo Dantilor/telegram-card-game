@@ -9,8 +9,7 @@ import type {
 } from '../lib/multiplayer'
 import { ROOM_SESSION_KEY } from '../lib/multiplayer'
 import type { CaseId, DistrictId } from '../lib/game-cases'
-import { getBaseUrl } from '../../../lib/api'
-import { getInitData } from '../../../lib/telegram'
+import { partyFetch } from '../../../lib/partyFetch'
 
 type ApiResponse = {
   room?: RoomPayload
@@ -22,25 +21,12 @@ const API_PREFIX = '/api/sled/rooms'
 const ROOM_TIMEOUT_MS = 12000
 
 async function sledRequest(path: string, init: RequestInit = {}) {
-  const initData = getInitData()
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(typeof init.headers === 'object' && !(init.headers instanceof Headers)
-      ? (init.headers as Record<string, string>)
-      : {}),
-  }
-  if (initData) headers['x-telegram-init-data'] = initData
-
-  const url = `${getBaseUrl()}${path}`
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ROOM_TIMEOUT_MS)
   try {
-    const response = await fetch(url, {
+    const response = await partyFetch(path, {
       ...init,
-      headers,
-      credentials: 'omit',
       signal: controller.signal,
-      cache: 'no-store',
     })
     const body = (await response.json().catch(() => ({}))) as ApiResponse
     if (!response.ok) throw new Error(body.error ?? 'Канал комнаты не отвечает.')

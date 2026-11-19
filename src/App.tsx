@@ -1,13 +1,24 @@
 import { useEffect, lazy, Suspense, useState, type ReactNode } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { LegalProvider } from './legal/LegalProvider'
-import { DeferredFirstUseSheet } from './components/DeferredFirstUseSheet'
+import { FirstUseSheet } from './components/LegalChoices'
 import { readyAndExpand } from './utils/telegram'
 import { scheduleIdleImports } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
+import { isWebShell } from './config/shell'
+import { getTelegramStartParam } from './lib/telegram'
+import {
+  GAME_SESSION_LIMIT_EVENT,
+  isGameSessionHeld,
+  releaseGameSessionLease,
+  shouldReleaseLeaseOnPath,
+} from './lib/gameSessionLease'
+import GameSessionLimitModal from './components/GameSessionLimitModal'
+import { WebAuthGate } from './shell/WebAuthGate'
+import WebInsideLayout from './shell/WebInsideLayout'
 import './App.css'
 
 // Главная загружается сразу (первый экран)
@@ -68,6 +79,9 @@ const TruthDareVote = lazy(() => import('./pages/TruthDareVote'))
 const TruthDareResult = lazy(() => import('./pages/TruthDareResult'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PremiumPage = lazy(() => import('./pages/PremiumPage'))
+const WebPurchaseRecover = lazy(() => import('./pages/WebPurchaseRecover'))
+const WebEmailConfirm = lazy(() => import('./pages/WebEmailConfirm'))
+const WebTelegramLink = lazy(() => import('./pages/WebTelegramLink'))
 const LegalDocumentPage = lazy(() => import('./pages/LegalDocumentPage'))
 
 function DelayedFallback({ delayMs, children }: { delayMs: number; children: ReactNode }) {
@@ -82,6 +96,46 @@ function DelayedFallback({ delayMs, children }: { delayMs: number; children: Rea
   return <>{children}</>
 }
 
+function TelegramLinkStartRedirect() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (isWebShell()) return
+    const param = getTelegramStartParam()
+    if (!/^wl_[A-Za-z0-9_-]{16,60}$/.test(param)) return
+    const hash = window.location.hash || ''
+    if (hash.includes('/link-web')) return
+    navigate('/link-web', { replace: true })
+  }, [navigate])
+  return null
+}
+
+/** Limit modal + release lease when returning to catalog/profile (no home-page API). */
+function GameSessionLeaseHost() {
+  const location = useLocation()
+  const [limitOpen, setLimitOpen] = useState(false)
+
+  useEffect(() => {
+    const onLimit = () => setLimitOpen(true)
+    window.addEventListener(GAME_SESSION_LIMIT_EVENT, onLimit)
+    return () => window.removeEventListener(GAME_SESSION_LIMIT_EVENT, onLimit)
+  }, [])
+
+  useEffect(() => {
+    if (!isGameSessionHeld()) return
+    if (shouldReleaseLeaseOnPath(location.pathname)) {
+      void releaseGameSessionLease()
+    }
+  }, [location.pathname])
+
+  return (
+    <GameSessionLimitModal
+      open={limitOpen}
+      onClose={() => setLimitOpen(false)}
+      onRetry={() => setLimitOpen(false)}
+    />
+  )
+}
+
 function App() {
   const [isReady, setReady] = useState(false)
   useAppHeight()
@@ -91,12 +145,15 @@ function App() {
     return () => cancelAnimationFrame(raf)
   }, [])
   useEffect(() => {
-    try {
-      readyAndExpand()
-    } catch {
-      // no-op: don't block UI
+    if (!isWebShell()) {
+      try {
+        readyAndExpand()
+      } catch {
+        // no-op: don't block UI
+      }
     }
     const fallbackT = setTimeout(() => {
+      if (isWebShell()) return
       try {
         readyAndExpand()
       } catch {
@@ -104,14 +161,29 @@ function App() {
       }
     }, 1800)
 
-    // Тёплый кэш только самых вероятных следующих экранов — в idle, без шторма игровых чанков.
-    // Premium/getMe уже грузит PremiumProvider; дублирующий prefetch и preload картинок убраны.
+    // WEB: быстрее прогреваем каталог / комиксы / частые игры, чтобы переходы были почти мгновенными.
+    // Mini App: бережнее — только самые вероятные экраны.
     const cancelRouteWarm = scheduleIdleImports(
-      [
-        () => import('./pages/Games'),
-        () => import('./pages/Profile'),
-      ],
-      { startDelayMs: 1200, gapMs: 500, timeoutMs: 3500 }
+      isWebShell()
+        ? [
+            () => import('./pages/Games'),
+            () => import('./pages/Comics'),
+            () => import('./pages/CardGameEntry'),
+            () => import('./pages/RussiaTravel'),
+            () => import('./pages/Play'),
+            () => import('./pages/ModePage'),
+            () => import('./pages/Profile'),
+            () => import('./pages/Favorites'),
+          ]
+        : [
+            () => import('./pages/Games'),
+            () => import('./pages/Profile'),
+          ],
+      {
+        startDelayMs: isWebShell() ? 350 : 1200,
+        gapMs: isWebShell() ? 180 : 500,
+        timeoutMs: isWebShell() ? 2200 : 3500,
+      }
     )
 
     // Обложки каталога грузит сама страница /games: на главной они забивали медленный канал.
@@ -122,26 +194,29 @@ function App() {
     }
   }, [])
 
-  return (
-    <PremiumProvider>
-      <LegalProvider>
-      <div className={`app${isReady ? ' is-ready' : ''}`}>
-        <PlayErrorBoundary>
+  const routes = (
+      <div className={`app${isReady ? ' is-ready' : ''}${isWebShell() ? ' app--web' : ''}`}>
+        <TelegramLinkStartRedirect />
+        <GameSessionLeaseHost />
         <Suspense
           fallback={
-            <DelayedFallback delayMs={250}>
-              <div className="page-loading page-loading-skeleton" aria-busy="true">
-                <ul className="page-loading-skeleton__grid">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <li key={i} className="page-loading-skeleton__card" aria-hidden />
-                  ))}
-                </ul>
-              </div>
-            </DelayedFallback>
+            isWebShell() ? null : (
+              <DelayedFallback delayMs={250}>
+                <div className="page-loading page-loading-skeleton" aria-busy="true">
+                  <ul className="page-loading-skeleton__grid">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <li key={i} className="page-loading-skeleton__card" aria-hidden />
+                    ))}
+                  </ul>
+                </div>
+              </DelayedFallback>
+            )
           }
         >
         <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Home />} />
+        <Route element={<WebInsideLayout />}>
         <Route path="/games" element={<Games />} />
         <Route path="/comics" element={<Comics />} />
         <Route path="/comics/:seriesId" element={<ComicReader />} />
@@ -211,16 +286,25 @@ function App() {
         />
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
+        <Route path="/recover" element={<WebPurchaseRecover />} />
+        <Route path="/email/confirm" element={<WebEmailConfirm />} />
+        <Route path="/link-web" element={<WebTelegramLink />} />
         <Route path="/legal/documents/:documentId/versions/:version" element={<LegalDocumentPage />} />
         <Route path="/legal/documents/:documentId" element={<LegalDocumentPage />} />
         <Route path="/legal/privacy" element={<LegalDocumentPage documentId="privacy" />} />
         <Route path="/legal/terms" element={<LegalDocumentPage documentId="agreement" />} />
         <Route path="/legal/premium" element={<LegalDocumentPage documentId="offer" />} />
+        </Route>
         </Routes>
         </Suspense>
-        </PlayErrorBoundary>
       </div>
-      <DeferredFirstUseSheet />
+  )
+
+  return (
+    <PremiumProvider>
+      <LegalProvider>
+        {isWebShell() ? <WebAuthGate>{routes}</WebAuthGate> : routes}
+        <FirstUseSheet />
       </LegalProvider>
     </PremiumProvider>
   )

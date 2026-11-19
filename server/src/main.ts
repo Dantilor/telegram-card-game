@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import path from 'node:path'
+import fs from 'node:fs'
 import express from 'express'
 import cors from 'cors'
 import compression from 'compression'
@@ -16,11 +17,22 @@ import sledRoomsRouter from './routes/sledRooms.js'
 import mafiaShadowsRouter from './routes/mafiaShadows.js'
 import doublesRouter from './routes/doubles.js'
 import infectedRouter from './routes/infected.js'
+import webAuthRouter from './routes/webAuth.js'
+import gameSessionsRouter from './routes/gameSessions.js'
 import { createLegalHtmlRouter, createLegalRouter } from './routes/legal.js'
 import { db, withTransaction } from './legal/runtime.js'
 import { verifyInitData } from './telegram/verifyInitData.js'
 import { getActivePlanById } from './services/plans.js'
 import { bot } from './bot.js'
+import { webPublicOrigin } from './auth/config.js'
+import {
+  assertStagingDatabaseUrl,
+  isStagingRuntime,
+  serveWebStaticEnabled,
+  telegramBotSideEffectsDisabled,
+  trustProxyHops,
+  webFeatureEnabled,
+} from './config/runtimeFlags.js'
 
 import { buildAllowedCorsOrigins, isOriginAllowed } from './corsOrigins.js'
 import { attachRequestTiming } from './middleware/requestTiming.js'
@@ -29,6 +41,7 @@ const port = Number(process.env.PORT || 3001)
 const allowedOrigins = buildAllowedCorsOrigins({
   CORS_ORIGIN: process.env.CORS_ORIGIN,
   WEBAPP_URL: process.env.WEBAPP_URL,
+  WEB_PUBLIC_ORIGIN: process.env.WEB_PUBLIC_ORIGIN || webPublicOrigin() || undefined,
 })
 const rejectedCorsOrigins = new Set<string>()
 
@@ -37,16 +50,51 @@ const BOT_WEBHOOK_PATH = (process.env.BOT_WEBHOOK_PATH || '/telegram/webhook-9f3
 console.log('[TCG] ENV PORT =', process.env.PORT)
 console.log('[TCG] CORS allow-list origins =', allowedOrigins.join(', '))
 console.log('[TCG] PUBLIC_API_ORIGIN hint =', (process.env.PUBLIC_API_ORIGIN || '').trim() || '(unset — clients use VITE_API_URL)')
+console.log(
+  '[TCG] staging =',
+  isStagingRuntime(),
+  'webFeature =',
+  webFeatureEnabled(),
+  'serveWebStatic =',
+  serveWebStaticEnabled(),
+  'telegramBotSideEffectsDisabled =',
+  telegramBotSideEffectsDisabled()
+)
 
 if (process.env.DATABASE_URL) {
-  const u = new URL(process.env.DATABASE_URL)
-  console.log('[DB] user=', u.username, 'host=', u.host, 'port=', u.port, 'db=', u.pathname)
+  try {
+    const u = new URL(process.env.DATABASE_URL)
+    console.log('[DB] user=', u.username, 'host=', u.host, 'port=', u.port, 'db=', u.pathname)
+  } catch {
+    console.error('[DB] DATABASE_URL is not a valid URL (value not logged)')
+    if (isStagingRuntime()) process.exit(1)
+  }
+  if (isStagingRuntime()) {
+    // Format normalize already ran in index.ts before pool import; re-check isolation only.
+    const check = assertStagingDatabaseUrl(process.env.DATABASE_URL)
+    if (!check.ok) {
+      console.error('[DB] Staging database check failed:', check.reason)
+      process.exit(1)
+    }
+  }
+} else if (isStagingRuntime()) {
+  console.error('[DB] DATABASE_URL is required in staging')
+  process.exit(1)
+}
+
+if (isStagingRuntime()) {
+  if (process.env.WEB_DEV_LOGIN_ENABLED === '1' || process.env.WEB_DEV_LOGIN_ENABLED === 'true') {
+    console.error('[TCG] Refusing staging boot with WEB_DEV_LOGIN_ENABLED')
+    process.exit(1)
+  }
+  console.log('[TCG] staging isolation: telegram bot side-effects and admin broadcasts disabled')
 }
 
 const app = express()
-// Trust Timeweb/Caddy so req.ip / secure cookies see the real client when enabled later.
-if ((process.env.TRUST_PROXY || '').trim() === '1') {
-  app.set('trust proxy', 1)
+const proxyHops = trustProxyHops()
+if (proxyHops !== false) {
+  app.set('trust proxy', proxyHops)
+  console.log('[TCG] trust proxy hops =', proxyHops)
 }
 app.use(attachRequestTiming)
 app.use(cors({
@@ -58,6 +106,10 @@ app.use(cors({
     }
     cb(null, false)
   },
+  // WEB shell cookies need credentials when API is temporarily on another origin.
+  // Same-origin reverse proxy (WEB-DOMAIN/api) does not rely on CORS at all.
+  // Never pair credentials with Access-Control-Allow-Origin: *.
+  credentials: true,
   // Lets the WebView skip repeating the preflight for authorized GETs on a slow link.
   maxAge: 600,
   exposedHeaders: ['Retry-After', 'ETag', 'X-GNH-Cache', 'Server-Timing'],
@@ -80,13 +132,25 @@ app.use('/public', express.static(path.join(process.cwd(), 'public'), {
   },
 }))
 
+function sendHealth(_req: express.Request, res: express.Response) {
+  res.status(200).json({
+    ok: true,
+    service: 'gnh',
+    env: isStagingRuntime() ? 'staging' : 'app',
+  })
+}
+
 // Health check — always 200, no DB
-app.get('/health', (_req, res) => {
-  res.status(200).send('ok')
-})
+app.get('/health', sendHealth)
+app.get('/api/health', sendHealth)
 
 // Telegram webhook — must be before other routes, always 200
 app.post(BOT_WEBHOOK_PATH, async (req, res) => {
+  if (telegramBotSideEffectsDisabled()) {
+    console.log('[telegram] webhook ignored (staging / bot side-effects disabled)')
+    res.status(200).send('ok')
+    return
+  }
   console.log('[telegram] POST', BOT_WEBHOOK_PATH)
   if (req.body?.update_id != null) {
     console.log('[telegram] update_id', req.body.update_id)
@@ -102,7 +166,7 @@ app.post(BOT_WEBHOOK_PATH, async (req, res) => {
       res.status(200).send('ok')
     }
   } catch (e) {
-    console.error('[telegram] webhook error:', e)
+    console.error('[telegram] webhook error:', e instanceof Error ? e.message : 'error')
     if (!res.headersSent) {
       res.status(200).send('ok')
     }
@@ -111,6 +175,8 @@ app.post(BOT_WEBHOOK_PATH, async (req, res) => {
 
 // API base = /api — все роуты доступны как /api/...
 app.use('/api', authRouter)
+app.use('/api', webAuthRouter)
+app.use('/api', gameSessionsRouter)
 app.use('/api', premiumRouter)
 app.use('/api', meRouter)
 app.use('/api', plansRouter)
@@ -143,6 +209,49 @@ app.use(
   })
 )
 app.use('/legal', createLegalHtmlRouter({ query: db }))
+
+// Optional same-origin WEB: Express serves dist-web + SPA fallback after API routes.
+// Controlled by GNH_WEB_ENABLED + GNH_SERVE_WEB_STATIC (never used by Mini App shell).
+if (serveWebStaticEnabled()) {
+  // Prefer server/web-dist (Timeweb Project directory=/server sidecar build),
+  // then ../dist-web (local monorepo), unless GNH_WEB_STATIC_DIR is set.
+  const defaultWebRoots = [
+    path.join(process.cwd(), 'web-dist'),
+    path.join(process.cwd(), '..', 'dist-web'),
+  ]
+  const configured = process.env.GNH_WEB_STATIC_DIR?.trim()
+  const webRoot = path.resolve(
+    configured || defaultWebRoots.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || defaultWebRoots[0]
+  )
+  if (!fs.existsSync(path.join(webRoot, 'index.html'))) {
+    console.warn('[TCG] GNH_SERVE_WEB_STATIC set but index.html missing at', webRoot)
+  } else {
+    console.log('[TCG] serving WEB static from', webRoot)
+    app.use(express.static(webRoot, { index: false, maxAge: '1h' }))
+    app.get('*', (req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+      if (
+        req.path.startsWith('/api') ||
+        req.path.startsWith('/legal') ||
+        req.path.startsWith('/public') ||
+        req.path === '/health' ||
+        req.path === BOT_WEBHOOK_PATH
+      ) {
+        return next()
+      }
+      res.sendFile(path.join(webRoot, 'index.html'), (err) => {
+        if (err) next(err)
+      })
+    })
+  }
+}
+
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[TCG] unhandled error:', err instanceof Error ? err.message : 'error')
+  if (!res.headersSent) {
+    res.status(500).json({ error: 'Internal server error', code: 'internal_error' })
+  }
+})
 
 // HTTP server (webhook mode — no bot.launch/polling)
 const server = app.listen(port, '0.0.0.0', () => {

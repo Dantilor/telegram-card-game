@@ -1,9 +1,8 @@
 import { Router, type Request, type Response } from 'express'
 import { query } from '../db.js'
-import { getUserPremiumWithDb } from '../premiumStore.js'
-import { verifyInitData } from '../telegram/verifyInitData.js'
 import { roleById } from '../sled/types.js'
 import { sledStartRefusal } from '../party/partyRules.js'
+import { callerIsPremium, optionalVerifiedTelegramId } from '../auth/premiumCaller.js'
 import {
   RoomApiError,
   authenticate,
@@ -48,42 +47,13 @@ router.get('/ready', async (_req, res) => {
   }
 })
 
-async function callerIsPremium(req: Request): Promise<boolean> {
-  const raw = req.headers['x-telegram-init-data']
-  const initData = typeof raw === 'string' ? raw.trim() : ''
-  if (!initData) return false
-  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? process.env.BOT_TOKEN ?? ''
-  if (!botToken) return false
-  try {
-    const parsed = verifyInitData(initData, botToken)
-    const status = await getUserPremiumWithDb(parsed.telegram_id)
-    return status.premium
-  } catch {
-    return false
-  }
-}
-
-/** Optional Telegram identity — never trusted from the request body. Guests allowed. */
-function optionalTelegramId(req: Request): number | null {
-  const raw = req.headers['x-telegram-init-data']
-  const initData = typeof raw === 'string' ? raw.trim() : ''
-  if (!initData) return null
-  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? process.env.BOT_TOKEN ?? ''
-  if (!botToken) return null
-  try {
-    return verifyInitData(initData, botToken).telegram_id
-  } catch {
-    return null
-  }
-}
-
 router.post('/rooms', async (req, res) => {
   try {
     if (!(await callerIsPremium(req))) {
       res.status(403).json({ error: 'Создать комнату можно только с Premium.' })
       return
     }
-    optionalTelegramId(req)
+    await optionalVerifiedTelegramId(req)
     const name = cleanName(req.body?.name)
     if (!validCaseId(req.body?.caseId)) {
       res.status(400).json({ error: 'Выберите доступное дело.' })
@@ -110,7 +80,7 @@ router.post('/rooms', async (req, res) => {
 
 router.post('/rooms/:code/join', async (req, res) => {
   try {
-    optionalTelegramId(req)
+    await optionalVerifiedTelegramId(req)
     const code = cleanCode(req.params.code)
     const name = cleanName(req.body?.name)
     const session = await joinRoom(code, name)

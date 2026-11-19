@@ -1,0 +1,14 @@
+﻿import { chromium } from "playwright";
+const browser = await chromium.launch({ channel: "msedge", headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await page.goto("http://127.0.0.1:4173/play/aboutUs", { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+await page.evaluate(() => document.querySelector(".play-page__actions")?.scrollIntoView({ block: "end" }));
+await page.waitForTimeout(200);
+const fav = await page.locator(".play-page__fav-btn").boundingBox();
+await page.screenshot({ path: "artifacts/web-ui-pass/fix-fav-final.png", clip: { x: Math.max(0, fav.x - 16), y: Math.max(0, fav.y - 16), width: Math.min(820, fav.width + 420), height: 140 } });
+await page.goto("http://127.0.0.1:4173/russia-travel", { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+await page.screenshot({ path: "artifacts/web-ui-pass/fix-russia-final.png" });
+await browser.close();
+console.log("done");

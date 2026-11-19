@@ -5,6 +5,7 @@
  */
 
 import cardGameHero from './optimized/catalog-card-game.webp'
+import cardGameHeroDesktop from './optimized/catalog-card-game-desktop.webp'
 import mafiaGame from './optimized/catalog-mafia.webp'
 import activityGame from './optimized/catalog-activity.webp'
 import sabotageGame from './optimized/catalog-sabotage.webp'
@@ -12,9 +13,11 @@ import aliasGame from './optimized/catalog-alias.webp'
 import quizGame from './optimized/catalog-quiz.webp'
 import truthDareGame from './optimized/catalog-truth-dare.webp'
 import whoIsWhoGame from './optimized/catalog-who-is-who.webp'
+import whoIsWhoGameDesktop from './optimized/catalog-who-is-who-desktop.webp'
 import phraseTranslatorGame from './optimized/catalog-phrase-translator.webp'
 import freebieTrashGame from './optimized/catalog-freebie-trash.webp'
 import russiaTravelGame from './optimized/catalog-russia-travel.webp'
+import russiaTravelGameDesktop from './optimized/catalog-russia-travel-desktop.webp'
 import sledCover from './optimized/catalog-sled.webp'
 import mafiaShadowsHero from './optimized/catalog-mafia-shadows.webp'
 import doublesKeyart from './optimized/catalog-doubles.webp'
@@ -22,6 +25,8 @@ import infectedCover from './optimized/catalog-infected.webp'
 import homePickMafiaShadows from './optimized/home-pick-mafia-shadows.webp'
 import homePickDoubles from './optimized/home-pick-doubles.webp'
 import homePickInfected from './optimized/home-pick-infected.webp'
+import portalDesktop from './optimized/portal-desktop.webp'
+import portalMobile from './optimized/portal-mobile.webp'
 import fireplaceScene from './fireplace_scene.png'
 import adultMode from './adult_mode.png'
 import partyMode from './party_mode.png'
@@ -69,6 +74,26 @@ export const IMAGES: Record<string, ImageAsset> = {
   mafiaCivilian2: { png: mafiaCivilian2 },
   mafiaHost: { png: mafiaHost },
 }
+
+/** Portal + wide hero covers from ASSET_MAP (desktop/mobile pairs). */
+export const RESPONSIVE_ARTWORK = {
+  portal: {
+    desktop: { src: portalDesktop, width: 2098, height: 749 },
+    mobile: { src: portalMobile, width: 1536, height: 1024 },
+  },
+  card: {
+    desktop: { src: cardGameHeroDesktop, width: 2098, height: 749 },
+    mobile: { src: cardGameHero, width: 1536, height: 1024 },
+  },
+  'who-is-who': {
+    desktop: { src: whoIsWhoGameDesktop, width: 2098, height: 749 },
+    mobile: { src: whoIsWhoGame, width: 1536, height: 1024 },
+  },
+  'russia-travel': {
+    desktop: { src: russiaTravelGameDesktop, width: 2098, height: 749 },
+    mobile: { src: russiaTravelGame, width: 1536, height: 1024 },
+  },
+} as const
 
 /** URL картинок Мафии для preload при входе в игру */
 export const PRELOAD_MAFIA_URLS: string[] = [

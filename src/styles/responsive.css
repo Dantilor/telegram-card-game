@@ -1,4 +1,4 @@
-/* Mobile + desktop layout for Telegram Mini App — loaded last via App.css */
+﻿/* Mobile + desktop layout for Telegram Mini App — loaded last via App.css */
 
 :root {
   --layout-pad: clamp(0.75rem, 3vw, 1rem);
@@ -78,7 +78,8 @@
     --tg-header-offset: 3rem;
   }
 
-  .app {
+  /* Telegram Mini App stays a centered phone column; WEB uses web-desktop.css wide shell. */
+  .app:not(.app--web) {
     max-width: min(var(--layout-content-max), 100%);
     margin-inline: auto;
   }
@@ -90,7 +91,7 @@
 }
 
 @media (min-width: 1024px) {
-  html:not([data-tg-mobile="1"]) .app {
+  html:not([data-tg-mobile="1"]):not([data-gnh-shell="web"]) .app:not(.app--web) {
     border-inline: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.08)) 55%, transparent);
   }
 }
@@ -106,3 +107,4 @@
     scroll-behavior: auto !important;
   }
 }
+

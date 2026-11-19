@@ -2,6 +2,11 @@ import fs from 'node:fs'
 import net from 'node:net'
 import type { ConnectionOptions } from 'node:tls'
 import { X509Certificate } from 'node:crypto'
+import {
+  logStagingDatabaseUrlFormat,
+  normalizeDatabaseUrlInput,
+  stagingDatabaseUrlRemediation,
+} from './databaseUrlFormat.js'
 
 /**
  * TLS settings for the shared pg pool used by the API and the legal CLI.
@@ -187,11 +192,35 @@ export function resolvePgPoolConfig(env: NodeJS.ProcessEnv = process.env): Resol
   if (env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
     fail('NODE_TLS_REJECT_UNAUTHORIZED=0 is refused because it disables certificate verification')
   }
+  const pgSslMode = (env.PGSSLMODE ?? '').trim().toLowerCase()
+  if (pgSslMode === 'disable' || PLAINTEXT_SSL.has(pgSslMode)) {
+    fail('PGSSLMODE disables TLS and is refused')
+  }
   const rawUrl = env.DATABASE_URL
   if (!rawUrl || rawUrl.trim() === '') fail('DATABASE_URL is required')
-  if (rawUrl.includes('\n') || rawUrl.includes('\r')) fail('DATABASE_URL could not be parsed')
 
-  const original = parseUrl(rawUrl)
+  // Safe staging diagnostics run before throw paths (db.ts imports this at module load,
+  // before main.ts can log). Never prints URL/password/PEM.
+  const { value: cleanedUrl, report } = normalizeDatabaseUrlInput(rawUrl)
+  logStagingDatabaseUrlFormat(report, env)
+
+  if (!cleanedUrl) fail('DATABASE_URL is required')
+  if (cleanedUrl.includes('\n') || cleanedUrl.includes('\r')) {
+    for (const tip of stagingDatabaseUrlRemediation(report)) {
+      console.error('[DB] staging url_format_hint', tip)
+    }
+    fail('DATABASE_URL contains an embedded newline and could not be parsed')
+  }
+
+  let original: URL
+  try {
+    original = parseUrl(cleanedUrl)
+  } catch (err) {
+    for (const tip of stagingDatabaseUrlRemediation(report)) {
+      console.error('[DB] staging url_format_hint', tip)
+    }
+    throw err
+  }
   if (original.protocol !== 'postgres:' && original.protocol !== 'postgresql:') {
     fail('DATABASE_URL must use the postgres protocol')
   }
@@ -200,8 +229,10 @@ export function resolvePgPoolConfig(env: NodeJS.ProcessEnv = process.env): Resol
   if (sslmode === 'disable' || PLAINTEXT_SSL.has(sslFlag)) {
     fail('DATABASE_URL requests a connection without TLS verification')
   }
+  // verify-full / verify-ca / require are accepted; node-pg always uses
+  // rejectUnauthorized + servername (verify-full equivalent).
 
-  const connectionString = stripSslQuery(rawUrl)
+  const connectionString = stripSslQuery(cleanedUrl)
   const parsed = parseUrl(connectionString)
   const host = parsed.hostname
   if (!host) fail('DATABASE_URL host is missing')

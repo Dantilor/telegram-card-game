@@ -1,0 +1,70 @@
+.gnh-session-limit {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+}
+
+.gnh-session-limit__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--bg, #120e18) 72%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.gnh-session-limit__card {
+  position: relative;
+  width: min(100%, 22rem);
+  padding: 1.35rem 1.25rem 1.2rem;
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--text, #f4efe8) 14%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--card, #2a2030) 92%, #fff 8%),
+      color-mix(in srgb, var(--bg, #1a1420) 88%, #000 12%)
+    );
+  box-shadow: 0 18px 48px color-mix(in srgb, #000 42%, transparent);
+  color: var(--text, #f4efe8);
+}
+
+.gnh-session-limit__title {
+  margin: 0 0 0.65rem;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  font-weight: 650;
+}
+
+.gnh-session-limit__desc {
+  margin: 0 0 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  opacity: 0.88;
+}
+
+.gnh-session-limit__actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.gnh-session-limit__btn {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--text, #f4efe8) 18%, transparent);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.gnh-session-limit__btn--primary {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent, #e8d5b5) 88%, #fff);
+  color: #1a1420;
+  font-weight: 600;
+}

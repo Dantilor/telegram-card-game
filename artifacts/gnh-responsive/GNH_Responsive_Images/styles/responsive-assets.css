@@ -1,0 +1,44 @@
+/* Scope these classes to the current Home. Adapt existing components rather than replacing the app. */
+.gnh-responsive-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--gnh-aspect-desktop);
+  overflow: hidden;
+  line-height: 0;
+}
+.gnh-responsive-art > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+}
+.gnh-asset-hero { position: relative; width: 100%; max-width: none; isolation: isolate; }
+.gnh-asset-hero__copy {
+  position: absolute;
+  z-index: 1;
+  top: 16%;
+  left: max(28px, calc((100% - 1280px) / 2));
+  width: min(43%, 540px);
+  color: #fff4ff;
+}
+.gnh-asset-hero__copy h1 { font-size: clamp(32px, 3.4vw, 60px); line-height: 1.08; letter-spacing: -.04em; margin: 0 0 16px; }
+.gnh-asset-hero__copy p { font-size: clamp(16px, 1.5vw, 22px); line-height: 1.45; margin: 0 0 20px; }
+.gnh-asset-hero__copy button { min-height: 46px; }
+.gnh-asset-card { position: relative; width: 100%; max-width: none; overflow: hidden; border-radius: 24px; isolation: isolate; }
+.gnh-asset-card::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, #1b0c3590, transparent 55%); }
+.gnh-asset-card__copy { position: absolute; left: 26px; bottom: 23px; width: min(42%, 500px); z-index: 2; color: white; text-shadow: 0 2px 16px #180c31a6; }
+.gnh-asset-card__copy h2 { font-size: clamp(28px, 2.5vw, 36px); line-height: 1.12; letter-spacing: -.03em; margin: 0 0 8px; overflow-wrap: normal; }
+.gnh-asset-card__copy p { font-size: 16px; line-height: 1.4; margin: 0; }
+@media (max-width: 640px) {
+  .gnh-responsive-art { aspect-ratio: var(--gnh-aspect-mobile); }
+  .gnh-asset-hero__copy { left: 20px; right: 20px; top: 6%; width: auto; }
+  .gnh-asset-hero__copy h1 { font-size: clamp(26px, 8.2vw, 34px); letter-spacing: -.035em; margin-bottom: 10px; }
+  .gnh-asset-hero__copy p { font-size: 16px; margin-bottom: 16px; }
+  .gnh-asset-card { border-radius: 20px; }
+  .gnh-asset-card::after { display: none; }
+  .gnh-asset-card__copy { position: static; width: auto; padding: 19px 20px; background: #392446; text-shadow: none; }
+  .gnh-asset-card__copy h2 { font-size: 27px; }
+  .gnh-asset-card__copy p { font-size: 14px; }
+}

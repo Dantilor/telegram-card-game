@@ -1,11 +1,27 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import {
   CONFIRMATION_SOURCE,
+  type ConfirmationSource,
   STATEMENTS,
   isConsentDocumentId,
   isIndividualDocumentId,
   statementMatches,
   usesFixedOneYearTerm,
 } from './constants.js'
+
+/** Request-scoped confirmation source (Mini App vs WEB). Defaults to telegram_webapp. */
+const confirmationSourceStore = new AsyncLocalStorage<ConfirmationSource>()
+
+export function withConfirmationSource<T>(
+  source: ConfirmationSource,
+  fn: () => Promise<T>
+): Promise<T> {
+  return confirmationSourceStore.run(source, fn)
+}
+
+function activeConfirmationSource(): ConfirmationSource {
+  return confirmationSourceStore.getStore() ?? CONFIRMATION_SOURCE
+}
 import { LegalError } from './errors.js'
 import { sameHash } from './hash.js'
 import { readActiveDocument } from './documents.js'
@@ -283,7 +299,7 @@ async function insertEvidence(
       input.version,
       input.sha256,
       JSON.stringify(input.context),
-      CONFIRMATION_SOURCE,
+      activeConfirmationSource(),
       input.requestId,
     ]
   )

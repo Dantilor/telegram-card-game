@@ -1,0 +1,4 @@
+/* Shown whenever Stage 2 home is mounted; themed by HomeWeb.css */
+.home-web-nav {
+  display: flex;
+}

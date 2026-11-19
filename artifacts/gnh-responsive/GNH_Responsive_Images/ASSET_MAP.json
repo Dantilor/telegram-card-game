@@ -1,0 +1,98 @@
+{
+  "breakpointPx": 640,
+  "assets": [
+    {
+      "key": "portal",
+      "title": "Портал главного экрана",
+      "desktop": {
+        "src": "assets/portal-desktop.webp",
+        "original": "originals/portal-desktop.png",
+        "width": 2172,
+        "height": 724,
+        "aspectRatio": "2172 / 724",
+        "bytes": 300736,
+        "objectFit": "contain"
+      },
+      "mobile": {
+        "src": "assets/portal-mobile.webp",
+        "original": "originals/portal-mobile.png",
+        "width": 1122,
+        "height": 1402,
+        "aspectRatio": "1122 / 1402",
+        "bytes": 344868,
+        "objectFit": "contain"
+      },
+      "embeddedTitles": false
+    },
+    {
+      "key": "gamenight-cards",
+      "title": "GameNight Cards",
+      "desktop": {
+        "src": "assets/gamenight-cards-desktop.webp",
+        "original": "originals/gamenight-cards-desktop.png",
+        "width": 2098,
+        "height": 749,
+        "aspectRatio": "2098 / 749",
+        "bytes": 603516,
+        "objectFit": "contain"
+      },
+      "mobile": {
+        "src": "assets/gamenight-cards-mobile.webp",
+        "original": "originals/gamenight-cards-mobile.png",
+        "width": 1536,
+        "height": 1024,
+        "aspectRatio": "1536 / 1024",
+        "bytes": 492928,
+        "objectFit": "contain"
+      },
+      "embeddedTitles": false
+    },
+    {
+      "key": "whoswho",
+      "title": "Кто тут кто?",
+      "desktop": {
+        "src": "assets/whoswho-desktop.webp",
+        "original": "originals/whoswho-desktop.png",
+        "width": 2098,
+        "height": 749,
+        "aspectRatio": "2098 / 749",
+        "bytes": 752444,
+        "objectFit": "contain"
+      },
+      "mobile": {
+        "src": "assets/whoswho-mobile.webp",
+        "original": "originals/whoswho-mobile.png",
+        "width": 1536,
+        "height": 1024,
+        "aspectRatio": "1536 / 1024",
+        "bytes": 624440,
+        "objectFit": "contain"
+      },
+      "embeddedTitles": false
+    },
+    {
+      "key": "where-are-we",
+      "title": "Где мы?",
+      "desktop": {
+        "src": "assets/where-are-we-desktop.webp",
+        "original": "originals/where-are-we-desktop.png",
+        "width": 2098,
+        "height": 749,
+        "aspectRatio": "2098 / 749",
+        "bytes": 719872,
+        "objectFit": "contain"
+      },
+      "mobile": {
+        "src": "assets/where-are-we-mobile.webp",
+        "original": "originals/where-are-we-mobile.png",
+        "width": 1536,
+        "height": 1024,
+        "aspectRatio": "1536 / 1024",
+        "bytes": 731468,
+        "objectFit": "contain"
+      },
+      "embeddedTitles": false
+    }
+  ],
+  "note": "Expanded NEW approved imagery, not old screenshot artwork. Desktop and mobile containers must use the matching file aspect ratio."
+}

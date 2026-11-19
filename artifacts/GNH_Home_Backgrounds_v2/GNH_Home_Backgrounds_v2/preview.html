@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GameNight Host — просмотр фонов</title>
+  <link rel="stylesheet" href="integration/HomeBackground.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.5 system-ui, sans-serif; background: #dfe2e8; }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; color: #202333; background: white; border-bottom: 1px solid #ddd; }
+    strong { margin-right: auto; }
+    select, button { font: inherit; padding: 6px 10px; border: 1px solid #c4c6d0; border-radius: 8px; background: white; color: #202333; }
+    .gnh-home-stage { margin: 0 auto; width: 100%; min-height: 1100px; }
+    .preview-caption { position: absolute; left: 50%; top: 40%; width: min(88%, 560px); transform: translateX(-50%); text-align: center; }
+    .preview-caption h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 42px); }
+    .preview-caption p { margin: 0; opacity: .65; }
+    .preview-caption[data-theme="neon"] { color: #f5f2ff; }
+    .preview-caption[data-theme="light"] { color: #201b31; }
+    .preview-caption[data-theme="sunset"] { color: #30221e; }
+    .preview-caption[data-theme="calm"] { color: #293330; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>GameNight Host · просмотр только фона</strong>
+    <label>Тема <select id="theme"><option value="neon">Neon</option><option value="light">Light</option><option value="sunset">Sunset</option><option value="calm">Calm</option></select></label>
+    <label>Ширина <select id="width"><option value="100%">Весь экран</option><option value="390px">390 px</option><option value="768px">768 px</option></select></label>
+    <label>Длина <select id="height"><option value="1100px">1100 px</option><option value="2200px">2200 px</option></select></label>
+  </header>
+  <main class="gnh-home-stage" id="stage">
+    <div class="gnh-home-background gnh-home-background--neon" id="background" aria-hidden="true">
+      <picture><source media="(max-width: 640px)" srcset="assets/home-bg-neon-mobile.webp" type="image/webp"><img class="gnh-home-background__art gnh-home-background__art--top" src="assets/home-bg-neon.webp" width="1182" height="1330" alt="" decoding="async" fetchpriority="low"></picture>
+      <picture><source media="(max-width: 640px)" srcset="assets/home-bg-neon-mobile.webp" type="image/webp"><img class="gnh-home-background__art gnh-home-background__art--bottom" src="assets/home-bg-neon.webp" width="1182" height="1330" alt="" decoding="async" fetchpriority="low"></picture>
+    </div>
+    <div class="preview-caption" id="caption" data-theme="neon">
+      <h1>Neon</h1>
+      <p>Свободный центр под существующий интерфейс.<br>Это просмотр фоновой графики, не макет приложения.</p>
+    </div>
+  </main>
+  <script>
+    const theme = document.querySelector('#theme');
+    const stage = document.querySelector('#stage');
+    const background = document.querySelector('#background');
+    const caption = document.querySelector('#caption');
+    theme.addEventListener('change', () => {
+      const key = theme.value;
+      background.className = 'gnh-home-background gnh-home-background--' + key;
+      for (const picture of background.querySelectorAll('picture')) {
+        picture.querySelector('source').srcset = 'assets/home-bg-' + key + '-mobile.webp';
+        picture.querySelector('img').src = 'assets/home-bg-' + key + '.webp';
+      }
+      caption.dataset.theme = key;
+      caption.querySelector('h1').textContent = theme.selectedOptions[0].textContent;
+    });
+    document.querySelector('#width').addEventListener('change', event => {
+      stage.style.width = 'min(100%, ' + event.target.value + ')';
+    });
+    document.querySelector('#height').addEventListener('change', event => {
+      stage.style.minHeight = event.target.value;
+    });
+  </script>
+</body>
+</html>

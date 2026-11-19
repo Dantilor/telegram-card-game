@@ -1,0 +1,136 @@
+{
+  "assets": [
+    {
+      "theme": "neon",
+      "path": "assets/home-bg-neon.webp",
+      "role": "runtime",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 22670,
+      "sha256": "ba73aaebdbc971ea5025a0b9406a54c31dcc4c8d94216fb2a379adf912b3c2c5"
+    },
+    {
+      "theme": "neon",
+      "path": "assets/home-bg-neon-mobile.webp",
+      "role": "runtime-mobile",
+      "dimensions": [
+        768,
+        864
+      ],
+      "size_bytes": 10996,
+      "sha256": "ae27c2050d4506fd5b61934da99865b022fc904ffb813c06fbce8abb66f5b1d0"
+    },
+    {
+      "theme": "neon",
+      "path": "originals/home-bg-neon.png",
+      "role": "source-only",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 1318191,
+      "sha256": "7bdc9bc5b53898f12cb211acf78ca2b775bd7a4cbd1d80ecdf9840ecd603e112"
+    },
+    {
+      "theme": "light",
+      "path": "assets/home-bg-light.webp",
+      "role": "runtime",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 14874,
+      "sha256": "2a82b7b1ac30a4a5640ecfa4ec6a03bb528c153490057315c3b79a06e6073668"
+    },
+    {
+      "theme": "light",
+      "path": "assets/home-bg-light-mobile.webp",
+      "role": "runtime-mobile",
+      "dimensions": [
+        768,
+        864
+      ],
+      "size_bytes": 6484,
+      "sha256": "5c6e620985de2f0575725becb6b6850b40516378f226345cbb3e9e646ce02587"
+    },
+    {
+      "theme": "light",
+      "path": "originals/home-bg-light.png",
+      "role": "source-only",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 1270381,
+      "sha256": "bb95e60380d25c8f7b3fea17e176cce3e99032c946219a4e18bbfa83d7f52c0b"
+    },
+    {
+      "theme": "sunset",
+      "path": "assets/home-bg-sunset.webp",
+      "role": "runtime",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 13932,
+      "sha256": "f7b371342345fec54aa13a894d942aa52203843f51738f0befb8f2be47379f60"
+    },
+    {
+      "theme": "sunset",
+      "path": "assets/home-bg-sunset-mobile.webp",
+      "role": "runtime-mobile",
+      "dimensions": [
+        768,
+        864
+      ],
+      "size_bytes": 6336,
+      "sha256": "a32a60a6fd54129149829591904fd39f069b1347455c74b01723fade1cf95a09"
+    },
+    {
+      "theme": "sunset",
+      "path": "originals/home-bg-sunset.png",
+      "role": "source-only",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 1455061,
+      "sha256": "91bfe63cdebad1d191ae7fe0e92c4498547d8e854a07b0de1600fb880edf04fd"
+    },
+    {
+      "theme": "calm",
+      "path": "assets/home-bg-calm.webp",
+      "role": "runtime",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 14642,
+      "sha256": "c2aa2599df7cdd4da762f831654e85fb35b4bba7b26aa041dc0d71e5221379f7"
+    },
+    {
+      "theme": "calm",
+      "path": "assets/home-bg-calm-mobile.webp",
+      "role": "runtime-mobile",
+      "dimensions": [
+        768,
+        864
+      ],
+      "size_bytes": 6402,
+      "sha256": "9fc033c2cf1aafefb3fa043017065932ba7a613ed7930ee0e585a7034b91a52f"
+    },
+    {
+      "theme": "calm",
+      "path": "originals/home-bg-calm.png",
+      "role": "source-only",
+      "dimensions": [
+        1182,
+        1330
+      ],
+      "size_bytes": 1464449,
+      "sha256": "48f9055ed72f4ffefa12b7e210995ae57d66258a3e986849b2fa9590aef9d9c0"
+    }
+  ]
+}

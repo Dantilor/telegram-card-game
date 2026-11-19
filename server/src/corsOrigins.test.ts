@@ -19,6 +19,14 @@ test('buildAllowedCorsOrigins keeps localhost, github pages, and WEBAPP_URL orig
   assert.equal(isOriginAllowed('https://evil.example', allowed), false)
 })
 
+test('buildAllowedCorsOrigins includes WEB_PUBLIC_ORIGIN for standalone WEB shell', () => {
+  const allowed = buildAllowedCorsOrigins({
+    CORS_ORIGIN: 'http://localhost:5173',
+    WEB_PUBLIC_ORIGIN: 'https://stand.example.twc1.net/app',
+  })
+  assert.equal(isOriginAllowed('https://stand.example.twc1.net', allowed), true)
+})
+
 test('missing Origin is allowed for same-origin and non-browser clients', () => {
   assert.equal(isOriginAllowed(undefined, ['https://dantilor.github.io']), true)
 })

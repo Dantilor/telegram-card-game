@@ -27,6 +27,15 @@ export function formatPlanPriceLabel(plan: Pick<PlanOption, 'priceRub' | 'durati
   return `${plan.priceRub} ₽ · ${formatPlanPeriod(plan.durationDays)}`
 }
 
+export function formatPremiumUntilLabel(activeUntil: string | null): string {
+  if (!activeUntil) return 'Premium активен'
+  const until = new Date(activeUntil)
+  if (!Number.isFinite(until.getTime())) return 'Premium активен'
+  const daysLeft = (until.getTime() - Date.now()) / 86_400_000
+  if (daysLeft >= LIFETIME_DURATION_DAYS * 0.9 || until.getFullYear() >= 2090) return 'Lifetime'
+  return `до ${until.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`
+}
+
 export function formatPlansFromPrice(plans: PlanOption[]): string {
   if (plans.length === 0) return 'Premium'
   const sorted = [...plans].sort((a, b) => a.priceRub - b.priceRub)

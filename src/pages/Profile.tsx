@@ -26,12 +26,12 @@ const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
 const PREMIUM_PERKS = ['8 игр', 'Избранное', '18+ режимы', 'Без автосписаний']
 
 type TgRestorePanel = {
-  code: string
   expiresAt: string
   instruction: string
   phase: 'waiting' | 'linked' | 'expired' | 'error'
   message: string | null
   activeUntil: string | null
+  isPremium: boolean | null
 }
 
 function getInitials(firstName?: string, lastName?: string): string {
@@ -84,8 +84,8 @@ function Profile() {
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [tgRestore, setTgRestore] = useState<TgRestorePanel | null>(null)
-  const [tgCopyDone, setTgCopyDone] = useState(false)
   const [tgLinked, setTgLinked] = useState(false)
+  const [tgLinkPremium, setTgLinkPremium] = useState(false)
   const [logoutBusy, setLogoutBusy] = useState(false)
   const [emailDraft, setEmailDraft] = useState('')
   const [emailBusy, setEmailBusy] = useState(false)
@@ -120,43 +120,53 @@ function Profile() {
     }
   }, [refreshPremium])
 
-  const handleRestoreFromTelegram = useCallback(async () => {
+  const handleLinkTelegram = useCallback(async () => {
     if (!web) return
     haptic('medium')
     stopTgPoll()
-    setTgCopyDone(false)
     setRestoreLoading(true)
     try {
       const started = await startTelegramLinkRestore()
-      if (!started.code || !started.expiresAt) {
+      if (!started.deepLink || !started.expiresAt) {
         setTgRestore({
-          code: '',
           expiresAt: '',
           instruction: started.instruction || '',
           phase: 'error',
-          message: 'Сервер не вернул код привязки. Попробуйте позже.',
+          message: 'Сервер не вернул ссылку привязки. Попробуйте позже.',
           activeUntil: null,
+          isPremium: null,
         })
         return
       }
       setTgRestore({
-        code: started.code,
         expiresAt: started.expiresAt,
         instruction:
           started.instruction ||
-          'Откройте GameNight Host в Telegram Mini App → «Привязать WEB» и введите код.',
+          'Подтвердите привязку в Telegram Mini App GameNight Host. Ссылка действует 10 минут.',
         phase: 'waiting',
         message: null,
         activeUntil: null,
+        isPremium: null,
       })
-    } catch {
+      const opened = window.open(started.deepLink, '_blank', 'noopener,noreferrer')
+      if (!opened) {
+        window.location.assign(started.deepLink)
+      }
+    } catch (reason) {
+      const codeName =
+        reason && typeof reason === 'object' && 'code' in reason
+          ? String((reason as { code?: string }).code ?? '')
+          : ''
       setTgRestore({
-        code: '',
         expiresAt: '',
         instruction: '',
         phase: 'error',
-        message: 'Не удалось начать восстановление из Telegram',
+        message:
+          codeName === 'web_already_linked'
+            ? 'Telegram уже подключён к этому аккаунту.'
+            : 'Не удалось начать привязку Telegram',
         activeUntil: null,
+        isPremium: null,
       })
     } finally {
       setRestoreLoading(false)
@@ -189,19 +199,8 @@ function Profile() {
     }
   }, [web, refreshPremium])
 
-  const handleCopyTgCode = useCallback(async () => {
-    if (!tgRestore?.code) return
-    haptic('light')
-    try {
-      await navigator.clipboard.writeText(tgRestore.code)
-      setTgCopyDone(true)
-    } catch {
-      setTgCopyDone(false)
-    }
-  }, [tgRestore?.code])
-
   useEffect(() => {
-    if (!web || !tgRestore || tgRestore.phase !== 'waiting' || !tgRestore.code) {
+    if (!web || !tgRestore || tgRestore.phase !== 'waiting') {
       stopTgPoll()
       return
     }
@@ -215,7 +214,7 @@ function Profile() {
                 ? {
                     ...prev,
                     phase: 'expired',
-                    message: 'Код истёк. Создайте новый — повторно использовать старый нельзя.',
+                    message: 'Ссылка истекла. Создайте новую — повторно использовать старую нельзя.',
                   }
                 : prev
             )
@@ -228,6 +227,7 @@ function Profile() {
         if (status.linked) {
           stopTgPoll()
           setTgLinked(true)
+          setTgLinkPremium(Boolean(status.isPremium))
           await refreshPremium()
           setTgRestore((prev) =>
             prev
@@ -235,9 +235,10 @@ function Profile() {
                   ...prev,
                   phase: 'linked',
                   message: status.isPremium
-                    ? 'Telegram привязан. Premium восстановлен на этом WEB-аккаунте.'
-                    : 'Telegram привязан. Активной Premium-подписки в Telegram не найдено.',
+                    ? 'Telegram подключён. Premium синхронизирован.'
+                    : 'Аккаунты связаны. Premium пока не активен.',
                   activeUntil: status.activeUntil,
+                  isPremium: status.isPremium,
                 }
               : prev
           )
@@ -254,14 +255,17 @@ function Profile() {
       cancelled = true
       stopTgPoll()
     }
-  }, [web, tgRestore?.phase, tgRestore?.code, tgRestore?.expiresAt, refreshPremium, stopTgPoll])
+  }, [web, tgRestore?.phase, tgRestore?.expiresAt, refreshPremium, stopTgPoll])
 
   useEffect(() => {
     if (!web) return
     let cancelled = false
     void fetchTelegramLinkStatus()
       .then((status) => {
-        if (!cancelled) setTgLinked(Boolean(status.linked))
+        if (!cancelled) {
+          setTgLinked(Boolean(status.linked))
+          setTgLinkPremium(Boolean(status.isPremium))
+        }
       })
       .catch(() => {})
     return () => {
@@ -345,25 +349,22 @@ function Profile() {
   const tgRestorePanel =
     web && tgRestore ? (
       <div className="profile-pass__tg-restore" role="status" aria-live="polite">
-        <p className="profile-pass__eyebrow">Восстановление из Telegram</p>
-        {tgRestore.phase === 'waiting' && tgRestore.code ? (
+        <p className="profile-pass__eyebrow">Связь с Telegram</p>
+        {tgRestore.phase === 'waiting' ? (
           <>
             <p className="profile-pass__desc">{tgRestore.instruction}</p>
-            <div className="profile-pass__tg-code-row">
-              <code className="profile-pass__tg-code">{tgRestore.code}</code>
-              <button type="button" className="profile-pass__restore" onClick={() => void handleCopyTgCode()}>
-                {tgCopyDone ? 'Скопировано' : 'Копировать код'}
-              </button>
-            </div>
             <p className="profile-pass__desc">
-              Код действует до {tgExpiresLabel || 'истечения срока'}. Ожидаем подтверждение в Mini App…
+              Ссылка действует до {tgExpiresLabel || 'истечения срока'}. Ожидаем подтверждение в Mini
+              App…
             </p>
           </>
         ) : null}
         {tgRestore.phase === 'linked' ? (
           <>
             <p className="profile-pass__desc profile-pass__desc--ok">
-              {tgRestore.message || 'Привязка выполнена.'}
+              {tgRestore.isPremium
+                ? 'Telegram подключён. Premium синхронизирован.'
+                : tgRestore.message || 'Аккаунты связаны. Premium пока не активен.'}
             </p>
             <p className="profile-pass__active-date">
               {formatPremiumUntilLabel(tgRestore.activeUntil ?? activeUntil)}
@@ -376,10 +377,10 @@ function Profile() {
             <button
               type="button"
               className="profile-pass__restore"
-              onClick={() => void handleRestoreFromTelegram()}
+              onClick={() => void handleLinkTelegram()}
               disabled={restoreLoading}
             >
-              Получить новый код
+              Связать с Telegram
             </button>
           </>
         ) : null}
@@ -464,32 +465,38 @@ function Profile() {
               >
                 {restoreLoading ? 'Загрузка…' : 'Обновить статус Premium'}
               </button>
-              {web && (
+              {web && !tgLinked && (
                 <button
                   type="button"
                   className="profile-pass__restore"
-                  onClick={() => void handleRestoreFromTelegram()}
+                  onClick={() => void handleLinkTelegram()}
                   disabled={restoreLoading || tgRestore?.phase === 'waiting'}
                 >
-                  {tgRestore?.phase === 'waiting'
-                    ? 'Ожидаем привязку…'
-                    : 'Восстановить покупку из Telegram'}
+                  {tgRestore?.phase === 'waiting' ? 'Ожидаем подтверждение…' : 'Связать с Telegram'}
                 </button>
+              )}
+              {web && tgLinked && !tgRestore && (
+                <>
+                  <p className="profile-pass__desc profile-pass__desc--ok">
+                    Telegram подключён
+                    {tgLinkPremium || isPremium
+                      ? '. Premium синхронизирован.'
+                      : '. Premium пока не активен.'}
+                  </p>
+                  <button
+                    type="button"
+                    className="profile-pass__restore"
+                    onClick={() => void handleUnlinkTelegram()}
+                    disabled={restoreLoading}
+                  >
+                    Отвязать Telegram
+                  </button>
+                </>
               )}
               {tgRestorePanel}
-              {web && tgLinked && !tgRestore && (
-                <button
-                  type="button"
-                  className="profile-pass__restore"
-                  onClick={() => void handleUnlinkTelegram()}
-                  disabled={restoreLoading}
-                >
-                  Отвязать Telegram
-                </button>
-              )}
               {!web && (
                 <Link to="/link-web" className="profile-pass__restore" onClick={() => haptic('light')}>
-                  Привязать WEB (код)
+                  Связать с сайтом
                 </Link>
               )}
               {restoreStatus && (
@@ -535,32 +542,38 @@ function Profile() {
               >
                 {restoreLoading ? 'Загрузка…' : 'Обновить статус Premium'}
               </button>
-              {web && (
+              {web && !tgLinked && (
                 <button
                   type="button"
                   className="profile-pass__restore"
-                  onClick={() => void handleRestoreFromTelegram()}
+                  onClick={() => void handleLinkTelegram()}
                   disabled={restoreLoading || tgRestore?.phase === 'waiting'}
                 >
-                  {tgRestore?.phase === 'waiting'
-                    ? 'Ожидаем привязку…'
-                    : 'Восстановить покупку из Telegram'}
+                  {tgRestore?.phase === 'waiting' ? 'Ожидаем подтверждение…' : 'Связать с Telegram'}
                 </button>
+              )}
+              {web && tgLinked && !tgRestore && (
+                <>
+                  <p className="profile-pass__desc profile-pass__desc--ok">
+                    Telegram подключён
+                    {tgLinkPremium || isPremium
+                      ? '. Premium синхронизирован.'
+                      : '. Premium пока не активен.'}
+                  </p>
+                  <button
+                    type="button"
+                    className="profile-pass__restore"
+                    onClick={() => void handleUnlinkTelegram()}
+                    disabled={restoreLoading}
+                  >
+                    Отвязать Telegram
+                  </button>
+                </>
               )}
               {tgRestorePanel}
-              {web && tgLinked && !tgRestore && (
-                <button
-                  type="button"
-                  className="profile-pass__restore"
-                  onClick={() => void handleUnlinkTelegram()}
-                  disabled={restoreLoading}
-                >
-                  Отвязать Telegram
-                </button>
-              )}
               {!web && (
                 <Link to="/link-web" className="profile-pass__restore" onClick={() => haptic('light')}>
-                  Привязать WEB (код)
+                  Связать с сайтом
                 </Link>
               )}
               {restoreStatus && (

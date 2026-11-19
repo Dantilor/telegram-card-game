@@ -32,7 +32,12 @@ import {
   startEmailRecover,
 } from '../auth/webEmailOtp.js'
 import { isWebOwnerAllowed, webFeatureEnabled } from '../config/runtimeFlags.js'
-import { randomNumericCode, sha256Hex } from '../auth/cryptoTokens.js'
+import { randomToken, sha256Hex } from '../auth/cryptoTokens.js'
+import {
+  buildTelegramLinkDeepLink,
+  isTelegramLinkStartParam,
+  TG_LINK_START_PREFIX,
+} from '../auth/telegramLinkDeepLink.js'
 import { clientIpFromRequest, consumeSharedRateLimit } from '../auth/rateLimit.js'
 import { query } from '../db.js'
 import { withTransaction } from '../legal/runtime.js'
@@ -43,8 +48,6 @@ const router = Router()
 function oidcWebLoginEnabled(): boolean {
   return process.env.WEB_OIDC_LOGIN_ENABLED === '1' || process.env.WEB_OIDC_LOGIN_ENABLED === 'true'
 }
-
-const LINK_CODE_RE = /^\d{8}$/
 
 function errorPayload(e: unknown): { status: number; body: Record<string, unknown> } {
   const err = e as Error & { status?: number; code?: string }
@@ -382,9 +385,9 @@ router.post('/web/session/ensure', async (req: Request, res: Response) => {
 })
 
 /**
- * Start Telegram Premium restore challenge for current WEB account.
+ * Start Telegram Premium link challenge for current WEB account.
  * POST /api/web/telegram-link/start  (CSRF)
- * Returns a short one-time code the user confirms from Mini App (staging/E2E may echo code when WEB_TELEGRAM_LINK_ECHO=1).
+ * Returns a one-time Mini App deep link (startapp). Token stored only as hash.
  */
 router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedRequest, res: Response) => {
   try {
@@ -409,21 +412,40 @@ router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedR
       res.status(429).json({ error: 'Too many codes', code: 'rate_limited' })
       return
     }
-    // Always return code to the authenticated WEB session that created it (pairing UX).
-    // Stored only as hash; single-use; short TTL; rate-limited.
-    const code = randomNumericCode(8)
+
+    const already = await query<{ telegram_id: string }>(
+      `SELECT telegram_id::text AS telegram_id
+         FROM web_telegram_links
+        WHERE web_account_id = $1::uuid AND revoked_at IS NULL
+        ORDER BY linked_at DESC NULLS LAST, id DESC
+        LIMIT 1`,
+      [auth.webAccountId]
+    )
+    if (already.rows[0]) {
+      res.status(409).json({
+        error: 'Already linked',
+        code: 'web_already_linked',
+        message: 'Этот WEB-аккаунт уже связан с Telegram. Сначала отвяжите текущую привязку.',
+      })
+      return
+    }
+
+    const token = `${TG_LINK_START_PREFIX}${randomToken(16)}`
     const expiresAt = new Date(Date.now() + 10 * 60_000)
     await query(
       `INSERT INTO web_telegram_link_challenges (web_account_id, code_hash, expires_at)
        VALUES ($1::uuid, $2, $3)`,
-      [auth.webAccountId, sha256Hex(code), expiresAt.toISOString()]
+      [auth.webAccountId, sha256Hex(token), expiresAt.toISOString()]
     )
+    const deepLink = buildTelegramLinkDeepLink(token)
     res.status(200).json({
       ok: true,
-      code,
+      deepLink,
       expiresAt: expiresAt.toISOString(),
+      // Returned only to the authenticated WEB session that created the challenge.
+      token,
       instruction:
-        'Откройте GameNight Host в Telegram Mini App → раздел «Привязать WEB» (/link-web) и введите этот код. Код действует 10 минут.',
+        'Откроется Telegram Mini App GameNight Host. Подтвердите привязку одним нажатием. Ссылка действует 10 минут.',
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -478,11 +500,6 @@ router.get('/web/telegram-link/status', requireWebSession(), async (req: AuthedR
     res.status(status).json(body)
   }
 })
-
-/**
- * Complete Telegram link from Mini App initData + code.
- * POST /api/web/telegram-link/complete  (initData auth, body: { code })
- */
 
 /**
  * POST /api/web/telegram-link/unlink (CSRF)
@@ -551,6 +568,11 @@ router.post('/web/telegram-link/unlink', requireWebSession(), async (req: Authed
   }
 })
 
+/**
+ * Complete Telegram link from Mini App initData + one-time startapp token.
+ * POST /api/web/telegram-link/complete  (initData auth, body: { token })
+ * Never trusts telegram_id from the body or query string.
+ */
 router.post('/web/telegram-link/complete', async (req: Request, res: Response) => {
   try {
     const auth = await resolveAuth(req)
@@ -564,9 +586,14 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       res.status(429).json({ error: 'Too many attempts', code: 'rate_limited' })
       return
     }
-    const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
-    if (!LINK_CODE_RE.test(code)) {
-      res.status(400).json({ error: 'Invalid code', code: 'invalid_code' })
+    const token =
+      typeof req.body?.token === 'string'
+        ? req.body.token.trim()
+        : typeof req.body?.code === 'string'
+          ? req.body.code.trim()
+          : ''
+    if (!isTelegramLinkStartParam(token)) {
+      res.status(400).json({ error: 'Invalid link token', code: 'invalid_token' })
       return
     }
 
@@ -578,19 +605,19 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         expires_at: Date
         consumed_at: Date | null
       }>(
-        `SELECT id, web_account_id, attempts, expires_at, consumed_at
+        `SELECT id, web_account_id::text AS web_account_id, attempts, expires_at, consumed_at
            FROM web_telegram_link_challenges
           WHERE code_hash = $1
           ORDER BY id DESC
           LIMIT 1
           FOR UPDATE`,
-        [sha256Hex(code)]
+        [sha256Hex(token)]
       )
       const row = challenge.rows[0]
       if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
-        const err = new Error('Code expired or unknown') as Error & { status?: number; code?: string }
+        const err = new Error('Link expired or unknown') as Error & { status?: number; code?: string }
         err.status = 400
-        err.code = 'code_invalid'
+        err.code = 'token_invalid'
         throw err
       }
       if (row.attempts >= 5) {
@@ -602,6 +629,45 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       await tx.query(`UPDATE web_telegram_link_challenges SET attempts = attempts + 1 WHERE id = $1`, [
         row.id,
       ])
+
+      const tgOwned = await tx.query<{ web_account_id: string }>(
+        `SELECT web_account_id::text AS web_account_id
+           FROM web_telegram_links
+          WHERE telegram_id = $1::bigint AND revoked_at IS NULL
+          ORDER BY linked_at DESC NULLS LAST, id DESC
+          LIMIT 1
+          FOR UPDATE`,
+        [auth.telegramId]
+      )
+      if (tgOwned.rows[0] && tgOwned.rows[0].web_account_id !== row.web_account_id) {
+        const err = new Error('Telegram already linked to another WEB account') as Error & {
+          status?: number
+          code?: string
+        }
+        err.status = 409
+        err.code = 'telegram_already_linked'
+        throw err
+      }
+
+      const webOwned = await tx.query<{ telegram_id: string }>(
+        `SELECT telegram_id::text AS telegram_id
+           FROM web_telegram_links
+          WHERE web_account_id = $1::uuid AND revoked_at IS NULL
+          ORDER BY linked_at DESC NULLS LAST, id DESC
+          LIMIT 1
+          FOR UPDATE`,
+        [row.web_account_id]
+      )
+      if (webOwned.rows[0] && Number(webOwned.rows[0].telegram_id) !== auth.telegramId) {
+        const err = new Error('WEB account already linked to another Telegram') as Error & {
+          status?: number
+          code?: string
+        }
+        err.status = 409
+        err.code = 'web_already_linked'
+        throw err
+      }
+
       const consumed = await tx.query<{ id: number }>(
         `UPDATE web_telegram_link_challenges SET consumed_at = now()
           WHERE id = $1 AND consumed_at IS NULL
@@ -609,23 +675,24 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         [row.id]
       )
       if (!consumed.rows[0]) {
-        const err = new Error('Code already used') as Error & { status?: number; code?: string }
+        const err = new Error('Link already used') as Error & { status?: number; code?: string }
         err.status = 400
-        err.code = 'code_invalid'
+        err.code = 'token_invalid'
         throw err
       }
 
-      await tx.query(
-        `UPDATE web_telegram_links SET revoked_at = now()
-          WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
-        [auth.telegramId, row.web_account_id]
-      )
-      await revokeTelegramLinkEntitlements({ telegramId: auth.telegramId, db: tx })
-      await revokeTelegramLinkEntitlements({ webAccountId: row.web_account_id, db: tx })
-      await tx.query(
-        `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
-        [row.web_account_id, auth.telegramId]
-      )
+      const alreadySame =
+        Boolean(tgOwned.rows[0]) &&
+        tgOwned.rows[0].web_account_id === row.web_account_id &&
+        Boolean(webOwned.rows[0]) &&
+        Number(webOwned.rows[0].telegram_id) === auth.telegramId
+
+      if (!alreadySame) {
+        await tx.query(
+          `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+          [row.web_account_id, auth.telegramId]
+        )
+      }
 
       const sub = await tx.query<{ active_until: Date; plan_id: string }>(
         `SELECT active_until, plan_id FROM subscriptions
@@ -633,7 +700,7 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
           ORDER BY active_until DESC LIMIT 1`,
         [auth.telegramId]
       )
-      if (sub.rows[0]) {
+      if (sub.rows[0] && !alreadySame) {
         await grantWebEntitlement({
           webAccountId: row.web_account_id,
           planId: sub.rows[0].plan_id || 'premium_1m',
@@ -646,12 +713,11 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       return {
         webAccountId: row.web_account_id,
         premiumRestored: Boolean(sub.rows[0]),
-        activeUntil: sub.rows[0]?.active_until
-          ? new Date(sub.rows[0].active_until).toISOString()
-          : null,
+        alreadyLinked: alreadySame,
       }
     })
 
+    await ensureUser(auth.telegramId!)
     const webPremium = await getWebAccountPremium(result.webAccountId)
     const tgPremium = await getTelegramPremium(auth.telegramId!)
     const activeUntil =
@@ -669,6 +735,7 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       isPremium: Boolean(activeUntil && new Date(activeUntil) > new Date()),
       activeUntil,
       sources,
+      alreadyLinked: result.alreadyLinked,
       webPremium,
       telegramPremium: tgPremium,
     })
@@ -680,7 +747,7 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
 
 /**
  * Staging/E2E: complete Telegram link without Mini App initData.
- * POST /api/web/telegram-link/complete-mock { code, telegramId, secret }
+ * POST /api/web/telegram-link/complete-mock { token, telegramId, secret }
  * Enabled only when WEB_TELEGRAM_LINK_ECHO=1 and not production.
  */
 router.post('/web/telegram-link/complete-mock', async (req: Request, res: Response) => {
@@ -695,9 +762,14 @@ router.post('/web/telegram-link/complete-mock', async (req: Request, res: Respon
       res.status(401).json({ error: 'Unauthorized', code: 'unauthorized' })
       return
     }
-    const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
+    const token =
+      typeof req.body?.token === 'string'
+        ? req.body.token.trim()
+        : typeof req.body?.code === 'string'
+          ? req.body.code.trim()
+          : ''
     const telegramId = Number(req.body?.telegramId)
-    if (!LINK_CODE_RE.test(code) || !Number.isFinite(telegramId) || telegramId <= 0) {
+    if (!isTelegramLinkStartParam(token) || !Number.isFinite(telegramId) || telegramId <= 0) {
       res.status(400).json({ error: 'Invalid payload', code: 'invalid_body' })
       return
     }
@@ -708,41 +780,66 @@ router.post('/web/telegram-link/complete-mock', async (req: Request, res: Respon
       expires_at: Date
       consumed_at: Date | null
     }>(
-      `SELECT id, web_account_id, attempts, expires_at, consumed_at
+      `SELECT id, web_account_id::text AS web_account_id, attempts, expires_at, consumed_at
          FROM web_telegram_link_challenges
         WHERE code_hash = $1
         ORDER BY id DESC
         LIMIT 1`,
-      [sha256Hex(code)]
+      [sha256Hex(token)]
     )
     const row = challenge.rows[0]
     if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
-      res.status(400).json({ error: 'Code expired or unknown', code: 'code_invalid' })
+      res.status(400).json({ error: 'Link expired or unknown', code: 'token_invalid' })
       return
     }
+
+    const tgOwned = await query<{ web_account_id: string }>(
+      `SELECT web_account_id::text AS web_account_id
+         FROM web_telegram_links
+        WHERE telegram_id = $1::bigint AND revoked_at IS NULL
+        LIMIT 1`,
+      [telegramId]
+    )
+    if (tgOwned.rows[0] && tgOwned.rows[0].web_account_id !== row.web_account_id) {
+      res.status(409).json({
+        error: 'Telegram already linked',
+        code: 'telegram_already_linked',
+      })
+      return
+    }
+
     await query(
       `UPDATE web_telegram_link_challenges SET consumed_at = now() WHERE id = $1 AND consumed_at IS NULL`,
       [row.id]
     )
     await ensureUser(telegramId)
-    await query(
-      `UPDATE web_telegram_links SET revoked_at = now()
-        WHERE (telegram_id = $1::bigint OR web_account_id = $2::uuid) AND revoked_at IS NULL`,
-      [telegramId, row.web_account_id]
+
+    const webOwned = await query<{ telegram_id: string }>(
+      `SELECT telegram_id::text AS telegram_id
+         FROM web_telegram_links
+        WHERE web_account_id = $1::uuid AND revoked_at IS NULL
+        LIMIT 1`,
+      [row.web_account_id]
     )
-    await revokeTelegramLinkEntitlements({ telegramId })
-    await revokeTelegramLinkEntitlements({ webAccountId: row.web_account_id })
-    await query(
-      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
-      [row.web_account_id, telegramId]
-    )
+    const alreadySame =
+      Boolean(webOwned.rows[0]) && Number(webOwned.rows[0].telegram_id) === telegramId
+    if (webOwned.rows[0] && !alreadySame) {
+      res.status(409).json({ error: 'WEB already linked', code: 'web_already_linked' })
+      return
+    }
+    if (!alreadySame) {
+      await query(
+        `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+        [row.web_account_id, telegramId]
+      )
+    }
     const sub = await query<{ active_until: Date; plan_id: string }>(
       `SELECT active_until, plan_id FROM subscriptions
         WHERE telegram_id = $1::bigint AND active_until > now()
         ORDER BY active_until DESC LIMIT 1`,
       [telegramId]
     )
-    if (sub.rows[0]) {
+    if (sub.rows[0] && !alreadySame) {
       await grantWebEntitlement({
         webAccountId: row.web_account_id,
         planId: sub.rows[0].plan_id || 'premium_1m',

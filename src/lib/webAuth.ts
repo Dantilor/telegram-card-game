@@ -83,7 +83,8 @@ export async function startTelegramLinkRestore(): Promise<{
   ok: boolean
   expiresAt?: string
   instruction?: string
-  code?: string
+  deepLink?: string
+  token?: string
 }> {
   const csrf = readCsrfToken()
   const res = await fetch(`${apiBase()}/api/web/telegram-link/start`, {
@@ -95,11 +96,23 @@ export async function startTelegramLinkRestore(): Promise<{
     },
   })
   if (!res.ok) {
-    const err = new Error('telegram_link_start_failed') as Error & { status?: number }
+    const err = new Error('telegram_link_start_failed') as Error & { status?: number; code?: string }
     err.status = res.status
+    try {
+      const body = (await res.json()) as { code?: string }
+      if (typeof body.code === 'string') err.code = body.code
+    } catch {
+      /* ignore */
+    }
     throw err
   }
-  return (await res.json()) as { ok: boolean; expiresAt?: string; instruction?: string; code?: string }
+  return (await res.json()) as {
+    ok: boolean
+    expiresAt?: string
+    instruction?: string
+    deepLink?: string
+    token?: string
+  }
 }
 
 export async function fetchTelegramLinkStatus(): Promise<{
@@ -134,11 +147,14 @@ export async function fetchTelegramLinkStatus(): Promise<{
   }
 }
 
-/** Complete WEB↔Telegram link from Mini App (initData + 8-digit code). */
-export async function completeTelegramLink(code: string): Promise<{
+/** Complete WEB↔Telegram link from Mini App (signed initData + one-time startapp token). */
+export async function completeTelegramLink(token: string): Promise<{
   ok: boolean
+  linked?: boolean
+  isPremium?: boolean
   premium?: boolean
   activeUntil?: string | null
+  sources?: string[]
 }> {
   const { getInitData } = await import('./telegram')
   const initData = getInitData()
@@ -155,7 +171,7 @@ export async function completeTelegramLink(code: string): Promise<{
       'Content-Type': 'application/json',
       'x-telegram-init-data': initData,
     },
-    body: JSON.stringify({ code: code.trim() }),
+    body: JSON.stringify({ token: token.trim() }),
   })
   if (!res.ok) {
     const err = new Error('telegram_link_complete_failed') as Error & { status?: number; code?: string }
@@ -168,7 +184,17 @@ export async function completeTelegramLink(code: string): Promise<{
     }
     throw err
   }
-  return (await res.json()) as { ok: boolean; premium?: boolean; activeUntil?: string | null }
+  const body = (await res.json()) as {
+    ok: boolean
+    linked?: boolean
+    isPremium?: boolean
+    activeUntil?: string | null
+    sources?: string[]
+  }
+  return {
+    ...body,
+    premium: body.isPremium,
+  }
 }
 
 export async function unlinkTelegramLink(): Promise<{

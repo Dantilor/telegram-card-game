@@ -1,6 +1,6 @@
 ﻿# Shared Premium (Telegram ↔ WEB)
 
-After a verified `web_telegram_links` row exists (Mini App initData code complete, or staging complete-mock):
+After a verified `web_telegram_links` row exists (Mini App initData + one-time `startapp` token complete, or staging complete-mock):
 
 - **Telegram → WEB:** `getWebAccountPremium` includes the linked Telegram `subscriptions` row.
 - **WEB → Telegram:** `getTelegramPremium` includes linked `web_entitlements` with `source=web_purchase` (and `manual_staging`).

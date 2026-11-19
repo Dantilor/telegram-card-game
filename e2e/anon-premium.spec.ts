@@ -306,12 +306,15 @@ test.describe('Anonymous WEB Premium', () => {
       headers: { 'X-CSRF-Token': csrf! },
     })
     expect(start.ok(), await start.text()).toBeTruthy()
-    const { code } = await start.json()
-    expect(code).toMatch(/^\d{8}$/)
+    const started = await start.json()
+    expect(typeof started.token).toBe('string')
+    expect(started.token).toMatch(/^wl_/)
+    expect(typeof started.deepLink).toBe('string')
+    expect(String(started.deepLink)).toContain('startapp=')
 
     const complete = await api.post('/api/web/telegram-link/complete-mock', {
       data: {
-        code,
+        token: started.token,
         telegramId: USERS.premium1m,
         secret: DEV_SECRET,
       },

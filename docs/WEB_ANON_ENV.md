@@ -25,7 +25,9 @@
 
 | Variable | Purpose |
 | --- | --- |
-| `WEB_TELEGRAM_LINK_ECHO=1` | Enable `complete-mock` only (never in production). Pairing code is always returned to the authenticated WEB session on `/telegram-link/start`. |
+| `WEB_TELEGRAM_LINK_ECHO=1` | Enable `complete-mock` only (never in production). Authenticated `/telegram-link/start` returns a one-time `deepLink` + `token` (startapp). |
+| `TELEGRAM_BOT_USERNAME` | Bot username for deep links (default `GameNightHostBot`). |
+| `TELEGRAM_MINI_APP_SHORT_NAME` | Optional BotFather Direct Link short name. Empty → Main Mini App `t.me/bot?startapp=`. |
 | `WEB_DEV_LOGIN_SECRET` | Shared secret for `dev-login` and link mock |
 | `WEB_DEV_LOGIN_ENABLED` | Local telegramId session bypass (not OIDC) |
 | `WEB_OIDC_LOGIN_ENABLED` | Must stay unset/0 — Telegram OIDC is not a WEB login method |

@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense, useState, type ReactNode } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
@@ -9,6 +9,7 @@ import { readyAndExpand } from './utils/telegram'
 import { scheduleIdleImports } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import { isWebShell } from './config/shell'
+import { getTelegramStartParam } from './lib/telegram'
 import { WebAuthGate } from './shell/WebAuthGate'
 import WebInsideLayout from './shell/WebInsideLayout'
 import './App.css'
@@ -88,6 +89,19 @@ function DelayedFallback({ delayMs, children }: { delayMs: number; children: Rea
   return <>{children}</>
 }
 
+function TelegramLinkStartRedirect() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (isWebShell()) return
+    const param = getTelegramStartParam()
+    if (!/^wl_[A-Za-z0-9_-]{16,60}$/.test(param)) return
+    const hash = window.location.hash || ''
+    if (hash.includes('/link-web')) return
+    navigate('/link-web', { replace: true })
+  }, [navigate])
+  return null
+}
+
 function App() {
   const [isReady, setReady] = useState(false)
   useAppHeight()
@@ -148,6 +162,7 @@ function App() {
 
   const routes = (
       <div className={`app${isReady ? ' is-ready' : ''}${isWebShell() ? ' app--web' : ''}`}>
+        <TelegramLinkStartRedirect />
         <Suspense
           fallback={
             isWebShell() ? null : (

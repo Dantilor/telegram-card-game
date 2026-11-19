@@ -21,6 +21,7 @@ import {
   countRecentAnonAccounts,
   createAnonymousWebAccountSession,
   getTelegramPremium,
+  getWebAccountContact,
   getWebAccountPremium,
   grantWebEntitlement,
   revokeTelegramLinkEntitlements,
@@ -297,6 +298,8 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
   const session = sessionToken ? await findActiveSessionByToken(sessionToken) : null
   const auth = req.auth!
   let premium: { isPremium: boolean; activeUntil: string | null; sources?: string[] } | undefined
+  let email: string | null = null
+  let emailVerified = false
   if (auth.webAccountId) {
     const status = await getWebAccountPremium(auth.webAccountId)
     premium = {
@@ -304,6 +307,9 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
       activeUntil: status.activeUntil,
       sources: status.sources,
     }
+    const contact = await getWebAccountContact(auth.webAccountId)
+    email = contact.email
+    emailVerified = contact.emailVerified
   }
   res.status(200).json({
     ok: true,
@@ -314,6 +320,8 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
     displayName: session?.display_name ?? null,
     username: session?.username ?? null,
     pictureUrl: session?.picture_url ?? null,
+    email,
+    emailVerified,
     premium,
   })
 })

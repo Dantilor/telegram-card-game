@@ -1,0 +1,23 @@
+﻿.gnh-responsive-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--gnh-aspect-desktop);
+  overflow: hidden;
+  line-height: 0;
+  background: transparent;
+}
+
+.gnh-responsive-art > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .gnh-responsive-art {
+    aspect-ratio: var(--gnh-aspect-mobile);
+  }
+}

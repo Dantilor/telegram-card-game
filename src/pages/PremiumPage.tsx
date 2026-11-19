@@ -3,6 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { haptic } from '../utils/telegram'
+import { isWebShell } from '../config/shell'
+import { formatPremiumUntilLabel } from '../utils/planLabel'
+import crystalUrl from './gnh-inside/assets/reference-crystal.webp'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
@@ -78,6 +81,50 @@ function PremiumPage() {
       }, 2500)
     }
   }, [refreshPremium])
+
+  if (isWebShell() && isPremium) {
+    return (
+      <div className="premium-page">
+        <div className="page-top">
+          <div className="breadcrumb">
+            <button type="button" className="ghost-link" onClick={handleBack}>
+              Назад
+            </button>
+          </div>
+        </div>
+        <div className="premium-heading">
+          <img className="crystal" src={crystalUrl} alt="" width={120} height={120} />
+          <div>
+            <h1 className="page-title">Premium-доступ</h1>
+            <p className="lead">{formatPremiumUntilLabel(activeUntil)}</p>
+          </div>
+        </div>
+        {paymentReturnStatus && <p className="premium-page__status">{paymentReturnStatus}</p>}
+        <section className="glass benefit-card">
+          <div className="premium-page__actions">
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={handleRestorePurchase}
+              disabled={restoreLoading}
+            >
+              {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+            </button>
+            {restoreStatus && <span className="premium-page__toast">{restoreStatus}</span>}
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  if (isWebShell()) {
+    return (
+      <div className="premium-page">
+        {paymentReturnStatus && <p className="premium-page__status">{paymentReturnStatus}</p>}
+        <PremiumOverlay isOpen onClose={handleBack} asPage />
+      </div>
+    )
+  }
 
   if (isPremium) {
     return (

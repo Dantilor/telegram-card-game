@@ -35,6 +35,7 @@ import heroCalm from '../assets/optimized/home-hero-calm.webp'
 import iconCalmFavorite from '../assets/icons/gnh-calm-pro/calm-favorite-star-pro.svg'
 import iconCalmProfile from '../assets/icons/gnh-calm-pro/calm-profile-user-pro.svg'
 import iconCalmChevronRight from '../assets/icons/gnh-calm-pro/calm-chevron-right-pro.svg'
+import HomeReference from './HomeReference'
 import './Home.css'
 
 const APP_FEATURES = [
@@ -65,6 +66,17 @@ const HOME_NEW_PICKS: HomePickItem[] = [
   { title: 'Кто тут кто?', image: IMAGES.whoIsWho.png, to: '/who-is-who' },
   { title: 'Путешествие по России', image: IMAGES.russiaTravel.png, to: '/russia-travel' },
   { title: 'Заражённые', image: HOME_PICK_THUMBS.infected, avif: pickInfectedAvif, to: '/infected' },
+]
+
+const WEB_POPULAR: HomePickItem[] = [
+  ...HOME_PICKS,
+  { title: 'Ассоциации', image: IMAGES.alias.png, to: '/alias' },
+  { title: 'Мафия Lite', image: IMAGES.mafia.png, to: '/mafia' },
+]
+
+const WEB_FRESH: HomePickItem[] = [
+  ...HOME_NEW_PICKS,
+  { title: 'СЛЕД', image: IMAGES.sled.png, to: '/sled' },
 ]
 
 function HomePickThumb({ image, avif }: { image: string; avif?: string }) {
@@ -277,6 +289,23 @@ function Home() {
       onOpen={handlePremiumOpen}
     />
   ) : null
+
+  if (web) {
+    return (
+      <HomeReference
+        popular={WEB_POPULAR}
+        fresh={WEB_FRESH}
+        plansPriceLabel={plansPriceLabel}
+        plansLoading={loading}
+        showPremium={!isPremium || loading}
+        onFavorites={handleFavoritesClick}
+        onPremium={handlePremiumOpen}
+        onPick={handlePickClick}
+        premiumOpen={premiumOverlayOpen}
+        onPremiumClose={() => setPremiumOverlayOpen(false)}
+      />
+    )
+  }
 
   if (isCalm) {
     return (

@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { getTelegramWebApp, ensureInitData } from '../lib/telegram'
 import { isWebShell } from '../config/shell'
@@ -10,6 +11,7 @@ import { invalidateDocument, loadDocument } from '../legal/documentCache'
 import { trackEvent } from '../lib/analytics'
 import { apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
+import { useWebSession } from '../shell/WebSessionContext'
 import { useTheme } from '../hooks/useTheme'
 import { useRecoveringResource } from '../hooks/useRecoveringResource'
 import {
@@ -23,9 +25,9 @@ import gemNeon from '../assets/optimized/premium-gem-neon.webp'
 import gemLight from '../assets/optimized/premium-gem-light.webp'
 import gemSunset from '../assets/optimized/premium-gem-sunset.webp'
 import gemCalm from '../assets/optimized/premium-gem-calm.webp'
+import crystalUrl from '../pages/gnh-inside/assets/reference-crystal.webp'
 import iconCheckCircle from '../assets/icons/premium-modal/check-circle.svg'
 import iconCloseX from '../assets/icons/premium-modal/close-x.svg'
-import iconClock from '../assets/icons/premium-modal/clock.svg'
 import iconRestorePurchases from '../assets/icons/premium-modal/restore-purchases.svg'
 import iconLockSecure from '../assets/icons/premium-modal/lock-secure.svg'
 import iconSparkle from '../assets/icons/premium-modal/sparkle.svg'
@@ -64,6 +66,23 @@ const PREMIUM_INCLUDES = [
     text: 'Сохраняй самые сильные вопросы, чтобы возвращаться к ним в нужный момент.',
   },
 ] as const
+
+function Mark({ children }: { children: ReactNode }) {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+      {children}
+    </svg>
+  )
+}
+
+function planNote(plan: PlanOption): string {
+  if (isLifetimePlan(plan.id, plan.durationDays)) return 'Один раз — без ограничений'
+  if (plan.durationDays > 31) {
+    const months = Math.max(1, Math.round(plan.durationDays / 30))
+    return `${Math.max(1, Math.round(plan.priceRub / months))} ₽ в месяц`
+  }
+  return 'Для ближайших вечеров'
+}
 
 const POLL_INTERVAL_MS = 2000
 const POLL_ATTEMPTS = 15
@@ -107,14 +126,76 @@ function loadOffer(): Promise<PublicDocument> {
   return loadDocument('offer')
 }
 
-function RecoveryNotice({ label, onRetry }: { label: string; onRetry: () => void }) {
+const PAGE_PERKS = [
+  'Все игры, колоды и 18+ режимы',
+  'Избранное и комикс-истории',
+  'Новые режимы без отдельной покупки',
+  'Без автопродления',
+] as const
+
+function offerStatementText(
+  document: PublicDocument | null | undefined,
+  status: string
+): string | null {
+  if (document?.confirmation.available === true && document.confirmation.mode === 'statement') {
+    return document.confirmation.statement
+  }
+  if (status === 'loading') return 'Загрузка текста оферты…'
+  return null
+}
+
+function CatalogNotice({
+  plans,
+  offer,
+}: {
+  plans: { status: string; error: unknown; retryNow: () => void }
+  offer: { status: string; error: unknown; retryNow: () => void }
+}) {
+  const reconnecting = plans.status === 'recovering' || offer.status === 'recovering'
+  const plansLoading = plans.status === 'idle' || plans.status === 'loading'
+  const show =
+    reconnecting ||
+    plans.status === 'failed' ||
+    offer.status === 'failed' ||
+    plansLoading
+  if (!show) return null
   return (
-    <p className="premium-overlay__plans-loading" role="status">
-      {label}{' '}
-      <button type="button" className="premium-overlay__legal-link" onClick={onRetry}>
-        Повторить сейчас
-      </button>
-    </p>
+    <div className="premium-catalog-status">
+      {reconnecting && (
+        <p className="premium-overlay__plans-loading" role="status">
+          Восстанавливаем соединение…
+        </p>
+      )}
+      {plans.status === 'recovering' && (
+        <button type="button" className="premium-overlay__legal-link" onClick={plans.retryNow}>
+          Повторить тарифы
+        </button>
+      )}
+      {offer.status === 'recovering' && (
+        <button type="button" className="premium-overlay__legal-link" onClick={offer.retryNow}>
+          Повторить оферту
+        </button>
+      )}
+      {plans.status === 'failed' && (
+        <p className="premium-overlay__error" role="alert">
+          {userFacingLoadError(plans.error)}{' '}
+          <button type="button" className="premium-overlay__legal-link" onClick={plans.retryNow}>
+            Повторить загрузку тарифов
+          </button>
+        </p>
+      )}
+      {offer.status === 'failed' && (
+        <p className="premium-offer__error" role="alert">
+          {userFacingLoadError(offer.error)}{' '}
+          <button type="button" className="premium-overlay__legal-link" onClick={offer.retryNow}>
+            Повторить загрузку оферты
+          </button>
+        </p>
+      )}
+      {!reconnecting && plansLoading && !plans.error && plans.status !== 'failed' && (
+        <p className="premium-overlay__plans-loading" role="status">Загрузка тарифов…</p>
+      )}
+    </div>
   )
 }
 
@@ -127,10 +208,14 @@ type Props = {
 }
 
 export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }: Props) {
+  const location = useLocation()
   const { refresh } = usePremium()
+  const insideWeb =
+    isWebShell() && location.pathname !== '/' && location.pathname !== '/login'
   const legal = useLegal()
+  const webSession = useWebSession()
   const [theme] = useTheme()
-  const gem = GEMS_BY_THEME[theme]
+  const gem = isWebShell() ? gemNeon : GEMS_BY_THEME[theme]
   const [offerChecked, setOfferChecked] = useState(false)
   const [receipt, setReceipt] = useState('')
   const [selectedPlanId, setSelectedPlanId] = useState<string>(DEFAULT_PLAN_ID)
@@ -151,10 +236,14 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
   const offerLoading = offerResource.status === 'loading' || offerResource.status === 'recovering'
   const offerError = offerResource.status === 'failed' ? userFacingLoadError(offerResource.error) : null
 
-  // Keep the receipt email across retries, but clear it for a new checkout.
+  const savedReceipt =
+    webSession.session?.emailVerified && webSession.session.email ? webSession.session.email : ''
+
+  // Prefill the receipt from the account email. A typed value is kept across retries.
   useEffect(() => {
-    if (isOpen) setReceipt('')
-  }, [isOpen])
+    if (!isOpen || !savedReceipt) return
+    setReceipt((current) => current || savedReceipt)
+  }, [isOpen, savedReceipt])
 
   // Each document (re)load requires the user to review and accept its version.
   useEffect(() => {
@@ -331,6 +420,164 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
     ? `Открыть Premium · ${formatPlanPriceLabel(selectedPlan)}`
     : 'Открыть Premium'
 
+  if (asPage && insideWeb) {
+    const offerStatement =
+      offerDocument?.confirmation.available === true && offerDocument.confirmation.mode === 'statement'
+        ? offerDocument.confirmation.statement
+        : null
+    return (
+      <div className="premium-screen">
+        <div className="page-top">
+          <div className="breadcrumb">
+            <Link to="/">
+              <Mark>
+                <path d="m3 10 9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" />
+              </Mark>
+              Домой
+            </Link>
+            <Mark>
+              <path d="m9 5 7 7-7 7" />
+            </Mark>
+            <span>Premium-доступ</span>
+          </div>
+          <button type="button" className="ghost-link" onClick={onClose}>
+            <Mark>
+              <path d="m9 5 7 7-7 7" />
+            </Mark>
+            Назад
+          </button>
+        </div>
+        <div className="premium-layout">
+          <section>
+            <div className="premium-heading">
+              <img className="crystal" src={crystalUrl} alt="" width={120} height={120} />
+              <div>
+                <span className="eyebrow">
+                  <Mark>
+                    <path d="m12 3 2.7 6.3L21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z" />
+                  </Mark>
+                  GAMENIGHT PREMIUM
+                </span>
+                <h1 className="page-title" id="premium-overlay-title">Premium-доступ</h1>
+                <p className="lead">Полный доступ для ведущего. Компания играет вместе.</p>
+              </div>
+            </div>
+            <div className="glass benefit-card">
+              <h2>
+                <Mark>
+                  <path d="m12 3 2.7 6.3L21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Z" />
+                </Mark>
+                Что входит
+              </h2>
+              <ul className="premium-perks">
+                {PAGE_PERKS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="premium-note">
+              <Mark>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+              </Mark>
+              <span>Premium нужен только ведущему.</span>
+            </div>
+          </section>
+          <aside className="glass plans-panel">
+            <h2>Выберите срок</h2>
+            <p>Цена приходит с сервера. Без автопродления.</p>
+            {success && <p className="premium-overlay__success">Premium активирован</p>}
+            {error && <p className="premium-overlay__error" role="alert">{error}</p>}
+            {restoreToast && <p className="premium-overlay__toast" role="status">{restoreToast}</p>}
+            <CatalogNotice plans={plansResource} offer={offerResource} />
+            {plansResource.status === 'ready' && (
+              <fieldset className="plans" aria-label="Тариф Premium">
+                {plans.map((plan) => (
+                  <label className="plan" key={plan.id}>
+                    <input
+                      type="radio"
+                      name="premium-plan"
+                      value={plan.id}
+                      checked={plan.id === selectedPlanId}
+                      onChange={() => {
+                        haptic('light')
+                        setSelectedPlanId(plan.id)
+                      }}
+                    />
+                    <span>
+                      <span className="plan-title">{plan.title || formatPlanPeriod(plan.durationDays)}</span>
+                      <span className="plan-note">{planNote(plan)}</span>
+                    </span>
+                    <strong className="plan-price">{plan.priceRub} ₽</strong>
+                    {plan.id === DEFAULT_PLAN_ID && <span className="plan-badge">ВЫГОДНЫЙ ВЫБОР</span>}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            <label className="field">
+              Email для чека
+              <input
+                type="email"
+                value={receipt}
+                placeholder="name@example.com"
+                autoComplete="email"
+                inputMode="email"
+                aria-invalid={receiptError ? true : undefined}
+                onChange={(event) => setReceipt(event.target.value)}
+              />
+            </label>
+            {receiptError && <p className="premium-offer__error" role="alert">{receiptError}</p>}
+            <label className="consent">
+              <input
+                id="consent"
+                type="checkbox"
+                checked={offerChecked}
+                disabled={offerLoading || !offerStatement}
+                onChange={(event) => setOfferChecked(event.target.checked)}
+              />
+              <span>
+                {offerStatement ?? offerStatementText(offerDocument, offerResource.status) ?? 'Текст оферты ещё не загружен'}
+                <span className="consent-links">
+                  <button type="button" onClick={() => { haptic('light'); legal.openDocument('offer') }}>
+                    условия оферты
+                  </button>
+                  {' и '}
+                  <button type="button" onClick={() => { haptic('light'); legal.openDocument('privacy') }}>
+                    политику конфиденциальности
+                  </button>
+                </span>
+              </span>
+            </label>
+            <button
+              type="button"
+              className="button button-primary premium-pay"
+              onClick={handleBuyPremium}
+              disabled={loading || !canStartPayment}
+              aria-busy={loading}
+            >
+              <Mark>
+                <path d="m3 8 4-5h10l4 5-9 13L3 8Z" />
+                <path d="M3 8h18M7 3l5 18 5-18" />
+              </Mark>
+              {loading ? 'Создаём оплату…' : buyLabel}
+            </button>
+            <p className="quiet-note">Без автопродления. Продлевать доступ решаете только вы.</p>
+            <button
+              type="button"
+              className="text-button restore-link"
+              onClick={handleRestorePurchase}
+              disabled={restoreLoading}
+              aria-busy={restoreLoading}
+            >
+              {restoreLoading ? 'Проверяем покупки…' : 'Восстановить покупки'}
+            </button>
+          </aside>
+        </div>
+      </div>
+    )
+  }
+
   const cardContent = (
     <div className="premium-overlay__card" onClick={asPage ? undefined : (e: React.MouseEvent) => e.stopPropagation()}>
         {!asPage && (
@@ -346,6 +593,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
             <img src={iconCloseX} alt="" className="premium-overlay__close-icon" decoding="async" />
           </button>
         )}
+        <div className="premium-overlay__scroll">
         <div className="premium-overlay__hero">
           <span className="premium-overlay__gem-wrap" aria-hidden>
             <img src={gem} alt="" className="premium-overlay__diamond" decoding="async" />
@@ -395,22 +643,8 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
         </div>
 
         <div className="premium-overlay__plans">
-          {plansResource.status === 'recovering' ? (
-            <div className="premium-overlay__plans-empty">
-              <img src={iconClock} alt="" className="premium-overlay__plans-empty-icon" decoding="async" aria-hidden />
-              <RecoveryNotice label="Восстанавливаем соединение…" onRetry={plansResource.retryNow} />
-            </div>
-          ) : plansResource.status === 'failed' ? (
-            <div className="premium-overlay__plans-empty">
-              <img src={iconClock} alt="" className="premium-overlay__plans-empty-icon" decoding="async" aria-hidden />
-              <p className="premium-overlay__plans-loading">{userFacingLoadError(plansResource.error)}</p>
-              <button type="button" className="premium-overlay__legal-link" onClick={plansResource.retryNow}>
-                Повторить загрузку
-              </button>
-            </div>
-          ) : plansLoading ? (
-            <p className="premium-overlay__plans-loading">Загрузка тарифов…</p>
-          ) : (
+          <CatalogNotice plans={plansResource} offer={offerResource} />
+          {plansResource.status === 'ready' && (
             <div className="premium-overlay__plans-list" role="radiogroup" aria-label="Тариф Premium">
               {plans.map((plan) => {
                 const isSelected = plan.id === selectedPlanId
@@ -460,17 +694,6 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); legal.openDocument('offer') }}>
             Открыть публичную оферту
           </button>
-          {offerResource.status === 'recovering' && (
-            <RecoveryNotice label="Восстанавливаем соединение…" onRetry={offerResource.retryNow} />
-          )}
-          {offerError && (
-            <p className="premium-offer__error">
-              {offerError}{' '}
-              <button type="button" className="premium-overlay__legal-link" onClick={offerResource.retryNow}>
-                Повторить загрузку
-              </button>
-            </p>
-          )}
           <label className="legal-choice__check">
             <input
               type="checkbox"
@@ -484,11 +707,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
               onChange={(event) => setOfferChecked(event.target.checked)}
             />
             <span>
-              {offerDocument?.confirmation.available === true && offerDocument.confirmation.mode === 'statement'
-                ? offerDocument.confirmation.statement
-                : offerLoading
-                  ? 'Загрузка текста оферты…'
-                  : 'Текст оферты ещё не загружен'}
+              {offerStatementText(offerDocument, offerResource.status) ?? 'Текст оферты ещё не загружен'}
             </span>
           </label>
           <label className="premium-offer__field">
@@ -507,30 +726,6 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
           <p className="premium-offer__hint">ЮKassa отправит чек на эту почту.</p>
         </div>
 
-        <button
-          type="button"
-          className="premium-overlay__btn premium-overlay__btn--buy"
-          onClick={handleBuyPremium}
-          disabled={loading || plansLoading || !canStartPayment}
-          aria-disabled={loading || plansLoading || !canStartPayment}
-        >
-          <img src={gem} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--gem" decoding="async" aria-hidden />
-          <span className="premium-overlay__btn-label">
-            {loading ? 'Загрузка…' : plansLoading ? 'Загрузка…' : buyLabel}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="premium-overlay__btn premium-overlay__btn--restore"
-          onClick={handleRestorePurchase}
-          disabled={restoreLoading}
-        >
-          <img src={iconRestorePurchases} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--restore" decoding="async" aria-hidden />
-          <span className="premium-overlay__btn-label">
-            {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
-          </span>
-        </button>
-
         <div className="premium-overlay__bottom">
           <p className="premium-overlay__footer">
             <img src={iconLockSecure} alt="" className="premium-overlay__footer-lock" decoding="async" aria-hidden />
@@ -545,6 +740,35 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
               Пользовательское соглашение
             </button>
           </p>
+        </div>
+        </div>
+
+        <div className="premium-overlay__dock">
+          <button
+            type="button"
+            className="premium-overlay__btn premium-overlay__btn--buy"
+            onClick={handleBuyPremium}
+            disabled={loading || !canStartPayment}
+            aria-busy={loading}
+            aria-disabled={loading || !canStartPayment}
+          >
+            <img src={gem} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--gem" decoding="async" aria-hidden />
+            <span className="premium-overlay__btn-label">
+              {loading ? 'Создаём оплату…' : buyLabel}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="premium-overlay__btn premium-overlay__btn--restore"
+            onClick={handleRestorePurchase}
+            disabled={restoreLoading}
+            aria-busy={restoreLoading}
+          >
+            <img src={iconRestorePurchases} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--restore" decoding="async" aria-hidden />
+            <span className="premium-overlay__btn-label">
+              {restoreLoading ? 'Проверяем покупки…' : 'Восстановить покупки'}
+            </span>
+          </button>
         </div>
 
         {asPage && (
@@ -572,7 +796,7 @@ export default function PremiumOverlay({ isOpen, onClose, onBuyPremium, asPage }
 
   return createPortal(
     <div
-      className="premium-overlay"
+      className={`premium-overlay${insideWeb ? ' gnh-inside-portal' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="premium-overlay-title"

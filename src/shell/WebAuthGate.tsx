@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
 import {
   ensureWebSession,
   fetchWebSessionMe,
@@ -36,12 +35,13 @@ function AuthAtmosphere() {
  * Children (Home/games) render immediately after ensure/session check.
  */
 export function WebAuthGate({ children }: { children: ReactNode }) {
-  const location = useLocation()
   const [gate, setGate] = useState<GateState>({ status: 'loading' })
 
   const bootstrap = useMemo(
-    () => async () => {
-      setGate({ status: 'loading' })
+    () => async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent === true
+      // Never flash the full-screen loader on route changes — only on first boot / retry.
+      if (!silent) setGate({ status: 'loading' })
       try {
         let session = await fetchWebSessionMe()
         if (!session) {
@@ -65,9 +65,11 @@ export function WebAuthGate({ children }: { children: ReactNode }) {
     []
   )
 
+  // Bootstrap once on mount. Do NOT re-run on pathname — that wiped the UI
+  // with "Загружаем…" on every screen switch.
   useEffect(() => {
     void bootstrap()
-  }, [bootstrap, location.pathname])
+  }, [bootstrap])
 
   if (gate.status === 'loading') {
     return (

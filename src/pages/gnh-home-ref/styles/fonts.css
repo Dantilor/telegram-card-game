@@ -1,0 +1,9 @@
+/* Latin from bundled faces; Cyrillic from system UI so У/Ф look normal (no long-stem display glyph). */
+@font-face{font-family:GNHHomeReference;src:url('../assets/fonts/sans-latin-regular.woff2') format('woff2');font-weight:400;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:GNHHomeReference;src:local("Segoe UI"),local("Helvetica Neue"),local(Arial);font-weight:400;font-display:swap;unicode-range:U+0400-052F,U+2DE0-2DFF,U+A640-A69F}
+@font-face{font-family:GNHHomeReference;src:url('../assets/fonts/sans-latin-medium.woff2') format('woff2');font-weight:500;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:GNHHomeReference;src:local("Segoe UI"),local("Helvetica Neue"),local(Arial);font-weight:500;font-display:swap;unicode-range:U+0400-052F,U+2DE0-2DFF,U+A640-A69F}
+@font-face{font-family:GNHHomeReference;src:url('../assets/fonts/sans-latin-semibold.woff2') format('woff2');font-weight:600;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:GNHHomeReference;src:local("Segoe UI Semibold"),local("Segoe UI"),local("Helvetica Neue"),local(Arial);font-weight:600;font-display:swap;unicode-range:U+0400-052F,U+2DE0-2DFF,U+A640-A69F}
+@font-face{font-family:GNHHomeReference;src:url('../assets/fonts/sans-latin-bold.woff2') format('woff2');font-weight:700 900;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:GNHHomeReference;src:local("Segoe UI Bold"),local("Segoe UI"),local("Helvetica Neue"),local(Arial);font-weight:700 900;font-display:swap;unicode-range:U+0400-052F,U+2DE0-2DFF,U+A640-A69F}

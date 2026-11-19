@@ -43,11 +43,8 @@
   --adult-badge-color: #fb923c;
   --adult-badge-border: rgba(234, 88, 12, 0.4);
   --adult-badge-glow: rgba(251, 146, 60, 0.25);
-  --app-page-bg-color: #050816;
-  --app-page-bg-image:
-    radial-gradient(ellipse 120% 75% at 50% -18%, rgba(139, 77, 255, 0.16) 0%, rgba(139, 77, 255, 0.04) 42%, transparent 72%),
-    radial-gradient(ellipse 85% 55% at 100% 12%, rgba(59, 130, 255, 0.08) 0%, transparent 68%),
-    linear-gradient(180deg, #050816 0%, #060a1c 55%, #050816 100%);
+  --app-page-bg-color: #060a1b;
+  --app-page-bg-image: none;
 }
 
 /* neon-light — почти дневная, светлый лавандово-голубой */
@@ -95,11 +92,8 @@
   --adult-badge-color: #c2410c;
   --adult-badge-border: rgba(194, 65, 12, 0.4);
   --adult-badge-glow: rgba(194, 65, 12, 0.15);
-  --app-page-bg-color: #f7f5ff;
-  --app-page-bg-image:
-    radial-gradient(ellipse 110% 70% at 50% -12%, rgba(255, 101, 216, 0.12) 0%, rgba(255, 101, 216, 0.03) 40%, transparent 70%),
-    radial-gradient(ellipse 80% 50% at 85% 8%, rgba(85, 183, 255, 0.1) 0%, transparent 65%),
-    linear-gradient(180deg, #fbfaff 0%, #f7f5ff 50%, #f4f2ff 100%);
+  --app-page-bg-color: #f6f4ff;
+  --app-page-bg-image: none;
 }
 
 /* soft-light — мягкий светлый */
@@ -191,10 +185,7 @@
   --adult-badge-border: rgba(251, 146, 60, 0.55);
   --adult-badge-glow: rgba(251, 146, 60, 0.3);
   --app-page-bg-color: #fff5f0;
-  --app-page-bg-image:
-    radial-gradient(ellipse 110% 70% at 50% -12%, rgba(255, 154, 139, 0.14) 0%, rgba(255, 154, 139, 0.04) 38%, transparent 70%),
-    radial-gradient(ellipse 80% 50% at 82% 10%, rgba(255, 153, 172, 0.1) 0%, transparent 65%),
-    linear-gradient(180deg, #fff8f4 0%, #fff5f0 50%, #fff0ea 100%);
+  --app-page-bg-image: none;
 }
 
 /* Sunset / Calm: светлый shell — тёмный текст (не cream из --text) */
@@ -269,11 +260,8 @@
   --adult-badge-color: #fb923c;
   --adult-badge-border: rgba(251, 146, 60, 0.45);
   --adult-badge-glow: rgba(251, 146, 60, 0.2);
-  --app-page-bg-color: #f7f8f7;
-  --app-page-bg-image:
-    radial-gradient(ellipse 110% 70% at 50% -12%, rgba(139, 168, 150, 0.1) 0%, rgba(139, 168, 150, 0.03) 38%, transparent 70%),
-    radial-gradient(ellipse 80% 50% at 82% 10%, rgba(168, 181, 196, 0.08) 0%, transparent 65%),
-    linear-gradient(180deg, #f9faf9 0%, #f7f8f7 50%, #f3f5f4 100%);
+  --app-page-bg-color: #f5f7f6;
+  --app-page-bg-image: none;
 }
 
 /* Gradient background + glow blobs (uses theme variables) + slow move */

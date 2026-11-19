@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GAMES } from '../data/games'
-import { PRELOAD_GAMES_CATALOG_URLS } from '../assets/images'
+import { PRELOAD_GAMES_CATALOG_URLS, RESPONSIVE_ARTWORK } from '../assets/images'
 import { useBack } from '../hooks/useBack'
 import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
 import { usePremium } from '../contexts/PremiumContext'
@@ -54,27 +54,30 @@ function Games() {
     // Чанки игр — последовательно в idle, чтобы не забивать сеть на 3G и не тормозить UI.
     const cancelWarm = scheduleIdleImports(
       [
+        () => import('./Comics'),
+        () => import('./RussiaTravel'),
+        () => import('./CardGameEntry'),
         () => import('./AliasLayout'),
         () => import('./ActivityLayout'),
         () => import('./MafiaLayout'),
-        () => import('./SabotageLayout'),
         () => import('./QuizLayout'),
         () => import('./TruthDareLayout'),
+        () => import('./SabotageLayout'),
         () => import('./WhoIsWhoLayout'),
         () => import('./PhraseTranslator'),
         () => import('./FreebieTrashLayout'),
-        () => import('./RussiaTravel'),
         () => import('./SledLayout'),
         () => import('./MafiaShadowsLayout'),
         () => import('./DoublesLayout'),
         () => import('./InfectedLayout'),
       ],
-      { startDelayMs: 400, gapMs: 280, timeoutMs: 2500 }
+      { startDelayMs: 180, gapMs: 140, timeoutMs: 1800 }
     )
 
     const cancelCardWarm = scheduleWhenIdle(() => {
       void import('./CardGameEntry')
-    }, 3000)
+      void import('./Play')
+    }, 900)
 
     return () => {
       cancelWarm()
@@ -108,7 +111,7 @@ function Games() {
               className="games-grid__card-img"
               priority={i < 6}
               aspectRatio=""
-              objectFit="cover"
+              objectFit="contain"
             />
             {game.catalogBadge === 'new' && !isLocked ? (
               <span className="games-card-badge games-card-badge--new">NEW</span>
@@ -134,6 +137,18 @@ function Games() {
           to={route}
           className={cardClass}
           style={{ animationDelay: `${i * 0.05}s` }}
+          onPointerEnter={() => {
+            const warm = READY_GAME_ROUTES[game.id]
+            if (game.id === 'card') void import('./CardGameEntry')
+            else if (game.id === 'russia-travel') void import('./RussiaTravel')
+            else if (warm?.startsWith('/play')) void import('./Play')
+            else if (warm === '/alias') void import('./AliasLayout')
+            else if (warm === '/activity') void import('./ActivityLayout')
+            else if (warm === '/mafia') void import('./MafiaLayout')
+            else if (warm === '/quiz') void import('./QuizLayout')
+            else if (warm === '/truth-dare') void import('./TruthDareLayout')
+            else if (warm === '/comics') void import('./Comics')
+          }}
           onClick={() => {
             hapticSelection()
             if (game.id === 'card') requestFullscreenOnUserGesture()
@@ -173,6 +188,7 @@ function Games() {
         <HeroGameCard
           game={heroGame}
           isLocked={isGameLocked(heroGame.id, isPremium)}
+          artwork={RESPONSIVE_ARTWORK.card}
         />
       )}
       <GamesGrid games={otherGames} renderCard={renderGameCard} />
@@ -184,6 +200,7 @@ function Games() {
           badge="NEW"
           badgeVariant="new"
           position="bottom"
+          artwork={RESPONSIVE_ARTWORK['who-is-who']}
         />
       )}
       {bottomHeroGame && (
@@ -194,6 +211,7 @@ function Games() {
           badge="NEW"
           badgeVariant="new"
           position="bottom"
+          artwork={RESPONSIVE_ARTWORK['russia-travel']}
         />
       )}
     </div>

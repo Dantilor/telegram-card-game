@@ -98,6 +98,27 @@ function pickBestUntil(current: Date | null, candidate: Date | null, now: Date):
   return current
 }
 
+/** Read-only contact already stored on the WEB account. Does not change bind or checkout. */
+export async function getWebAccountContact(
+  webAccountId: string,
+  customDb?: Queryable
+): Promise<{ email: string | null; emailVerified: boolean }> {
+  const result = await db(customDb).query<{
+    email_normalized: string | null
+    email_verified_at: Date | null
+  }>(
+    `SELECT email_normalized, email_verified_at
+       FROM web_accounts
+      WHERE id = $1::uuid AND revoked_at IS NULL`,
+    [webAccountId]
+  )
+  const row = result.rows[0]
+  return {
+    email: row?.email_normalized ?? null,
+    emailVerified: Boolean(row?.email_verified_at && row.email_normalized),
+  }
+}
+
 /**
  * Effective Premium for a WEB account.
  * Own WEB purchases stay local; Telegram Premium is visible only while an active verified link exists.

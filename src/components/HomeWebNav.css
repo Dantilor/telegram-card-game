@@ -1,4 +1,4 @@
-/* Visibility and layout for .home-web-nav live in styles/web-desktop.css (.app.app--web). */
+/* Shown whenever Stage 2 home is mounted; themed by HomeWeb.css */
 .home-web-nav {
-  display: none;
+  display: flex;
 }

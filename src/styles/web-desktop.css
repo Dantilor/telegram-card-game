@@ -903,6 +903,21 @@
     height: 100%;
   }
 
+  /* Compact stacked heroes inside WEB catalog (WhoIsWho / Cards / Где мы?). */
+  .app.app--web .gnh-inside .games-page .hero-game-card {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+  }
+
+  .app.app--web .gnh-inside .games-page .hero-game-card .hero-game-card__media,
+  .app.app--web .gnh-inside .games-page .hero-game-card--responsive .hero-game-card__media {
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    aspect-ratio: var(--gnh-aspect-desktop, 2098 / 749);
+  }
+
   .app.app--web .hero-game-card__content {
     display: flex;
     flex-direction: column;
@@ -1319,8 +1334,11 @@ html[data-theme="minimal-calm"] .app.app--web .profile-pass__email-input {
   .app.app--web .home-sunset-quick,
   .app.app--web .home-calm-quick {
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     grid-template-columns: none !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    justify-items: stretch !important;
   }
 
   html[data-theme] .app.app--web .home-neon-picks__row,
@@ -1345,6 +1363,69 @@ html[data-theme="minimal-calm"] .app.app--web .profile-pass__email-input {
   .app.app--web .home-calm-hero__content {
     max-width: none !important;
     background: none !important;
+  }
+
+  .app.app--web .home-page--neon,
+  .app.app--web .home-page--light,
+  .app.app--web .home-page--sunset,
+  .app.app--web .home-page--calm {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .app.app--web .home-web-side {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.85rem;
+  }
+
+  .app.app--web .home-premium-banner,
+  .app.app--web .home-premium-banner__card {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  html[data-theme] .app.app--web .home-neon-quick__card,
+  html[data-theme] .app.app--web .home-light-quick__card,
+  html[data-theme] .app.app--web .home-sunset-quick__card,
+  html[data-theme] .app.app--web .home-calm-quick__card {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 7.35rem !important;
+    height: auto !important;
+    aspect-ratio: auto !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .app.app--web .home-neon-quick__text,
+  .app.app--web .home-light-quick__text,
+  .app.app--web .home-sunset-quick__text,
+  .app.app--web .home-calm-quick__text {
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+
+  .app.app--web .home-neon-quick__chev-img,
+  .app.app--web .home-light-quick__chev-img,
+  .app.app--web .home-sunset-quick__chev-img,
+  .app.app--web .home-calm-quick__chev-img {
+    display: block !important;
+  }
+
+  .app.app--web .home-picks__thumb-wrap {
+    width: 5.35rem !important;
+    aspect-ratio: auto !important;
+    height: auto !important;
+    margin: -0.5rem 0 !important;
+  }
+
+  .app.app--web .home-picks__play {
+    position: static !important;
+    align-self: center !important;
+    margin-left: auto !important;
   }
 }
 

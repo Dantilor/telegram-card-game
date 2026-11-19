@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact } from '../utils/haptics'
 import { requestFullscreenOnUserGesture } from '../lib/telegramTheme'
+import { IconBell, IconSearch } from '../pages/homeWebIcons'
 import './HomeWebNav.css'
 
 type HomeWebNavProps = {
@@ -10,7 +11,8 @@ type HomeWebNavProps = {
 
 export default function HomeWebNav({ onPremium }: HomeWebNavProps) {
   const { pathname } = useLocation()
-  const gamesActive = pathname.startsWith('/games')
+  const onHome = pathname === '/' || pathname === ''
+  const gamesActive = onHome || pathname.startsWith('/games')
   const profileActive = pathname.startsWith('/profile')
   const premiumActive = pathname.startsWith('/premium')
 
@@ -52,6 +54,19 @@ export default function HomeWebNav({ onPremium }: HomeWebNavProps) {
             Тарифы
           </button>
         ) : null}
+      </div>
+      <div className="home-web-nav__tools">
+        <Link
+          to="/games"
+          className="home-web-nav__tool"
+          aria-label="Поиск по каталогу"
+          onClick={() => haptic('light')}
+        >
+          <IconSearch size={16} />
+        </Link>
+        <button type="button" className="home-web-nav__tool" aria-label="Уведомления" onClick={() => haptic('light')}>
+          <IconBell size={16} />
+        </button>
       </div>
     </nav>
   )

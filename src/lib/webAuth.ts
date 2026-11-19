@@ -11,6 +11,9 @@ export type WebSessionMe = {
   displayName?: string | null
   username?: string | null
   pictureUrl?: string | null
+  /** Verified purchase-recovery email, when the account already has one. */
+  email?: string | null
+  emailVerified?: boolean
   premium?: {
     isPremium: boolean
     activeUntil: string | null

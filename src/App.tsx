@@ -10,6 +10,7 @@ import { scheduleIdleImports } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import { isWebShell } from './config/shell'
 import { WebAuthGate } from './shell/WebAuthGate'
+import WebInsideLayout from './shell/WebInsideLayout'
 import './App.css'
 
 // Главная загружается сразу (первый экран)
@@ -111,14 +112,29 @@ function App() {
       }
     }, 1800)
 
-    // Тёплый кэш только самых вероятных следующих экранов — в idle, без шторма игровых чанков.
-    // Premium/getMe уже грузит PremiumProvider; дублирующий prefetch и preload картинок убраны.
+    // WEB: быстрее прогреваем каталог / комиксы / частые игры, чтобы переходы были почти мгновенными.
+    // Mini App: бережнее — только самые вероятные экраны.
     const cancelRouteWarm = scheduleIdleImports(
-      [
-        () => import('./pages/Games'),
-        () => import('./pages/Profile'),
-      ],
-      { startDelayMs: 1200, gapMs: 500, timeoutMs: 3500 }
+      isWebShell()
+        ? [
+            () => import('./pages/Games'),
+            () => import('./pages/Comics'),
+            () => import('./pages/CardGameEntry'),
+            () => import('./pages/RussiaTravel'),
+            () => import('./pages/Play'),
+            () => import('./pages/ModePage'),
+            () => import('./pages/Profile'),
+            () => import('./pages/Favorites'),
+          ]
+        : [
+            () => import('./pages/Games'),
+            () => import('./pages/Profile'),
+          ],
+      {
+        startDelayMs: isWebShell() ? 350 : 1200,
+        gapMs: isWebShell() ? 180 : 500,
+        timeoutMs: isWebShell() ? 2200 : 3500,
+      }
     )
 
     // Обложки каталога грузит сама страница /games: на главной они забивали медленный канал.
@@ -133,19 +149,23 @@ function App() {
       <div className={`app${isReady ? ' is-ready' : ''}${isWebShell() ? ' app--web' : ''}`}>
         <Suspense
           fallback={
-            <DelayedFallback delayMs={250}>
-              <div className="page-loading page-loading-skeleton" aria-busy="true">
-                <ul className="page-loading-skeleton__grid">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <li key={i} className="page-loading-skeleton__card" aria-hidden />
-                  ))}
-                </ul>
-              </div>
-            </DelayedFallback>
+            isWebShell() ? null : (
+              <DelayedFallback delayMs={250}>
+                <div className="page-loading page-loading-skeleton" aria-busy="true">
+                  <ul className="page-loading-skeleton__grid">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <li key={i} className="page-loading-skeleton__card" aria-hidden />
+                    ))}
+                  </ul>
+                </div>
+              </DelayedFallback>
+            )
           }
         >
         <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Home />} />
+        <Route element={<WebInsideLayout />}>
         <Route path="/games" element={<Games />} />
         <Route path="/comics" element={<Comics />} />
         <Route path="/comics/:seriesId" element={<ComicReader />} />
@@ -222,7 +242,7 @@ function App() {
         <Route path="/legal/privacy" element={<LegalDocumentPage documentId="privacy" />} />
         <Route path="/legal/terms" element={<LegalDocumentPage documentId="agreement" />} />
         <Route path="/legal/premium" element={<LegalDocumentPage documentId="offer" />} />
-        <Route path="/login" element={<Home />} />
+        </Route>
         </Routes>
         </Suspense>
       </div>

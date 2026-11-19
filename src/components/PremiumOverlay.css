@@ -1126,3 +1126,118 @@
   max-width: 0.95rem;
   height: 0.95rem;
 }
+
+/* WEB modal stays the dark vertical card from the home reference, even when the shell theme is light. */
+html[data-gnh-shell="web"] .premium-overlay::before {
+  background: rgba(6, 8, 18, 0.68);
+}
+
+html[data-gnh-shell="web"] .premium-overlay__card {
+  width: min(560px, 100%);
+  max-width: 560px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  --po-text: #f5f7ff;
+  --po-muted: rgba(245, 247, 255, 0.78);
+  --po-body: rgba(245, 247, 255, 0.86);
+  --po-accent: #55b7ff;
+  --po-success: #4ade80;
+  --po-error: #ff6b9d;
+  --po-border: rgba(255, 255, 255, 0.1);
+  --po-divider: rgba(255, 255, 255, 0.08);
+  --po-line: rgba(139, 77, 255, 0.45);
+  --po-plan-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  --po-plan-border: rgba(255, 255, 255, 0.1);
+  --po-plan-radio: rgba(255, 255, 255, 0.25);
+  --po-restore-fill: rgba(12, 10, 24, 0.92);
+  --po-restore-text: rgba(245, 247, 255, 0.92);
+  --po-empty-bg: rgba(139, 77, 255, 0.08);
+  --po-empty-border: rgba(255, 63, 216, 0.22);
+  color: var(--po-text);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(138, 43, 226, 0.22) 0%, transparent 55%),
+    linear-gradient(165deg, rgba(32, 26, 52, 0.98) 0%, rgba(16, 14, 28, 0.99) 100%);
+  border: 1px solid var(--po-border);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(138, 43, 226, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+html[data-gnh-shell="web"] .premium-overlay__close-icon,
+html[data-gnh-shell="web"] .premium-overlay__plans-empty-icon {
+  filter: none;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__gem-wrap::after {
+  display: block;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__heading-text {
+  background: linear-gradient(90deg, #ff3fd8 0%, #c084fc 42%, #3b82ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__tagline {
+  border: none;
+  background: linear-gradient(90deg, #8d3aab 0%, #6a3ec4 48%, #4a62d6 100%);
+  box-shadow: none;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__tagline-text {
+  background: none;
+  -webkit-text-fill-color: #fff;
+  color: #fff;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__plan {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  min-height: 64px;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__dock {
+  position: static;
+  flex: 0 0 auto;
+  z-index: 2;
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 1.25rem max(14px, env(safe-area-inset-bottom));
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy {
+  min-height: 52px;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy:disabled {
+  opacity: 0.62;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy[aria-busy="true"] {
+  opacity: 0.88;
+}
+
+@media (max-width: 767px) {
+  html[data-gnh-shell="web"] .premium-overlay {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  html[data-gnh-shell="web"] .premium-overlay__card {
+    width: 100%;
+    max-width: none;
+  }
+}

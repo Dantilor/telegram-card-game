@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useBack } from "../../hooks/useBack";
 import { usePremium } from "../../contexts/PremiumContext";
 import { hapticSelection } from "../../utils/haptics";
+import { ensureHostGameSessionLease } from "../../lib/gameSessionLease";
 import HomeButton from "../../components/HomeButton";
 import BackButton from "../../components/BackButton";
 import PremiumOverlay from "../../components/PremiumOverlay";
@@ -663,6 +664,8 @@ export default function SledGame() {
       return;
     }
     try {
+      const lease = await ensureHostGameSessionLease("sled");
+      if (!lease.ok && lease.limitReached) return;
       playSound("radio");
       const initialState = createInitialSharedState(currentMode.time);
       hostHydratedRef.current = true;

@@ -38,6 +38,10 @@ import {
   isTelegramLinkStartParam,
   TG_LINK_START_PREFIX,
 } from '../auth/telegramLinkDeepLink.js'
+import {
+  gameSessionLimitEnabled,
+  reconcileLeasesAfterTelegramLink,
+} from '../auth/gameSessionLeases.js'
 import { clientIpFromRequest, consumeSharedRateLimit } from '../auth/rateLimit.js'
 import { query } from '../db.js'
 import { withTransaction } from '../legal/runtime.js'
@@ -718,6 +722,16 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
     })
 
     await ensureUser(auth.telegramId!)
+    if (gameSessionLimitEnabled()) {
+      try {
+        await reconcileLeasesAfterTelegramLink({
+          webAccountId: result.webAccountId,
+          telegramId: auth.telegramId!,
+        })
+      } catch (e) {
+        console.error('[telegram-link] lease reconcile failed', e)
+      }
+    }
     const webPremium = await getWebAccountPremium(result.webAccountId)
     const tgPremium = await getTelegramPremium(auth.telegramId!)
     const activeUntil =

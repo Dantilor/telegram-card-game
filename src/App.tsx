@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense, useState, type ReactNode } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
@@ -10,6 +10,13 @@ import { scheduleIdleImports } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import { isWebShell } from './config/shell'
 import { getTelegramStartParam } from './lib/telegram'
+import {
+  GAME_SESSION_LIMIT_EVENT,
+  isGameSessionHeld,
+  releaseGameSessionLease,
+  shouldReleaseLeaseOnPath,
+} from './lib/gameSessionLease'
+import GameSessionLimitModal from './components/GameSessionLimitModal'
 import { WebAuthGate } from './shell/WebAuthGate'
 import WebInsideLayout from './shell/WebInsideLayout'
 import './App.css'
@@ -102,6 +109,33 @@ function TelegramLinkStartRedirect() {
   return null
 }
 
+/** Limit modal + release lease when returning to catalog/profile (no home-page API). */
+function GameSessionLeaseHost() {
+  const location = useLocation()
+  const [limitOpen, setLimitOpen] = useState(false)
+
+  useEffect(() => {
+    const onLimit = () => setLimitOpen(true)
+    window.addEventListener(GAME_SESSION_LIMIT_EVENT, onLimit)
+    return () => window.removeEventListener(GAME_SESSION_LIMIT_EVENT, onLimit)
+  }, [])
+
+  useEffect(() => {
+    if (!isGameSessionHeld()) return
+    if (shouldReleaseLeaseOnPath(location.pathname)) {
+      void releaseGameSessionLease()
+    }
+  }, [location.pathname])
+
+  return (
+    <GameSessionLimitModal
+      open={limitOpen}
+      onClose={() => setLimitOpen(false)}
+      onRetry={() => setLimitOpen(false)}
+    />
+  )
+}
+
 function App() {
   const [isReady, setReady] = useState(false)
   useAppHeight()
@@ -163,6 +197,7 @@ function App() {
   const routes = (
       <div className={`app${isReady ? ' is-ready' : ''}${isWebShell() ? ' app--web' : ''}`}>
         <TelegramLinkStartRedirect />
+        <GameSessionLeaseHost />
         <Suspense
           fallback={
             isWebShell() ? null : (

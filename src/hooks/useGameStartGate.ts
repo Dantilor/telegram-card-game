@@ -2,11 +2,13 @@ import { useCallback, useState } from 'react'
 import { usePremium } from '../contexts/PremiumContext'
 import { isGameLocked } from '../utils/access'
 import { hapticSelection } from '../utils/haptics'
+import { acquireGameSessionLease, notifyGameSessionLimitReached } from '../lib/gameSessionLease'
 
-/** Gate the main start CTA: setup screens stay open, play requires Premium when game is locked. */
+/** Gate the main start CTA: Premium paywall first, then optional concurrent game-session lease. */
 export function useGameStartGate(gameId: string, ctaBaseClass = 'game-page__cta') {
   const { isPremium } = usePremium()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
+  const [sessionBusy, setSessionBusy] = useState(false)
   const startLocked = isGameLocked(gameId, isPremium)
 
   const gatedStart = useCallback(
@@ -16,9 +18,22 @@ export function useGameStartGate(gameId: string, ctaBaseClass = 'game-page__cta'
         setPremiumOverlayOpen(true)
         return
       }
-      onStart()
+      if (sessionBusy) return
+      setSessionBusy(true)
+      void (async () => {
+        try {
+          const lease = await acquireGameSessionLease(gameId)
+          if (!lease.ok && lease.limitReached) {
+            notifyGameSessionLimitReached()
+            return
+          }
+          onStart()
+        } finally {
+          setSessionBusy(false)
+        }
+      })()
     },
-    [startLocked],
+    [startLocked, sessionBusy, gameId],
   )
 
   const startCtaClassName = startLocked
@@ -29,6 +44,7 @@ export function useGameStartGate(gameId: string, ctaBaseClass = 'game-page__cta'
     startLocked,
     premiumOverlayOpen,
     closePremiumOverlay: () => setPremiumOverlayOpen(false),
+    sessionBusy,
     gatedStart,
     startCtaClassName,
   }

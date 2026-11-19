@@ -33,6 +33,7 @@ import BackButton from "../../components/BackButton";
 import PremiumOverlay from "../../components/PremiumOverlay";
 import { getApiBaseUrl } from "../../api/client";
 import { trackEvent } from "../../lib/analytics";
+import { ensureHostGameSessionLease } from "../../lib/gameSessionLease";
 import { partyFetch } from "../../lib/partyFetch";
 import { buildPartyInviteUrl, readRoomCodeFromLocation } from "../../lib/inviteUrl";
 import { MAX_PLAYERS, MIN_PLAYERS, PHASE_TITLES, type Archetype, type Phase } from "./doubles";
@@ -271,6 +272,10 @@ function Landing({ initialCode, sound, setSound, onJoin, unlock }: { initialCode
     }
     try {
       setBusy(true);
+      if (mode === "create") {
+        const lease = await ensureHostGameSessionLease("doubles");
+        if (!lease.ok && lease.limitReached) return;
+      }
       await unlock().catch(() => undefined);
       haptic("medium");
       const result = await post(mode === "create" ? { action: "create", name } : { action: "join", name, code });

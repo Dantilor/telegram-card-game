@@ -18,6 +18,7 @@ import mafiaShadowsRouter from './routes/mafiaShadows.js'
 import doublesRouter from './routes/doubles.js'
 import infectedRouter from './routes/infected.js'
 import webAuthRouter from './routes/webAuth.js'
+import gameSessionsRouter from './routes/gameSessions.js'
 import { createLegalHtmlRouter, createLegalRouter } from './routes/legal.js'
 import { db, withTransaction } from './legal/runtime.js'
 import { verifyInitData } from './telegram/verifyInitData.js'
@@ -165,6 +166,7 @@ app.post(BOT_WEBHOOK_PATH, async (req, res) => {
 // API base = /api — все роуты доступны как /api/...
 app.use('/api', authRouter)
 app.use('/api', webAuthRouter)
+app.use('/api', gameSessionsRouter)
 app.use('/api', premiumRouter)
 app.use('/api', meRouter)
 app.use('/api', plansRouter)

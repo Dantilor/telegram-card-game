@@ -35,6 +35,8 @@ const steps = [
   { label: '019', file: 'db/migrations/019_web_legal_subjects.sql' },
   { label: '020', file: 'db/migrations/020_web_email_magic_links.sql' },
   { label: 'grants_020', file: 'db/staging/04_grants_020_only.sql' },
+  { label: '021', file: 'db/migrations/021_game_session_leases.sql' },
+  { label: 'grants_021', file: 'db/staging/05_grants_021_only.sql' },
   { label: 'grants-017-018', file: 'db/staging/02_grants_017_018_only.sql' },
 ]
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
+import { useHoldGameSessionLease } from '../hooks/useHoldGameSessionLease'
 import {
   getRussiaTravelCardsByDeck,
   getRussiaTravelDeckById,
@@ -51,6 +52,7 @@ export default function RussiaTravelPlay() {
   const cards = useMemo(() => getRussiaTravelCardsByDeck(deckId), [deckId])
   const gameLocked = isGameLocked('russia-travel', isPremium)
   const locked = gameLocked || (deck ? isRussiaTravelDeckLocked(deck, isPremium) : true)
+  useHoldGameSessionLease('russia-travel', Boolean(deck) && !locked)
 
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [progressMap, setProgressMap] = useState<DeckProgressMap>(() => loadDeckProgressMap())

@@ -62,6 +62,7 @@ const steps = [
   { label: '018', file: 'db/migrations/018_web_rate_buckets.sql' },
   { label: '019', file: 'db/migrations/019_web_legal_subjects.sql' },
   { label: '020', file: 'db/migrations/020_web_email_magic_links.sql' },
+  { label: '021', file: 'db/migrations/021_game_session_leases.sql' },
 ]
 
 if (wantSeed) {

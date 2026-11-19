@@ -65,8 +65,14 @@ async function request<T>(path: string, options: RequestInit & { method?: string
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    const err = new Error(`API ${res.status}: ${text}`) as ApiError
+    const err = new Error(`API ${res.status}: ${text}`) as ApiError & { code?: string }
     err.status = res.status
+    try {
+      const parsed = JSON.parse(text) as { code?: string }
+      if (typeof parsed?.code === 'string') err.code = parsed.code
+    } catch {
+      /* ignore */
+    }
     const retryAfterMs = parseRetryAfterMs(res.headers.get('Retry-After'))
     if (retryAfterMs !== null) err.retryAfterMs = retryAfterMs
     throw err

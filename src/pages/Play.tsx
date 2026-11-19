@@ -7,6 +7,7 @@ import { getDeckQuestions } from '../lib/deckQuestions'
 import { defaultUserState, type UserState } from '../data/types'
 import { useLocalState } from '../hooks/useLocalState'
 import { usePremium } from '../contexts/PremiumContext'
+import { useHoldGameSessionLease } from '../hooks/useHoldGameSessionLease'
 import { isQuestionBeyondFreeLimit, isFavoritesLocked } from '../utils/access'
 import type { ModeId } from '../data/modes'
 import { haptic } from '../utils/telegram'
@@ -109,6 +110,7 @@ export default function Play() {
   const animationPhaseRef = useRef<TransitionPhase>('idle')
   const [localState, setLocalState] = useLocalState<UserState>('tcg_state', defaultUserState)
   const { isPremium } = usePremium()
+  useHoldGameSessionLease('cards', state.status === 'ready')
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [adultGatePassed, setAdultGatePassed] = useState(() =>
     (location.state as PlayNavState | null)?.adultConfirmed === true

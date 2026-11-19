@@ -497,11 +497,12 @@ html:has(.profile-page) #root {
 
 /* Premium pass */
 .profile-pass {
-  padding: 1.1rem 1rem;
+  padding: 1.25rem 1.15rem;
   border-radius: 18px;
   border: none;
   background: var(--prof-pass-bg);
   box-shadow: var(--prof-pass-shadow);
+  box-sizing: border-box;
 }
 
 .profile-pass--active {
@@ -893,7 +894,8 @@ html:has(.profile-page) #root {
 
 .profile-pass--email {
   margin-top: 1rem;
-  padding: 1rem 1.1rem;
+  padding: 1.25rem 1.2rem;
+  box-sizing: border-box;
 }
 
 .profile-pass__email-label {
@@ -917,4 +919,10 @@ html:has(.profile-page) #root {
 .profile-pass__email-input:focus {
   outline: 2px solid rgba(167, 139, 250, 0.55);
   outline-offset: 1px;
+}
+
+.profile-identity__name-edit {
+  width: 100%;
+  margin-top: 0.85rem;
+  text-align: left;
 }

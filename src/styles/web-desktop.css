@@ -1005,18 +1005,19 @@
   }
 }
 
-/* Profile compact composition (desktop) */
+/* Profile composition (desktop) — keep text clear of card edges */
 @media (min-width: 1024px) {
   .app.app--web .profile-identity,
   .app.app--web .profile-pass,
   .app.app--web .profile-menu,
   .app.app--web .profile-alert {
-    padding: 1rem 1.1rem;
+    padding: 1.45rem 1.4rem;
     min-height: 0;
+    box-sizing: border-box;
   }
 
   .app.app--web .profile-pass__desc {
-    max-width: 42ch;
+    max-width: none;
   }
 
   .app.app--web .profile-pass__email-input {
@@ -1037,19 +1038,22 @@
 
 /* ========== PREMIUM ========== */
 @media (min-width: 768px) {
-  .app.app--web .premium-overlay__card {
-    max-width: min(36rem, 92vw);
-    padding: 1.6rem 1.6rem 1.75rem;
+  html[data-gnh-shell="web"] .app.app--web .premium-overlay__card,
+  html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__card {
+    width: min(640px, calc(100vw - 28px)) !important;
+    max-width: 640px !important;
   }
 }
 
 @media (min-width: 1024px) {
-  .app.app--web .premium-overlay__card {
-    max-width: min(42rem, 70vw);
+  html[data-gnh-shell="web"] .app.app--web .premium-overlay__card,
+  html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__card {
+    width: min(680px, calc(100vw - 48px)) !important;
+    max-width: 680px !important;
   }
 
-  .app.app--web .premium-page .premium-overlay__card {
-    max-width: min(48rem, 100%);
+  html[data-gnh-shell="web"] .app.app--web .premium-page .premium-overlay__card {
+    max-width: min(720px, 100%) !important;
   }
 }
 

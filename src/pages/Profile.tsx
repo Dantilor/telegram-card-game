@@ -20,6 +20,10 @@ import {
 } from '../lib/webAuth'
 import { LIFETIME_DURATION_DAYS } from '../utils/planLabel'
 import './Profile.css'
+import ProfileFaq from '../components/web/ProfileFaq'
+import { openWebInstallPrompt } from '../components/web/WebInstallBanner'
+import { readWebDisplayName, writeWebDisplayName } from '../lib/webDisplayName'
+import { isStandaloneDisplay } from '../lib/webInstall'
 
 const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
 
@@ -56,24 +60,34 @@ function Profile() {
   const tgUser = getTgUser()
   const webSession = useWebSession()
   const web = isWebShell()
+  const [localDisplayName, setLocalDisplayName] = useState(() => readWebDisplayName())
+  const [nameDraft, setNameDraft] = useState(() => readWebDisplayName())
+  const [nameStatus, setNameStatus] = useState<string | null>(null)
+  const localName = localDisplayName
   const user = web
-    ? webSession.session
-      ? {
-          first_name:
-            webSession.session.displayName?.split(/\s+/)[0] ||
-            (webSession.session.webAccountId ? 'Игрок' : 'Host'),
-          last_name: webSession.session.displayName?.split(/\s+/).slice(1).join(' ') || undefined,
-          username: webSession.session.username ?? undefined,
-          photo_url: webSession.session.pictureUrl ?? undefined,
-          id: webSession.session.telegramId ?? undefined,
+    ? (() => {
+        const session = webSession.session
+        const tgLinkedNow = Boolean(session?.telegramId || session?.username)
+        if (tgLinkedNow) {
+          const full = session?.displayName?.trim() || 'Игрок'
+          const parts = full.split(/\s+/)
+          return {
+            first_name: parts[0] || 'Игрок',
+            last_name: parts.slice(1).join(' ') || undefined,
+            username: session?.username ?? undefined,
+            photo_url: session?.pictureUrl ?? undefined,
+            id: session?.telegramId ?? undefined,
+          }
         }
-      : {
-          first_name: 'Игрок',
+        const name = localName || 'Игрок'
+        return {
+          first_name: name,
           last_name: undefined,
           username: undefined,
-          photo_url: undefined,
+          photo_url: session?.pictureUrl ?? undefined,
           id: undefined,
         }
+      })()
     : tgUser
   const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
   const initData = getInitData()
@@ -438,6 +452,38 @@ function Profile() {
             <p className="profile-identity__username">Telegram ID {userId}</p>
           )}
 
+          {web && !tgLinked && userId == null && (
+            <div className="profile-identity__name-edit">
+              <label className="profile-pass__email-label">
+                Как к вам обращаться?
+                <input
+                  type="text"
+                  className="profile-pass__email-input"
+                  value={nameDraft}
+                  maxLength={40}
+                  placeholder="Необязательно"
+                  autoComplete="nickname"
+                  onChange={(e) => setNameDraft(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="profile-pass__restore"
+                onClick={() => {
+                  haptic('light')
+                  const saved = writeWebDisplayName(nameDraft)
+                  setLocalDisplayName(saved)
+                  setNameDraft(saved)
+                  setNameStatus(saved ? 'Имя сохранено на этом устройстве' : 'Имя очищено')
+                  window.setTimeout(() => setNameStatus(null), 2000)
+                }}
+              >
+                Сохранить имя
+              </button>
+              {nameStatus && <span className="profile-pass__toast">{nameStatus}</span>}
+            </div>
+          )}
+
           <span className={`profile-identity__badge${isPremium ? ' profile-identity__badge--pro' : ''}`}>
             {isPremium ? 'Premium активен' : 'Free'}
           </span>
@@ -465,7 +511,7 @@ function Profile() {
               >
                 {restoreLoading ? 'Загрузка…' : 'Обновить статус Premium'}
               </button>
-              {web && !tgLinked && (
+              {web && !tgLinked && userId == null && (
                 <button
                   type="button"
                   className="profile-pass__restore"
@@ -645,6 +691,7 @@ function Profile() {
         )}
 
         <div className="profile-aside">
+        {web && <ProfileFaq />}
         <section className="profile-menu">
           <h2 className="profile-menu__title">Документы</h2>
           <div className="profile-menu__panel">
@@ -670,6 +717,23 @@ function Profile() {
         <section className="profile-menu profile-menu--support">
           <h2 className="profile-menu__title">Поддержка</h2>
           <div className="profile-menu__panel">
+            {web && !isStandaloneDisplay() && (
+              <button
+                type="button"
+                className="profile-menu__row"
+                onClick={() => {
+                  haptic('light')
+                  openWebInstallPrompt()
+                }}
+              >
+                <span className="profile-menu__icon" aria-hidden>📲</span>
+                <span className="profile-menu__label">
+                  <span className="profile-menu__label-main">Установить приложение</span>
+                  <span className="profile-menu__label-sub">На главный экран телефона</span>
+                </span>
+                <span className="profile-menu__chev" aria-hidden>›</span>
+              </button>
+            )}
             <button
               type="button"
               className="profile-menu__row profile-menu__row--support"

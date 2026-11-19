@@ -800,8 +800,10 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .premium-pay[
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-catalog-status {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   margin-top: 16px;
 }
 
@@ -2032,7 +2034,18 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .brand > span {
   }
 
   html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-identity {
-    padding: 18px 16px !important;
+    padding: 20px 18px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass--email,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-menu {
+    padding: 20px 18px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-menu__row {
+    min-height: 3.55rem;
+    padding: 0.85rem 0.95rem !important;
   }
 
   html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass__perks {
@@ -2372,9 +2385,9 @@ html[data-gnh-shell="web"] .app.app--web .page-loading-skeleton {
 html[data-gnh-shell="web"] .premium-overlay__card,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__card,
 html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__card {
-  width: min(560px, 100%) !important;
-  max-width: 560px !important;
-  max-height: min(88vh, 920px) !important;
+  width: min(640px, calc(100vw - 24px)) !important;
+  max-width: 640px !important;
+  max-height: min(92vh, 980px) !important;
   display: flex !important;
   flex-direction: column !important;
   grid-template-columns: none !important;
@@ -2382,12 +2395,47 @@ html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__card {
   align-items: stretch !important;
   padding: 0 !important;
   overflow: hidden !important;
+  box-sizing: border-box !important;
   background:
     radial-gradient(ellipse 120% 80% at 50% -20%, rgba(138, 43, 226, 0.22) 0%, transparent 55%),
     linear-gradient(165deg, rgba(32, 26, 52, 0.98) 0%, rgba(16, 14, 28, 0.99) 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 24px !important;
   color: #f5f7ff !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__scroll,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__scroll,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__scroll {
+  box-sizing: border-box !important;
+  padding: 1.45rem 1.55rem 1.2rem !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__include-body,
+html[data-gnh-shell="web"] .premium-overlay__include-text,
+html[data-gnh-shell="web"] .premium-overlay__include-title,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__include-body,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__include-text,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__include-title {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+html[data-gnh-shell="web"] .premium-catalog-status,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-catalog-status,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-catalog-status {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+
+html[data-gnh-shell="web"] .premium-catalog-status .premium-overlay__legal-link,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-catalog-status .premium-overlay__legal-link {
+  display: inline-block !important;
+  margin: 0 !important;
 }
 
 html[data-gnh-shell="web"] .premium-overlay__description,
@@ -2428,7 +2476,8 @@ html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__dock {
   gap: 10px !important;
   width: 100% !important;
   margin: 0 !important;
-  padding: 14px 1.25rem 1.15rem !important;
+  padding: 16px 1.55rem 1.35rem !important;
+  box-sizing: border-box !important;
   background: transparent !important;
   background-image: none !important;
   border: none !important;

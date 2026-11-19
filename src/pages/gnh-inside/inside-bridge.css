@@ -544,9 +544,48 @@ html:has(.gnh-inside .rt-play)::before {
   }
 }
 
-.app.app--web .gnh-inside .profile-pass,
-.app.app--web .gnh-inside .profile-menu {
-  padding: 8px 4px;
+#root .app.app--web .gnh-inside .profile-pass,
+#root .app.app--web .gnh-inside .profile-pass--email,
+#root .app.app--web .gnh-inside .profile-menu {
+  box-sizing: border-box !important;
+  padding: 22px 20px !important;
+  min-width: 0 !important;
+}
+
+#root .app.app--web .gnh-inside .profile-pass__desc,
+#root .app.app--web .gnh-inside .profile-pass__title,
+#root .app.app--web .gnh-inside .profile-menu__label-main,
+#root .app.app--web .gnh-inside .profile-menu__label-sub {
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+#root .app.app--web .gnh-inside .profile-menu__panel {
+  box-sizing: border-box !important;
+  padding: 10px 8px !important;
+}
+
+#root .app.app--web .gnh-inside .profile-menu__row {
+  min-height: 3.7rem !important;
+  padding: 0.9rem 1.05rem !important;
+}
+
+@media (min-width: 900px) {
+  #root .app.app--web .gnh-inside .profile-pass,
+  #root .app.app--web .gnh-inside .profile-pass--email,
+  #root .app.app--web .gnh-inside .profile-menu {
+    padding: 28px 26px !important;
+  }
+
+  #root .app.app--web .gnh-inside .profile-menu__panel {
+    padding: 12px 10px !important;
+  }
+
+  #root .app.app--web .gnh-inside .profile-menu__row {
+    min-height: 4rem !important;
+    padding: 1.05rem 1.2rem !important;
+  }
 }
 
 .app.app--web .gnh-inside .profile-pass__cta,

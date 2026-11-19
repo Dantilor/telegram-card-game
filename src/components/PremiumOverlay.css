@@ -1133,12 +1133,13 @@ html[data-gnh-shell="web"] .premium-overlay::before {
 }
 
 html[data-gnh-shell="web"] .premium-overlay__card {
-  width: min(560px, 100%);
-  max-width: 560px;
-  max-height: 85vh;
+  width: min(640px, calc(100vw - 24px));
+  max-width: 640px;
+  max-height: min(92vh, 980px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
   --po-text: #f5f7ff;
   --po-muted: rgba(245, 247, 255, 0.78);
   --po-body: rgba(245, 247, 255, 0.86);
@@ -1203,6 +1204,19 @@ html[data-gnh-shell="web"] .premium-overlay__scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  box-sizing: border-box;
+  padding: 1.45rem 1.55rem 1.2rem;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__includes li {
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__include-text {
+  padding-right: 0.15rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 html[data-gnh-shell="web"] .premium-overlay__dock {
@@ -1212,7 +1226,8 @@ html[data-gnh-shell="web"] .premium-overlay__dock {
   display: grid;
   gap: 10px;
   margin: 0;
-  padding: 14px 1.25rem max(14px, env(safe-area-inset-bottom));
+  padding: 16px 1.55rem max(16px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
   background: transparent;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: none;
@@ -1232,12 +1247,21 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy[ari
 
 @media (max-width: 767px) {
   html[data-gnh-shell="web"] .premium-overlay {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
   html[data-gnh-shell="web"] .premium-overlay__card {
     width: 100%;
     max-width: none;
+    max-height: min(94vh, 980px);
+  }
+
+  html[data-gnh-shell="web"] .premium-overlay__scroll {
+    padding: 1.25rem 1.2rem 1rem;
+  }
+
+  html[data-gnh-shell="web"] .premium-overlay__dock {
+    padding: 14px 1.2rem max(14px, env(safe-area-inset-bottom));
   }
 }

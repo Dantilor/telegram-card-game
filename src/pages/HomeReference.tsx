@@ -12,6 +12,7 @@ import { formatGameTags } from '../utils/gameTags'
 import { apiGet } from '../lib/api'
 import PremiumOverlay from '../components/PremiumOverlay'
 import AdultConfirmModal from '../components/AdultConfirmModal'
+import WebSiteFooter from '../components/web/WebSiteFooter'
 import markUrl from './gnh-home-ref/assets/reference-mark.webp'
 import crystalUrl from './gnh-home-ref/assets/reference-crystal.webp'
 import { RESPONSIVE_ARTWORK } from '../assets/images'
@@ -556,6 +557,7 @@ function HomeReference({
             </div>
           </section>
         </main>
+        <WebSiteFooter />
         <nav className="mobile-nav" aria-label="Нижняя навигация">
           <Link to="/" className="active" data-nav="home" onClick={() => haptic('light')}>
             <Icon>

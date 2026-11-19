@@ -19,6 +19,7 @@ import {
 import GameSessionLimitModal from './components/GameSessionLimitModal'
 import { WebAuthGate } from './shell/WebAuthGate'
 import WebInsideLayout from './shell/WebInsideLayout'
+import WebInstallBanner from './components/web/WebInstallBanner'
 import './App.css'
 
 // Главная загружается сразу (первый экран)
@@ -304,6 +305,7 @@ function App() {
     <PremiumProvider>
       <LegalProvider>
         {isWebShell() ? <WebAuthGate>{routes}</WebAuthGate> : routes}
+        {isWebShell() ? <WebInstallBanner /> : null}
         <FirstUseSheet />
       </LegalProvider>
     </PremiumProvider>

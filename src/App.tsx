@@ -72,6 +72,7 @@ const TruthDareResult = lazy(() => import('./pages/TruthDareResult'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PremiumPage = lazy(() => import('./pages/PremiumPage'))
 const WebPurchaseRecover = lazy(() => import('./pages/WebPurchaseRecover'))
+const WebEmailConfirm = lazy(() => import('./pages/WebEmailConfirm'))
 const WebTelegramLink = lazy(() => import('./pages/WebTelegramLink'))
 const LegalDocumentPage = lazy(() => import('./pages/LegalDocumentPage'))
 
@@ -236,6 +237,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/recover" element={<WebPurchaseRecover />} />
+        <Route path="/email/confirm" element={<WebEmailConfirm />} />
         <Route path="/link-web" element={<WebTelegramLink />} />
         <Route path="/legal/documents/:documentId/versions/:version" element={<LegalDocumentPage />} />
         <Route path="/legal/documents/:documentId" element={<LegalDocumentPage />} />

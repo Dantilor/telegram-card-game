@@ -27,10 +27,9 @@ import {
   revokeTelegramLinkEntitlements,
 } from '../auth/webAccounts.js'
 import {
-  completeEmailRecover,
+  completeEmailMagicLink,
   startEmailBind,
   startEmailRecover,
-  verifyEmailBind,
 } from '../auth/webEmailOtp.js'
 import { isWebOwnerAllowed, webFeatureEnabled } from '../config/runtimeFlags.js'
 import { randomNumericCode, sha256Hex } from '../auth/cryptoTokens.js'
@@ -300,6 +299,7 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
   let premium: { isPremium: boolean; activeUntil: string | null; sources?: string[] } | undefined
   let email: string | null = null
   let emailVerified = false
+  let emailPending = false
   if (auth.webAccountId) {
     const status = await getWebAccountPremium(auth.webAccountId)
     premium = {
@@ -310,6 +310,7 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
     const contact = await getWebAccountContact(auth.webAccountId)
     email = contact.email
     emailVerified = contact.emailVerified
+    emailPending = contact.emailPending
   }
   res.status(200).json({
     ok: true,
@@ -322,6 +323,7 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
     pictureUrl: session?.picture_url ?? null,
     email,
     emailVerified,
+    emailPending,
     premium,
   })
 })
@@ -801,7 +803,7 @@ router.post('/web/email/bind/start', requireWebSession(), async (req: AuthedRequ
     res.status(200).json({
       ok: true,
       expiresAt: started.expiresAt.toISOString(),
-      ...(started.echoCode ? { code: started.echoCode } : {}),
+      ...(started.echoToken ? { token: started.echoToken } : {}),
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -810,25 +812,39 @@ router.post('/web/email/bind/start', requireWebSession(), async (req: AuthedRequ
 })
 
 /**
- * POST /api/web/email/bind/verify { email, code } CSRF
+ * Complete magic-link confirmation (bind or recover).
+ * POST /api/web/email/confirm { token }
+ * Intentional POST only — mail prefetch must not consume the link.
  */
-router.post('/web/email/bind/verify', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+router.post('/web/email/confirm', async (req: Request, res: Response) => {
   try {
-    const auth = req.auth!
-    if (!auth.webAccountId) {
-      res.status(400).json({ error: 'Anonymous WEB account required', code: 'web_account_required' })
+    if (!webFeatureEnabled()) {
+      res.status(503).json({ error: 'WEB auth disabled', code: 'web_disabled' })
       return
     }
-    const cookies = readCookies(req)
-    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
-    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
-      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
-      return
-    }
-    const email = typeof req.body?.email === 'string' ? req.body.email : ''
-    const code = typeof req.body?.code === 'string' ? req.body.code : ''
-    const verified = await verifyEmailBind({ webAccountId: auth.webAccountId, email, code })
-    res.status(200).json({ ok: true, email: verified.emailNormalized })
+    const token =
+      typeof req.body?.token === 'string'
+        ? req.body.token
+        : typeof req.body?.code === 'string'
+          ? req.body.code
+          : ''
+    const completed = await completeEmailMagicLink({
+      token,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    })
+    const maxAgeSec = Math.floor(sessionTtlMs() / 1000)
+    setSessionCookies(res, {
+      sessionToken: completed.sessionToken,
+      csrfToken: completed.csrfToken,
+      maxAgeSec,
+    })
+    res.status(200).json({
+      ok: true,
+      webAccountId: completed.webAccountId,
+      email: completed.emailNormalized,
+      purpose: completed.purpose,
+      expiresAt: completed.expiresAt.toISOString(),
+    })
   } catch (e) {
     const { status, body } = errorPayload(e)
     res.status(status).json(body)
@@ -849,7 +865,7 @@ router.post('/web/email/recover/start', async (req: Request, res: Response) => {
     res.status(200).json({
       ok: true,
       expiresAt: started.expiresAt,
-      ...(started.echoCode ? { code: started.echoCode } : {}),
+      ...(started.echoToken ? { token: started.echoToken } : {}),
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -858,7 +874,7 @@ router.post('/web/email/recover/start', async (req: Request, res: Response) => {
 })
 
 /**
- * POST /api/web/email/recover/complete { email, code } — sets new session cookies
+ * POST /api/web/email/recover/complete { token } — alias of /web/email/confirm
  */
 router.post('/web/email/recover/complete', async (req: Request, res: Response) => {
   try {
@@ -866,11 +882,14 @@ router.post('/web/email/recover/complete', async (req: Request, res: Response) =
       res.status(503).json({ error: 'WEB auth disabled', code: 'web_disabled' })
       return
     }
-    const email = typeof req.body?.email === 'string' ? req.body.email : ''
-    const code = typeof req.body?.code === 'string' ? req.body.code : ''
-    const recovered = await completeEmailRecover({
-      email,
-      code,
+    const token =
+      typeof req.body?.token === 'string'
+        ? req.body.token
+        : typeof req.body?.code === 'string'
+          ? req.body.code
+          : ''
+    const recovered = await completeEmailMagicLink({
+      token,
       userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
     })
     const maxAgeSec = Math.floor(sessionTtlMs() / 1000)
@@ -882,6 +901,7 @@ router.post('/web/email/recover/complete', async (req: Request, res: Response) =
     res.status(200).json({
       ok: true,
       webAccountId: recovered.webAccountId,
+      email: recovered.emailNormalized,
       expiresAt: recovered.expiresAt.toISOString(),
     })
   } catch (e) {

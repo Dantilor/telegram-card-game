@@ -1,7 +1,7 @@
 import type { Queryable } from '../legal/types.js'
 import { query as defaultQuery } from '../db.js'
-import { randomNumericCode, randomToken, sha256Hex } from './cryptoTokens.js'
-import { sessionTtlMs } from './config.js'
+import { randomToken, sha256Hex } from './cryptoTokens.js'
+import { sessionTtlMs, webPublicOrigin } from './config.js'
 import { getMailTransport } from '../services/mailTransport.js'
 import { grantWebEntitlement } from './webAccounts.js'
 import { consumeSharedRateLimit } from './rateLimit.js'
@@ -33,13 +33,62 @@ export function normalizeEmail(raw: string): string | null {
   return v
 }
 
-function otpCode(): string {
-  return randomNumericCode(8)
+const LINK_TTL_MS = 30 * 60_000
+const MAX_ATTEMPTS = 5
+const TOKEN_RE = /^[A-Za-z0-9_-]{20,128}$/
+
+function magicConfirmPath(token: string): string {
+  const origin = webPublicOrigin() || 'http://localhost:5173'
+  return `${origin}/email/confirm?token=${encodeURIComponent(token)}`
 }
 
-const OTP_TTL_MS = 10 * 60_000
-const MAX_ATTEMPTS = 5
-const OTP_DIGITS_RE = /^\d{8}$/
+function buildMagicMail(input: {
+  purpose: 'bind' | 'recover'
+  link: string
+}): { subject: string; text: string; html: string } {
+  const isRecover = input.purpose === 'recover'
+  const subject = isRecover
+    ? 'GameNight Host — ссылка для входа'
+    : 'GameNight Host — подтвердите почту'
+  const lead = isRecover
+    ? 'Откройте ссылку, чтобы вернуть Premium и игры на этом устройстве.'
+    : 'Откройте ссылку, чтобы подтвердить почту для восстановления Premium.'
+  const title = isRecover ? 'С возвращением' : 'Подтвердите почту'
+  const text = [
+    'GameNight Host',
+    '',
+    lead,
+    '',
+    'Ссылка действует 30 минут и одноразовая:',
+    input.link,
+    '',
+    'Если вы не запрашивали письмо — просто проигнорируйте его.',
+  ].join('\n')
+  const html = `<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /></head>
+<body style="margin:0;padding:0;background:#1a1420;font-family:Georgia,'Times New Roman',serif;color:#f4efe8;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#1a1420;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" style="max-width:520px;background:linear-gradient(160deg,#2a2030,#1e1624);border:1px solid rgba(244,239,232,0.12);border-radius:16px;padding:28px 24px;">
+        <tr><td>
+          <p style="margin:0 0 8px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#c9b8a4;">GameNight Host</p>
+          <h1 style="margin:0 0 12px;font-size:24px;font-weight:normal;color:#f4efe8;">${title}</h1>
+          <p style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#d8cfc3;">${lead}</p>
+          <p style="margin:0 0 24px;">
+            <a href="${input.link}" style="display:inline-block;padding:12px 22px;background:#e8d5b5;color:#1a1420;text-decoration:none;border-radius:999px;font-size:15px;">Открыть ссылку</a>
+          </p>
+          <p style="margin:0 0 8px;font-size:13px;line-height:1.45;color:#a89a8c;">Ссылка одноразовая и действует 30 минут.</p>
+          <p style="margin:0 0 20px;font-size:12px;word-break:break-all;color:#8f8276;">${input.link}</p>
+          <p style="margin:0;font-size:12px;color:#7a6f66;">Если вы не запрашивали письмо — просто проигнорируйте его.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+  return { subject, text, html }
+}
 
 export async function countRecentEmailOtps(
   emailNormalized: string,
@@ -55,13 +104,13 @@ export async function countRecentEmailOtps(
   return Number(result.rows[0]?.c || 0)
 }
 
-async function insertAndSendOtp(input: {
+async function insertAndSendMagicLink(input: {
   webAccountId: string
   emailNormalized: string
   purpose: 'bind' | 'recover'
   ip?: string | null
   db?: Queryable
-}): Promise<{ expiresAt: Date; echoCode?: string }> {
+}): Promise<{ expiresAt: Date; echoToken?: string }> {
   const ipKey = (input.ip || 'unknown').slice(0, 64)
   for (const key of [
     `email_otp_ip:${ipKey}`,
@@ -90,35 +139,136 @@ async function insertAndSendOtp(input: {
     throw err
   }
 
-  const code = otpCode()
-  const expiresAt = new Date(Date.now() + OTP_TTL_MS)
+  const token = randomToken(32)
+  const expiresAt = new Date(Date.now() + LINK_TTL_MS)
   await db(input.db).query(
     `INSERT INTO web_email_otps (web_account_id, email_normalized, code_hash, purpose, expires_at)
      VALUES ($1::uuid, $2, $3, $4, $5)`,
-    [input.webAccountId, input.emailNormalized, sha256Hex(code), input.purpose, expiresAt.toISOString()]
+    [input.webAccountId, input.emailNormalized, sha256Hex(token), input.purpose, expiresAt.toISOString()]
   )
 
+  const link = magicConfirmPath(token)
+  const mail = buildMagicMail({ purpose: input.purpose, link })
   await getMailTransport().send({
     to: input.emailNormalized,
-    subject: 'GameNight Host — код подтверждения',
-    text: `Ваш код: ${code}\nДействует 10 минут.\nЕсли вы не запрашивали код, проигнорируйте письмо.`,
+    subject: mail.subject,
+    text: mail.text,
+    html: mail.html,
   })
 
   const echo =
     process.env.WEB_EMAIL_OTP_ECHO === '1' && process.env.NODE_ENV !== 'production'
-      ? code
+      ? token
       : undefined
 
-  return { expiresAt, echoCode: echo }
+  return { expiresAt, echoToken: echo }
 }
 
-/** Bind email to the current anonymous WEB account. */
+/** Persist checkout receipt email on the payment row (not verified ownership). */
+export async function savePaymentReceiptEmail(input: {
+  paymentId: string
+  email: string
+  db?: Queryable
+}): Promise<string | null> {
+  const emailNormalized = normalizeEmail(input.email)
+  if (!emailNormalized) return null
+  await db(input.db).query(
+    `UPDATE web_payments
+        SET receipt_email_normalized = $2
+      WHERE id = $1`,
+    [input.paymentId, emailNormalized]
+  )
+  return emailNormalized
+}
+
+/**
+ * After successful Premium grant: store receipt email as pending (not verified)
+ * and send a magic-link confirmation for recovery. Never auto-merges accounts.
+ */
+export async function afterWebPurchasePaid(input: {
+  webAccountId: string
+  paymentId: string
+  ip?: string | null
+  db?: Queryable
+}): Promise<{ pendingEmail: string | null; linkSent: boolean }> {
+  const pay = await db(input.db).query<{ receipt_email_normalized: string | null }>(
+    `SELECT receipt_email_normalized FROM web_payments WHERE id = $1 LIMIT 1`,
+    [input.paymentId]
+  )
+  const receipt = pay.rows[0]?.receipt_email_normalized
+    ? normalizeEmail(pay.rows[0].receipt_email_normalized)
+    : null
+  if (!receipt) return { pendingEmail: null, linkSent: false }
+
+  const account = await db(input.db).query<{
+    email_normalized: string | null
+    email_verified_at: Date | null
+    pending_email_normalized: string | null
+  }>(
+    `SELECT email_normalized, email_verified_at, pending_email_normalized
+       FROM web_accounts
+      WHERE id = $1::uuid AND revoked_at IS NULL
+      LIMIT 1`,
+    [input.webAccountId]
+  )
+  const row = account.rows[0]
+  if (!row) return { pendingEmail: null, linkSent: false }
+
+  const alreadyVerifiedSame =
+    Boolean(row.email_verified_at) && row.email_normalized === receipt
+  if (alreadyVerifiedSame) {
+    return { pendingEmail: null, linkSent: false }
+  }
+
+  const taken = await db(input.db).query<{ id: string }>(
+    `SELECT id FROM web_accounts
+      WHERE email_normalized = $1
+        AND email_verified_at IS NOT NULL
+        AND revoked_at IS NULL
+        AND id <> $2::uuid
+      LIMIT 1`,
+    [receipt, input.webAccountId]
+  )
+  if (taken.rows[0]) {
+    return { pendingEmail: null, linkSent: false }
+  }
+
+  if (!row.email_verified_at) {
+    await db(input.db).query(
+      `UPDATE web_accounts
+          SET pending_email_normalized = $2,
+              last_seen_at = now()
+        WHERE id = $1::uuid AND revoked_at IS NULL`,
+      [input.webAccountId, receipt]
+    )
+  }
+
+  try {
+    await insertAndSendMagicLink({
+      webAccountId: input.webAccountId,
+      emailNormalized: receipt,
+      purpose: 'bind',
+      ip: input.ip,
+      db: input.db,
+    })
+    return { pendingEmail: receipt, linkSent: true }
+  } catch (e) {
+    const err = e as Error & { code?: string }
+    if (err.code === 'rate_limited') {
+      return { pendingEmail: receipt, linkSent: false }
+    }
+    console.error('[webEmail] afterWebPurchasePaid mail failed', err.message)
+    return { pendingEmail: receipt, linkSent: false }
+  }
+}
+
+/** Bind / confirm email for the current anonymous WEB account via magic link. */
 export async function startEmailBind(input: {
   webAccountId: string
   email: string
   ip?: string | null
   db?: Queryable
-}): Promise<{ expiresAt: Date; echoCode?: string }> {
+}): Promise<{ expiresAt: Date; echoToken?: string }> {
   const emailNormalized = normalizeEmail(input.email)
   if (!emailNormalized) {
     const err = new Error('Invalid email') as Error & { status?: number; code?: string }
@@ -128,7 +278,7 @@ export async function startEmailBind(input: {
   }
   const taken = await db(input.db).query<{ id: string }>(
     `SELECT id FROM web_accounts
-      WHERE email_normalized = $1 AND revoked_at IS NULL AND id <> $2::uuid
+      WHERE email_normalized = $1 AND email_verified_at IS NOT NULL AND revoked_at IS NULL AND id <> $2::uuid
       LIMIT 1`,
     [emailNormalized, input.webAccountId]
   )
@@ -138,7 +288,17 @@ export async function startEmailBind(input: {
     err.code = 'email_taken'
     throw err
   }
-  return insertAndSendOtp({
+
+  await db(input.db).query(
+    `UPDATE web_accounts
+        SET pending_email_normalized = $2,
+            last_seen_at = now()
+      WHERE id = $1::uuid AND revoked_at IS NULL
+        AND (email_verified_at IS NULL OR email_normalized IS DISTINCT FROM $2)`,
+    [input.webAccountId, emailNormalized]
+  )
+
+  return insertAndSendMagicLink({
     webAccountId: input.webAccountId,
     emailNormalized,
     purpose: 'bind',
@@ -148,14 +308,14 @@ export async function startEmailBind(input: {
 }
 
 /**
- * Start recover OTP. Always returns generic ok to avoid email enumeration.
- * Only sends mail when a verified email-bound account exists.
+ * Start recover magic link. Always returns generic ok (anti-enumeration).
+ * Sends when verified email matches OR paid receipt/pending email matches.
  */
 export async function startEmailRecover(input: {
   email: string
   ip?: string | null
   db?: Queryable
-}): Promise<{ ok: true; expiresAt?: string; echoCode?: string }> {
+}): Promise<{ ok: true; expiresAt?: string; echoToken?: string }> {
   const emailNormalized = normalizeEmail(input.email)
   if (!emailNormalized) {
     return { ok: true }
@@ -169,7 +329,8 @@ export async function startEmailRecover(input: {
   if (!ipLimited.ok) {
     return { ok: true }
   }
-  const account = await db(input.db).query<{ id: string }>(
+
+  let account = await db(input.db).query<{ id: string }>(
     `SELECT id FROM web_accounts
       WHERE email_normalized = $1
         AND email_verified_at IS NOT NULL
@@ -177,11 +338,41 @@ export async function startEmailRecover(input: {
       LIMIT 1`,
     [emailNormalized]
   )
+
+  if (!account.rows[0]) {
+    account = await db(input.db).query<{ id: string }>(
+      `SELECT a.id
+         FROM web_accounts a
+        WHERE a.revoked_at IS NULL
+          AND (
+            a.pending_email_normalized = $1
+            OR EXISTS (
+              SELECT 1 FROM web_payments p
+               WHERE p.web_account_id = a.id
+                 AND p.receipt_email_normalized = $1
+                 AND p.premium_granted_at IS NOT NULL
+                 AND p.status = 'succeeded'
+            )
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM web_accounts o
+             WHERE o.email_normalized = $1
+               AND o.email_verified_at IS NOT NULL
+               AND o.revoked_at IS NULL
+               AND o.id <> a.id
+          )
+        ORDER BY a.created_at ASC
+        LIMIT 1`,
+      [emailNormalized]
+    )
+  }
+
   if (!account.rows[0]) {
     return { ok: true }
   }
+
   try {
-    const started = await insertAndSendOtp({
+    const started = await insertAndSendMagicLink({
       webAccountId: account.rows[0].id,
       emailNormalized,
       purpose: 'recover',
@@ -191,7 +382,7 @@ export async function startEmailRecover(input: {
     return {
       ok: true,
       expiresAt: started.expiresAt.toISOString(),
-      echoCode: started.echoCode,
+      echoToken: started.echoToken,
     }
   } catch (e) {
     const err = e as Error & { code?: string }
@@ -200,106 +391,52 @@ export async function startEmailRecover(input: {
   }
 }
 
-export async function verifyEmailBind(input: {
-  webAccountId: string
-  email: string
-  code: string
-  db?: Queryable
-}): Promise<{ emailNormalized: string }> {
-  const emailNormalized = normalizeEmail(input.email)
-  if (!emailNormalized || !OTP_DIGITS_RE.test(input.code.trim())) {
-    const err = new Error('Invalid code or email') as Error & { status?: number; code?: string }
-    err.status = 400
-    err.code = 'invalid_code'
-    throw err
-  }
-
-  const result = await db(input.db).query<{
-    id: number
-    web_account_id: string
-    attempts: number
-    expires_at: Date
-    consumed_at: Date | null
-  }>(
-    `SELECT id, web_account_id, attempts, expires_at, consumed_at
-       FROM web_email_otps
-      WHERE email_normalized = $1
-        AND purpose = 'bind'
-        AND code_hash = $2
-        AND web_account_id = $3::uuid
-      ORDER BY id DESC
-      LIMIT 1`,
-    [emailNormalized, sha256Hex(input.code.trim()), input.webAccountId]
-  )
-  const row = result.rows[0]
-  if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
-    const err = new Error('Code expired or unknown') as Error & { status?: number; code?: string }
-    err.status = 400
-    err.code = 'code_invalid'
-    throw err
-  }
-  if (row.attempts >= MAX_ATTEMPTS) {
-    const err = new Error('Too many attempts') as Error & { status?: number; code?: string }
-    err.status = 429
-    err.code = 'rate_limited'
-    throw err
-  }
-  await db(input.db).query(`UPDATE web_email_otps SET attempts = attempts + 1 WHERE id = $1`, [row.id])
-  await db(input.db).query(
-    `UPDATE web_email_otps SET consumed_at = now() WHERE id = $1 AND consumed_at IS NULL`,
-    [row.id]
-  )
-  await db(input.db).query(
-    `UPDATE web_accounts
-        SET email_normalized = $2,
-            email_verified_at = now(),
-            last_seen_at = now()
-      WHERE id = $1::uuid AND revoked_at IS NULL`,
-    [input.webAccountId, emailNormalized]
-  )
-  return { emailNormalized }
-}
-
-export async function completeEmailRecover(input: {
-  email: string
-  code: string
+/**
+ * Complete magic-link (bind or recover). Consumes token only on intentional POST
+ * so mail-client prefetch does not burn the link.
+ */
+export async function completeEmailMagicLink(input: {
+  token: string
   userAgent?: string | null
   db?: Queryable
 }): Promise<{
   webAccountId: string
+  emailNormalized: string
+  purpose: 'bind' | 'recover'
   sessionToken: string
   csrfToken: string
   expiresAt: Date
 }> {
-  const emailNormalized = normalizeEmail(input.email)
-  if (!emailNormalized || !OTP_DIGITS_RE.test(input.code.trim())) {
-    const err = new Error('Invalid code or email') as Error & { status?: number; code?: string }
+  const token = input.token.trim()
+  if (!TOKEN_RE.test(token)) {
+    const err = new Error('Invalid link') as Error & { status?: number; code?: string }
     err.status = 400
-    err.code = 'invalid_code'
+    err.code = 'invalid_token'
     throw err
   }
 
   const result = await db(input.db).query<{
     id: number
     web_account_id: string
+    email_normalized: string
+    purpose: 'bind' | 'recover'
     attempts: number
     expires_at: Date
     consumed_at: Date | null
   }>(
-    `SELECT id, web_account_id, attempts, expires_at, consumed_at
+    `SELECT id, web_account_id::text AS web_account_id, email_normalized, purpose,
+            attempts, expires_at, consumed_at
        FROM web_email_otps
-      WHERE email_normalized = $1
-        AND purpose = 'recover'
-        AND code_hash = $2
+      WHERE code_hash = $1
       ORDER BY id DESC
       LIMIT 1`,
-    [emailNormalized, sha256Hex(input.code.trim())]
+    [sha256Hex(token)]
   )
   const row = result.rows[0]
   if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now()) {
-    const err = new Error('Code expired or unknown') as Error & { status?: number; code?: string }
+    const err = new Error('Link expired or unknown') as Error & { status?: number; code?: string }
     err.status = 400
-    err.code = 'code_invalid'
+    err.code = 'token_invalid'
     throw err
   }
   if (row.attempts >= MAX_ATTEMPTS) {
@@ -308,13 +445,49 @@ export async function completeEmailRecover(input: {
     err.code = 'rate_limited'
     throw err
   }
+
   await db(input.db).query(`UPDATE web_email_otps SET attempts = attempts + 1 WHERE id = $1`, [row.id])
-  await db(input.db).query(
-    `UPDATE web_email_otps SET consumed_at = now() WHERE id = $1 AND consumed_at IS NULL`,
+
+  const taken = await db(input.db).query<{ id: string }>(
+    `SELECT id FROM web_accounts
+      WHERE email_normalized = $1
+        AND email_verified_at IS NOT NULL
+        AND revoked_at IS NULL
+        AND id <> $2::uuid
+      LIMIT 1`,
+    [row.email_normalized, row.web_account_id]
+  )
+  if (taken.rows[0]) {
+    const err = new Error('Email already linked') as Error & { status?: number; code?: string }
+    err.status = 409
+    err.code = 'email_taken'
+    throw err
+  }
+
+  const claimed = await db(input.db).query<{ id: number }>(
+    `UPDATE web_email_otps
+        SET consumed_at = now()
+      WHERE id = $1 AND consumed_at IS NULL
+      RETURNING id`,
     [row.id]
   )
+  if (!claimed.rows[0]) {
+    const err = new Error('Link already used') as Error & { status?: number; code?: string }
+    err.status = 400
+    err.code = 'token_invalid'
+    throw err
+  }
 
-  const webAccountId = row.web_account_id
+  await db(input.db).query(
+    `UPDATE web_accounts
+        SET email_normalized = $2,
+            email_verified_at = now(),
+            pending_email_normalized = NULL,
+            last_seen_at = now()
+      WHERE id = $1::uuid AND revoked_at IS NULL`,
+    [row.web_account_id, row.email_normalized]
+  )
+
   const sessionToken = randomToken(32)
   const csrfToken = randomToken(32)
   const expiresAt = new Date(Date.now() + sessionTtlMs())
@@ -323,10 +496,17 @@ export async function completeEmailRecover(input: {
   await db(input.db).query(
     `INSERT INTO web_sessions (token_hash, csrf_hash, web_account_id, expires_at, user_agent_hash)
      VALUES ($1, $2, $3::uuid, $4, $5)`,
-    [sha256Hex(sessionToken), sha256Hex(csrfToken), webAccountId, expiresAt.toISOString(), uaHash]
+    [sha256Hex(sessionToken), sha256Hex(csrfToken), row.web_account_id, expiresAt.toISOString(), uaHash]
   )
 
-  return { webAccountId, sessionToken, csrfToken, expiresAt }
+  return {
+    webAccountId: row.web_account_id,
+    emailNormalized: row.email_normalized,
+    purpose: row.purpose,
+    sessionToken,
+    csrfToken,
+    expiresAt,
+  }
 }
 
 /** Staging helper: grant manual premium for E2E without payment. */

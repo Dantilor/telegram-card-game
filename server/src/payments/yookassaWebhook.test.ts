@@ -95,6 +95,8 @@ test('refund.succeeded verifies refund via API and splits partial vs full', () =
   assert.match(route, /auth\.webAccountId/)
   assert.match(route, /payment_owner_mismatch/)
   assert.match(route, /assertWebCheckout/)
+  assert.match(route, /receipt_email_normalized/)
+  assert.match(route, /afterWebPurchasePaid/)
 })
 
 test('fetchYookassaRefund throws on provider 5xx for webhook retry', async () => {

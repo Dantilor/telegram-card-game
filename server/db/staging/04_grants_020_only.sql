@@ -1,0 +1,5 @@
+-- Grants for 020 columns/indexes (staging role). Re-run safe.
+GRANT SELECT, INSERT, UPDATE, DELETE ON web_payments TO CURRENT_USER;
+GRANT SELECT, INSERT, UPDATE, DELETE ON web_accounts TO CURRENT_USER;
+GRANT SELECT, INSERT, UPDATE, DELETE ON web_email_otps TO CURRENT_USER;
+GRANT USAGE, SELECT ON SEQUENCE web_email_otps_id_seq TO CURRENT_USER;

@@ -263,11 +263,11 @@ test.describe('Anonymous WEB Premium', () => {
     })
     expect(start.ok(), await start.text()).toBeTruthy()
     const started = await start.json()
-    expect(started.code).toMatch(/^\d{8}$/)
+    expect(typeof started.token).toBe('string')
+    expect(started.token.length).toBeGreaterThan(20)
 
-    const verify = await api.post('/api/web/email/bind/verify', {
-      headers: { 'X-CSRF-Token': csrf! },
-      data: { email, code: started.code },
+    const verify = await api.post('/api/web/email/confirm', {
+      data: { token: started.token },
     })
     expect(verify.ok(), await verify.text()).toBeTruthy()
 
@@ -278,10 +278,11 @@ test.describe('Anonymous WEB Premium', () => {
     })
     expect(recoverStart.ok()).toBeTruthy()
     const recoverBody = await recoverStart.json()
-    expect(recoverBody.code).toMatch(/^\d{8}$/)
+    expect(typeof recoverBody.token).toBe('string')
+    expect(recoverBody.token.length).toBeGreaterThan(20)
 
-    const complete = await api2.post('/api/web/email/recover/complete', {
-      data: { email, code: recoverBody.code },
+    const complete = await api2.post('/api/web/email/confirm', {
+      data: { token: recoverBody.token },
     })
     expect(complete.ok(), await complete.text()).toBeTruthy()
     const recovered = await complete.json()

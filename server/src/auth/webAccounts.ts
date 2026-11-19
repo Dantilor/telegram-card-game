@@ -102,20 +102,24 @@ function pickBestUntil(current: Date | null, candidate: Date | null, now: Date):
 export async function getWebAccountContact(
   webAccountId: string,
   customDb?: Queryable
-): Promise<{ email: string | null; emailVerified: boolean }> {
+): Promise<{ email: string | null; emailVerified: boolean; emailPending: boolean }> {
   const result = await db(customDb).query<{
     email_normalized: string | null
     email_verified_at: Date | null
+    pending_email_normalized: string | null
   }>(
-    `SELECT email_normalized, email_verified_at
+    `SELECT email_normalized, email_verified_at, pending_email_normalized
        FROM web_accounts
       WHERE id = $1::uuid AND revoked_at IS NULL`,
     [webAccountId]
   )
   const row = result.rows[0]
+  const emailVerified = Boolean(row?.email_verified_at && row.email_normalized)
+  const pending = row?.pending_email_normalized ?? null
   return {
-    email: row?.email_normalized ?? null,
-    emailVerified: Boolean(row?.email_verified_at && row.email_normalized),
+    email: emailVerified ? (row?.email_normalized ?? null) : pending ?? row?.email_normalized ?? null,
+    emailVerified,
+    emailPending: Boolean(pending) && !emailVerified,
   }
 }
 

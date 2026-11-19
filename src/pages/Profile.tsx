@@ -17,7 +17,6 @@ import {
   startEmailBind,
   startTelegramLinkRestore,
   unlinkTelegramLink,
-  verifyEmailBind,
 } from '../lib/webAuth'
 import { LIFETIME_DURATION_DAYS } from '../utils/planLabel'
 import './Profile.css'
@@ -89,8 +88,6 @@ function Profile() {
   const [tgLinked, setTgLinked] = useState(false)
   const [logoutBusy, setLogoutBusy] = useState(false)
   const [emailDraft, setEmailDraft] = useState('')
-  const [emailCode, setEmailCode] = useState('')
-  const [emailStep, setEmailStep] = useState<'idle' | 'code'>('idle')
   const [emailBusy, setEmailBusy] = useState(false)
   const [emailStatus, setEmailStatus] = useState<string | null>(null)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -279,32 +276,27 @@ function Profile() {
     }
   }, [stopTgPoll])
 
-  const handleEmailProtect = useCallback(async () => {
-    if (!web || !emailDraft.trim()) return
+  const savedEmail = webSession.session?.email?.trim() || ''
+  const emailVerified = Boolean(webSession.session?.emailVerified)
+  const emailPending = Boolean(webSession.session?.emailPending)
+
+  const handleEmailConfirm = useCallback(async () => {
+    if (!web) return
+    const target = (savedEmail || emailDraft).trim()
+    if (!target) return
     haptic('medium')
     setEmailBusy(true)
     setEmailStatus(null)
     try {
-      if (emailStep === 'idle') {
-        const started = await startEmailBind(emailDraft.trim())
-        setEmailStep('code')
-        setEmailStatus(
-          started.code
-            ? `Код отправлен (тестовый: ${started.code})`
-            : 'Код отправлен на почту. Действует 10 минут.'
-        )
-      } else {
-        await verifyEmailBind(emailDraft.trim(), emailCode.trim())
-        setEmailStatus('Email подтверждён — покупки можно восстановить на другом устройстве.')
-        setEmailStep('idle')
-        setEmailCode('')
-      }
+      await startEmailBind(target)
+      setEmailStatus('Проверьте почту — мы отправили ссылку для подтверждения.')
+      await webSession.refreshSession()
     } catch {
-      setEmailStatus('Не удалось подтвердить email. Попробуйте позже.')
+      setEmailStatus('Не удалось отправить ссылку. Попробуйте позже.')
     } finally {
       setEmailBusy(false)
     }
-  }, [web, emailDraft, emailCode, emailStep])
+  }, [web, savedEmail, emailDraft, webSession])
 
   const handleSupport = useCallback(() => {
     haptic('light')
@@ -580,52 +572,61 @@ function Profile() {
 
         {web && (
           <section className="profile-pass profile-pass--email">
-            <p className="profile-pass__eyebrow">Защита покупки</p>
-            <p className="profile-pass__desc">
-              Email необязателен. Без него покупка остаётся только в cookie этого устройства —
-              очистка браузера может привести к потере доступа.
-            </p>
-            <label className="profile-pass__email-label">
-              Email
-              <input
-                type="email"
-                className="profile-pass__email-input"
-                value={emailDraft}
-                onChange={(e) => setEmailDraft(e.target.value)}
-                placeholder="name@example.com"
-                autoComplete="email"
-              />
-            </label>
-            {emailStep === 'code' && (
-              <label className="profile-pass__email-label">
-                Код из письма
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="profile-pass__email-input"
-                  value={emailCode}
-                  onChange={(e) => setEmailCode(e.target.value)}
-                  placeholder="8 цифр"
-                  maxLength={8}
-                />
-              </label>
+            <p className="profile-pass__eyebrow">Почта</p>
+            {savedEmail ? (
+              <>
+                <p className="profile-pass__desc">
+                  {savedEmail}
+                  <br />
+                  Статус:{' '}
+                  {emailVerified
+                    ? 'подтверждена'
+                    : emailPending
+                      ? 'ожидает подтверждения'
+                      : 'сохранена'}
+                </p>
+                {!emailVerified && (
+                  <button
+                    type="button"
+                    className="profile-pass__restore"
+                    onClick={() => void handleEmailConfirm()}
+                    disabled={emailBusy}
+                  >
+                    {emailBusy ? 'Отправка…' : 'Подтвердить почту'}
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="profile-pass__desc">
+                  Почта появится после покупки Premium (email для чека) или можно указать её здесь
+                  для восстановления доступа.
+                </p>
+                <label className="profile-pass__email-label">
+                  Ваш email
+                  <input
+                    type="email"
+                    className="profile-pass__email-input"
+                    value={emailDraft}
+                    onChange={(e) => setEmailDraft(e.target.value)}
+                    placeholder="name@example.com"
+                    autoComplete="email"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="profile-pass__restore"
+                  onClick={() => void handleEmailConfirm()}
+                  disabled={emailBusy || !emailDraft.trim()}
+                >
+                  {emailBusy ? 'Отправка…' : 'Подтвердить почту'}
+                </button>
+              </>
             )}
-            <button
-              type="button"
-              className="profile-pass__restore"
-              onClick={() => void handleEmailProtect()}
-              disabled={emailBusy || !emailDraft.trim()}
-            >
-              {emailBusy
-                ? 'Загрузка…'
-                : emailStep === 'code'
-                  ? 'Подтвердить код'
-                  : 'Защитить покупку — добавить email'}
-            </button>
             {emailStatus && <span className="profile-pass__toast">{emailStatus}</span>}
             <p className="profile-pass__desc">
               Потеряли доступ к cookie?{' '}
-              <Link to="/recover">Восстановить покупку по email</Link>
+              <Link to="/recover">Восстановить доступ</Link>
             </p>
           </section>
         )}

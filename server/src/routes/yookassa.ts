@@ -30,6 +30,7 @@ import {
   evaluateYookassaWebhookIp,
 } from '../payments/yookassaWebhookSecurity.js'
 import { grantWebEntitlement, revokeWebPurchaseEntitlements } from '../auth/webAccounts.js'
+import { afterWebPurchasePaid, normalizeEmail } from '../auth/webEmailOtp.js'
 
 const mockPayments = new Map<
   string,
@@ -281,11 +282,12 @@ async function handleCreatePayment(req: Request, res: Response) {
           amount: { value: amount, currency: 'RUB' },
           metadata,
         })
+        const receiptEmail = normalizeEmail(receiptCustomer.email)
         await query(
-          `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status)
-           VALUES ($1, $2::uuid, $3, $4, 'pending')
+          `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status, receipt_email_normalized)
+           VALUES ($1, $2::uuid, $3, $4, 'pending', $5)
            ON CONFLICT (id) DO NOTHING`,
-          [paymentId, webAccountId, plan.plan_id, plan.price_rub]
+          [paymentId, webAccountId, plan.plan_id, plan.price_rub, receiptEmail]
         )
         console.log('[YooKassa] MOCK WEB create paymentId=', paymentId)
         res.status(200).json({ confirmationUrl, paymentId, mock: true, webAccount: true })
@@ -324,11 +326,12 @@ async function handleCreatePayment(req: Request, res: Response) {
         res.status(502).json({ ok: false, error: 'Invalid payment response' })
         return
       }
+      const receiptEmail = normalizeEmail(receiptCustomer.email)
       await query(
-        `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status)
-         VALUES ($1, $2::uuid, $3, $4, 'pending')
+        `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status, receipt_email_normalized)
+         VALUES ($1, $2::uuid, $3, $4, 'pending', $5)
          ON CONFLICT (id) DO NOTHING`,
-        [payment.id, webAccountId, plan.plan_id, plan.price_rub]
+        [payment.id, webAccountId, plan.plan_id, plan.price_rub, receiptEmail]
       )
       res.status(200).json({ confirmationUrl, paymentId: payment.id, webAccount: true })
       return
@@ -918,6 +921,11 @@ async function handleWebhook(req: Request, res: Response) {
           currency: verified.amount?.currency || 'RUB',
         })
         if (webGrant.granted) {
+          try {
+            await afterWebPurchasePaid({ webAccountId, paymentId: pid })
+          } catch (e) {
+            console.error('[YooKassa] webhook: afterWebPurchasePaid failed', e)
+          }
           console.log(
             `[YooKassa] webhook: WEB premium granted paymentId=${pid} webAccountId=${webAccountId} planId=${planId}`
           )
@@ -1067,6 +1075,13 @@ async function handleConfirm(req: Request, res: Response) {
       })
 
       if (grant.granted || grant.alreadyDone) {
+        if (grant.granted) {
+          try {
+            await afterWebPurchasePaid({ webAccountId: auth.webAccountId, paymentId })
+          } catch (e) {
+            console.error('[YooKassa] confirm: afterWebPurchasePaid failed', e)
+          }
+        }
         const premium = await query<{ active_until: Date | null }>(
           `SELECT active_until FROM web_entitlements
             WHERE web_account_id = $1::uuid AND active_until > now()

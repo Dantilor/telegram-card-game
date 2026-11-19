@@ -25,6 +25,7 @@ async function createHarness() {
   await pg.exec(readSql('db/migrations/012_web_sessions.sql'))
   await pg.exec(readSql('db/migrations/013_web_session_profile.sql'))
   await pg.exec(readSql('db/migrations/017_web_anonymous_accounts.sql'))
+  await pg.exec(readSql('db/migrations/020_web_email_magic_links.sql'))
   const query: Queryable = {
     query: async (sql, params) => {
       const result = await pg.query(sql, params)

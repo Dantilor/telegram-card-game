@@ -11,9 +11,10 @@ export type WebSessionMe = {
   displayName?: string | null
   username?: string | null
   pictureUrl?: string | null
-  /** Verified purchase-recovery email, when the account already has one. */
+  /** Saved purchase-recovery email (verified or pending). */
   email?: string | null
   emailVerified?: boolean
+  emailPending?: boolean
   premium?: {
     isPremium: boolean
     activeUntil: string | null
@@ -205,7 +206,7 @@ export async function unlinkTelegramLink(): Promise<{
 export async function startEmailBind(email: string): Promise<{
   ok: boolean
   expiresAt?: string
-  code?: string
+  token?: string
 }> {
   const csrf = readCsrfToken()
   const res = await fetch(`${apiBase()}/api/web/email/bind/start`, {
@@ -223,27 +224,58 @@ export async function startEmailBind(email: string): Promise<{
     err.status = res.status
     throw err
   }
-  return (await res.json()) as { ok: boolean; expiresAt?: string; code?: string }
+  return (await res.json()) as { ok: boolean; expiresAt?: string; token?: string }
 }
 
-export async function verifyEmailBind(email: string, code: string): Promise<{ ok: boolean; email?: string }> {
-  const csrf = readCsrfToken()
-  const res = await fetch(`${apiBase()}/api/web/email/bind/verify`, {
+export async function startEmailRecover(email: string): Promise<{
+  ok: boolean
+  expiresAt?: string
+  token?: string
+}> {
+  const res = await fetch(`${apiBase()}/api/web/email/recover/start`, {
     method: 'POST',
     credentials: 'include',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
-    body: JSON.stringify({ email, code }),
+    body: JSON.stringify({ email }),
   })
   if (!res.ok) {
-    const err = new Error('email_bind_verify_failed') as Error & { status?: number }
+    const err = new Error('email_recover_start_failed') as Error & { status?: number }
     err.status = res.status
     throw err
   }
-  return (await res.json()) as { ok: boolean; email?: string }
+  return (await res.json()) as { ok: boolean; expiresAt?: string; token?: string }
+}
+
+/** Complete magic-link via intentional POST (not on page load / mail prefetch). */
+export async function completeEmailMagicLink(token: string): Promise<{
+  ok: boolean
+  webAccountId?: string
+  email?: string
+  purpose?: string
+}> {
+  const res = await fetch(`${apiBase()}/api/web/email/confirm`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  })
+  if (!res.ok) {
+    const err = new Error('email_confirm_failed') as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as {
+    ok: boolean
+    webAccountId?: string
+    email?: string
+    purpose?: string
+  }
 }
 
 /** Local-only helper when WEB_DEV_LOGIN_ENABLED is on the server. */

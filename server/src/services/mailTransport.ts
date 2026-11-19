@@ -7,6 +7,7 @@ export type MailMessage = {
   to: string
   subject: string
   text: string
+  html?: string
 }
 
 export type MailTransport = {
@@ -36,6 +37,7 @@ export function createTestMailTransport(): MailTransport {
         to: message.to.replace(/(^.).*(@.*$)/, '$1***$2'),
         subject: message.subject,
         textLen: message.text.length,
+        htmlLen: message.html?.length ?? 0,
       })
       return { ok: true, transport: 'test' }
     },
@@ -70,6 +72,7 @@ export function createSmtpMailTransport(opts?: { allowTestFallback?: boolean }):
           to: message.to,
           subject: message.subject,
           text: message.text,
+          ...(message.html ? { html: message.html } : {}),
         }),
       })
       if (!res.ok) {

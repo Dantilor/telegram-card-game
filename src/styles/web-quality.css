@@ -108,6 +108,11 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav svg {
 
 html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-inside .bottom-nav,
 html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-home-ref .mobile-nav,
+/* Legal site footer stays on home/catalog/profile — not inside games */
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .web-site-footer {
+  display: none !important;
+}
+
 html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .bottom-nav,
 html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-home-ref .mobile-nav {
   transform: translate3d(0, calc(100% + 8px), 0);

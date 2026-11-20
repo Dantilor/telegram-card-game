@@ -7,6 +7,7 @@ import { hapticImpact } from '../../utils/haptics'
 import { requestFullscreenOnUserGesture } from '../../lib/telegramTheme'
 import PremiumOverlay from '../../components/PremiumOverlay'
 import WebSiteFooter from '../../components/web/WebSiteFooter'
+import { isImmersiveWebPath } from '../../lib/webChrome'
 import markUrl from './assets/reference-mark.webp'
 import './styles/fonts.css'
 import './styles/inside-scoped.css'
@@ -38,6 +39,7 @@ export default function GnhInsideFrame({ children }: { children: ReactNode }) {
   const premium = path === '/premium'
   const wheel = path === '/wheel'
   const kitExperience = premium || wheel
+  const showSiteFooter = !kitExperience && !isImmersiveWebPath(path)
 
   const openFavorites = () => {
     haptic('light')
@@ -86,7 +88,7 @@ export default function GnhInsideFrame({ children }: { children: ReactNode }) {
       <main className="content">{children}</main>
       {!kitExperience ? (
         <>
-          <WebSiteFooter />
+          {showSiteFooter ? <WebSiteFooter /> : null}
           <nav className="bottom-nav" aria-label="Нижняя навигация">
             <Link to="/" className={path === '/' ? 'active' : undefined} onClick={() => haptic('light')}>
               <Icon>

@@ -362,14 +362,30 @@ html[data-theme] .app.app--web .gnh-experience .gnh-button-primary {
     display: block;
     margin-top: 10px !important;
   }
+  /* Keep full card fan visible on first paint — was clipped at half height. */
+  .gnh-experience .gnh-hero-visual {
+    height: auto !important;
+    min-height: 340px !important;
+    padding-bottom: 8px !important;
+    overflow: visible !important;
+  }
   .gnh-experience .gnh-stack {
     inset: auto !important;
     position: relative !important;
-    height: 280px !important;
+    width: 100% !important;
+    height: 320px !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
   }
-  .gnh-experience .gnh-hero-visual {
-    height: auto !important;
-    padding-bottom: 0 !important;
+  .gnh-experience .gnh-stack-card {
+    height: 210px !important;
+  }
+}
+
+/* Don't clip rotated stack cards on phone first paint. */
+@media (max-width: 800px) {
+  .gnh-experience {
+    overflow: visible !important;
   }
 }
 

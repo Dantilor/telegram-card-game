@@ -953,13 +953,13 @@ export default function SledGame() {
         </button>
 
         <div className="topbar-status">
+          {!session && screen !== "rules" && (
+            <button className="header-join" onClick={() => { playSound("click"); setJoinOpen(true); }}><DoorOpen /> ПО КОДУ</button>
+          )}
           <span className={`network-pill state-${connection}`}>
             {connection === "error" ? <WifiOff /> : <Wifi />}
             {session ? connection === "syncing" ? "СИНХРОНИЗАЦИЯ" : connection === "error" ? "КАНАЛ НАРУШЕН" : `КОМНАТА ${session.code}` : "СЕТЬ ГОТОВА"}
           </span>
-          {!session && screen !== "rules" && (
-            <button className="header-join" onClick={() => { playSound("click"); setJoinOpen(true); }}><DoorOpen /> ПО КОДУ</button>
-          )}
           <label className="sound-control">
             {soundOn ? <Volume2 /> : <VolumeX />}
             <span>ЗВУК</span>

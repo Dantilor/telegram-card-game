@@ -890,25 +890,41 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .topbar {
   border-bottom-color: rgba(117, 196, 242, 0.32) !important;
 }
 
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .topbar-status {
+  margin-left: auto !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .network-pill {
+  order: 2 !important;
+  margin-left: 4px !important;
+}
+
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .header-join {
+  order: 1 !important;
   border: 1px solid rgba(183, 131, 255, 0.5) !important;
   color: #eee8ff !important;
   background: rgba(183, 131, 255, 0.12) !important;
   background-image: none !important;
   box-shadow: none !important;
-  min-height: 30px !important;
-  height: 30px !important;
-  padding: 0 8px !important;
-  gap: 4px !important;
-  font-size: 9px !important;
-  letter-spacing: 0.04em !important;
-  border-radius: 8px !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  gap: 5px !important;
+  font-size: 10px !important;
+  letter-spacing: 0.05em !important;
+  border-radius: 9px !important;
   white-space: nowrap !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .header-join svg {
-  width: 12px !important;
-  height: 12px !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .sound-control {
+  order: 3 !important;
 }
 
 html[data-gnh-shell="web"]:has(.infected-game),
@@ -928,21 +944,21 @@ html[data-gnh-shell="web"] .app.app--web:has(.mafia-shadows) {
 
 /* Premium / Wheel kit header — clear status bar / notch; Домой a bit lower */
 html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header {
-  padding-top: calc(18px + env(safe-area-inset-top, 0px)) !important;
+  padding-top: calc(22px + env(safe-area-inset-top, 0px)) !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header-home {
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 @media (max-width: 600px) {
   html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header {
-    padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
     padding-bottom: 12px !important;
   }
 
   html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header-home {
-    margin-top: 6px;
+    margin-top: 10px;
   }
 }
 

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { isWebShell } from '../../config/shell'
 import { haptic } from '../../utils/telegram'
@@ -33,7 +33,7 @@ export default function WebInstallBanner() {
 
   useEffect(() => {
     if (!isWebShell()) return
-    if (isStandaloneDisplay() || isTelegramWebView() || isDismissedRecently()) return
+    if (isStandaloneDisplay() || isTelegramWebView()) return
 
     const onBip = (ev: Event) => {
       ev.preventDefault()
@@ -64,15 +64,20 @@ export default function WebInstallBanner() {
   }, [])
 
   useEffect(() => {
-    if (!isWebShell() || isStandaloneDisplay() || isTelegramWebView() || isDismissedRecently()) {
+    if (!isWebShell() || isStandaloneDisplay() || isTelegramWebView()) {
       setMode('hidden')
       return
     }
-    if (!ready && !force) {
+    // Profile CTA always opens the sheet, even if the auto-banner was dismissed.
+    if (force) {
+      setMode(deferred ? 'native' : 'guide')
+      return
+    }
+    if (isDismissedRecently() || (!ready && !force)) {
       setMode('hidden')
       return
     }
-    if (isGameplayPath(location.pathname) && !force) {
+    if (isGameplayPath(location.pathname)) {
       setMode('hidden')
       return
     }
@@ -105,20 +110,30 @@ export default function WebInstallBanner() {
 
   if (!isWebShell() || mode === 'hidden') return null
 
-  const guideText = isIosSafariLike()
-    ? 'На iPhone откройте меню «Поделиться» и выберите «На экран «Домой»».'
-    : 'В меню браузера выберите «Установить приложение» или «Добавить на главный экран».'
+  const ios = isIosSafariLike()
 
   return (
-    <aside className="web-install-banner" role="dialog" aria-label="Установка GameNight Host">
+    <aside className="web-install-banner web-install-banner--sheet" role="dialog" aria-label="Установка GameNight Host">
       <div className="web-install-banner__card">
         <div className="web-install-banner__copy">
-          <p className="web-install-banner__title">GameNight Host — всегда под рукой</p>
-          <p className="web-install-banner__text">
-            {mode === 'native'
-              ? 'Добавьте игры на главный экран и запускайте их как приложение.'
-              : guideText}
-          </p>
+          <p className="web-install-banner__title">На экран «Домой»</p>
+          {mode === 'native' ? (
+            <p className="web-install-banner__text">
+              Добавьте GameNight Host на главный экран — и открывайте игры одним касанием, как обычное приложение.
+            </p>
+          ) : ios ? (
+            <ol className="web-install-banner__steps">
+              <li>Нажмите кнопку «Поделиться» внизу Safari (квадрат со стрелкой вверх).</li>
+              <li>Пролистайте меню и выберите «На экран „Домой“».</li>
+              <li>Подтвердите «Добавить» — ярлык появится рядом с другими приложениями.</li>
+            </ol>
+          ) : (
+            <ol className="web-install-banner__steps">
+              <li>Откройте меню браузера (три точки или три линии).</li>
+              <li>Выберите «Установить приложение» или «Добавить на главный экран».</li>
+              <li>Подтвердите — GameNight Host откроется с ярлыка, как приложение.</li>
+            </ol>
+          )}
         </div>
         <div className="web-install-banner__actions">
           {mode === 'native' ? (
@@ -132,7 +147,7 @@ export default function WebInstallBanner() {
             </button>
           ) : null}
           <button type="button" className="web-install-banner__btn web-install-banner__btn--ghost" onClick={onLater}>
-            Позже
+            Понятно
           </button>
         </div>
       </div>

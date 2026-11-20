@@ -38,6 +38,24 @@
   color: rgba(255, 248, 255, 0.78);
 }
 
+.web-install-banner__steps {
+  margin: 0;
+  padding: 0 0 0 1.15rem;
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(255, 248, 255, 0.82);
+}
+
+.web-install-banner__steps li {
+  padding-left: 2px;
+}
+
+.web-install-banner--sheet .web-install-banner__card {
+  max-width: 420px;
+}
+
 .web-install-banner__actions {
   display: flex;
   flex-wrap: wrap;
@@ -78,7 +96,8 @@
   box-shadow: 0 14px 36px rgba(47, 42, 91, 0.14);
 }
 
-[data-theme="neon-light"] .web-install-banner__text {
+[data-theme="neon-light"] .web-install-banner__text,
+[data-theme="neon-light"] .web-install-banner__steps {
   color: #5a5a72;
 }
 

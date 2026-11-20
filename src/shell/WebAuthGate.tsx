@@ -5,7 +5,6 @@ import {
   type WebSessionMe,
 } from '../lib/webAuth'
 import { WebSessionProvider } from './WebSessionContext'
-import { WebAuthCrystal } from './WebAuthCrystal'
 import './WebAuthGate.css'
 
 type GateState =
@@ -32,56 +31,34 @@ function AuthAtmosphere() {
 
 /**
  * WEB bootstrap: anonymous account cookie, no mandatory login.
- * Children (Home/games) render immediately after ensure/session check.
+ * Paint children immediately — session resolves in the background (no full-screen gate flash).
  */
 export function WebAuthGate({ children }: { children: ReactNode }) {
-  const [gate, setGate] = useState<GateState>({ status: 'loading' })
+  const [gate, setGate] = useState<GateState>({ status: 'ready', session: null })
 
   const bootstrap = useMemo(
-    () => async (opts?: { silent?: boolean }) => {
-      const silent = opts?.silent === true
-      // Never flash the full-screen loader on route changes — only on first boot / retry.
-      if (!silent) setGate({ status: 'loading' })
+    () => async () => {
       try {
         let session = await fetchWebSessionMe()
         if (!session) {
           session = await ensureWebSession()
         }
         setGate({ status: 'ready', session })
-        // PremiumProvider mounts outside the gate and may have fetched /api/me before cookie —
-        // re-sync after anonymous ensure so first paint does not stick on 401/free.
+        // PremiumProvider may have fetched /api/me before cookie — re-sync after ensure.
         if (session) {
           window.dispatchEvent(new Event('tcg_premium_sync'))
           window.dispatchEvent(new Event('tcg_legal_sync'))
         }
       } catch {
-        // Soft-fail: still allow browsing free UI; APIs enforce auth where needed.
-        setGate({
-          status: 'ready',
-          session: null,
-        })
+        setGate({ status: 'ready', session: null })
       }
     },
     []
   )
 
-  // Bootstrap once on mount. Do NOT re-run on pathname — that wiped the UI
-  // with "Загружаем…" on every screen switch.
   useEffect(() => {
     void bootstrap()
   }, [bootstrap])
-
-  if (gate.status === 'loading') {
-    return (
-      <div className="web-auth-gate web-auth-gate--loading" aria-busy="true">
-        <AuthAtmosphere />
-        <div className="web-auth-gate__loading-stack">
-          <WebAuthCrystal className="web-auth-gate__crystal web-auth-gate__crystal--pulse" />
-          <p className="web-auth-gate__loading">Загружаем GameNight Host…</p>
-        </div>
-      </div>
-    )
-  }
 
   if (gate.status === 'error') {
     return (
@@ -99,7 +76,7 @@ export function WebAuthGate({ children }: { children: ReactNode }) {
     )
   }
 
-  if (gate.session) {
+  if (gate.status === 'ready' && gate.session) {
     return <WebSessionProvider initial={gate.session}>{children}</WebSessionProvider>
   }
 

@@ -17,10 +17,6 @@
   padding-inline: 0;
 }
 
-.app.app--web::after {
-  /* Keep aurora subtle; parallax layer uses transform separately */
-  will-change: transform;
-}
 
 /* —— Breakpoints —— */
 @media (min-width: 768px) {
@@ -295,7 +291,6 @@
     opacity: 1;
     transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.04);
     transition: transform 500ms ease;
-    will-change: transform;
   }
 
   .app.app--web .home-neon-hero__card:hover .home-neon-hero__bg,

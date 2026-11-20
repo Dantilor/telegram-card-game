@@ -10,9 +10,14 @@ export default defineConfig(({ mode }) => {
     base: isWeb ? '/' : '/telegram-card-game/',
     plugins: [
       react(),
-      legacy({
-        targets: ['defaults', 'not IE 11'],
-      }),
+      // Legacy polyfills only for Mini App WebViews — WEB modern browsers skip the ~1MB legacy chunk.
+      ...(isWeb
+        ? []
+        : [
+            legacy({
+              targets: ['defaults', 'not IE 11'],
+            }),
+          ]),
       {
         name: 'gnh-web-pwa-head',
         transformIndexHtml(html: string) {

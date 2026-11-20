@@ -29,36 +29,21 @@ export function getWebScrollRoot(): HTMLElement | null {
   )
 }
 
-/** All containers that may own the scroll on different phones / browsers. */
+/** Active scroll owners — prefer the real shell root, then window as fallback. */
 export function getWebScrollSources(): Array<HTMLElement | Window> {
   if (typeof document === 'undefined' || typeof window === 'undefined') return []
-  const nodes = [
-    document.querySelector('.app.app--web > .gnh-inside') as HTMLElement | null,
-    document.querySelector('.app.app--web > .gnh-home-scroll') as HTMLElement | null,
-    document.querySelector('.app.app--web') as HTMLElement | null,
-    document.documentElement,
-    document.body,
-  ]
-  const seen = new Set<HTMLElement | Window>()
+  const primary = getWebScrollRoot()
   const out: Array<HTMLElement | Window> = []
-  for (const node of nodes) {
-    if (!node || seen.has(node)) continue
-    seen.add(node)
-    out.push(node)
-  }
+  if (primary) out.push(primary)
   out.push(window)
   return out
 }
 
 export function getWebScrollY(): number {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return 0
-  let y = window.scrollY || window.pageYOffset || 0
-  for (const source of getWebScrollSources()) {
-    if (source === window) continue
-    const el = source as HTMLElement
-    if (typeof el.scrollTop === 'number' && el.scrollTop > y) y = el.scrollTop
-  }
-  return y
+  if (typeof window === 'undefined') return 0
+  const root = getWebScrollRoot()
+  const rootY = root && typeof root.scrollTop === 'number' ? root.scrollTop : 0
+  return Math.max(rootY, window.scrollY || window.pageYOffset || 0)
 }
 
 export function scrollWebShellToTop(behavior: ScrollBehavior = 'auto'): void {
@@ -66,21 +51,10 @@ export function scrollWebShellToTop(behavior: ScrollBehavior = 'auto'): void {
   const run = () => {
     if (root) root.scrollTo({ top: 0, left: 0, behavior })
     window.scrollTo({ top: 0, left: 0, behavior })
-    if (typeof document !== 'undefined') {
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-    }
   }
   run()
-  // Games mount async content — re-pin to top after layout.
+  // One layout pass retry — avoid 50/200ms thrash on every route change.
   if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(() => {
-      run()
-      requestAnimationFrame(run)
-    })
-  }
-  if (typeof window !== 'undefined') {
-    window.setTimeout(run, 50)
-    window.setTimeout(run, 200)
+    requestAnimationFrame(run)
   }
 }

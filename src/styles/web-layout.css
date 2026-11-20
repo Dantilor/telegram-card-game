@@ -26,14 +26,15 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .app-header {
   /* Same mauve as the lower page field under modes/catalog. */
   background: linear-gradient(
     110deg,
-    rgba(138, 115, 160, 0.94),
-    rgba(148, 124, 170, 0.9) 55%,
-    rgba(138, 115, 160, 0.94)
+    rgba(138, 115, 160, 0.98),
+    rgba(148, 124, 170, 0.96) 55%,
+    rgba(138, 115, 160, 0.98)
   );
   border-color: rgba(241, 222, 255, 0.35);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 22px rgba(48, 28, 72, 0.12);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /* Solid fill — blur on sticky chrome janks scroll on mid phones. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header,

@@ -185,18 +185,18 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside {
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .app-header {
   top: 0;
   padding-top: 0;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Opaque fill — skip backdrop-filter (scroll tax on phones). */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   background: linear-gradient(
     110deg,
-    rgba(108, 88, 132, 0.96),
-    rgba(120, 98, 142, 0.94) 55%,
-    rgba(108, 88, 132, 0.96)
+    rgba(108, 88, 132, 0.98),
+    rgba(120, 98, 142, 0.97) 55%,
+    rgba(108, 88, 132, 0.98)
   ) !important;
   transform: translate3d(0, 0, 0);
   opacity: 1;
   transition: transform 0.22s ease, opacity 0.18s ease;
-  will-change: transform;
 }
 
 /* Scroll-away top bar on catalog/home — keep GNH header visible inside games */
@@ -215,8 +215,8 @@ html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .app
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Unified bottom clearance — one token, no double padding.
@@ -252,10 +252,17 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav {
   border-left: none !important;
   border-right: none !important;
   border-bottom: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   transform: translate3d(0, 0, 0);
   opacity: 1;
   transition: transform 0.22s ease, opacity 0.18s ease;
-  will-change: transform;
+}
+
+/* Skip layout work for off-screen catalog tiles while scrolling. */
+html[data-gnh-shell="web"] .app.app--web .games-grid__card {
+  content-visibility: auto;
+  contain-intrinsic-size: 220px 280px;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav a,

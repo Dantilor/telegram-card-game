@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { haptic } from '../utils/telegram'
 import { hapticImpact, hapticSelection } from '../utils/haptics'
@@ -10,9 +10,11 @@ import { MODES, type ModeId } from '../data/modes'
 import { getGameById } from '../data/games'
 import { formatGameTags } from '../utils/gameTags'
 import { apiGet } from '../lib/api'
-import PremiumOverlay from '../components/PremiumOverlay'
-import AdultConfirmModal from '../components/AdultConfirmModal'
 import WebSiteFooter from '../components/web/WebSiteFooter'
+import HomeCommunitySection from '../components/web/HomeCommunitySection'
+
+const PremiumOverlay = lazy(() => import('../components/PremiumOverlay'))
+const AdultConfirmModal = lazy(() => import('../components/AdultConfirmModal'))
 import markUrl from './gnh-home-ref/assets/reference-mark.webp'
 import crystalUrl from './gnh-home-ref/assets/reference-crystal.webp'
 import { RESPONSIVE_ARTWORK } from '../assets/images'
@@ -570,6 +572,7 @@ function HomeReference({
               </article>
             </div>
           </section>
+          <HomeCommunitySection />
         </main>
         <WebSiteFooter />
         <nav className="mobile-nav" aria-label="Нижняя навигация">
@@ -618,15 +621,23 @@ function HomeReference({
             </button>
           ) : null}
         </nav>
-        <PremiumOverlay isOpen={premiumOpen} onClose={onPremiumClose} />
-        <AdultConfirmModal
-          isOpen={adultOpen}
-          onConfirm={() => {
-            setAdultOpen(false)
-            navigate('/mode/adult')
-          }}
-          onCancel={() => setAdultOpen(false)}
-        />
+        {premiumOpen ? (
+          <Suspense fallback={null}>
+            <PremiumOverlay isOpen onClose={onPremiumClose} />
+          </Suspense>
+        ) : null}
+        {adultOpen ? (
+          <Suspense fallback={null}>
+            <AdultConfirmModal
+              isOpen
+              onConfirm={() => {
+                setAdultOpen(false)
+                navigate('/mode/adult')
+              }}
+              onCancel={() => setAdultOpen(false)}
+            />
+          </Suspense>
+        ) : null}
       </div>
     </div>
   )

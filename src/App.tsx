@@ -19,12 +19,11 @@ import {
 } from './lib/gameSessionLease'
 import GameSessionLimitModal from './components/GameSessionLimitModal'
 import { WebAuthGate } from './shell/WebAuthGate'
-import WebInsideLayout from './shell/WebInsideLayout'
 import WebInstallBanner from './components/web/WebInstallBanner'
 import './App.css'
 
-// Главная загружается сразу (первый экран)
-import Home from './pages/Home'
+const Home = lazy(() => import('./pages/Home'))
+const WebInsideLayout = lazy(() => import('./shell/WebInsideLayout'))
 
 // Остальные — ленивая загрузка для быстрого старта
 const Games = lazy(() => import('./pages/Games'))
@@ -165,31 +164,22 @@ function App() {
       }
     }, 1800)
 
-    // WEB: быстрее прогреваем каталог / комиксы / частые игры, чтобы переходы были почти мгновенными.
-    // Mini App: бережнее — только самые вероятные экраны.
+    // Warm only the next most likely screens — aggressive warming fought first interaction on 3G.
     const cancelRouteWarm = scheduleIdleImports(
       isWebShell()
         ? [
             () => import('./pages/Games'),
-            () => import('./pages/Comics'),
-            () => import('./pages/CardGameEntry'),
-            () => import('./pages/RussiaTravel'),
-            () => import('./pages/Play'),
-            () => import('./pages/ModePage'),
             () => import('./pages/Profile'),
-            () => import('./pages/Favorites'),
-            // Prefetch so locked-game → Premium does not flash a blank/legacy gap
             () => import('./pages/PremiumPage'),
-            () => import('./pages/WebPremiumExperience'),
           ]
         : [
             () => import('./pages/Games'),
             () => import('./pages/Profile'),
           ],
       {
-        startDelayMs: isWebShell() ? 350 : 1200,
-        gapMs: isWebShell() ? 180 : 500,
-        timeoutMs: isWebShell() ? 2200 : 3500,
+        startDelayMs: isWebShell() ? 900 : 1200,
+        gapMs: isWebShell() ? 350 : 500,
+        timeoutMs: isWebShell() ? 2500 : 3500,
       }
     )
 
@@ -207,17 +197,15 @@ function App() {
         <GameSessionLeaseHost />
         <Suspense
           fallback={
-            isWebShell() ? null : (
-              <DelayedFallback delayMs={250}>
-                <div className="page-loading page-loading-skeleton" aria-busy="true">
-                  <ul className="page-loading-skeleton__grid">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <li key={i} className="page-loading-skeleton__card" aria-hidden />
-                    ))}
-                  </ul>
-                </div>
-              </DelayedFallback>
-            )
+            <DelayedFallback delayMs={isWebShell() ? 120 : 250}>
+              <div className="page-loading page-loading-skeleton" aria-busy="true">
+                <ul className="page-loading-skeleton__grid">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <li key={i} className="page-loading-skeleton__card" aria-hidden />
+                  ))}
+                </ul>
+              </div>
+            </DelayedFallback>
           }
         >
         <Routes>

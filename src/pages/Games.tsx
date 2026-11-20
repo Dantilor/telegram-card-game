@@ -49,37 +49,25 @@ function Games() {
   const { isPremium } = usePremium()
 
   useEffect(() => {
-    // Обложки каталога — сразу после входа на /games (пользователь уже видит сетку).
     if (!isWebShell()) return
-    preloadImages(PRELOAD_GAMES_CATALOG_URLS)
+    // First-row covers only — full catalog preload starved 3G and caused scroll jank.
+    preloadImages(PRELOAD_GAMES_CATALOG_URLS.slice(0, 8))
 
-    // Чанки игр — последовательно в idle, чтобы не забивать сеть на 3G и не тормозить UI.
+    // Warm only high-traffic next hops; the rest load on navigation/hover.
     const cancelWarm = scheduleIdleImports(
       [
         () => import('./Comics'),
-        () => import('./RussiaTravel'),
         () => import('./CardGameEntry'),
         () => import('./AliasLayout'),
-        () => import('./ActivityLayout'),
         () => import('./MafiaLayout'),
-        () => import('./QuizLayout'),
-        () => import('./TruthDareLayout'),
-        () => import('./SabotageLayout'),
-        () => import('./WhoIsWhoLayout'),
-        () => import('./PhraseTranslator'),
-        () => import('./FreebieTrashLayout'),
         () => import('./SledLayout'),
-        () => import('./MafiaShadowsLayout'),
-        () => import('./DoublesLayout'),
-        () => import('./InfectedLayout'),
       ],
-      { startDelayMs: 180, gapMs: 140, timeoutMs: 1800 }
+      { startDelayMs: 700, gapMs: 320, timeoutMs: 2200 }
     )
 
     const cancelCardWarm = scheduleWhenIdle(() => {
-      void import('./CardGameEntry')
       void import('./Play')
-    }, 900)
+    }, 1400)
 
     return () => {
       cancelWarm()

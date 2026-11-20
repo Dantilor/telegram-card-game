@@ -51,11 +51,11 @@ describe('Home cold start', () => {
     vi.unstubAllEnvs()
   })
 
-  it('renders the home shell while a slow plans request is still pending', async () => {
-    const Home = (await import('../pages/Home')).default
+  it('renders Mini App home while a slow plans request is still pending', async () => {
+    const HomeTelegram = (await import('../pages/HomeTelegram')).default
     render(
       <MemoryRouter>
-        <Home />
+        <HomeTelegram />
       </MemoryRouter>
     )
     await waitFor(() => {

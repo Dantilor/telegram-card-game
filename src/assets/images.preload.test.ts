@@ -21,10 +21,15 @@ describe('image preload lists', () => {
 })
 
 describe('startup asset guards', () => {
-  it('Home uses compressed thumbnails, not the 2 MB catalog originals', () => {
-    const home = source('src/pages/Home.tsx')
-    expect(home).not.toMatch(/mafia_shadows_hero\.png|infected_cover\.png/)
-    expect(home).toMatch(/optimized\/home-hero-/)
+  it('Home shells use compressed thumbnails, not the 2 MB catalog originals', () => {
+    const telegramHome = source('src/pages/HomeTelegram.tsx')
+    const webHome = source('src/pages/HomeWebEntry.tsx')
+    const router = source('src/pages/Home.tsx')
+    expect(router).not.toMatch(/mafia_shadows_hero\.png|infected_cover\.png/)
+    expect(telegramHome).not.toMatch(/mafia_shadows_hero\.png|infected_cover\.png/)
+    expect(webHome).not.toMatch(/mafia_shadows_hero\.png|infected_cover\.png/)
+    expect(telegramHome).toMatch(/optimized\/home-hero-/)
+    expect(webHome).toMatch(/optimized\/home-pick-/)
   })
 
   it('Premium banner and overlay use the compressed gem', () => {

@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { isFavoritesLocked } from '../../utils/access'
 import { usePremium } from '../../contexts/PremiumContext'
 import { haptic } from '../../utils/telegram'
 import { hapticImpact } from '../../utils/haptics'
 import { requestFullscreenOnUserGesture } from '../../lib/telegramTheme'
-import PremiumOverlay from '../../components/PremiumOverlay'
 import markUrl from './assets/reference-mark.webp'
 import './styles/fonts.css'
 import './styles/inside-scoped.css'
@@ -29,7 +28,6 @@ export default function GnhInsideFrame({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const { isPremium } = usePremium()
   const favoritesLocked = isFavoritesLocked(isPremium)
-  const [premiumOpen, setPremiumOpen] = useState(false)
   const path = location.pathname
   const catalog = isCatalogPath(path)
   const favorites = path === '/favorites' || path.startsWith('/decks/custom')
@@ -40,8 +38,12 @@ export default function GnhInsideFrame({ children }: { children: ReactNode }) {
 
   const openFavorites = () => {
     haptic('light')
-    if (favoritesLocked) setPremiumOpen(true)
-    else navigate('/favorites')
+    if (favoritesLocked) {
+      // WEB: kit Premium page — avoid legacy overlay flash
+      navigate('/premium?focus=plans')
+      return
+    }
+    navigate('/favorites')
   }
 
   return (
@@ -132,7 +134,6 @@ export default function GnhInsideFrame({ children }: { children: ReactNode }) {
           </nav>
         </>
       ) : null}
-      <PremiumOverlay isOpen={premiumOpen} onClose={() => setPremiumOpen(false)} />
     </div>
   )
 }

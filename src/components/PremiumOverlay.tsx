@@ -469,6 +469,9 @@ export default function PremiumOverlay({
 
   if (!isOpen && !asPage) return null
 
+  // WEB: never paint the legacy marketing modal — redirect effect sends users to /premium.
+  if (isWebShell() && !checkoutOnly && !asPage) return null
+
   const receiptEmail = receipt.trim()
   const receiptCheck = receiptEmail ? classifyReceipt(receiptEmail) : null
   const receiptError = receiptCheck && 'error' in receiptCheck ? receiptCheck.error : null

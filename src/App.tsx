@@ -178,6 +178,9 @@ function App() {
             () => import('./pages/ModePage'),
             () => import('./pages/Profile'),
             () => import('./pages/Favorites'),
+            // Prefetch so locked-game → Premium does not flash a blank/legacy gap
+            () => import('./pages/PremiumPage'),
+            () => import('./pages/WebPremiumExperience'),
           ]
         : [
             () => import('./pages/Games'),

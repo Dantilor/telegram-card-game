@@ -1338,7 +1338,7 @@ html[data-gnh-shell="web"] .premium-checkout__scroll {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 16px 22px 0;
+  padding: 16px 22px 18px;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -1492,11 +1492,11 @@ html[data-gnh-shell="web"] .premium-offer--checkout .premium-offer__hint {
 }
 html[data-gnh-shell="web"] .premium-overlay__dock--checkout {
   flex: 0 0 auto;
-  position: sticky;
-  bottom: 0;
-  margin-top: auto;
-  margin-left: -22px;
-  margin-right: -22px;
+  position: relative;
+  bottom: auto;
+  margin-top: 0;
+  margin-left: 0;
+  margin-right: 0;
   padding: 12px 22px max(16px, env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(214, 183, 238, 0.16);
   background:
@@ -1559,7 +1559,7 @@ html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__bt
   }
 
   html[data-gnh-shell="web"] .premium-checkout__scroll {
-    padding: 10px 16px 0;
+    padding: 10px 16px 14px;
   }
 
   html[data-gnh-shell="web"] .premium-checkout__title {
@@ -1583,8 +1583,8 @@ html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__bt
   }
 
   html[data-gnh-shell="web"] .premium-overlay__dock--checkout {
-    margin-left: -16px;
-    margin-right: -16px;
+    margin-left: 0;
+    margin-right: 0;
     padding: 10px 16px max(20px, calc(env(safe-area-inset-bottom, 0px) + 12px));
     gap: 8px;
   }

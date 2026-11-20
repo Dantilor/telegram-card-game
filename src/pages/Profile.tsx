@@ -206,18 +206,57 @@ function Profile() {
     haptic('medium')
     stopTgPoll()
     setRestoreLoading(true)
-    // Open a tab synchronously (user gesture) so Safari/PWA do not block the deep link.
+    // iOS Safari/PWA: about:blank openers stay white and never navigate to t.me.
+    // Prefer same-window deep link there; on desktop keep a sync popup gesture.
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : ''
+    const iosLike =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (typeof navigator !== 'undefined' &&
+        navigator.platform === 'MacIntel' &&
+        navigator.maxTouchPoints > 1)
+    const sameWindowOpen = iosLike || isStandaloneDisplay()
     let opener: Window | null = null
-    try {
-      opener = window.open('about:blank', '_blank')
-    } catch {
-      opener = null
+    if (!sameWindowOpen) {
+      try {
+        opener = window.open('about:blank', '_blank')
+      } catch {
+        opener = null
+      }
+    }
+    const openDeepLink = (deepLink: string) => {
+      if (sameWindowOpen) {
+        window.location.assign(deepLink)
+        return
+      }
+      if (opener && !opener.closed) {
+        try {
+          opener.location.replace(deepLink)
+          return
+        } catch {
+          try {
+            opener.close()
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      // Popup blocked or navigation failed — stay reliable with same-window open.
+      window.location.assign(deepLink)
+    }
+    const closeOpener = () => {
+      if (opener && !opener.closed) {
+        try {
+          opener.close()
+        } catch {
+          /* ignore */
+        }
+      }
     }
     try {
       // Already linked → just refresh Premium, no new challenge.
       const current = await fetchTelegramLinkStatus().catch(() => null)
       if (current?.linked) {
-        if (opener && !opener.closed) opener.close()
+        closeOpener()
         setTgLinked(true)
         setTgLinkPremium(Boolean(current.isPremium))
         await refreshPremium()
@@ -241,7 +280,7 @@ function Profile() {
 
       const started = await startTelegramLinkRestore()
       if (!started.deepLink || !started.expiresAt) {
-        if (opener && !opener.closed) opener.close()
+        closeOpener()
         setTgRestore({
           expiresAt: '',
           instruction: started.instruction || '',
@@ -256,19 +295,15 @@ function Profile() {
         expiresAt: started.expiresAt,
         instruction:
           started.instruction ||
-          'Откроется Telegram Mini App GameNight Host. Подтвердите привязку одним нажатием. Если открылась обычная главная — вернитесь и нажмите кнопку снова.',
+          'Откроется Telegram Mini App GameNight Host. Подтвердите привязку одним нажатием, затем вернитесь на сайт — Premium подтянется автоматически.',
         phase: 'waiting',
-        message: 'Ожидаем подключение Telegram…',
+        message: 'Ожидаем подключение Telegram… Вернитесь сюда после подтверждения в Mini App.',
         activeUntil: null,
         isPremium: null,
       })
-      if (opener && !opener.closed) {
-        opener.location.href = started.deepLink
-      } else {
-        window.location.assign(started.deepLink)
-      }
+      openDeepLink(started.deepLink)
     } catch (reason) {
-      if (opener && !opener.closed) opener.close()
+      closeOpener()
       const codeName =
         reason && typeof reason === 'object' && 'code' in reason
           ? String((reason as { code?: string }).code ?? '')

@@ -50,7 +50,15 @@ export function FirstUseSheet() {
   const needed = legal.status === 'ready' && !hidden && legal.records?.agreement?.active !== true
   const agreement = usePublicDocument('agreement', needed)
   const privacy = usePublicDocument('privacy', needed)
-  const close = useCallback(() => { rememberClosed(); setHidden(true) }, [])
+  const close = useCallback(() => {
+    rememberClosed()
+    setHidden(true)
+    try {
+      window.dispatchEvent(new Event('gnh_legal_first_use_closed'))
+    } catch {
+      /* ignore */
+    }
+  }, [])
   useTelegramBack(needed, close)
 
   useEffect(() => {

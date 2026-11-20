@@ -10,7 +10,8 @@ import { readyAndExpand } from './utils/telegram'
 import { scheduleIdleImports } from './utils/scheduleWhenIdle'
 import { PlayErrorBoundary } from './components/PlayErrorBoundary'
 import { isWebShell } from './config/shell'
-import { getTelegramStartParam } from './lib/telegram'
+import { waitForTelegramStartParam } from './lib/telegram'
+import WebWelcomeSheet from './components/web/WebWelcomeSheet'
 import {
   GAME_SESSION_LIMIT_EVENT,
   isGameSessionHeld,
@@ -102,11 +103,18 @@ function TelegramLinkStartRedirect() {
   const navigate = useNavigate()
   useEffect(() => {
     if (isWebShell()) return
-    const param = getTelegramStartParam()
-    if (!/^wl_[A-Za-z0-9_-]{16,60}$/.test(param)) return
-    const hash = window.location.hash || ''
-    if (hash.includes('/link-web')) return
-    navigate('/link-web', { replace: true })
+    let cancelled = false
+    void (async () => {
+      const param = await waitForTelegramStartParam(4000)
+      if (cancelled) return
+      if (!/^wl_[A-Za-z0-9_-]{16,60}$/.test(param)) return
+      const hash = window.location.hash || ''
+      if (hash.includes('/link-web')) return
+      navigate('/link-web', { replace: true })
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [navigate])
   return null
 }
@@ -303,6 +311,7 @@ function App() {
       <LegalProvider>
         {isWebShell() ? <WebAuthGate>{routes}</WebAuthGate> : routes}
         {isWebShell() ? <WebInstallBanner /> : null}
+        {isWebShell() ? <WebWelcomeSheet /> : null}
         <FirstUseSheet />
       </LegalProvider>
     </PremiumProvider>

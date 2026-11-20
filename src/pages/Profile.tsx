@@ -170,9 +170,42 @@ function Profile() {
     haptic('medium')
     stopTgPoll()
     setRestoreLoading(true)
+    // Open a tab synchronously (user gesture) so Safari/PWA do not block the deep link.
+    let opener: Window | null = null
     try {
+      opener = window.open('about:blank', '_blank')
+    } catch {
+      opener = null
+    }
+    try {
+      // Already linked → just refresh Premium, no new challenge.
+      const current = await fetchTelegramLinkStatus().catch(() => null)
+      if (current?.linked) {
+        if (opener && !opener.closed) opener.close()
+        setTgLinked(true)
+        setTgLinkPremium(Boolean(current.isPremium))
+        await refreshPremium()
+        try {
+          window.dispatchEvent(new Event('tcg_premium_sync'))
+        } catch {
+          /* ignore */
+        }
+        setTgRestore({
+          expiresAt: '',
+          instruction: '',
+          phase: 'linked',
+          message: current.isPremium
+            ? 'Telegram подключён. Premium восстановлен!'
+            : 'Telegram подключён, но активный Premium не найден.',
+          activeUntil: current.activeUntil,
+          isPremium: current.isPremium,
+        })
+        return
+      }
+
       const started = await startTelegramLinkRestore()
       if (!started.deepLink || !started.expiresAt) {
+        if (opener && !opener.closed) opener.close()
         setTgRestore({
           expiresAt: '',
           instruction: started.instruction || '',
@@ -187,36 +220,62 @@ function Profile() {
         expiresAt: started.expiresAt,
         instruction:
           started.instruction ||
-          'Подтвердите привязку в Telegram Mini App GameNight Host. Ссылка действует 10 минут.',
+          'Откроется Telegram Mini App GameNight Host. Подтвердите привязку одним нажатием.',
         phase: 'waiting',
-        message: null,
+        message: 'Ожидаем подключение Telegram…',
         activeUntil: null,
         isPremium: null,
       })
-      const opened = window.open(started.deepLink, '_blank', 'noopener,noreferrer')
-      if (!opened) {
+      if (opener && !opener.closed) {
+        opener.location.href = started.deepLink
+      } else {
         window.location.assign(started.deepLink)
       }
     } catch (reason) {
+      if (opener && !opener.closed) opener.close()
       const codeName =
         reason && typeof reason === 'object' && 'code' in reason
           ? String((reason as { code?: string }).code ?? '')
           : ''
+      if (codeName === 'web_already_linked') {
+        try {
+          const status = await fetchTelegramLinkStatus()
+          setTgLinked(Boolean(status.linked))
+          setTgLinkPremium(Boolean(status.isPremium))
+          await refreshPremium()
+          window.dispatchEvent(new Event('tcg_premium_sync'))
+          setTgRestore({
+            expiresAt: '',
+            instruction: '',
+            phase: 'linked',
+            message: status.isPremium
+              ? 'Telegram подключён. Premium восстановлен!'
+              : 'Telegram подключён, но активный Premium не найден.',
+            activeUntil: status.activeUntil,
+            isPremium: status.isPremium,
+          })
+          return
+        } catch {
+          /* fall through */
+        }
+      }
       setTgRestore({
         expiresAt: '',
         instruction: '',
         phase: 'error',
         message:
-          codeName === 'web_already_linked'
-            ? 'Telegram уже подключён к этому аккаунту.'
-            : 'Не удалось начать привязку Telegram',
+          codeName === 'telegram_already_linked'
+            ? 'Этот Telegram уже связан с другим WEB-аккаунтом.'
+            : codeName === 'rate_limited'
+              ? 'Слишком много попыток. Подождите немного.'
+              : 'Не удалось начать восстановление через Telegram',
         activeUntil: null,
         isPremium: null,
       })
     } finally {
       setRestoreLoading(false)
     }
-  }, [web, stopTgPoll])
+  }, [web, stopTgPoll, refreshPremium])
 
   const handleUnlinkTelegram = useCallback(async () => {
     if (!web) return
@@ -259,7 +318,7 @@ function Profile() {
                 ? {
                     ...prev,
                     phase: 'expired',
-                    message: 'Ссылка истекла. Создайте новую — повторно использовать старую нельзя.',
+                    message: 'Время подключения истекло. Попробуйте ещё раз.',
                   }
                 : prev
             )
@@ -273,15 +332,21 @@ function Profile() {
           stopTgPoll()
           setTgLinked(true)
           setTgLinkPremium(Boolean(status.isPremium))
+          await webSession.refreshSession()
           await refreshPremium()
+          try {
+            window.dispatchEvent(new Event('tcg_premium_sync'))
+          } catch {
+            /* ignore */
+          }
           setTgRestore((prev) =>
             prev
               ? {
                   ...prev,
                   phase: 'linked',
                   message: status.isPremium
-                    ? 'Telegram подключён. Premium синхронизирован.'
-                    : 'Аккаунты связаны. Premium пока не активен.',
+                    ? 'Telegram подключён. Premium восстановлен!'
+                    : 'Telegram подключён, но активный Premium не найден.',
                   activeUntil: status.activeUntil,
                   isPremium: status.isPremium,
                 }
@@ -296,11 +361,20 @@ function Profile() {
     tgPollRef.current = setInterval(() => {
       void tick()
     }, 2500)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void tick()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('pageshow', onVisible)
+    window.addEventListener('focus', onVisible)
     return () => {
       cancelled = true
       stopTgPoll()
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('pageshow', onVisible)
+      window.removeEventListener('focus', onVisible)
     }
-  }, [web, tgRestore?.phase, tgRestore?.expiresAt, refreshPremium, stopTgPoll])
+  }, [web, tgRestore?.phase, tgRestore?.expiresAt, refreshPremium, stopTgPoll, webSession])
 
   useEffect(() => {
     if (!web) return
@@ -453,8 +527,8 @@ function Profile() {
           <>
             <p className="profile-pass__desc profile-pass__desc--ok">
               {tgRestore.isPremium
-                ? 'Telegram подключён. Premium синхронизирован.'
-                : tgRestore.message || 'Аккаунты связаны. Premium пока не активен.'}
+                ? 'Telegram подключён. Premium восстановлен!'
+                : tgRestore.message || 'Telegram подключён, но активный Premium не найден.'}
             </p>
             <p className="profile-pass__active-date">
               {tgRestore.isPremium

@@ -12,7 +12,6 @@ import { formatGameTags } from '../utils/gameTags'
 import { apiGet } from '../lib/api'
 import WebSiteFooter from '../components/web/WebSiteFooter'
 import HomeCommunitySection from '../components/web/HomeCommunitySection'
-import WebAuthStatusChip from '../components/web/WebAuthStatusChip'
 
 const PremiumOverlay = lazy(() => import('../components/PremiumOverlay'))
 const AdultConfirmModal = lazy(() => import('../components/AdultConfirmModal'))
@@ -340,7 +339,6 @@ function HomeReference({
             {usersCount !== null ? (
               <PlayerCount usersCount={usersCount} className="gnh-player-count gnh-player-count--bar" />
             ) : null}
-            <WebAuthStatusChip />
             <nav className="desktop-nav" aria-label="Главная навигация">
               <Link
                 to="/games"

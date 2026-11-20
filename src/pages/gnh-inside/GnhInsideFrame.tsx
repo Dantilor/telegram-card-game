@@ -5,7 +5,6 @@ import { usePremium } from '../../contexts/PremiumContext'
 import { haptic } from '../../utils/telegram'
 import { hapticImpact } from '../../utils/haptics'
 import { requestFullscreenOnUserGesture } from '../../lib/telegramTheme'
-import WebAuthStatusChip from '../../components/web/WebAuthStatusChip'
 import markUrl from './assets/reference-mark.webp'
 import './styles/fonts.css'
 import './styles/inside-scoped.css'
@@ -57,7 +56,6 @@ export default function GnhInsideFrame({ children }: { children: ReactNode }) {
               <img src={markUrl} alt="" width={44} height={44} />
               <span>GNH</span>
             </Link>
-            <WebAuthStatusChip compact />
             <nav className="header-nav" aria-label="Главная навигация">
               <Link
                 to="/games"

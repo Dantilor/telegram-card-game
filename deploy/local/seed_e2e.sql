@@ -28,6 +28,19 @@ VALUES
   (900003, 'premium_lifetime', now() + interval '100 years', now()),
   (900004, 'premium_1m', now() - interval '7 days', now() - interval '40 days');
 
+-- Clear prior WEB/Telegram links for seed users so restore E2E stays isolated.
+UPDATE web_telegram_links
+   SET revoked_at = now()
+ WHERE telegram_id BETWEEN 900001 AND 900004
+   AND revoked_at IS NULL;
+
+UPDATE web_entitlements
+   SET active_until = LEAST(active_until, now() - interval '1 second'),
+       updated_at = now()
+ WHERE source = 'telegram_link'
+   AND linked_telegram_id BETWEEN 900001 AND 900004
+   AND active_until > now();
+
 -- Minimal synthetic offer for local Premium checkout (not production legal text).
 INSERT INTO legal_document_versions (
   document_id, version, title, kind, scope, document_date, sha256, body_markdown, blocks, requires_individual_details

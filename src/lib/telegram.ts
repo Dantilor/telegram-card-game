@@ -97,6 +97,23 @@ export function getTelegramStartParam(): string {
   return typeof unsafe === 'string' ? unsafe.trim() : ''
 }
 
+/** Wait for late SDK / initData so startapp=wl_… is not missed on cold Mini App launch. */
+export async function waitForTelegramStartParam(
+  timeoutMs = 3500,
+  intervalMs = 60
+): Promise<string> {
+  const existing = getTelegramStartParam()
+  if (existing) return existing
+  const started = Date.now()
+  while (Date.now() - started < timeoutMs) {
+    await ensureInitData(Math.min(250, timeoutMs))
+    const next = getTelegramStartParam()
+    if (next) return next
+    await new Promise((r) => setTimeout(r, intervalMs))
+  }
+  return getTelegramStartParam()
+}
+
 /**
  * Best-effort refresh before payment. Telegram may expose WebApp before initData is filled.
  * Does not log initData.

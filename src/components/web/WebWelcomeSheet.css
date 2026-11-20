@@ -1,0 +1,105 @@
+.web-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: end center;
+  padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+.web-welcome--in {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.web-welcome__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: rgba(12, 8, 20, 0.42);
+  cursor: pointer;
+}
+
+.web-welcome__card {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  padding: 1.1rem 1.15rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 228, 255, 0.22);
+  background: linear-gradient(160deg, rgba(58, 36, 82, 0.96), rgba(28, 18, 44, 0.98));
+  box-shadow: 0 18px 48px rgba(12, 6, 28, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: #fff8ff;
+  transform: translateY(18px) scale(0.98);
+  opacity: 0;
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+}
+
+.web-welcome--in .web-welcome__card {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.web-welcome__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 236, 255, 0.62);
+}
+
+.web-welcome__title {
+  margin: 0 0 0.55rem;
+  font-size: 1.22rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.web-welcome__text {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255, 248, 255, 0.82);
+}
+
+.web-welcome__actions {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+
+.web-welcome__primary,
+.web-welcome__ghost {
+  width: 100%;
+  border-radius: 12px;
+  padding: 0.72rem 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.web-welcome__primary {
+  border: 0;
+  background: linear-gradient(180deg, #f5d78c, #e2b45a);
+  color: #2a1a08;
+}
+
+.web-welcome__ghost {
+  border: 1px solid rgba(255, 228, 255, 0.22);
+  background: transparent;
+  color: rgba(255, 248, 255, 0.88);
+}
+
+@media (min-width: 720px) {
+  .web-welcome {
+    place-items: center;
+    padding: 24px;
+  }
+}

@@ -449,7 +449,7 @@ router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedR
       // Returned only to the authenticated WEB session that created the challenge.
       token,
       instruction:
-        'Откроется Telegram Mini App GameNight Host. Подтвердите привязку одним нажатием. Ссылка действует 10 минут.',
+        'Ожидаем подключение Telegram… Откроется Mini App GameNight Host — подтвердите одним нажатием. Ссылка действует 10 минут.',
     })
   } catch (e) {
     const { status, body } = errorPayload(e)

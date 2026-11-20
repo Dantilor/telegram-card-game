@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { isWebShell } from '../config/shell'
 import { completeTelegramLink } from '../lib/webAuth'
-import { getInitData, getTelegramStartParam } from '../lib/telegram'
+import { waitForTelegramStartParam } from '../lib/telegram'
+import { waitForInitData } from '../lib/waitForInitData'
 import { haptic } from '../utils/telegram'
 import { usePremium } from '../contexts/PremiumContext'
 import HomeButton from '../components/HomeButton'
@@ -14,35 +15,62 @@ const WL_TOKEN_RE = /^wl_[A-Za-z0-9_-]{16,60}$/
 
 /**
  * Telegram Mini App: confirm one-click WEB link from startapp token.
- * No 8-digit codes. Identity is verified via signed initData on the server.
+ * Waits for late SDK/initData so startapp is not missed on cold launch.
  */
 export default function WebTelegramLink() {
   const handleBack = useBack('/')
   const navigate = useNavigate()
   const web = isWebShell()
-  const hasInit = Boolean(getInitData())
   const { refreshPremium } = usePremium()
-  const startParam = useMemo(() => getTelegramStartParam(), [])
-  const token = WL_TOKEN_RE.test(startParam) ? startParam : ''
+  const [token, setToken] = useState('')
+  const [initReady, setInitReady] = useState(false)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const [bootHint, setBootHint] = useState('Подключаем Telegram…')
+  const autoStarted = useRef(false)
 
   useEffect(() => {
     if (web) return
-    if (!token && !window.location.hash.includes('link-web')) return
-  }, [web, token])
+    let cancelled = false
+    void (async () => {
+      setBootHint('Подключаем Telegram…')
+      const [initData, startParam] = await Promise.all([
+        waitForInitData(4000),
+        waitForTelegramStartParam(4000),
+      ])
+      if (cancelled) return
+      setInitReady(Boolean(initData))
+      const next = WL_TOKEN_RE.test(startParam) ? startParam : ''
+      setToken(next)
+      if (!next) {
+        setBootHint('Ссылка привязки не найдена. Вернитесь на сайт и нажмите «Восстановить через Telegram».')
+      } else if (!initData) {
+        setBootHint('Откройте эту страницу внутри Telegram Mini App GameNight Host.')
+      } else {
+        setBootHint('')
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [web])
 
   const onConfirm = useCallback(async () => {
     haptic('medium')
     setError(null)
     setStatus(null)
     if (!token) {
-      setError('Ссылка привязки неполная или устарела. Вернитесь на сайт и нажмите «Связать с Telegram».')
+      setError('Ссылка привязки неполная или устарела. Вернитесь на сайт и нажмите «Восстановить через Telegram».')
       return
     }
-    if (web || !hasInit) {
+    if (web) {
+      setError('Привязка подтверждается только внутри Telegram Mini App.')
+      return
+    }
+    const initData = await waitForInitData(2500)
+    if (!initData) {
       setError('Откройте эту страницу внутри Telegram Mini App GameNight Host.')
       return
     }
@@ -55,11 +83,11 @@ export default function WebTelegramLink() {
       if (result.isPremium || result.premium) {
         setStatus(
           result.activeUntil
-            ? `Telegram подключён. Premium синхронизирован до ${new Date(result.activeUntil).toLocaleDateString('ru-RU')}.`
-            : 'Telegram подключён. Premium синхронизирован.'
+            ? `Telegram подключён. Premium восстановлен до ${new Date(result.activeUntil).toLocaleDateString('ru-RU')}.`
+            : 'Telegram подключён. Premium восстановлен!'
         )
       } else {
-        setStatus('Аккаунты связаны. Premium пока не активен.')
+        setStatus('Telegram подключён, но активный Premium не найден.')
       }
     } catch (reason) {
       const codeName =
@@ -80,7 +108,15 @@ export default function WebTelegramLink() {
     } finally {
       setBusy(false)
     }
-  }, [token, hasInit, web, refreshPremium])
+  }, [token, web, refreshPremium])
+
+  // One short confirm action as soon as Mini App + token are ready.
+  useEffect(() => {
+    if (web || done || busy || autoStarted.current) return
+    if (!token || !initReady) return
+    autoStarted.current = true
+    void onConfirm()
+  }, [web, token, initReady, done, busy, onConfirm])
 
   return (
     <div className="web-tg-link">
@@ -88,31 +124,30 @@ export default function WebTelegramLink() {
         <HomeButton className="web-tg-link__nav" />
         <BackButton onClick={handleBack} className="web-tg-link__nav" />
       </div>
-      <h1 className="web-tg-link__title">Связать с сайтом</h1>
+      <h1 className="web-tg-link__title">Восстановить Premium</h1>
       <p className="web-tg-link__lead">
-        Подтвердите привязку GameNight Host на сайте к этому Telegram. Premium станет общим — без
-        повторной покупки и без изменения срока.
+        Подтвердите связь с сайтом GameNight Host. Действующий Telegram Premium станет доступен в
+        WEB без повторной оплаты и без изменения срока.
       </p>
       {web ? (
         <p className="web-tg-link__hint" role="status">
-          Привязка подтверждается только внутри Telegram Mini App. На сайте нажмите «Связать с
-          Telegram».
+          Привязка подтверждается только внутри Telegram Mini App. На сайте нажмите «Восстановить
+          через Telegram».
         </p>
       ) : null}
-      {!web && !token ? (
+      {!web && bootHint ? (
         <p className="web-tg-link__hint" role="status">
-          Откройте ссылку из WEB-профиля («Связать с Telegram»), чтобы подтвердить привязку одним
-          нажатием.
+          {bootHint}
         </p>
       ) : null}
-      {!web && token ? (
+      {!web && token && !done ? (
         <button
           type="button"
           className="web-tg-link__submit"
-          disabled={busy || done}
+          disabled={busy}
           onClick={() => void onConfirm()}
         >
-          {busy ? 'Привязываем…' : done ? 'Готово' : 'Подтвердить'}
+          {busy ? 'Привязываем…' : 'Подтвердить'}
         </button>
       ) : null}
       {error ? (
@@ -135,7 +170,7 @@ export default function WebTelegramLink() {
         <p className="web-tg-link__foot">
           Нет активной ссылки? В WEB откройте{' '}
           <Link to="/profile" onClick={() => haptic('light')}>
-            Профиль → Связать с Telegram
+            Профиль → Восстановить через Telegram
           </Link>
           .
         </p>

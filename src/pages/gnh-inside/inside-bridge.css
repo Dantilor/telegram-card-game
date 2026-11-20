@@ -265,7 +265,7 @@ html:has(.gnh-inside .rt-play)::before {
   flex: 0 0 auto;
   width: 100%;
   height: auto;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
   border-radius: inherit;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;

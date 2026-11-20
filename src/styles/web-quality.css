@@ -195,7 +195,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__card {
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__media {
   position: relative !important;
   flex: 0 0 auto !important;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
   background: #241632 !important;
 }
 

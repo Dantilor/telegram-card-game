@@ -2173,13 +2173,14 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__media,
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-page .comics-grid__media.games-grid__card-image-wrap {
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-page .comics-grid__media.games-grid__card-image-wrap,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-page .comics-grid__media.comics-grid__media--34 {
   position: relative !important;
   inset: auto !important;
   flex: 0 0 auto !important;
   width: 100% !important;
   height: auto !important;
-  aspect-ratio: 3 / 4 !important;
+  aspect-ratio: 4 / 3 !important;
   background: #1a1228 !important;
   border-radius: inherit;
   border-bottom-left-radius: 0 !important;

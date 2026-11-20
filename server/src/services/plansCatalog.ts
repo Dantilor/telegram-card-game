@@ -1,6 +1,7 @@
 import { query } from '../db.js'
 import { createPublicTtlCache, weakEtagFromJson } from './publicCache.js'
 import { sqlTimingLog } from '../middleware/requestTiming.js'
+import { isMissingAudienceColumn } from './plans.js'
 
 export type PublicPlan = {
   id: string
@@ -31,7 +32,7 @@ export function clearPlansCatalogCache(): void {
   caches.all.clear()
 }
 
-function audienceSql(filter: PlansAudienceFilter): { sql: string; params: string[] } {
+export function audienceSql(filter: PlansAudienceFilter): { sql: string; params: string[] } {
   if (filter === 'all') {
     return { sql: `COALESCE(audience, 'all') IN ('all', 'telegram', 'web')`, params: [] }
   }
@@ -41,6 +42,23 @@ function audienceSql(filter: PlansAudienceFilter): { sql: string; params: string
   // telegram (default for Mini App / unspecified)
   return { sql: `COALESCE(audience, 'all') IN ('all', 'telegram')`, params: [] }
 }
+
+/** Production `plans` has `plan_id` — never SELECT/WHERE `plans.id`. */
+export function plansCatalogSql(filter: PlansAudienceFilter): { sql: string; params: string[] } {
+  const where = audienceSql(filter)
+  return {
+    sql: `SELECT plan_id, title, price_rub, duration_days,
+              COALESCE(audience, 'all') AS audience
+       FROM plans
+       WHERE is_active = true AND (${where.sql})
+       ORDER BY duration_days ASC, price_rub ASC`,
+    params: where.params,
+  }
+}
+
+export const PLANS_CATALOG_SQL_NO_AUDIENCE = `SELECT plan_id, title, price_rub, duration_days
+         FROM plans WHERE is_active = true
+         ORDER BY duration_days ASC, price_rub ASC`
 
 export async function getPlansCatalog(
   filter: PlansAudienceFilter = 'telegram'
@@ -56,7 +74,6 @@ export async function getPlansCatalog(
     return { payload: hit.value, etag: hit.etag, cacheHit: true, sqlMs: null }
   }
 
-  const where = audienceSql(filter)
   const started = process.hrtime.bigint()
   let rows: Array<{
     plan_id: string
@@ -66,24 +83,17 @@ export async function getPlansCatalog(
     audience: 'all' | 'telegram' | 'web'
   }>
   try {
+    const catalog = plansCatalogSql(filter)
     const r = await query<{
       plan_id: string
       title: string
       price_rub: number
       duration_days: number
       audience: 'all' | 'telegram' | 'web'
-    }>(
-      `SELECT COALESCE(plan_id, id) AS plan_id, title, price_rub, duration_days,
-              COALESCE(audience, 'all') AS audience
-       FROM plans
-       WHERE is_active = true AND (${where.sql})
-       ORDER BY duration_days ASC, price_rub ASC`,
-      where.params
-    )
+    }>(catalog.sql, catalog.params)
     rows = r.rows
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    if (!/column ["']?audience["']? does not exist/i.test(msg)) throw error
+    if (!isMissingAudienceColumn(error)) throw error
     // Pre-022 schema: shared catalog only (Telegram prices). WEB filter returns empty intentionally.
     if (filter === 'web') {
       rows = []
@@ -93,11 +103,7 @@ export async function getPlansCatalog(
         title: string
         price_rub: number
         duration_days: number
-      }>(
-        `SELECT COALESCE(plan_id, id) AS plan_id, title, price_rub, duration_days
-         FROM plans WHERE is_active = true
-         ORDER BY duration_days ASC, price_rub ASC`
-      )
+      }>(PLANS_CATALOG_SQL_NO_AUDIENCE)
       rows = r.rows.map((row) => ({ ...row, audience: 'all' as const }))
     }
   }

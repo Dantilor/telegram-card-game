@@ -24,6 +24,18 @@ export type PlanRow = {
   audience: PlanAudience
 }
 
+/** Production `plans` uses `plan_id` only — never reference `plans.id`. */
+export const ACTIVE_PLAN_BY_ID_SQL = `SELECT plan_id, title, price_rub, duration_days,
+              COALESCE(audience, 'all') AS audience
+       FROM plans
+       WHERE plan_id = $1 AND is_active = true
+       LIMIT 1`
+
+export const ACTIVE_PLAN_BY_ID_SQL_NO_AUDIENCE = `SELECT plan_id, title, price_rub, duration_days
+       FROM plans
+       WHERE plan_id = $1 AND is_active = true
+       LIMIT 1`
+
 export function planAllowedForChannel(
   plan: Pick<PlanRow, 'audience'>,
   channel: 'telegram' | 'web'
@@ -45,7 +57,7 @@ export function planReceiptDescription(durationDays: number): string {
   return `Подписка GameNight Host Premium (${months} мес.)`
 }
 
-function isMissingAudienceColumn(error: unknown): boolean {
+export function isMissingAudienceColumn(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error)
   return /column ["']?audience["']? does not exist/i.test(msg)
 }
@@ -53,22 +65,12 @@ function isMissingAudienceColumn(error: unknown): boolean {
 export async function getActivePlanById(planId: string, db?: Queryable): Promise<PlanRow | null> {
   const q = database(db)
   try {
-    const res = await q.query<PlanRow>(
-      `SELECT COALESCE(plan_id, id) AS plan_id, title, price_rub, duration_days,
-              COALESCE(audience, 'all') AS audience
-       FROM plans
-       WHERE (plan_id = $1 OR id = $1) AND is_active = true
-       LIMIT 1`,
-      [planId]
-    )
+    const res = await q.query<PlanRow>(ACTIVE_PLAN_BY_ID_SQL, [planId])
     return res.rows[0] ?? null
   } catch (error) {
     if (!isMissingAudienceColumn(error)) throw error
     const res = await q.query<Omit<PlanRow, 'audience'> & { audience?: PlanAudience }>(
-      `SELECT COALESCE(plan_id, id) AS plan_id, title, price_rub, duration_days
-       FROM plans
-       WHERE (plan_id = $1 OR id = $1) AND is_active = true
-       LIMIT 1`,
+      ACTIVE_PLAN_BY_ID_SQL_NO_AUDIENCE,
       [planId]
     )
     const row = res.rows[0]

@@ -60,9 +60,17 @@ describe('pre-022 audience fallback', () => {
 
   it('plansCatalog source keeps missing-audience fallback for Telegram lists', () => {
     const src = fs.readFileSync(path.join(here, 'plansCatalog.ts'), 'utf8')
-    assert.match(src, /column \["'\]\?audience\["'\]\? does not exist/)
+    assert.match(src, /isMissingAudienceColumn/)
     assert.match(src, /Pre-022 schema/)
     assert.match(src, /filter === 'web'/)
     assert.match(src, /audience: 'all'/)
+    assert.doesNotMatch(src, /COALESCE\(\s*plan_id\s*,\s*id\s*\)/)
+  })
+
+  it('getActivePlanById SQL uses plan_id only (production has no plans.id)', () => {
+    const src = fs.readFileSync(path.join(here, 'plans.ts'), 'utf8')
+    assert.match(src, /WHERE plan_id = \$1 AND is_active = true/)
+    assert.doesNotMatch(src, /COALESCE\(\s*plan_id\s*,\s*id\s*\)/)
+    assert.doesNotMatch(src, /OR\s+id\s*=/)
   })
 })

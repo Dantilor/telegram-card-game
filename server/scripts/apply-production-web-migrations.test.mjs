@@ -176,18 +176,20 @@ test('refuses staging app role in URL', () => {
   assert.match(`${result.stdout}\n${result.stderr}`, /gnh_web_stage/)
 })
 
-test('022 SQL keeps Telegram prices and inserts WEB plans inactive', () => {
+test('022 SQL keeps Telegram prices and inserts WEB plans inactive without requiring plans.id', () => {
   const sql = fs.readFileSync(path.join(serverRoot, 'db/migrations/022_web_plans_audience.sql'), 'utf8')
-  assert.match(sql, /premium_web_1m[\s\S]*false,\s*'web'/)
-  assert.match(sql, /premium_web_3m[\s\S]*false,\s*'web'/)
-  assert.match(sql, /premium_web_lifetime[\s\S]*false,\s*'web'/)
   assert.match(sql, /Does NOT change existing premium_1m/)
   assert.match(sql, /audience = 'telegram'/)
   assert.match(sql, /plan_id IN \('premium_1m', 'premium_3m', 'premium_lifetime'\)/)
+  assert.match(sql, /information_schema\.columns/)
+  assert.match(sql, /column_name = 'id'/)
+  assert.match(sql, /INSERT INTO plans \(plan_id, title, price_rub, duration_days, is_active, audience\)/)
+  assert.match(sql, /premium_web_1m[\s\S]*false,\s*'web'/)
+  assert.match(sql, /premium_web_3m[\s\S]*499[\s\S]*false,\s*'web'/)
+  assert.match(sql, /premium_web_lifetime[\s\S]*1190[\s\S]*false,\s*'web'/)
   // Must not activate rows in 022 (partial index predicate is fine)
   assert.doesNotMatch(sql, /is_active\s*=\s*true(?!\s*;)/)
   assert.doesNotMatch(sql, /UPDATE\s+plans[\s\S]{0,120}price_rub\s*=/i)
-  assert.match(sql, /,\s*false,\s*'web'/)
 })
 
 test('023 SQL activates only WEB plan ids at expected prices', () => {

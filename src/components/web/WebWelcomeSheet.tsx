@@ -93,7 +93,7 @@ export default function WebWelcomeSheet() {
   useEffect(() => {
     if (!isWebShell()) return
     if (welcomeSeen()) return
-    if (legal.status === 'loading' || legal.status === 'idle') return
+    if (legal.status === 'loading') return
     if (firstUseBlocking) return
     const showTimer = window.setTimeout(() => {
       setOpen(true)

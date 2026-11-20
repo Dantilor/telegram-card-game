@@ -157,10 +157,12 @@ export async function completeTelegramLink(token: string): Promise<{
   sources?: string[]
 }> {
   const { getInitData } = await import('./telegram')
-  const initData = getInitData()
+  const { waitForInitData } = await import('./waitForInitData')
+  const initData = getInitData() || (await waitForInitData(3500))
   if (!initData) {
-    const err = new Error('telegram_init_required') as Error & { status?: number }
+    const err = new Error('telegram_init_required') as Error & { status?: number; code?: string }
     err.status = 401
+    err.code = 'telegram_init_required'
     throw err
   }
   const res = await fetch(`${apiBase()}/api/web/telegram-link/complete`, {
@@ -182,6 +184,7 @@ export async function completeTelegramLink(token: string): Promise<{
     } catch {
       /* ignore */
     }
+    if (!err.code && res.status === 401) err.code = 'telegram_init_required'
     throw err
   }
   const body = (await res.json()) as {

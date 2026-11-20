@@ -96,6 +96,8 @@ export default function WebTelegramLink() {
           : ''
       if (codeName === 'token_invalid' || codeName === 'invalid_token' || codeName === 'code_invalid') {
         setError('Ссылка недействительна или уже использована. Запросите новую на сайте.')
+      } else if (codeName === 'telegram_init_required') {
+        setError('Telegram не передал данные входа. Закройте Mini App и откройте ссылку снова из профиля на сайте.')
       } else if (codeName === 'telegram_already_linked') {
         setError('Этот Telegram уже связан с другим WEB-аккаунтом. Сначала отвяжите его там.')
       } else if (codeName === 'web_already_linked') {

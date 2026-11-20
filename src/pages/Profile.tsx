@@ -37,6 +37,40 @@ type TgRestorePanel = {
   isPremium: boolean | null
 }
 
+const TG_RESTORE_WAIT_KEY = 'gnh_tg_restore_wait_v1'
+
+function readPersistedTgRestore(): TgRestorePanel | null {
+  try {
+    const raw = sessionStorage.getItem(TG_RESTORE_WAIT_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as TgRestorePanel
+    if (!parsed || parsed.phase !== 'waiting' || !parsed.expiresAt) return null
+    if (new Date(parsed.expiresAt).getTime() <= Date.now()) {
+      sessionStorage.removeItem(TG_RESTORE_WAIT_KEY)
+      return {
+        ...parsed,
+        phase: 'expired',
+        message: 'Время подключения истекло. Попробуйте ещё раз.',
+      }
+    }
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function persistTgRestore(panel: TgRestorePanel | null): void {
+  try {
+    if (panel?.phase === 'waiting') {
+      sessionStorage.setItem(TG_RESTORE_WAIT_KEY, JSON.stringify(panel))
+    } else {
+      sessionStorage.removeItem(TG_RESTORE_WAIT_KEY)
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 function getInitials(firstName?: string, lastName?: string): string {
   const first = firstName?.trim()[0] ?? ''
   const last = lastName?.trim()[0] ?? ''
@@ -121,7 +155,9 @@ function Profile() {
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
-  const [tgRestore, setTgRestore] = useState<TgRestorePanel | null>(null)
+  const [tgRestore, setTgRestore] = useState<TgRestorePanel | null>(() =>
+    isWebShell() ? readPersistedTgRestore() : null
+  )
   const [tgLinked, setTgLinked] = useState(false)
   const [tgLinkPremium, setTgLinkPremium] = useState(false)
   const [logoutBusy, setLogoutBusy] = useState(false)
@@ -220,7 +256,7 @@ function Profile() {
         expiresAt: started.expiresAt,
         instruction:
           started.instruction ||
-          'Откроется Telegram Mini App GameNight Host. Подтвердите привязку одним нажатием.',
+          'Откроется Telegram Mini App GameNight Host. Подтвердите привязку одним нажатием. Если открылась обычная главная — вернитесь и нажмите кнопку снова.',
         phase: 'waiting',
         message: 'Ожидаем подключение Telegram…',
         activeUntil: null,
@@ -304,11 +340,16 @@ function Profile() {
   }, [web, refreshPremium])
 
   useEffect(() => {
+    persistTgRestore(tgRestore)
+  }, [tgRestore])
+
+  useEffect(() => {
     if (!web || !tgRestore || tgRestore.phase !== 'waiting') {
       stopTgPoll()
       return
     }
     let cancelled = false
+    let missingPendingTicks = 0
     const tick = async () => {
       try {
         if (new Date(tgRestore.expiresAt).getTime() <= Date.now()) {
@@ -352,6 +393,26 @@ function Profile() {
                 }
               : prev
           )
+          return
+        }
+        // Challenge gone without a link → Mini App never completed (lost startapp / error).
+        if (!status.pendingChallengeExpiresAt) {
+          missingPendingTicks += 1
+          if (missingPendingTicks >= 3) {
+            stopTgPoll()
+            setTgRestore((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    phase: 'error',
+                    message:
+                      'Подтверждение в Telegram не завершилось. Откройте ссылку снова и дождитесь экрана «Восстановить Premium», либо нажмите «Восстановить через Telegram» ещё раз.',
+                  }
+                : prev
+            )
+          }
+        } else {
+          missingPendingTicks = 0
         }
       } catch {
         /* keep polling; transient network */

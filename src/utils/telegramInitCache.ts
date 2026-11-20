@@ -140,6 +140,16 @@ export function parseAndCacheFromHash(): CachedInitData | null {
     // Both caches must be committed before HashRouter removes the launch hash.
     if (!primeTelegramSdkInitParams(params)) return null
     sessionStorage.setItem(TG_INIT_CACHE, JSON.stringify(cached))
+    // Preserve startapp across hash normalization (tgWebAppStartParam lives outside tgWebAppData).
+    try {
+      const launchStart =
+        params.get('tgWebAppStartParam')?.trim() ||
+        new URLSearchParams(parsed.initDataRaw ?? tgWebAppData).get('start_param')?.trim() ||
+        ''
+      if (launchStart) sessionStorage.setItem('gnh_tg_launch_start_param', launchStart)
+    } catch {
+      /* ignore */
+    }
     normalizeHash()
     return cached
   } catch {

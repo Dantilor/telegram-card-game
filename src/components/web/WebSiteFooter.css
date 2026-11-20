@@ -27,12 +27,21 @@
   color: rgba(255, 248, 255, 0.66);
 }
 
+.web-site-footer__help {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .web-site-footer__nav {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
 }
 
+.web-site-footer__help a,
 .web-site-footer__nav button,
 .web-site-footer__nav a {
   margin: 0;
@@ -69,6 +78,7 @@
 }
 
 [data-theme="neon-light"] .web-site-footer__name,
+[data-theme="neon-light"] .web-site-footer__help a,
 [data-theme="neon-light"] .web-site-footer__nav button,
 [data-theme="neon-light"] .web-site-footer__nav a {
   color: #1a102a;
@@ -85,6 +95,7 @@
 }
 
 [data-theme="sunset"] .web-site-footer__name,
+[data-theme="sunset"] .web-site-footer__help a,
 [data-theme="sunset"] .web-site-footer__nav button,
 [data-theme="sunset"] .web-site-footer__nav a {
   color: #2d1f1a;
@@ -96,6 +107,7 @@
 }
 
 [data-theme="minimal-calm"] .web-site-footer__name,
+[data-theme="minimal-calm"] .web-site-footer__help a,
 [data-theme="minimal-calm"] .web-site-footer__nav button,
 [data-theme="minimal-calm"] .web-site-footer__nav a {
   color: #2f3640;

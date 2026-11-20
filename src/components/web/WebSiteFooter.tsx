@@ -16,6 +16,14 @@ export default function WebSiteFooter() {
         <div className="web-site-footer__brand">
           <p className="web-site-footer__name">GameNight Host</p>
           <p className="web-site-footer__tagline">{GNH_OPERATOR.tagline}</p>
+          <nav className="web-site-footer__help" aria-label="Помощь">
+            <Link to="/profile#faq" onClick={() => haptic('light')}>
+              Частые вопросы
+            </Link>
+            <a href={GNH_OPERATOR.supportUrl} target="_blank" rel="noopener noreferrer" onClick={() => haptic('light')}>
+              Связаться с поддержкой
+            </a>
+          </nav>
         </div>
         <nav className="web-site-footer__nav" aria-label="Юридические ссылки">
           <button type="button" onClick={() => { haptic('light'); legal.openDocument('privacy') }}>
@@ -27,12 +35,6 @@ export default function WebSiteFooter() {
           <button type="button" onClick={() => { haptic('light'); legal.openDocument('offer') }}>
             Публичная оферта Premium
           </button>
-          <Link to="/profile#faq" onClick={() => haptic('light')}>
-            Частые вопросы
-          </Link>
-          <a href={GNH_OPERATOR.supportUrl} target="_blank" rel="noopener noreferrer" onClick={() => haptic('light')}>
-            Связаться с поддержкой
-          </a>
         </nav>
         <div className="web-site-footer__legal">
           <p>{GNH_OPERATOR.legalName}</p>

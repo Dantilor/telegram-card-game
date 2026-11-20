@@ -314,6 +314,7 @@ html:has(.gnh-inside .rt-play)::before {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  align-items: center;
   gap: 0;
   border-top: 0;
   margin: 0;
@@ -351,15 +352,18 @@ html:has(.gnh-inside .rt-play)::before {
 }
 
 .app.app--web .gnh-inside .comics-grid .comics-grid__cta {
-  align-self: stretch;
-  width: 100%;
-  margin: 0;
+  align-self: center;
+  width: auto;
+  max-width: 100%;
+  min-width: min(100%, 11.5rem);
+  margin: 0 auto;
   min-height: 40px;
   padding: 0.55rem 0.85rem;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .app.app--web .gnh-inside .hero-game-card.games-grid__card--image {
@@ -842,9 +846,12 @@ html:has(.gnh-inside .rt-play)::before {
     grid-column: 2;
   }
 
-  .app.app--web .gnh-inside .games-grid:not(.comics-grid),
-  .app.app--web .gnh-inside .comics-grid {
+  .app.app--web .gnh-inside .games-grid:not(.comics-grid) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app.app--web .gnh-inside .comics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .app.app--web .gnh-inside .profile-shell {
@@ -916,8 +923,8 @@ html:has(.gnh-inside .rt-play)::before {
   }
 
   .app.app--web .gnh-inside .comics-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
   .app.app--web .gnh-inside .favorites-page__list {
     grid-template-columns: 1fr;

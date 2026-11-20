@@ -2161,10 +2161,10 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__cta--premium-l
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 20px rgba(140, 80, 200, 0.28) !important;
 }
 
-/* Comics: 3 proportional cards per row, cover + CTA only. */
+/* Comics: 2 larger cards per row, cover + CTA only. */
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__card {
@@ -2220,7 +2220,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important;
-  align-items: stretch !important;
+  align-items: center !important;
   gap: 0 !important;
   min-height: 0 !important;
   height: auto !important;
@@ -2244,17 +2244,20 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__cta {
   display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch !important;
-  width: 100% !important;
-  margin: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  width: auto !important;
+  max-width: 100% !important;
+  min-width: min(100%, 11.5rem);
+  margin: 0 auto !important;
   min-height: 34px;
-  padding: 0.4rem 0.45rem !important;
+  padding: 0.4rem 0.85rem !important;
   border-radius: 999px !important;
   font-size: 0.68rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.02em;
+  text-align: center !important;
   color: #fff8ff !important;
   background: linear-gradient(105deg, #d8a6f0 0%, #b07de8 48%, #8a6ad8 100%) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 14px rgba(140, 80, 200, 0.28) !important;

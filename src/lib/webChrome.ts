@@ -30,9 +30,24 @@ export function getWebScrollRoot(): HTMLElement | null {
 
 export function scrollWebShellToTop(behavior: ScrollBehavior = 'auto'): void {
   const root = getWebScrollRoot()
-  if (root) {
-    root.scrollTo({ top: 0, left: 0, behavior })
-    return
+  const run = () => {
+    if (root) root.scrollTo({ top: 0, left: 0, behavior })
+    window.scrollTo({ top: 0, left: 0, behavior })
+    if (typeof document !== 'undefined') {
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }
   }
-  window.scrollTo({ top: 0, left: 0, behavior })
+  run()
+  // Games mount async content — re-pin to top after layout.
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => {
+      run()
+      requestAnimationFrame(run)
+    })
+  }
+  if (typeof window !== 'undefined') {
+    window.setTimeout(run, 50)
+    window.setTimeout(run, 200)
+  }
 }

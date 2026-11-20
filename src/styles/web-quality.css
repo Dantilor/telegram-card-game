@@ -545,9 +545,8 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   opacity: 1;
 }
 
-/* Russia Travel / Где мы? card scrim */
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-route-card,
-html[data-gnh-shell="web"] .app.app--web .gnh-inside [class*="rt-"] [class*="card"] {
+/* Russia Travel / Где мы? — hero/route art keeps light ink; paper deck cards stay dark ink */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-route-card {
   position: relative;
 }
 
@@ -557,6 +556,145 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-route-card :is(h3, p, s
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
 }
 
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-travel-card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-page__deck.rt-travel-card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside article.rt-page__deck {
+  color: var(--rt-ink, #2a2620) !important;
+  -webkit-text-fill-color: var(--rt-ink, #2a2620) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-travel-card :is(
+  .rt-page__deck-title,
+  h3,
+  .rt-page__deck-head,
+  .rt-page__deck-top
+),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside article.rt-page__deck :is(
+  .rt-page__deck-title,
+  h3
+) {
+  color: var(--rt-ink, #2a2620) !important;
+  -webkit-text-fill-color: var(--rt-ink, #2a2620) !important;
+  text-shadow: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-travel-card :is(
+  .rt-page__deck-desc,
+  .rt-page__deck-meta,
+  p
+),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside article.rt-page__deck :is(
+  .rt-page__deck-desc,
+  .rt-page__deck-meta,
+  p
+) {
+  color: var(--rt-ink-muted, #6f5046) !important;
+  -webkit-text-fill-color: var(--rt-ink-muted, #6f5046) !important;
+  text-shadow: none !important;
+}
+
+/* WEB shell already pads safe-area — kill double top inset inside games */
+html[data-gnh-shell="web"] .app.app--web {
+  --app-inset-top: 0px;
+  --tg-header-offset: 0px;
+  min-height: 100dvh;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-nav.game-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .inf-nav.game-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .dv-nav.game-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .ms-nav.game-page {
+  padding-top: 8px !important;
+  margin-top: 0 !important;
+  min-height: 0 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .topbar,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .infected-game .home-layout,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .infected-game .game-stage,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .doubles .landing,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-shadows .landing-inner {
+  padding-top: 12px !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .topbar {
+  padding-top: 10px !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sound-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 8px !important;
+  margin: 0 !important;
+  transform: none !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sound-control > svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sound-control [data-slot="switch"] {
+  transform: none !important;
+  flex-shrink: 0;
+  align-self: center !important;
+}
+
+/* Kill white home-indicator strip — paint shell/page through the bottom */
+html[data-gnh-shell="web"],
+html[data-gnh-shell="web"] body,
+html[data-gnh-shell="web"] #root {
+  min-height: 100dvh !important;
+  background-color: var(--web-shell-mauve, #887099) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
+  background-color: inherit;
+}
+
+html[data-gnh-shell="web"]:has(.sled-root),
+html[data-gnh-shell="web"]:has(.sled-root) body,
+html[data-gnh-shell="web"]:has(.sled-root) #root,
+html[data-gnh-shell="web"] .app.app--web:has(.sled-root) {
+  background-color: #090d29 !important;
+}
+
+html[data-gnh-shell="web"]:has(.infected-game),
+html[data-gnh-shell="web"]:has(.infected-game) body,
+html[data-gnh-shell="web"]:has(.infected-game) #root,
+html[data-gnh-shell="web"] .app.app--web:has(.infected-game),
+html[data-gnh-shell="web"]:has(.doubles),
+html[data-gnh-shell="web"]:has(.doubles) body,
+html[data-gnh-shell="web"]:has(.doubles) #root,
+html[data-gnh-shell="web"] .app.app--web:has(.doubles),
+html[data-gnh-shell="web"]:has(.mafia-shadows),
+html[data-gnh-shell="web"]:has(.mafia-shadows) body,
+html[data-gnh-shell="web"]:has(.mafia-shadows) #root,
+html[data-gnh-shell="web"] .app.app--web:has(.mafia-shadows) {
+  background-color: #070914 !important;
+}
+
+/* Premium / Wheel kit header — clear status bar / notch on phone */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header {
+  padding-top: calc(14px + env(safe-area-inset-top, 0px)) !important;
+}
+
+@media (max-width: 600px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header {
+    padding-top: calc(12px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 12px !important;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav,

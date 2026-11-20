@@ -2816,7 +2816,6 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(
   .quiz-home__section-hint,
   .pt__section-hint,
   .mafia-setup__section-note,
-  .mafia-setup__roles-line,
   .teams-setup__hint,
   .activity-teams-setup__hint,
   .truth-dare-setup__section-hint,
@@ -2824,6 +2823,31 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(
   .alias-page__hint
 ) {
   margin: 0 0 0.7rem !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-setup__roles-line {
+  margin: 0.9rem 0 0 !important;
+}
+
+/* Stronger chip outlines on all game setups */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(
+  .game-page__chip,
+  .alias-page__chip,
+  .mafia-page__chip,
+  .quiz-room-setup__count-btn
+) {
+  border: 2px solid rgba(255, 236, 255, 0.78) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 255, 0.14);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(
+  .game-page__chip.is-active,
+  .alias-page__chip.is-active,
+  .mafia-page__chip.is-active,
+  .quiz-room-setup__count-btn.is-active
+) {
+  border-color: #fff4ff !important;
+  box-shadow: 0 0 0 1px rgba(255, 248, 255, 0.4), 0 0 18px rgba(225, 176, 245, 0.3);
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-setup__section-head {

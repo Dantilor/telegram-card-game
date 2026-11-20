@@ -774,10 +774,21 @@ html:has(.gnh-inside .rt-play)::before {
 .app.app--web .gnh-inside .quiz-room-setup__count-btn {
   min-width: 42px;
   min-height: 41px;
-  border: 1px solid #eed4ff6e !important;
+  border: 2px solid rgba(255, 236, 255, 0.72) !important;
   border-radius: 13px !important;
-  background: #d7b3f012 !important;
+  background: rgba(215, 179, 240, 0.12) !important;
   color: #fff8ff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 255, 0.12);
+}
+
+.app.app--web .gnh-inside .game-page__chip.is-active,
+.app.app--web .gnh-inside .alias-page__chip.is-active,
+.app.app--web .gnh-inside .mafia-page__chip.is-active,
+.app.app--web .gnh-inside .quiz-room-setup__count-btn.is-active {
+  border-color: rgba(255, 244, 255, 0.95) !important;
+  background: linear-gradient(115deg, rgba(220, 168, 239, 0.42), rgba(215, 180, 238, 0.28)) !important;
+  box-shadow: 0 0 0 1px rgba(255, 248, 255, 0.35), 0 0 16px rgba(225, 176, 245, 0.28);
+  color: #ffffff !important;
 }
 
 .app.app--web .gnh-inside .alias-home__actions,

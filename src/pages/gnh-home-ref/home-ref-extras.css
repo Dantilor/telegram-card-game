@@ -280,7 +280,7 @@
   height: 100%;
   padding: 0;
   background: none;
-  color: #60517b;
+  color: #cbb6e0;
   font-size: 11px;
   line-height: 1.2;
   font-weight: 400;
@@ -293,13 +293,15 @@
   stroke-width: 1.7;
 }
 
-.gnh-home-ref .mobile-nav a.active {
-  color: #9349f3;
+.gnh-home-ref .mobile-nav a.active,
+.gnh-home-ref .mobile-nav button.active {
+  color: #e8c6ff;
 }
 
-.gnh-home-ref .mobile-nav a.active[data-nav='home'] svg {
-  fill: #9349f3;
-  color: #9349f3;
+.gnh-home-ref .mobile-nav a.active[data-nav='home'] svg,
+.gnh-home-ref .mobile-nav button.active[data-nav='home'] svg {
+  fill: #e8c6ff;
+  color: #e8c6ff;
 }
 
 .gnh-home-ref .gnh-menu {

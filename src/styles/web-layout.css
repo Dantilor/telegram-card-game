@@ -2325,20 +2325,31 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero:not(.gnh-asset-hero
   mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgba(0, 0, 0, 0.42) 82%, transparent 100%) !important;
 }
 
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav {
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav {
   border-color: #3a2a5288 !important;
   background: linear-gradient(145deg, #1a1228f2, #241832f0 55%, #1c142af5) !important;
   box-shadow: inset 0 1px 0 #ffffff14, 0 10px 28px #0a0618a6 !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav a,
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button {
-  color: #cbb6e0;
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav a,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav button {
+  color: #cbb6e0 !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav a.active,
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button.active {
-  color: #e8c6ff;
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button.active,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav a.active,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav button.active {
+  color: #e8c6ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav a.active[data-nav='home'] svg,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav button.active[data-nav='home'] svg {
+  fill: #e8c6ff !important;
+  color: #e8c6ff !important;
 }
 
 /* Kill residual rectangular chrome on every back/nav pill. */

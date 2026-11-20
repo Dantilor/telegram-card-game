@@ -69,6 +69,96 @@
   color: rgba(255, 248, 255, 0.82);
 }
 
+.web-welcome__footnotes {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(255, 236, 255, 0.55);
+}
+
+.web-welcome__footnote {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  color: rgba(236, 214, 255, 0.92);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(236, 214, 255, 0.35);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.web-welcome__footnote:hover {
+  color: #fff;
+  text-decoration-color: rgba(255, 255, 255, 0.55);
+}
+
+.web-welcome__feedback {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  align-items: center;
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  color: rgba(255, 210, 210, 0.9);
+}
+
+.web-welcome__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin: 0.15rem 0 0.15rem;
+  padding: 0.72rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(214, 183, 238, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 248, 255, 0.88);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.web-welcome__check input[type='checkbox'] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin-top: 1px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(227, 184, 255, 0.55);
+  background: rgba(20, 12, 32, 0.85);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.web-welcome__check input[type='checkbox']:checked {
+  background: linear-gradient(135deg, #e8b2f9, #b88ce9);
+  border-color: #f0d0ff;
+}
+
+.web-welcome__check input[type='checkbox']:checked::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #2a1538;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.web-welcome__check input[type='checkbox']:focus-visible {
+  outline: 2px solid #e9c2ff;
+  outline-offset: 2px;
+}
+
+.web-welcome__error {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #ffc9c9;
+}
+
 .web-welcome__actions {
   display: grid;
   gap: 0.45rem;
@@ -89,6 +179,12 @@
   border: 0;
   background: linear-gradient(180deg, #f5d78c, #e2b45a);
   color: #2a1a08;
+}
+
+.web-welcome__primary:disabled,
+.web-welcome__ghost:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .web-welcome__ghost {

@@ -32,14 +32,13 @@ export default function WebEmailConfirm() {
       await webSession.refreshSession()
       const premium = await refreshPremium()
       setDone(true)
-      if (premium?.isPremium) {
-        setStatus('Готово. Premium и профиль восстановлены.')
-      } else if (completed.purpose === 'recover') {
-        setStatus('Готово. Вход выполнен — аккаунт восстановлен.')
-      } else {
-        setStatus('Готово. Почта подтверждена, вход выполнен.')
-      }
-      navigate('/profile', { replace: true })
+      const toast = premium?.isPremium
+        ? 'Готово. Premium и профиль восстановлены.'
+        : completed.purpose === 'recover'
+          ? 'Готово. Вход выполнен — аккаунт восстановлен.'
+          : 'Готово. Почта подтверждена, вход выполнен.'
+      setStatus(toast)
+      navigate('/profile', { replace: true, state: { emailAuthToast: toast } })
     } catch {
       setStatus('Ссылка недействительна или уже использована. Запросите новую на странице входа.')
     } finally {

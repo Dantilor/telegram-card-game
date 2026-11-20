@@ -229,6 +229,11 @@ export async function afterWebPurchasePaid(input: {
     return { pendingEmail: null, linkSent: false }
   }
 
+  // Never auto-bind a receipt email over a different already-verified login email.
+  if (row.email_verified_at && row.email_normalized && row.email_normalized !== receipt) {
+    return { pendingEmail: null, linkSent: false }
+  }
+
   const taken = await db(input.db).query<{ id: string }>(
     `SELECT id FROM web_accounts
       WHERE email_normalized = $1
@@ -242,15 +247,13 @@ export async function afterWebPurchasePaid(input: {
     return { pendingEmail: null, linkSent: false }
   }
 
-  if (!row.email_verified_at) {
-    await db(input.db).query(
-      `UPDATE web_accounts
-          SET pending_email_normalized = $2,
-              last_seen_at = now()
-        WHERE id = $1::uuid AND revoked_at IS NULL`,
-      [input.webAccountId, receipt]
-    )
-  }
+  await db(input.db).query(
+    `UPDATE web_accounts
+        SET pending_email_normalized = $2,
+            last_seen_at = now()
+      WHERE id = $1::uuid AND revoked_at IS NULL`,
+    [input.webAccountId, receipt]
+  )
 
   try {
     await insertAndSendMagicLink({
@@ -471,6 +474,34 @@ export async function completeEmailMagicLink(input: {
     err.status = 409
     err.code = 'email_taken'
     throw err
+  }
+
+  // Defense: do not replace a verified login email unless the account explicitly
+  // started a rebind (pending_email_normalized matches this token).
+  if (row.purpose === 'bind') {
+    const current = await db(input.db).query<{
+      email_normalized: string | null
+      email_verified_at: Date | null
+      pending_email_normalized: string | null
+    }>(
+      `SELECT email_normalized, email_verified_at, pending_email_normalized
+         FROM web_accounts
+        WHERE id = $1::uuid AND revoked_at IS NULL
+        LIMIT 1`,
+      [row.web_account_id]
+    )
+    const cur = current.rows[0]
+    if (
+      cur?.email_verified_at &&
+      cur.email_normalized &&
+      cur.email_normalized !== row.email_normalized &&
+      cur.pending_email_normalized !== row.email_normalized
+    ) {
+      const err = new Error('Verified email already set') as Error & { status?: number; code?: string }
+      err.status = 409
+      err.code = 'email_already_verified'
+      throw err
+    }
   }
 
   const claimed = await db(input.db).query<{ id: number }>(

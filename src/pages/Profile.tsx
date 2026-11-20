@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
@@ -60,6 +60,7 @@ function Profile() {
   const tgUser = getTgUser()
   const webSession = useWebSession()
   const navigate = useNavigate()
+  const location = useLocation()
   const web = isWebShell()
   const [localDisplayName, setLocalDisplayName] = useState(() => readWebDisplayName())
   const [nameDraft, setNameDraft] = useState(() => readWebDisplayName())
@@ -294,6 +295,13 @@ function Profile() {
       cancelled = true
     }
   }, [web])
+
+  useEffect(() => {
+    const toast = (location.state as { emailAuthToast?: string } | null)?.emailAuthToast
+    if (!toast) return
+    setEmailStatus(toast)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.state, location.pathname, navigate])
 
   useEffect(() => {
     return () => {

@@ -15,6 +15,7 @@ import {
 } from './webEmailOtp.js'
 import { getWebAccountContact, getWebAccountPremium, grantWebEntitlement } from './webAccounts.js'
 import { resetMailTransportCache } from '../services/mailTransport.js'
+import { sha256Hex } from './cryptoTokens.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const serverRoot = path.resolve(here, '../..')
@@ -259,6 +260,59 @@ test('paid receipt email enables recover before first confirm; webhook does not 
       [webAccountId]
     )
     assert.equal(entsAfter.rows[0]!.c, '1', 'old purchase kept, not duplicated')
+  } finally {
+    await harness.close()
+  }
+})
+
+test('paid receipt does not overwrite a different verified login email', async () => {
+  const harness = await createHarness()
+  try {
+    const account = await harness.query.query<{ id: string }>(
+      `INSERT INTO web_accounts DEFAULT VALUES RETURNING id`
+    )
+    const webAccountId = String(account.rows[0]!.id)
+    await harness.query.query(
+      `UPDATE web_accounts
+          SET email_normalized = 'owner@example.com',
+              email_verified_at = now()
+        WHERE id = $1::uuid`,
+      [webAccountId]
+    )
+    const paymentId = 'pay_receipt_other'
+    await harness.query.query(
+      `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status, premium_granted_at, receipt_email_normalized)
+       VALUES ($1, $2::uuid, 'premium_1m', 259, 'succeeded', now(), 'receipt@example.com')`,
+      [paymentId, webAccountId]
+    )
+
+    const after = await afterWebPurchasePaid({
+      webAccountId,
+      paymentId,
+      db: harness.query,
+    })
+    assert.equal(after.linkSent, false)
+    assert.equal(after.pendingEmail, null)
+
+    const contact = await getWebAccountContact(webAccountId, harness.query)
+    assert.equal(contact.email, 'owner@example.com')
+    assert.equal(contact.emailVerified, true)
+
+    // Stale bind OTP without pending rebind must not replace verified login email.
+    const staleToken = 'stale_bind_token_xxxxxxxxxxxxxxxx'
+    await harness.query.query(
+      `INSERT INTO web_email_otps (web_account_id, email_normalized, code_hash, purpose, expires_at)
+       VALUES ($1::uuid, 'receipt@example.com', $2, 'bind', now() + interval '30 minutes')`,
+      [webAccountId, sha256Hex(staleToken)]
+    )
+    await assert.rejects(
+      () => completeEmailMagicLink({ token: staleToken, db: harness.query }),
+      (err: Error & { code?: string }) => err.code === 'email_already_verified'
+    )
+
+    const still = await getWebAccountContact(webAccountId, harness.query)
+    assert.equal(still.email, 'owner@example.com')
+    assert.equal(still.emailVerified, true)
   } finally {
     await harness.close()
   }

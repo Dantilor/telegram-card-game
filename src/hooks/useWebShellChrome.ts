@@ -7,8 +7,8 @@ const HIDE_CLASS = 'gnh-web-nav--hidden'
 const IMMERSIVE_CLASS = 'gnh-web-nav--immersive'
 
 /**
- * WEB-only: scroll-to-top on route change, hide bottom nav while scrolling down
- * and on immersive game paths. Does not run in Telegram Mini App.
+ * WEB-only: scroll-to-top on route change, hide top header + bottom nav while
+ * scrolling down and on immersive game paths. Does not run in Telegram Mini App.
  */
 export function useWebShellChrome(): void {
   const location = useLocation()

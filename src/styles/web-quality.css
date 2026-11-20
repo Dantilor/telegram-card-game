@@ -81,6 +81,18 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .app-header {
     rgba(120, 98, 142, 0.94) 55%,
     rgba(108, 88, 132, 0.96)
   ) !important;
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+  will-change: transform;
+}
+
+/* Same scroll-away chrome as home: sticky top bar hides with bottom nav */
+html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-inside .app-header,
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .app-header {
+  transform: translate3d(0, calc(-100% - 12px), 0);
+  opacity: 0;
+  pointer-events: none;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header {

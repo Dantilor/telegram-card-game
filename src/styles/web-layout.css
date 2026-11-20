@@ -1697,7 +1697,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .comics-grid .comics-grid__media .smart-image__img,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .comics-grid .games-grid__card-image-wrap .smart-image__img {
   object-fit: cover !important;
-  object-position: center top !important;
+  object-position: center center !important;
   width: 100% !important;
   height: 100% !important;
   transform: none !important;
@@ -2180,7 +2180,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-page .comics-grid__
   flex: 0 0 auto !important;
   width: 100% !important;
   height: auto !important;
-  aspect-ratio: 4 / 3 !important;
+  aspect-ratio: 3 / 4 !important;
   background: #1a1228 !important;
   border-radius: inherit;
   border-bottom-left-radius: 0 !important;
@@ -2206,6 +2206,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .smart-image__
   filter: none !important;
 }
 
+/* Cover art already has title/genres — keep only open/Premium CTA under the image. */
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__body {
   position: relative !important;
   inset: auto !important;
@@ -2213,12 +2214,12 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important;
-  align-items: flex-start;
-  gap: 6px !important;
+  align-items: stretch !important;
+  gap: 0 !important;
   min-height: 0 !important;
   height: auto !important;
   margin: 0 !important;
-  padding: 12px 12px 14px !important;
+  padding: 10px 10px 12px !important;
   background: linear-gradient(180deg, #2a1c3c 0%, #221632 100%) !important;
 }
 
@@ -2226,67 +2227,36 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
   display: none !important;
 }
 
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 2px !important;
-}
-
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__kind {
-  display: inline-flex !important;
-  margin: 0;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(244, 220, 255, 0.35);
-  background: rgba(255, 244, 255, 0.1);
-  color: #f6eaff;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-}
-
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-card-badge {
-  position: static !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  height: 20px !important;
-  padding: 0 9px !important;
-  font-size: 10px !important;
-  letter-spacing: 0.04em;
-}
-
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__meta-row,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__kind,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-card-badge,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-grid__title,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle,
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__pages,
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-grid__title {
-  margin: 0 !important;
-  background: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  overflow: visible !important;
-  -webkit-line-clamp: unset !important;
-  white-space: normal !important;
-}
-
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-grid__title {
-  color: #fff8ff !important;
-  font-size: 1.05rem !important;
-  line-height: 1.25 !important;
-}
-
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle {
-  color: #f3e6fb !important;
-  font-weight: 600;
-}
-
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__pages {
-  color: rgba(255, 248, 255, 0.78) !important;
+  display: none !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__cta {
-  margin-top: 8px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch !important;
+  width: 100% !important;
+  margin: 0 !important;
+  min-height: 40px;
+  padding: 0.55rem 0.85rem !important;
+  border-radius: 999px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  color: #fff8ff !important;
+  background: linear-gradient(105deg, #d8a6f0 0%, #b07de8 48%, #8a6ad8 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 14px rgba(140, 80, 200, 0.28) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__cta--premium {
+  background: linear-gradient(105deg, #e2a85a 0%, #c4843a 55%, #a86b2e 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 236, 210, 0.35), 0 6px 14px rgba(120, 70, 20, 0.28) !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__card::before,

@@ -265,7 +265,7 @@ html:has(.gnh-inside .rt-play)::before {
   flex: 0 0 auto;
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   border-radius: inherit;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
@@ -294,7 +294,7 @@ html:has(.gnh-inside .rt-play)::before {
 
 .app.app--web .gnh-inside .comics-grid .comics-grid__media .smart-image__img {
   object-fit: cover !important;
-  object-position: center top !important;
+  object-position: center center !important;
   width: 100% !important;
   height: 100% !important;
 }
@@ -313,10 +313,10 @@ html:has(.gnh-inside .rt-play)::before {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 0;
   border-top: 0;
   margin: 0;
-  padding: 12px 12px 14px;
+  padding: 10px;
   background: linear-gradient(180deg, #2a1c3c 0%, #221632 100%) !important;
 }
 
@@ -332,9 +332,7 @@ html:has(.gnh-inside .rt-play)::before {
   display: none;
 }
 
-.app.app--web .gnh-inside .games-grid:not(.comics-grid) .games-grid__desc,
-.app.app--web .gnh-inside .comics-grid .comics-grid__subtitle,
-.app.app--web .gnh-inside .comics-grid .comics-grid__pages {
+.app.app--web .gnh-inside .games-grid:not(.comics-grid) .games-grid__desc {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -342,24 +340,25 @@ html:has(.gnh-inside .rt-play)::before {
 }
 
 .app.app--web .gnh-inside .comics-grid .comics-grid__body::before,
-.app.app--web .gnh-inside .comics-grid .comics-grid__kind {
-  display: none;
-}
-
-.app.app--web .gnh-inside .comics-grid .comics-grid__subtitle {
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: 0;
-  box-shadow: none;
-  color: #f5eafa;
+.app.app--web .gnh-inside .comics-grid .comics-grid__meta-row,
+.app.app--web .gnh-inside .comics-grid .comics-grid__kind,
+.app.app--web .gnh-inside .comics-grid .games-card-badge,
+.app.app--web .gnh-inside .comics-grid .games-grid__title,
+.app.app--web .gnh-inside .comics-grid .comics-grid__subtitle,
+.app.app--web .gnh-inside .comics-grid .comics-grid__pages {
+  display: none !important;
 }
 
 .app.app--web .gnh-inside .comics-grid .comics-grid__cta {
-  align-self: flex-start;
-  width: auto;
-  margin-top: 8px;
-  padding: 4px 10px;
+  align-self: stretch;
+  width: 100%;
+  margin: 0;
+  min-height: 40px;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .app.app--web .gnh-inside .hero-game-card.games-grid__card--image {

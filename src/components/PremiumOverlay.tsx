@@ -722,11 +722,11 @@ export default function PremiumOverlay({
               checked={bindAccountEmail}
               onChange={(event) => setBindAccountEmail(event.target.checked)}
             />
-            <span>Сохранить email для восстановления Premium</span>
+            <span>Сохранить email для аккаунта и покупок</span>
           </label>
           <p className="premium-offer__hint">
-            Если смените телефон или потеряете доступ к приложению, сможете восстановить покупки по
-            этой почте. Ссылку для входа отправим только по вашему запросу.
+            Ваши покупки сохранятся в аккаунте. Этот email поможет найти их при восстановлении
+            доступа.
           </p>
         </>
       ) : null}

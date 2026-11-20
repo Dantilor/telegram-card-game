@@ -915,6 +915,31 @@ html:has(.profile-page):not([data-gnh-shell="web"]) #root {
   box-sizing: border-box;
 }
 
+.profile-pass__login-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.18), rgba(250, 204, 21, 0.08));
+  color: #fde68a;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.profile-pass__login-cta:hover {
+  color: #fff7c2;
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.28), rgba(250, 204, 21, 0.12));
+}
+
 .profile-pass__email-form {
   display: flex;
   flex-direction: column;

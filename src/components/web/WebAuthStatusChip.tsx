@@ -14,13 +14,12 @@ function maskEmail(email: string): string {
 }
 
 function labelFor(status: WebAuthUiStatus, email: string | null | undefined, wide: boolean): string {
-  if (status === 'verified') {
-    if (wide && email) return maskEmail(email)
+  if (status === 'verified' || status === 'telegram') {
+    if (wide && email && status === 'verified') return maskEmail(email)
     return 'Авторизован'
   }
-  if (status === 'pending') return 'Подтвердите почту'
-  if (status === 'telegram') return 'Авторизован'
-  return 'Не авторизован'
+  if (status === 'account' || status === 'pending') return 'Аккаунт создан'
+  return 'Гость'
 }
 
 type Props = {
@@ -46,16 +45,12 @@ export default function WebAuthStatusChip({ className = '', compact = false }: P
   const tone =
     authStatus === 'verified' || authStatus === 'telegram'
       ? 'verified'
-      : authStatus === 'pending'
+      : authStatus === 'account' || authStatus === 'pending'
         ? 'pending'
         : 'anon'
 
   const onClick = () => {
     haptic('light')
-    if (authStatus === 'anonymous') {
-      navigate('/login')
-      return
-    }
     navigate('/profile')
   }
 
@@ -70,7 +65,7 @@ export default function WebAuthStatusChip({ className = '', compact = false }: P
       <span className="web-auth-chip__icon" aria-hidden>
         {authStatus === 'verified' || authStatus === 'telegram' ? (
           <Check size={14} strokeWidth={2.4} />
-        ) : authStatus === 'pending' ? (
+        ) : authStatus === 'account' || authStatus === 'pending' ? (
           <Mail size={14} strokeWidth={2.2} />
         ) : (
           <UserRound size={14} strokeWidth={2.2} />

@@ -12,7 +12,8 @@ import type { WebSessionMe } from '../lib/webAuth'
 import { ensureWebSession, fetchWebSessionMe, logoutWebSession } from '../lib/webAuth'
 import { applyIfCurrent, createSessionApplyGate } from './webSessionStale'
 
-export type WebAuthUiStatus = 'anonymous' | 'pending' | 'verified' | 'telegram'
+/** anonymous=Гость, account=email saved (not ownership-proof), verified/telegram=Авторизован */
+export type WebAuthUiStatus = 'anonymous' | 'account' | 'pending' | 'verified' | 'telegram'
 
 type WebSessionContextValue = {
   session: WebSessionMe | null
@@ -34,8 +35,9 @@ const EMAIL_POLL_MAX_MS = 3 * 60_000
 function deriveAuthStatus(session: WebSessionMe | null): WebAuthUiStatus {
   if (!session) return 'anonymous'
   if (session.emailVerified) return 'verified'
-  if (session.emailPending || (session.email && !session.emailVerified)) return 'pending'
   if (session.telegramId) return 'telegram'
+  // Saved contact email on this WEB account — not proof of mailbox ownership.
+  if (session.emailPending || (session.email && !session.emailVerified)) return 'account'
   return 'anonymous'
 }
 
@@ -160,9 +162,6 @@ export function WebSessionProvider({
         if (!cancelled) {
           applySession(next)
           setReady(true)
-          if (next && (next.emailPending || (next.email && !next.emailVerified))) {
-            startEmailPendingWatch()
-          }
         }
       } catch {
         if (!cancelled) {
@@ -174,17 +173,13 @@ export function WebSessionProvider({
     return () => {
       cancelled = true
     }
-  }, [applySession, startEmailPendingWatch])
+  }, [applySession])
 
-  // Cross-context sync: Safari confirm → return to PWA / other tab.
+  // Cross-context sync when returning to the app (PWA / other tab / device).
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return
-      void refreshSession().then((next) => {
-        if (next && !next.emailVerified && (next.emailPending || next.email)) {
-          startEmailPendingWatch()
-        }
-      })
+      void refreshSession()
     }
     const onPageShow = () => {
       void refreshSession()
@@ -200,7 +195,7 @@ export function WebSessionProvider({
       window.removeEventListener('pageshow', onPageShow)
       window.removeEventListener('focus', onFocus)
     }
-  }, [refreshSession, startEmailPendingWatch])
+  }, [refreshSession])
 
   useEffect(() => () => stopEmailPendingWatch(), [stopEmailPendingWatch])
 

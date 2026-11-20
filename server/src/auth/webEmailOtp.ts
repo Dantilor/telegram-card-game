@@ -73,17 +73,32 @@ function mailShell(title: string, bodyHtml: string, textBody: string): {
 }
 
 /** Informational only — does not verify ownership and has no login CTA. */
-function buildEmailSavedInfoMail(): { subject: string; text: string; html: string } {
-  return mailShell(
-    'Email сохранён',
-    `<p style="margin:0 0 14px;font-size:16px;line-height:1.55;color:#44403c;">Мы сохранили ваш адрес в аккаунте GameNight Host. Это ещё не подтверждение почты.</p>
-     <p style="margin:0;font-size:15px;line-height:1.55;color:#44403c;">Можно продолжать играть на этом устройстве. Чтобы войти на другом телефоне или в браузере, откройте страницу входа и запросите одноразовую ссылку сами.</p>`,
-    [
-      'Мы сохранили ваш адрес в аккаунте GameNight Host.',
-      'Это ещё не подтверждение почты — можно продолжать играть на этом устройстве.',
-      'Чтобы войти на другом устройстве, откройте страницу входа и запросите одноразовую ссылку сами.',
-    ].join('\n')
-  )
+function buildWelcomeInfoMail(): { subject: string; text: string; html: string } {
+  const subject = 'Добро пожаловать в GameNight Host!'
+  const text = [
+    'Ваш email добавлен в GameNight Host. Можно продолжать играть и пользоваться приложением.',
+    '',
+    'Если вы не указывали этот адрес, просто проигнорируйте сообщение.',
+  ].join('\n')
+  const html = `<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#ece7df;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#1c1917;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ece7df;padding:36px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" style="max-width:520px;background:#faf8f4;border:1px solid #d6d0c6;border-radius:12px;padding:28px 26px;">
+        <tr><td>
+          <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#6b645c;">GameNight Host</p>
+          <h1 style="margin:0 0 12px;font-size:24px;font-weight:600;line-height:1.25;color:#1c1917;">Добро пожаловать!</h1>
+          <p style="margin:0 0 14px;font-size:16px;line-height:1.55;color:#44403c;">Ваш email добавлен в GameNight Host. Можно продолжать играть и пользоваться приложением.</p>
+          <p style="margin:0;font-size:15px;line-height:1.55;color:#44403c;">Если вы не указывали этот адрес, просто проигнорируйте сообщение.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+  return { subject, text, html }
 }
 
 function buildMagicMail(input: {
@@ -280,13 +295,13 @@ export async function afterWebPurchasePaid(input: {
     [input.webAccountId, receipt]
   )
 
-  // No post-purchase SMTP from us — user requests a magic link later via /login.
+  // No post-purchase SMTP — contact email is saved without verification or magic link.
   return { pendingEmail: receipt, linkSent: false }
 }
 
 /**
- * Save email on the current WEB account as pending (not verified).
- * Sends an informational note only — no magic-link confirmation after add.
+ * Save contact email on the current WEB account without verifying ownership.
+ * No magic link. Optional one-shot welcome info mail (rate-limited).
  * Same webAccountId is kept; games/checkout stay unblocked.
  */
 export async function startEmailBind(input: {
@@ -294,6 +309,8 @@ export async function startEmailBind(input: {
   email: string
   ip?: string | null
   db?: Queryable
+  /** When false, skip welcome mail (e.g. checkout opt-in already paid). Default true. */
+  sendWelcomeMail?: boolean
 }): Promise<{ expiresAt: Date; echoToken?: string; infoMailSent: boolean }> {
   const emailNormalized = normalizeEmail(input.email)
   if (!emailNormalized) {
@@ -309,37 +326,85 @@ export async function startEmailBind(input: {
     [emailNormalized, input.webAccountId]
   )
   if (taken.rows[0]) {
+    // Anti-enumeration: same generic conflict — do not reveal who owns the address.
     const err = new Error('Email already linked') as Error & { status?: number; code?: string }
     err.status = 409
     err.code = 'email_taken'
     throw err
   }
 
+  const before = await db(input.db).query<{
+    pending_email_normalized: string | null
+    email_normalized: string | null
+    email_verified_at: Date | null
+  }>(
+    `SELECT pending_email_normalized, email_normalized, email_verified_at
+       FROM web_accounts
+      WHERE id = $1::uuid AND revoked_at IS NULL
+      LIMIT 1`,
+    [input.webAccountId]
+  )
+  const prev = before.rows[0]
+  // Never replace a different already-verified login email with an unverified contact.
+  if (
+    prev?.email_verified_at &&
+    prev.email_normalized &&
+    prev.email_normalized !== emailNormalized
+  ) {
+    const err = new Error('Verified email already set') as Error & { status?: number; code?: string }
+    err.status = 409
+    err.code = 'email_already_verified'
+    throw err
+  }
+
+  const alreadySame =
+    (Boolean(prev?.email_verified_at) && prev?.email_normalized === emailNormalized) ||
+    prev?.pending_email_normalized === emailNormalized
+
   await db(input.db).query(
     `UPDATE web_accounts
         SET pending_email_normalized = $2,
             last_seen_at = now()
       WHERE id = $1::uuid AND revoked_at IS NULL
-        AND (email_verified_at IS NULL OR email_normalized IS DISTINCT FROM $2)`,
+        AND (email_verified_at IS NULL OR email_normalized IS NOT DISTINCT FROM $2)`,
     [input.webAccountId, emailNormalized]
   )
 
   let infoMailSent = false
-  try {
-    const mail = buildEmailSavedInfoMail()
-    await getMailTransport().send({
-      to: emailNormalized,
-      subject: mail.subject,
-      text: mail.text,
-      html: mail.html,
-    })
-    infoMailSent = true
-  } catch (e) {
-    const err = e as Error
-    console.error('[webEmail] startEmailBind info mail failed', err.message)
+  const wantMail = input.sendWelcomeMail !== false
+  if (wantMail && !alreadySame) {
+    const ipKey = (input.ip || 'unknown').slice(0, 64)
+    for (const key of [
+      `email_welcome_ip:${ipKey}`,
+      `email_welcome_addr:${emailNormalized}`,
+      `email_welcome_acct:${input.webAccountId}`,
+    ]) {
+      const limited = await consumeSharedRateLimit(
+        key,
+        key.startsWith('email_welcome_ip:') ? 8 : 2,
+        60 * 60_000,
+        input.db
+      )
+      if (!limited.ok) {
+        return { expiresAt: new Date(Date.now() + LINK_TTL_MS), infoMailSent: false }
+      }
+    }
+    try {
+      const mail = buildWelcomeInfoMail()
+      await getMailTransport().send({
+        to: emailNormalized,
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html,
+      })
+      infoMailSent = true
+    } catch (e) {
+      const err = e as Error
+      console.error('[webEmail] startEmailBind welcome mail failed', err.message)
+      // Email row stays saved even if SMTP fails.
+    }
   }
 
-  // No magic link here — user requests login link explicitly via recover/start.
   return { expiresAt: new Date(Date.now() + LINK_TTL_MS), infoMailSent }
 }
 

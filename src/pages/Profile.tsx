@@ -334,16 +334,12 @@ function Profile() {
 
   const savedEmail = webSession.session?.email?.trim() || ''
   const emailVerified = Boolean(webSession.session?.emailVerified)
-  const emailPending = Boolean(webSession.session?.emailPending)
 
   useEffect(() => {
     if (!web) return
     let cancelled = false
-    void webSession.refreshSession().then((next) => {
+    void webSession.refreshSession().then(() => {
       if (cancelled) return
-      if (next && !next.emailVerified && (next.emailPending || next.email)) {
-        webSession.startEmailPendingWatch()
-      }
     })
     return () => {
       cancelled = true
@@ -361,15 +357,13 @@ function Profile() {
     setEmailStatus(null)
     try {
       await startEmailBind(target)
-      setEmailStatus('Email добавлен. Можно продолжать играть')
       await webSession.refreshSession()
-      webSession.startEmailPendingWatch()
+      setEmailStatus('Аккаунт создан')
     } catch (e) {
       const status = (e as Error & { status?: number }).status
-      if (status === 409) {
-        setEmailStatus(
-          'Этот email уже используется. Войдите в существующий аккаунт на странице входа.'
-        )
+      const code = (e as Error & { code?: string }).code
+      if (status === 409 || code === 'email_taken' || code === 'email_already_verified') {
+        setEmailStatus('Не удалось сохранить этот email. Попробуйте другой адрес или войдите на странице входа.')
       } else if (status === 429) {
         setEmailStatus('Слишком много попыток. Подождите минуту и попробуйте снова.')
       } else {
@@ -379,28 +373,6 @@ function Profile() {
       setEmailBusy(false)
     }
   }, [web, savedEmail, emailDraft, webSession])
-
-  const handleCheckEmailConfirm = useCallback(async () => {
-    if (!web) return
-    haptic('light')
-    setEmailBusy(true)
-    try {
-      const next = await webSession.refreshSession()
-      if (next?.emailVerified) {
-        setEmailStatus('Авторизован — почта подтверждена')
-        webSession.stopEmailPendingWatch()
-      } else {
-        setEmailStatus(
-          'Аккаунт создан. Чтобы подтвердить почту на другом устройстве, запросите ссылку на странице входа.'
-        )
-        webSession.startEmailPendingWatch()
-      }
-    } catch {
-      setEmailStatus('Не удалось проверить статус. Попробуйте ещё раз.')
-    } finally {
-      setEmailBusy(false)
-    }
-  }, [web, webSession])
 
   const handleSupport = useCallback(() => {
     haptic('light')
@@ -493,7 +465,7 @@ function Profile() {
               onClick={() => void handleLinkTelegram()}
               disabled={restoreLoading}
             >
-              Связать с Telegram
+              Восстановить через Telegram
             </button>
           </>
         ) : null}
@@ -631,7 +603,7 @@ function Profile() {
                 >
                   {tgRestore?.phase === 'waiting'
                     ? 'Ожидаем подтверждение…'
-                    : 'Связать с Telegram (необязательно)'}
+                    : 'Восстановить через Telegram'}
                 </button>
               )}
               {web && tgLinked && !tgRestore && (
@@ -676,7 +648,7 @@ function Profile() {
               <p className="profile-pass__desc">
                 Все игры, колоды, избранное и 18+ режимы — без автосписаний.
                 {web
-                  ? ' Покупка привязана к аккаунту устройства. Подтвердите email, чтобы вернуть Premium на другом устройстве. Telegram — по желанию.'
+                  ? ' Покупка привязана к аккаунту на этом устройстве. Сохраните email в профиле, чтобы не потерять доступ.'
                   : ''}
               </p>
               <div className="profile-pass__perks">
@@ -713,7 +685,7 @@ function Profile() {
                 >
                   {tgRestore?.phase === 'waiting'
                     ? 'Ожидаем подтверждение…'
-                    : 'Связать с Telegram (необязательно)'}
+                    : 'Восстановить через Telegram'}
                 </button>
               )}
               {web && tgLinked && !tgRestore && (
@@ -755,34 +727,13 @@ function Profile() {
                 <p className="profile-pass__desc">
                   {savedEmail}
                   <br />
-                  Статус:{' '}
-                  {emailVerified
-                    ? 'Авторизован'
-                    : emailPending
-                      ? 'Аккаунт создан'
-                      : 'Аккаунт создан'}
+                  Статус: {emailVerified ? 'Авторизован' : 'Аккаунт создан'}
                 </p>
-                {!emailVerified && (
-                  <div className="profile-pass__email-actions">
-                    <button
-                      type="button"
-                      className="profile-pass__restore"
-                      onClick={() => void handleCheckEmailConfirm()}
-                      disabled={emailBusy}
-                    >
-                      {emailBusy ? 'Проверка…' : 'Обновить статус'}
-                    </button>
-                    <Link to="/login" className="profile-pass__restore" onClick={() => haptic('light')}>
-                      Войти на другом устройстве
-                    </Link>
-                  </div>
-                )}
               </>
             ) : (
               <>
                 <p className="profile-pass__desc">
-                  Статус: Гость. Добавьте email, чтобы сохранить аккаунт. Игры и Premium можно
-                  продолжать без подтверждения письма.
+                  Статус: Гость. Введите email и нажмите «Сохранить» — аккаунт сразу готов к работе.
                 </p>
                 <label className="profile-pass__email-label">
                   Ваш email
@@ -797,19 +748,23 @@ function Profile() {
                 </label>
                 <button
                   type="button"
-                  className="profile-pass__restore"
+                  className="profile-pass__cta"
                   onClick={() => void handleEmailConfirm()}
                   disabled={emailBusy || !emailDraft.trim()}
                 >
-                  {emailBusy ? 'Сохранение…' : 'Добавить email'}
+                  <span className="profile-pass__cta-shine" aria-hidden />
+                  {emailBusy ? 'Сохранение…' : 'Сохранить'}
                 </button>
               </>
             )}
             {emailStatus && <span className="profile-pass__toast">{emailStatus}</span>}
-            <p className="profile-pass__desc">
-              Уже есть аккаунт?{' '}
-              <Link to="/login">Войти по email</Link>
-            </p>
+            <Link
+              to="/login"
+              className="profile-pass__login-cta"
+              onClick={() => haptic('light')}
+            >
+              Уже есть аккаунт? Войти по email
+            </Link>
           </section>
         )}
 

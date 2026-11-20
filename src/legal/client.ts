@@ -243,12 +243,14 @@ export function buildOfferBody(
 export function buildPaymentBody(
   planId: string,
   evidenceId: number,
-  receipt: { email: string }
+  receipt: { email: string },
+  bindAccountEmail = false
 ): Record<string, unknown> {
   return {
     planId,
     offerAcceptanceId: evidenceId,
     email: receipt.email,
+    bindAccountEmail: Boolean(bindAccountEmail),
   }
 }
 
@@ -256,6 +258,7 @@ export async function submitNewPremiumOrder(input: {
   document: PublicDocument
   plan: { id: string; title: string; priceRub: number; durationDays: number }
   receiptRaw: string
+  bindAccountEmail?: boolean
   post: (path: string, body: Record<string, unknown>) => Promise<unknown>
 }): Promise<{ confirmationUrl: string }> {
   const receipt = classifyReceipt(input.receiptRaw)
@@ -284,7 +287,7 @@ export async function submitNewPremiumOrder(input: {
   try {
     payment = (await input.post(
       '/api/payments/yookassa/create',
-      buildPaymentBody(input.plan.id, evidenceId, receipt)
+      buildPaymentBody(input.plan.id, evidenceId, receipt, Boolean(input.bindAccountEmail))
     )) as { confirmationUrl?: unknown }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Платёж не создан.'

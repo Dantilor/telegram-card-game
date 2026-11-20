@@ -86,6 +86,7 @@ test('receipt email saved on paid purchase; pending until magic confirm; no auto
     const after = await afterWebPurchasePaid({
       webAccountId,
       paymentId,
+      bindAccountEmail: true,
       db: harness.query,
     })
     assert.equal(after.pendingEmail, 'buyer@example.com')
@@ -232,8 +233,8 @@ test('paid receipt email enables recover before first confirm; webhook does not 
       db: harness.query,
     })
 
-    await afterWebPurchasePaid({ webAccountId, paymentId, db: harness.query })
-    await afterWebPurchasePaid({ webAccountId, paymentId, db: harness.query })
+    await afterWebPurchasePaid({ webAccountId, paymentId, bindAccountEmail: true, db: harness.query })
+    await afterWebPurchasePaid({ webAccountId, paymentId, bindAccountEmail: true, db: harness.query })
 
     const ents = await harness.query.query<{ c: string }>(
       `SELECT count(*)::text AS c FROM web_entitlements WHERE web_account_id = $1::uuid`,
@@ -289,10 +290,20 @@ test('paid receipt does not overwrite a different verified login email', async (
     const after = await afterWebPurchasePaid({
       webAccountId,
       paymentId,
+      bindAccountEmail: true,
       db: harness.query,
     })
     assert.equal(after.linkSent, false)
     assert.equal(after.pendingEmail, null)
+
+    const skipped = await afterWebPurchasePaid({
+      webAccountId,
+      paymentId,
+      bindAccountEmail: false,
+      db: harness.query,
+    })
+    assert.equal(skipped.linkSent, false)
+    assert.equal(skipped.pendingEmail, null)
 
     const contact = await getWebAccountContact(webAccountId, harness.query)
     assert.equal(contact.email, 'owner@example.com')

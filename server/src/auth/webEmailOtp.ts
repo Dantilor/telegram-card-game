@@ -199,6 +199,8 @@ export async function afterWebPurchasePaid(input: {
   paymentId: string
   ip?: string | null
   db?: Queryable
+  /** Explicit checkout opt-in to use receipt email for account recovery. */
+  bindAccountEmail?: boolean
 }): Promise<{ pendingEmail: string | null; linkSent: boolean }> {
   const pay = await db(input.db).query<{ receipt_email_normalized: string | null }>(
     `SELECT receipt_email_normalized FROM web_payments WHERE id = $1 LIMIT 1`,
@@ -208,6 +210,11 @@ export async function afterWebPurchasePaid(input: {
     ? normalizeEmail(pay.rows[0].receipt_email_normalized)
     : null
   if (!receipt) return { pendingEmail: null, linkSent: false }
+
+  // Receipt alone never becomes verified ownership. Bind letter only on opt-in.
+  if (!input.bindAccountEmail) {
+    return { pendingEmail: null, linkSent: false }
+  }
 
   const account = await db(input.db).query<{
     email_normalized: string | null

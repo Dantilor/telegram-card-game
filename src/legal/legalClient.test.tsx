@@ -218,7 +218,12 @@ describe('premium purchase', () => {
     })
     expect(result.confirmationUrl).toMatch(/^https:\/\//)
     const payment = buildPaymentBody('premium_3m', 15, { email: 'buyer@example.com' })
-    expect(payment).toEqual({ planId: 'premium_3m', offerAcceptanceId: 15, email: 'buyer@example.com' })
+    expect(payment).toEqual({
+      planId: 'premium_3m',
+      offerAcceptanceId: 15,
+      email: 'buyer@example.com',
+      bindAccountEmail: false,
+    })
     expect(payment).not.toHaveProperty('phone')
     expect(payment).not.toHaveProperty('marketing')
     expect(payment).not.toHaveProperty('analytics')

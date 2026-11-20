@@ -1,7 +1,8 @@
 import { apiGet } from '../lib/api'
 
 export type MeResponse = {
-  telegramId: number
+  telegramId: number | null
+  webAccountId?: string | null
   premium: boolean
   premiumUntil?: string
 }
@@ -21,6 +22,11 @@ export class ApiAuthError extends Error {
 const ME_CACHE_TTL_MS = 5000
 let meCache: { data: MeResponse; ts: number } | null = null
 let mePromise: Promise<MeResponse> | null = null
+
+export function invalidateMeCache(): void {
+  meCache = null
+  mePromise = null
+}
 
 /** Кэш на 5 с и дедупликация запросов: prefetch и usePremiumStatus не дергают API дважды. */
 export async function getMe(): Promise<MeResponse> {

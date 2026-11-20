@@ -267,12 +267,17 @@ async function handleCreatePayment(req: Request, res: Response) {
       }
       const idempotenceKey = randomUUID()
       const amount = `${plan.price_rub}.00`
+      const bindAccountEmail =
+        req.body?.bindAccountEmail === true ||
+        req.body?.bindAccountEmail === '1' ||
+        req.body?.bindAccountEmail === 1
       const metadata = {
         web_account_id: webAccountId,
         plan_id: plan.plan_id,
         planId: plan.plan_id,
         auth_source: source,
         offer_acceptance_id: String(webCheckout.evidenceId),
+        bind_account_email: bindAccountEmail ? '1' : '0',
       }
       const description = `GameNight Host WEB: ${plan.title} (${plan.plan_id})`
       const receipt = buildReceipt({
@@ -936,7 +941,11 @@ async function handleWebhook(req: Request, res: Response) {
         })
         if (webGrant.granted) {
           try {
-            await afterWebPurchasePaid({ webAccountId, paymentId: pid })
+            await afterWebPurchasePaid({
+              webAccountId,
+              paymentId: pid,
+              bindAccountEmail: meta.bind_account_email === '1',
+            })
           } catch (e) {
             console.error('[YooKassa] webhook: afterWebPurchasePaid failed', e)
           }
@@ -1091,7 +1100,11 @@ async function handleConfirm(req: Request, res: Response) {
       if (grant.granted || grant.alreadyDone) {
         if (grant.granted) {
           try {
-            await afterWebPurchasePaid({ webAccountId: auth.webAccountId, paymentId })
+            await afterWebPurchasePaid({
+              webAccountId: auth.webAccountId,
+              paymentId,
+              bindAccountEmail: meta.bind_account_email === '1',
+            })
           } catch (e) {
             console.error('[YooKassa] confirm: afterWebPurchasePaid failed', e)
           }

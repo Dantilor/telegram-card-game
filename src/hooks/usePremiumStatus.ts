@@ -2,21 +2,45 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { getInitData } from '../lib/telegram'
 import { waitForInitData } from '../lib/waitForInitData'
 import { subscribeTelegramSdkReady } from '../lib/telegramSdk'
-import { getMe, ApiAuthError } from '../api/subscription'
+import { getMe, ApiAuthError, invalidateMeCache } from '../api/subscription'
 import { defaultUserState } from '../data/types'
 import { devLog, devWarn } from '../utils/devLog'
 import { isWebShell } from '../config/shell'
 
-const CACHE_KEY = 'tcg_premium_status'
+const CACHE_KEY_PREFIX = 'tcg_premium_status'
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 const PREMIUM_POLL_INTERVAL_MS = 2000
 const PREMIUM_POLL_MAX_ATTEMPTS = 15
 const EXPECTING_PAYMENT_FLAG = 'tcg_expecting_payment'
 const EXPECTING_PAYMENT_MAX_AGE_MS = 120000 // 2 min
+const ACCOUNT_KEY = 'tcg_premium_account'
 
-function clearCache(): void {
+function cacheKeyFor(accountId: string | null | undefined): string {
+  return `${CACHE_KEY_PREFIX}:${accountId || 'anon'}`
+}
+
+function readAccountKey(): string {
   try {
-    sessionStorage.removeItem(CACHE_KEY)
+    return sessionStorage.getItem(ACCOUNT_KEY) || 'anon'
+  } catch {
+    return 'anon'
+  }
+}
+
+function writeAccountKey(accountId: string | null | undefined): void {
+  try {
+    sessionStorage.setItem(ACCOUNT_KEY, accountId || 'anon')
+  } catch {
+    // ignore
+  }
+}
+
+function clearCache(accountId?: string | null): void {
+  try {
+    const key = cacheKeyFor(accountId ?? readAccountKey())
+    sessionStorage.removeItem(key)
+    // Legacy unscoped key
+    sessionStorage.removeItem(CACHE_KEY_PREFIX)
   } catch {
     // ignore
   }
@@ -28,23 +52,31 @@ type PremiumStatus = {
   activeUntil: string | null
 }
 
-function readCache(): PremiumStatus | null {
+function readCache(accountId?: string | null): PremiumStatus | null {
   try {
-    const raw = sessionStorage.getItem(CACHE_KEY)
+    const raw = sessionStorage.getItem(cacheKeyFor(accountId ?? readAccountKey()))
     if (!raw) return null
-    const { data, ts } = JSON.parse(raw) as { data: PremiumStatus; ts: number }
+    const { data, ts, account } = JSON.parse(raw) as {
+      data: PremiumStatus
+      ts: number
+      account?: string
+    }
     if (Date.now() - ts > CACHE_TTL_MS) return null
+    const expected = accountId ?? readAccountKey()
+    if (account && account !== expected) return null
     return data
   } catch {
     return null
   }
 }
 
-function writeCache(data: PremiumStatus): void {
+function writeCache(data: PremiumStatus, accountId?: string | null): void {
   try {
+    const account = accountId || readAccountKey()
+    writeAccountKey(account)
     sessionStorage.setItem(
-      CACHE_KEY,
-      JSON.stringify({ data, ts: Date.now() })
+      cacheKeyFor(account),
+      JSON.stringify({ data, ts: Date.now(), account })
     )
   } catch {
     // ignore
@@ -151,7 +183,9 @@ export function usePremiumStatus(): {
         isPremium: me.premium,
         activeUntil: me.premiumUntil ?? null,
       }
-      writeCache(data)
+      const accountId = me.webAccountId ? String(me.webAccountId) : readAccountKey()
+      writeCache(data, accountId)
+      writeAccountKey(accountId)
       updateTcgState(data.isPremium)
       devLog('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
       doneLoading({ ...data, authError: false, authError401: false, serverError503: false })
@@ -249,6 +283,7 @@ export function usePremiumStatus(): {
 
   useEffect(() => {
     const onSync = () => {
+      invalidateMeCache()
       clearCache()
       fetchStatus(true)
     }
@@ -257,6 +292,7 @@ export function usePremiumStatus(): {
   }, [fetchStatus])
 
   const refresh = useCallback(async (): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
+    invalidateMeCache()
     clearCache()
     return fetchStatus(true)
   }, [fetchStatus])

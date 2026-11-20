@@ -314,6 +314,22 @@ function Profile() {
   const emailVerified = Boolean(webSession.session?.emailVerified)
   const emailPending = Boolean(webSession.session?.emailPending)
 
+  useEffect(() => {
+    if (!web) return
+    let cancelled = false
+    void webSession.refreshSession().then((next) => {
+      if (cancelled) return
+      if (next && !next.emailVerified && (next.emailPending || next.email)) {
+        webSession.startEmailPendingWatch()
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+    // Refresh once when opening Profile — callbacks from context are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [web])
+
   const handleEmailConfirm = useCallback(async () => {
     if (!web) return
     const target = (savedEmail || emailDraft).trim()
@@ -325,10 +341,13 @@ function Profile() {
       await startEmailBind(target)
       setEmailStatus('Проверьте почту — мы отправили ссылку для подтверждения.')
       await webSession.refreshSession()
+      webSession.startEmailPendingWatch()
     } catch (e) {
       const status = (e as Error & { status?: number }).status
       if (status === 409) {
-        setEmailStatus('Этот email уже привязан к другому аккаунту. Войдите по email на странице входа.')
+        setEmailStatus(
+          'Этот email уже используется. Войдите в существующий аккаунт на странице входа.'
+        )
       } else if (status === 429) {
         setEmailStatus('Слишком много попыток. Подождите минуту и попробуйте снова.')
       } else {
@@ -338,6 +357,26 @@ function Profile() {
       setEmailBusy(false)
     }
   }, [web, savedEmail, emailDraft, webSession])
+
+  const handleCheckEmailConfirm = useCallback(async () => {
+    if (!web) return
+    haptic('light')
+    setEmailBusy(true)
+    try {
+      const next = await webSession.refreshSession()
+      if (next?.emailVerified) {
+        setEmailStatus('Почта подтверждена')
+        webSession.stopEmailPendingWatch()
+      } else {
+        setEmailStatus('Пока не подтверждено. Откройте ссылку из письма и вернитесь сюда.')
+        webSession.startEmailPendingWatch()
+      }
+    } catch {
+      setEmailStatus('Не удалось проверить статус. Попробуйте ещё раз.')
+    } finally {
+      setEmailBusy(false)
+    }
+  }, [web, webSession])
 
   const handleSupport = useCallback(() => {
     haptic('light')
@@ -674,20 +713,30 @@ function Profile() {
                   <br />
                   Статус:{' '}
                   {emailVerified
-                    ? 'подтверждена'
+                    ? 'Почта подтверждена'
                     : emailPending
                       ? 'ожидает подтверждения'
                       : 'сохранена'}
                 </p>
                 {!emailVerified && (
-                  <button
-                    type="button"
-                    className="profile-pass__restore"
-                    onClick={() => void handleEmailConfirm()}
-                    disabled={emailBusy}
-                  >
-                    {emailBusy ? 'Отправка…' : 'Отправить ссылку ещё раз'}
-                  </button>
+                  <div className="profile-pass__email-actions">
+                    <button
+                      type="button"
+                      className="profile-pass__restore"
+                      onClick={() => void handleCheckEmailConfirm()}
+                      disabled={emailBusy}
+                    >
+                      {emailBusy ? 'Проверка…' : 'Проверить подтверждение'}
+                    </button>
+                    <button
+                      type="button"
+                      className="profile-pass__restore"
+                      onClick={() => void handleEmailConfirm()}
+                      disabled={emailBusy}
+                    >
+                      {emailBusy ? 'Отправка…' : 'Отправить ссылку ещё раз'}
+                    </button>
+                  </div>
                 )}
               </>
             ) : (

@@ -1,0 +1,88 @@
+.web-auth-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: min(220px, 42vw);
+  min-height: 34px;
+  padding: 0 12px 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(228, 196, 255, 0.28);
+  background: linear-gradient(120deg, rgba(62, 42, 92, 0.72), rgba(42, 28, 68, 0.78));
+  color: #f4ebff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 1;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+.web-auth-chip__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(232, 206, 255, 0.12);
+  color: #e9d2ff;
+  flex-shrink: 0;
+}
+.web-auth-chip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.web-auth-chip--anon {
+  border-color: rgba(210, 180, 240, 0.22);
+  color: rgba(245, 236, 255, 0.86);
+}
+.web-auth-chip--pending {
+  border-color: rgba(232, 198, 120, 0.42);
+  box-shadow: 0 0 18px rgba(212, 170, 90, 0.12);
+}
+.web-auth-chip--pending .web-auth-chip__icon {
+  color: #f0d7a2;
+  background: rgba(232, 198, 120, 0.14);
+}
+.web-auth-chip--verified {
+  border-color: rgba(214, 180, 255, 0.48);
+  box-shadow: 0 0 22px rgba(171, 114, 226, 0.16);
+}
+.web-auth-chip--verified .web-auth-chip__icon {
+  color: #efe0ff;
+  background: rgba(198, 154, 249, 0.22);
+}
+.web-auth-chip:hover {
+  border-color: rgba(245, 220, 255, 0.5);
+  color: #fff;
+}
+@media (max-width: 720px) {
+  .web-auth-chip {
+    min-height: 30px;
+    padding: 0 10px 0 7px;
+    font-size: 11px;
+    max-width: min(168px, 46vw);
+  }
+  .web-auth-chip__icon { width: 18px; height: 18px; }
+}
+.gnh-home-ref .site-header .web-auth-chip {
+  margin-left: auto;
+  margin-right: 10px;
+}
+.gnh-inside .app-header .web-auth-chip {
+  margin-left: 8px;
+  margin-right: 4px;
+}
+.gnh-experience .gnh-header .web-auth-chip {
+  margin-left: auto;
+  margin-right: 8px;
+}
+.gnh-experience .gnh-header .web-auth-chip-host {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+}

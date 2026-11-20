@@ -242,6 +242,7 @@ export default function PremiumOverlay({
   const [theme] = useTheme()
   const gem = isWebShell() ? gemNeon : GEMS_BY_THEME[theme]
   const [offerChecked, setOfferChecked] = useState(false)
+  const [bindAccountEmail, setBindAccountEmail] = useState(false)
   const [receipt, setReceipt] = useState('')
   const [selectedPlanId, setSelectedPlanId] = useState<string>(preferredPlanId || DEFAULT_PLAN_ID)
   const [loading, setLoading] = useState(false)
@@ -282,7 +283,13 @@ export default function PremiumOverlay({
   // Each document (re)load requires the user to review and accept its version.
   useEffect(() => {
     setOfferChecked(false)
+    setBindAccountEmail(false)
   }, [isOpen, offerDocument])
+
+  const accountVerified = Boolean(webSession.session?.emailVerified && webSession.session?.email)
+  const accountEmail = webSession.session?.email?.trim() || ''
+  const receiptMatchesVerified =
+    accountVerified && receipt.trim().toLowerCase() === accountEmail.toLowerCase()
 
   useEffect(() => {
     if (preferredPlanId) setSelectedPlanId(preferredPlanId)
@@ -420,6 +427,11 @@ export default function PremiumOverlay({
           durationDays: plan.durationDays,
         },
         receiptRaw: receiptEmail,
+        bindAccountEmail:
+          isWebShell() &&
+          bindAccountEmail &&
+          !receiptMatchesVerified &&
+          !(accountVerified && receipt.trim().toLowerCase() !== accountEmail.toLowerCase()),
         post: (path, body) => legal.postLegal(path, body),
       })
       const url = res.confirmationUrl
@@ -697,6 +709,32 @@ export default function PremiumOverlay({
       </label>
       {receiptError && <p className="premium-offer__error" role="alert">{receiptError}</p>}
       <p className="premium-offer__hint">ЮKassa отправит чек на эту почту.</p>
+      {isWebShell() && receiptMatchesVerified ? (
+        <p className="premium-offer__hint">
+          Premium останется в вашем подтверждённом аккаунте. Повторно подтверждать почту не нужно.
+        </p>
+      ) : null}
+      {isWebShell() && !accountVerified ? (
+        <>
+          <label className={`legal-choice__check${checkoutOnly ? ' legal-choice__check--gnh' : ''}`}>
+            <input
+              type="checkbox"
+              checked={bindAccountEmail}
+              onChange={(event) => setBindAccountEmail(event.target.checked)}
+            />
+            <span>Использовать эту почту для входа и восстановления Premium</span>
+          </label>
+          <p className="premium-offer__hint">
+            После оплаты отправим ссылку для подтверждения почты. Так вы сможете вернуть покупки на
+            другом устройстве.
+          </p>
+        </>
+      ) : null}
+      {isWebShell() && accountVerified && !receiptMatchesVerified ? (
+        <p className="premium-offer__hint">
+          Email для чека можно изменить. Подтверждённый email входа при этом не меняется.
+        </p>
+      ) : null}
       <p className="premium-overlay__legal">
         <button type="button" className="premium-overlay__legal-link" onClick={() => { haptic('light'); legal.openDocument('privacy') }}>
           Политика конфиденциальности

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import WebAuthStatusChip from '../components/web/WebAuthStatusChip'
 import { GnhPremiumWheel } from '../components/gnh-premium-wheel/GnhPremiumWheel'
 import type { PremiumPlan, ReturnContext } from '../components/gnh-premium-wheel/gnh-experience'
 import '../components/gnh-premium-wheel/gnh-experience.css'
@@ -217,8 +219,29 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
     }
   }, [navigate, refreshPremium])
 
+  const [headerHost, setHeaderHost] = useState<Element | null>(null)
+  useEffect(() => {
+    const ensureHost = () => {
+      const header = document.querySelector('.gnh-experience .gnh-header')
+      if (!header) return
+      let host = header.querySelector('.web-auth-chip-host')
+      if (!host) {
+        host = document.createElement('div')
+        host.className = 'web-auth-chip-host'
+        const homeBtn = header.querySelector('.gnh-header-home')
+        if (homeBtn) header.insertBefore(host, homeBtn)
+        else header.appendChild(host)
+      }
+      setHeaderHost(host)
+    }
+    ensureHost()
+    const id = window.setInterval(ensureHost, 500)
+    return () => window.clearInterval(id)
+  }, [])
+
   return (
     <div className={`web-premium-experience${focusPlans ? ' web-premium-experience--plans' : ''}`}>
+      {headerHost ? createPortal(<WebAuthStatusChip compact />, headerHost) : null}
       {(plansError || plansLoading) && (
         <div className="web-premium-experience__banner" role="status">
           <p className="web-premium-experience__error">

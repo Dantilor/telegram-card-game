@@ -1,42 +1,225 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import type { WebSessionMe } from '../lib/webAuth'
-import { fetchWebSessionMe, logoutWebSession } from '../lib/webAuth'
+import { ensureWebSession, fetchWebSessionMe, logoutWebSession } from '../lib/webAuth'
+
+export type WebAuthUiStatus = 'anonymous' | 'pending' | 'verified' | 'telegram'
 
 type WebSessionContextValue = {
   session: WebSessionMe | null
+  ready: boolean
+  authStatus: WebAuthUiStatus
   setSession: (session: WebSessionMe | null) => void
   refreshSession: () => Promise<WebSessionMe | null>
   logout: () => Promise<void>
+  /** Short polling while email confirmation is pending (PWA ↔ Safari). */
+  startEmailPendingWatch: () => void
+  stopEmailPendingWatch: () => void
 }
 
 const WebSessionContext = createContext<WebSessionContextValue | null>(null)
 
+const EMAIL_POLL_MS = 2500
+const EMAIL_POLL_MAX_MS = 3 * 60_000
+
+function deriveAuthStatus(session: WebSessionMe | null): WebAuthUiStatus {
+  if (!session) return 'anonymous'
+  if (session.emailVerified) return 'verified'
+  if (session.emailPending || (session.email && !session.emailVerified)) return 'pending'
+  if (session.telegramId) return 'telegram'
+  return 'anonymous'
+}
+
+function accountKey(session: WebSessionMe | null): string {
+  return session?.webAccountId ? String(session.webAccountId) : ''
+}
+
 export function WebSessionProvider({
-  initial,
+  initial = null,
   children,
 }: {
-  initial: WebSessionMe | null
+  initial?: WebSessionMe | null
   children: ReactNode
 }) {
-  const [session, setSession] = useState<WebSessionMe | null>(initial)
+  const [session, setSessionState] = useState<WebSessionMe | null>(initial)
+  const [ready, setReady] = useState(Boolean(initial))
+  const sessionRef = useRef(session)
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollStartedAtRef = useRef(0)
+  const refreshInFlight = useRef<Promise<WebSessionMe | null> | null>(null)
 
-  const refreshSession = useCallback(async () => {
-    const next = await fetchWebSessionMe()
-    setSession(next)
-    return next
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
+
+  const stopEmailPendingWatch = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current)
+      pollTimerRef.current = null
+    }
+    pollStartedAtRef.current = 0
   }, [])
 
+  const applySession = useCallback((next: WebSessionMe | null) => {
+    const prev = sessionRef.current
+    const prevKey = accountKey(prev)
+    const nextKey = accountKey(next)
+    const verifiedFlipped = Boolean(next?.emailVerified) && !prev?.emailVerified
+    const accountChanged = prevKey !== nextKey
+    sessionRef.current = next
+    setSessionState(next)
+    if (accountChanged || verifiedFlipped) {
+      try {
+        window.dispatchEvent(new Event('tcg_premium_sync'))
+        window.dispatchEvent(new Event('tcg_legal_sync'))
+      } catch {
+        /* ignore */
+      }
+    }
+    if (next?.emailVerified) stopEmailPendingWatch()
+  }, [stopEmailPendingWatch])
+
+  const setSession = useCallback(
+    (next: WebSessionMe | null) => {
+      applySession(next)
+    },
+    [applySession]
+  )
+
+  const refreshSession = useCallback(async () => {
+    if (refreshInFlight.current) return refreshInFlight.current
+    const run = (async () => {
+      try {
+        const next = await fetchWebSessionMe()
+        applySession(next)
+        return next
+      } catch {
+        return sessionRef.current
+      } finally {
+        refreshInFlight.current = null
+      }
+    })()
+    refreshInFlight.current = run
+    return run
+  }, [applySession])
+
+  const startEmailPendingWatch = useCallback(() => {
+    stopEmailPendingWatch()
+    pollStartedAtRef.current = Date.now()
+    void refreshSession()
+    pollTimerRef.current = setInterval(() => {
+      if (Date.now() - pollStartedAtRef.current > EMAIL_POLL_MAX_MS) {
+        stopEmailPendingWatch()
+        return
+      }
+      const current = sessionRef.current
+      if (current?.emailVerified) {
+        stopEmailPendingWatch()
+        return
+      }
+      void refreshSession()
+    }, EMAIL_POLL_MS)
+  }, [refreshSession, stopEmailPendingWatch])
+
   const logout = useCallback(async () => {
+    stopEmailPendingWatch()
     try {
       await logoutWebSession()
     } finally {
-      setSession(null)
+      applySession(null)
+      try {
+        window.dispatchEvent(new Event('tcg_premium_sync'))
+      } catch {
+        /* ignore */
+      }
     }
-  }, [])
+  }, [applySession, stopEmailPendingWatch])
+
+  // Bootstrap anonymous session once.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        let next = await fetchWebSessionMe()
+        if (!next) next = await ensureWebSession()
+        if (!cancelled) {
+          applySession(next)
+          setReady(true)
+          if (next && (next.emailPending || (next.email && !next.emailVerified))) {
+            startEmailPendingWatch()
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          applySession(null)
+          setReady(true)
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [applySession, startEmailPendingWatch])
+
+  // Cross-context sync: Safari confirm → return to PWA / other tab.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      void refreshSession().then((next) => {
+        if (next && !next.emailVerified && (next.emailPending || next.email)) {
+          startEmailPendingWatch()
+        }
+      })
+    }
+    const onPageShow = () => {
+      void refreshSession()
+    }
+    const onFocus = () => {
+      void refreshSession()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('pageshow', onPageShow)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('pageshow', onPageShow)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [refreshSession, startEmailPendingWatch])
+
+  useEffect(() => () => stopEmailPendingWatch(), [stopEmailPendingWatch])
+
+  const authStatus = useMemo(() => deriveAuthStatus(session), [session])
 
   const value = useMemo(
-    () => ({ session, setSession, refreshSession, logout }),
-    [session, refreshSession, logout]
+    () => ({
+      session,
+      ready,
+      authStatus,
+      setSession,
+      refreshSession,
+      logout,
+      startEmailPendingWatch,
+      stopEmailPendingWatch,
+    }),
+    [
+      session,
+      ready,
+      authStatus,
+      setSession,
+      refreshSession,
+      logout,
+      startEmailPendingWatch,
+      stopEmailPendingWatch,
+    ]
   )
 
   return <WebSessionContext.Provider value={value}>{children}</WebSessionContext.Provider>
@@ -47,9 +230,13 @@ export function useWebSession(): WebSessionContextValue {
   if (!ctx) {
     return {
       session: null,
+      ready: false,
+      authStatus: 'anonymous',
       setSession: () => {},
       refreshSession: async () => null,
       logout: async () => {},
+      startEmailPendingWatch: () => {},
+      stopEmailPendingWatch: () => {},
     }
   }
   return ctx

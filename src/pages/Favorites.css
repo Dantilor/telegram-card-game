@@ -1,11 +1,11 @@
 /* Фон на весь viewport — как на Games / Profile */
-html:has(.favorites-page) {
+html:has(.favorites-page):not([data-gnh-shell="web"]) {
   position: relative;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-html:has(.favorites-page)::before {
+html:has(.favorites-page):not([data-gnh-shell="web"])::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -18,13 +18,13 @@ html:has(.favorites-page)::before {
   background-size: 100% 100%;
 }
 
-html:has(.favorites-page) body,
-html:has(.favorites-page) #root {
+html:has(.favorites-page):not([data-gnh-shell="web"]) body,
+html:has(.favorites-page):not([data-gnh-shell="web"]) #root {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.app:has(.favorites-page) {
+.app:has(.favorites-page):not(.app--web) {
   background: transparent !important;
   background-image: none !important;
   animation: none;
@@ -33,7 +33,7 @@ html:has(.favorites-page) #root {
   padding-bottom: 0;
 }
 
-.app:has(.favorites-page)::before {
+.app:has(.favorites-page):not(.app--web)::before {
   display: none;
 }
 

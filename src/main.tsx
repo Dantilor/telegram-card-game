@@ -42,6 +42,12 @@ try {
 
 const web = isWebShell()
 document.documentElement.dataset.gnhShell = web ? 'web' : 'telegram'
+if (web) {
+  // Match WEB shell mauve immediately — prevents iPhone PWA white flash under home indicator.
+  const mauve = '#887099'
+  document.documentElement.style.backgroundColor = mauve
+  if (document.body) document.body.style.backgroundColor = mauve
+}
 
 installChunkRecovery()
 

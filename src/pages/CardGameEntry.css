@@ -1,11 +1,11 @@
 /* Фон и shell — как на Games */
-html:has(.card-entry-page) {
+html:has(.card-entry-page):not([data-gnh-shell="web"]) {
   position: relative;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-html:has(.card-entry-page)::before {
+html:has(.card-entry-page):not([data-gnh-shell="web"])::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -18,13 +18,13 @@ html:has(.card-entry-page)::before {
   background-size: 100% 100%;
 }
 
-html:has(.card-entry-page) body,
-html:has(.card-entry-page) #root {
+html:has(.card-entry-page):not([data-gnh-shell="web"]) body,
+html:has(.card-entry-page):not([data-gnh-shell="web"]) #root {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.app:has(.card-entry-page) {
+.app:has(.card-entry-page):not(.app--web) {
   background: transparent !important;
   background-image: none !important;
   animation: none;
@@ -33,7 +33,7 @@ html:has(.card-entry-page) #root {
   padding-bottom: 0;
 }
 
-.app:has(.card-entry-page)::before {
+.app:has(.card-entry-page):not(.app--web)::before {
   display: none;
 }
 

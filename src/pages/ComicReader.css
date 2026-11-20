@@ -1,10 +1,10 @@
-html:has(.comic-reader-page) {
+html:has(.comic-reader-page):not([data-gnh-shell="web"]) {
   position: relative;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-html:has(.comic-reader-page)::before {
+html:has(.comic-reader-page):not([data-gnh-shell="web"])::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -17,13 +17,13 @@ html:has(.comic-reader-page)::before {
   background-size: 100% 100%;
 }
 
-html:has(.comic-reader-page) body,
-html:has(.comic-reader-page) #root {
+html:has(.comic-reader-page):not([data-gnh-shell="web"]) body,
+html:has(.comic-reader-page):not([data-gnh-shell="web"]) #root {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.app:has(.comic-reader-page) {
+.app:has(.comic-reader-page):not(.app--web) {
   background: transparent !important;
   background-image: none !important;
   animation: none;
@@ -32,7 +32,7 @@ html:has(.comic-reader-page) #root {
   padding-bottom: 0;
 }
 
-.app:has(.comic-reader-page)::before {
+.app:has(.comic-reader-page):not(.app--web)::before {
   display: none;
 }
 

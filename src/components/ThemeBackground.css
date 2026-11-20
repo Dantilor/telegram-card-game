@@ -124,6 +124,14 @@ body,
   background-color: var(--app-page-bg-color, #060a1b);
 }
 
+/* WEB: keep opaque shell mauve — page CSS used to punch these transparent (iPhone white strip) */
+html[data-gnh-shell="web"],
+html[data-gnh-shell="web"] body,
+html[data-gnh-shell="web"] #root {
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
+}
+
 html[data-theme="neon-dark"] {
   --app-page-bg-color: #060a1b;
 }
@@ -140,14 +148,18 @@ html[data-theme="minimal-calm"] {
   --app-page-bg-color: #f5f7f6;
 }
 
-.app,
-.app.app--web {
+.app {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-/* Home column must not paint opaque side panels over the theme */
-.app:has(.home-web-landing),
-.app.app--web:has(.home-web-landing) {
+/* WEB shell paints its own mauve/kit/game backgrounds — never force transparent canvas */
+html[data-gnh-shell="web"] .app.app--web {
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
+}
+
+/* Home column must not paint opaque side panels over the theme (Mini App only) */
+.app:has(.home-web-landing):not(.app--web) {
   background: transparent !important;
 }

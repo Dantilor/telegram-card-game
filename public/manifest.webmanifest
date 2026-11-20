@@ -9,8 +9,8 @@
   "id": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#1a1030",
-  "theme_color": "#2a1640",
+  "background_color": "#887099",
+  "theme_color": "#887099",
   "categories": ["games", "entertainment"],
   "icons": [
     {

@@ -1,11 +1,11 @@
 /* Shell — как Games / CardGameEntry */
-html:has(.mafia-page) {
+html:has(.mafia-page):not([data-gnh-shell="web"]) {
   position: relative;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-html:has(.mafia-page)::before {
+html:has(.mafia-page):not([data-gnh-shell="web"])::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -18,7 +18,7 @@ html:has(.mafia-page)::before {
   background-size: 100% 100%;
 }
 
-html:has(.mafia-page--night)::after {
+html:has(.mafia-page--night):not([data-gnh-shell="web"])::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -27,13 +27,13 @@ html:has(.mafia-page--night)::after {
   background: radial-gradient(ellipse at 50% 0%, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.42) 100%);
 }
 
-html:has(.mafia-page) body,
-html:has(.mafia-page) #root {
+html:has(.mafia-page):not([data-gnh-shell="web"]) body,
+html:has(.mafia-page):not([data-gnh-shell="web"]) #root {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.app:has(.mafia-page) {
+.app:has(.mafia-page):not(.app--web) {
   background: transparent !important;
   background-image: none !important;
   animation: none;
@@ -42,7 +42,7 @@ html:has(.mafia-page) #root {
   padding-bottom: 0;
 }
 
-.app:has(.mafia-page)::before {
+.app:has(.mafia-page):not(.app--web)::before {
   display: none;
 }
 

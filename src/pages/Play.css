@@ -1,11 +1,11 @@
 /* Shell — themed play screen */
-html:has(.play-page) {
+html:has(.play-page):not([data-gnh-shell="web"]) {
   position: relative;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-html:has(.play-page)::before {
+html:has(.play-page):not([data-gnh-shell="web"])::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -18,13 +18,13 @@ html:has(.play-page)::before {
   background-size: 100% 100%;
 }
 
-html:has(.play-page) body,
-html:has(.play-page) #root {
+html:has(.play-page):not([data-gnh-shell="web"]) body,
+html:has(.play-page):not([data-gnh-shell="web"]) #root {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.app:has(.play-page) {
+.app:has(.play-page):not(.app--web) {
   background: transparent !important;
   background-image: none !important;
   animation: none;
@@ -33,7 +33,7 @@ html:has(.play-page) #root {
   padding-bottom: 0;
 }
 
-.app:has(.play-page)::before {
+.app:has(.play-page):not(.app--web)::before {
   display: none;
 }
 

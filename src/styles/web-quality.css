@@ -1,16 +1,128 @@
 /* WEB quality overhaul — scoped to standalone shell only. Never touch Mini App. */
 
-html[data-gnh-shell="web"],
-html[data-gnh-shell="web"] body,
-html[data-gnh-shell="web"] #root {
-  background-color: var(--web-shell-mauve, #887099) !important;
-  background-image: none;
+/*
+ * iPhone / PWA viewport model:
+ * - Fill the real screen (dvh + -webkit-fill-available), not a short 100% chain.
+ * - Opaque mauve on every root layer so rubber-band / home-indicator never flash white
+ *   (early neon-light #e8e6f5 and transparent .app.app--web were the white strip).
+ */
+html[data-gnh-shell="web"] {
+  height: 100%;
+  height: -webkit-fill-available;
   min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
+  overscroll-behavior: none;
   overscroll-behavior-y: none;
 }
 
-html[data-gnh-shell="web"] .app.app--web {
-  background-color: var(--web-shell-mauve, #887099);
+html[data-gnh-shell="web"] body,
+html[data-gnh-shell="web"] #root {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+}
+
+html[data-gnh-shell="web"] #root {
+  min-height: var(--app-height, 100dvh);
+}
+
+/* Kill theme light washes (#f7f5ff etc.) — WEB shell is always mauve unless kit/game overrides */
+html[data-gnh-shell="web"] .app.app--web,
+html[data-gnh-shell="web"][data-theme] .app.app--web,
+html[data-gnh-shell="web"][data-theme="neon-light"] .app.app--web,
+html[data-gnh-shell="web"][data-theme="sunset"] .app.app--web,
+html[data-gnh-shell="web"][data-theme="minimal-calm"] .app.app--web {
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  min-height: var(--app-height, 100dvh);
+}
+
+html[data-gnh-shell="web"] .app.app--web > .gnh-inside,
+html[data-gnh-shell="web"] .app.app--web > .gnh-home-scroll {
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
+  min-height: 100%;
+}
+
+/*
+ * Games/Comics/Profile CSS punch html/body/#root/.app to transparent and rely on
+ * html::before theme photos. On WEB that photo layer is hidden → white iPhone gap.
+ * Restore opaque mauve (and kill the fixed ::before wash) for the shell.
+ */
+html[data-gnh-shell="web"]:has(.games-page),
+html[data-gnh-shell="web"]:has(.comics-page),
+html[data-gnh-shell="web"]:has(.profile-page),
+html[data-gnh-shell="web"]:has(.favorites-page),
+html[data-gnh-shell="web"]:has(.card-entry-page),
+html[data-gnh-shell="web"]:has(.deck-select-page),
+html[data-gnh-shell="web"]:has(.play-page),
+html[data-gnh-shell="web"]:has(.games-page) body,
+html[data-gnh-shell="web"]:has(.comics-page) body,
+html[data-gnh-shell="web"]:has(.profile-page) body,
+html[data-gnh-shell="web"]:has(.favorites-page) body,
+html[data-gnh-shell="web"]:has(.card-entry-page) body,
+html[data-gnh-shell="web"]:has(.deck-select-page) body,
+html[data-gnh-shell="web"]:has(.play-page) body,
+html[data-gnh-shell="web"]:has(.games-page) #root,
+html[data-gnh-shell="web"]:has(.comics-page) #root,
+html[data-gnh-shell="web"]:has(.profile-page) #root,
+html[data-gnh-shell="web"]:has(.favorites-page) #root,
+html[data-gnh-shell="web"]:has(.card-entry-page) #root,
+html[data-gnh-shell="web"]:has(.deck-select-page) #root,
+html[data-gnh-shell="web"]:has(.play-page) #root,
+html[data-gnh-shell="web"] .app.app--web:has(.games-page),
+html[data-gnh-shell="web"] .app.app--web:has(.comics-page),
+html[data-gnh-shell="web"] .app.app--web:has(.profile-page),
+html[data-gnh-shell="web"] .app.app--web:has(.favorites-page),
+html[data-gnh-shell="web"] .app.app--web:has(.card-entry-page),
+html[data-gnh-shell="web"] .app.app--web:has(.deck-select-page),
+html[data-gnh-shell="web"] .app.app--web:has(.play-page) {
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
+}
+
+html[data-gnh-shell="web"]:has(.games-page)::before,
+html[data-gnh-shell="web"]:has(.comics-page)::before,
+html[data-gnh-shell="web"]:has(.profile-page)::before,
+html[data-gnh-shell="web"]:has(.favorites-page)::before,
+html[data-gnh-shell="web"]:has(.card-entry-page)::before,
+html[data-gnh-shell="web"]:has(.deck-select-page)::before,
+html[data-gnh-shell="web"]:has(.play-page)::before,
+html[data-gnh-shell="web"]:has(.alias-page)::before,
+html[data-gnh-shell="web"]:has(.mafia-page)::before,
+html[data-gnh-shell="web"]:has(.comic-reader-page)::before {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+html[data-gnh-shell="web"]:has(.alias-page),
+html[data-gnh-shell="web"]:has(.mafia-page),
+html[data-gnh-shell="web"]:has(.comic-reader-page),
+html[data-gnh-shell="web"]:has(.alias-page) body,
+html[data-gnh-shell="web"]:has(.mafia-page) body,
+html[data-gnh-shell="web"]:has(.comic-reader-page) body,
+html[data-gnh-shell="web"]:has(.alias-page) #root,
+html[data-gnh-shell="web"]:has(.mafia-page) #root,
+html[data-gnh-shell="web"]:has(.comic-reader-page) #root,
+html[data-gnh-shell="web"] .app.app--web:has(.alias-page),
+html[data-gnh-shell="web"] .app.app--web:has(.mafia-page),
+html[data-gnh-shell="web"] .app.app--web:has(.comic-reader-page) {
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none !important;
 }
 
 /* Premium + Wheel: original kit night field — beat mauve on every shell layer */
@@ -669,17 +781,10 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .sound-control [data-slot="
   align-self: center !important;
 }
 
-/* Kill white home-indicator strip — paint shell/page through the bottom */
-html[data-gnh-shell="web"],
-html[data-gnh-shell="web"] body,
-html[data-gnh-shell="web"] #root {
-  min-height: 100dvh !important;
-  background-color: var(--web-shell-mauve, #887099) !important;
-}
-
-html[data-gnh-shell="web"] .app.app--web .gnh-inside,
+/* Keep shell layers opaque through the home-indicator / overscroll region */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside:not(.gnh-inside--kit-experience),
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
-  background-color: inherit;
+  background-color: var(--web-shell-mauve, #887099) !important;
 }
 
 html[data-gnh-shell="web"]:has(.sled-root),

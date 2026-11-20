@@ -1,11 +1,11 @@
 /* Shell — как Games / CardGameEntry */
-html:has(.deck-select-page) {
+html:has(.deck-select-page):not([data-gnh-shell="web"]) {
   position: relative;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-html:has(.deck-select-page)::before {
+html:has(.deck-select-page):not([data-gnh-shell="web"])::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -18,13 +18,13 @@ html:has(.deck-select-page)::before {
   background-size: 100% 100%;
 }
 
-html:has(.deck-select-page) body,
-html:has(.deck-select-page) #root {
+html:has(.deck-select-page):not([data-gnh-shell="web"]) body,
+html:has(.deck-select-page):not([data-gnh-shell="web"]) #root {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.app:has(.deck-select-page) {
+.app:has(.deck-select-page):not(.app--web) {
   background: transparent !important;
   background-image: none !important;
   animation: none;
@@ -33,7 +33,7 @@ html:has(.deck-select-page) #root {
   padding-bottom: 0;
 }
 
-.app:has(.deck-select-page)::before {
+.app:has(.deck-select-page):not(.app--web)::before {
   display: none;
 }
 

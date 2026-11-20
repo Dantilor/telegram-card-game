@@ -3,7 +3,7 @@
 .app.app--web:has(.gnh-inside) {
   padding: 0;
   overflow: hidden;
-  background: #887099;
+  background: var(--web-shell-mauve, #887099);
 }
 
 .app.app--web:has(.gnh-inside):has(.rt-page),
@@ -48,7 +48,7 @@ html:has(.gnh-inside .rt-play)::before {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: #887099;
+  background: var(--web-shell-mauve, #887099);
   -webkit-overflow-scrolling: touch;
   --layout-phone-max: none;
   --layout-content-max: 100%;

@@ -9,13 +9,16 @@ function useThrottledAppHeight() {
   const update = () => {
     if (typeof document === 'undefined') return
     const tg = getTg() as { viewportStableHeight?: number; viewportHeight?: number } | null
+    const vv = typeof window !== 'undefined' ? window.visualViewport?.height ?? 0 : 0
+    const client = document.documentElement?.clientHeight ?? 0
+    const webFill = Math.max(window.innerHeight || 0, vv || 0, client || 0)
     const h =
       (typeof tg?.viewportStableHeight === 'number' && tg.viewportStableHeight > 0
         ? tg.viewportStableHeight
         : typeof tg?.viewportHeight === 'number' && tg.viewportHeight > 0
           ? tg.viewportHeight
-          : window.innerHeight)
-    document.documentElement.style.setProperty('--app-height', `${h}px`)
+          : webFill)
+    document.documentElement.style.setProperty('--app-height', `${Math.round(h)}px`)
     if (tg) {
       document.documentElement.dataset.tgMobile = '1'
     } else {

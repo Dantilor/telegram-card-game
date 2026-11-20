@@ -1,12 +1,13 @@
-/* Comics catalog — extends games-page theme tokens from Games.css */
+/* Comics catalog — extends games-page theme tokens from Games.css.
+   WEB shell keeps opaque mauve (no transparent punch / theme ::before). */
 
-html:has(.comics-page) {
+html:has(.comics-page):not([data-gnh-shell="web"]) {
   position: relative;
   background-color: transparent !important;
   background-image: none !important;
 }
 
-html:has(.comics-page)::before {
+html:has(.comics-page):not([data-gnh-shell="web"])::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -19,13 +20,13 @@ html:has(.comics-page)::before {
   background-size: 100% 100%;
 }
 
-html:has(.comics-page) body,
-html:has(.comics-page) #root {
+html:has(.comics-page):not([data-gnh-shell="web"]) body,
+html:has(.comics-page):not([data-gnh-shell="web"]) #root {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.app:has(.comics-page) {
+.app:has(.comics-page):not(.app--web) {
   background: transparent !important;
   background-image: none !important;
   animation: none;
@@ -34,7 +35,7 @@ html:has(.comics-page) #root {
   padding-bottom: 0;
 }
 
-.app:has(.comics-page)::before {
+.app:has(.comics-page):not(.app--web)::before {
   display: none;
 }
 

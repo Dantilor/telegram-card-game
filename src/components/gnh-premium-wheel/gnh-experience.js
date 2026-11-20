@@ -97,9 +97,8 @@ export function mountGnhExperience(root, options = {}) {
         ? (plan.days === null ? 'Продлить навсегда' : ('Продлить · ' + plan.days + ' дней'))
         : (plan.cta || 'Выбрать тариф');
       return '<article class="' + classes.join(' ') + '" data-action="select-plan" data-plan="' + esc(plan.id) + '" role="button" tabindex="0" aria-pressed="' + (selected?'true':'false') + '">'
-        + (plan.badge ? '<span class="gnh-plan-badge">' + esc(plan.badge) + '</span>' : '')
         + (premiumOn && selected ? '<span class="gnh-plan-owned-badge">Premium активен</span>' : '')
-        + '<div class="gnh-plan-top"><span class="gnh-plan-icon">' + icon(plan.days===null?'diamond':plan.days===90?'spark':'moon') + '</span><h3>' + esc(plan.label) + '</h3><p>' + esc(plan.description) + '</p></div>'
+        + '<div class="gnh-plan-top"><div class="gnh-plan-mark"><span class="gnh-plan-icon">' + icon(plan.days===null?'diamond':plan.days===90?'spark':'moon') + '</span>' + (plan.badge ? '<span class="gnh-plan-badge">' + esc(plan.badge) + '</span>' : '') + '</div><h3>' + esc(plan.label) + '</h3><p>' + esc(plan.description) + '</p></div>'
         + '<p class="gnh-price">' + esc(rub(plan.price)) + '</p>'
         + '<p class="gnh-price-term">' + (plan.days===null?'одна покупка · без продлений':('за ' + plan.days + ' дней · без автопродления')) + '</p>'
         + '<div class="gnh-saving">' + (saving ? ('<del>' + esc(rub(short.price * plan.days / short.days)) + '</del><span>Экономия ' + esc(rub(saving)) + '</span>') : (plan.days===null?'':(icon('heart') + ' Подойдёт, чтобы попробовать'))) + '</div>'

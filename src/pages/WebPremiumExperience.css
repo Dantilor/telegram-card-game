@@ -93,10 +93,31 @@
     linear-gradient(120deg, rgba(90, 68, 40, 0.35), rgba(42, 30, 58, 0.45)) !important;
   box-shadow: 0 0 36px rgba(212, 170, 90, 0.14), inset 0 0 28px rgba(255, 228, 170, 0.05) !important;
 }
+.gnh-experience .gnh-plan-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.gnh-experience .gnh-plan-mark .gnh-plan-icon {
+  margin-bottom: 0 !important;
+}
+.gnh-experience .gnh-plan-badge {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
 .gnh-experience .gnh-plan-featured .gnh-plan-badge {
   background: linear-gradient(100deg, #f0d7a2, #d4a85e) !important;
   color: #3a2a12 !important;
   border-color: rgba(255, 236, 190, 0.7) !important;
+}
+.gnh-experience .gnh-plans {
+  padding-top: 0 !important;
 }
 .gnh-experience .gnh-plan-selected,
 .gnh-experience .gnh-plan.gnh-plan-featured.gnh-plan-selected {

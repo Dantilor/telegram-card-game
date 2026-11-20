@@ -97,37 +97,81 @@ Compose для production **не обязателен**.
 
 ---
 
-## 6. Миграции и проверки
+## 6. Миграции и проверки (два этапа)
 
-Только аддитивные:
+Скрипт **не** автозапускается из контейнера. По умолчанию / `--through-022` **никогда не применяет 023**.
 
-1. `012_web_sessions.sql`  
-2. `013_web_session_profile.sql`  
-3. `014_legal_confirmation_source_web.sql`  
+### Phase A — через 022 + grants (WEB-тарифы ещё inactive)
 
-**Не** трогают `subscriptions` / `payments` данные.
-
-Скрипт (не автозапуск контейнера):
+После деплоя audience-aware API с `GNH_WEB_ENABLED=0` и бэкапа `gnh_supabase`:
 
 ```bash
 cd server
-node scripts/apply-production-web-migrations.mjs --dry-run
-# после бэкапа и разрешения:
-GNH_ALLOW_PROD_WEB_MIGRATE=1 CONFIRM_PRODUCTION_WEB_MIGRATE=YES \
-  PRODUCTION_DATABASE_URL='…/gnh_supabase' \
-  node scripts/apply-production-web-migrations.mjs
+npm run build:api
+npm run migrate:production-web:through-022:dry
+npm run migrate:production-web:through-022:preflight
+
+GNH_ALLOW_PROD_WEB_MIGRATE=1 \
+CONFIRM_PRODUCTION_WEB_MIGRATE=YES \
+CONFIRM_PRODUCTION_BACKUP=YES \
+PRODUCTION_DATABASE_URL='postgresql://…/gnh_supabase?sslmode=verify-full' \
+DATABASE_TLS_CA_FILE=/path/to/timeweb-ca.crt \
+npm run migrate:production-web:through-022
 ```
 
-Проверки после миграции:
+Проверки Phase A:
 
 ```sql
-SELECT to_regclass('public.web_sessions');
 SELECT column_name FROM information_schema.columns
-  WHERE table_name='web_sessions' AND column_name IN ('display_name','username');
-SELECT pg_get_constraintdef(oid) FROM pg_constraint
-  WHERE conname='legal_evidence_source_check';
--- Premium sanity
+ WHERE table_name='plans' AND column_name='audience';
+SELECT plan_id, price_rub, is_active, audience
+  FROM plans
+ WHERE plan_id IN (
+   'premium_1m','premium_3m','premium_lifetime',
+   'premium_web_1m','premium_web_3m','premium_web_lifetime'
+ )
+ ORDER BY plan_id;
+-- Telegram prices must stay 259 / 399 / 990
+-- WEB rows must exist with is_active = false
 SELECT count(*) FROM subscriptions WHERE active_until > now();
+```
+
+Smoke Mini App: тарифы 259 / 399 / 990, оплата Telegram-канала.
+
+### Phase B — только 023 (активация WEB-тарифов)
+
+Только после подтверждения, что новый API фильтрует `/api/plans` по audience:
+
+```bash
+cd server
+npm run migrate:production-web:activate-023:dry
+npm run migrate:production-web:activate-023:preflight
+
+GNH_ALLOW_PROD_WEB_MIGRATE=1 \
+CONFIRM_PRODUCTION_WEB_MIGRATE=YES \
+CONFIRM_PRODUCTION_BACKUP=YES \
+CONFIRM_PRODUCTION_WEB_PLANS_ACTIVATE=YES \
+PRODUCTION_DATABASE_URL='postgresql://…/gnh_supabase?sslmode=verify-full' \
+DATABASE_TLS_CA_FILE=/path/to/timeweb-ca.crt \
+npm run migrate:production-web:activate-023
+```
+
+Проверки Phase B:
+
+```sql
+SELECT plan_id, price_rub, is_active, audience FROM plans
+ WHERE audience = 'web' ORDER BY plan_id;
+-- expect active 259 / 499 / 1190
+-- GET /api/plans           → только telegram
+-- GET /api/plans?audience=web → web rows
+```
+
+### Откат API на `ac49d0c` после Phase B
+
+**Сначала** деактивировать WEB-тарифы, **потом** откатывать образ:
+
+```sql
+UPDATE plans SET is_active = false WHERE audience = 'web';
 ```
 
 ---
@@ -168,15 +212,16 @@ OIDC callback отклоняет остальных (`owner_only`). Публич
 
 ## 9. Пошаговый план запуска (после разрешения)
 
-1. Backup `gnh_supabase`.  
-2. Dry-run миграций → apply 012–014.  
-3. BotFather: Login Widget URLs для `WEB-DOMAIN` (webhook без изменений).  
-4. Пересобрать Timeweb app с `Dockerfile.production` (WEB flags ещё `0`).  
-5. Проверить `GET /api/health`, Mini App login, webhook, `/api/me`.  
-6. Привязать `WEB-DOMAIN`.  
-7. Выставить OIDC env + `WEB_OWNER_TELEGRAM_IDS` + `GNH_WEB_ENABLED=1` + `GNH_SERVE_WEB_STATIC=1`.  
-8. Личный smoke: login, Premium, 1–2 party games, тестовая оплата только если отдельно разрешено.  
-9. Снять owner allowlist только когда готовы к публичному WEB.
+1. Backup `gnh_supabase` (+ подтвердить ключ к `gnh-delta.enc` если используете).  
+2. Deploy API commit с audience-aware `/api/plans`, env: `GNH_WEB_ENABLED=0`, `GNH_SERVE_WEB_STATIC=0`.  
+3. Smoke Telegram Mini App (тарифы 259/399/990) **до** любых миграций 022/023.  
+4. Phase A: `--through-022` (см. §6). Повторный smoke Mini App.  
+5. Phase B: `--activate-023` + `CONFIRM_PRODUCTION_WEB_PLANS_ACTIVATE=YES`.  
+6. BotFather: Login Widget URLs для `play.gamenighthost.ru` (webhook без изменений).  
+7. Привязать домен + `WEB_PUBLIC_ORIGIN` / `YOOKASSA_RETURN_URL_WEB` / CORS.  
+8. Включить `GNH_WEB_ENABLED=1` + `GNH_SERVE_WEB_STATIC=1` (сначала owner allowlist).  
+9. Личный smoke WEB: `/premium`, `/wheel`, checkout.  
+10. Снять owner allowlist только для публичного WEB.
 
 ---
 

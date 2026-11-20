@@ -29,9 +29,15 @@
     "local:pg:start": "node scripts/start-local-embedded-pg.mjs",
     "local:pg:stop": "node scripts/start-local-embedded-pg.mjs --stop",
     "dev:web-local": "node scripts/dev-web-local.mjs",
-    "migrate:production-web:dry": "node scripts/apply-production-web-migrations.mjs --dry-run",
-    "migrate:production-web": "node scripts/apply-production-web-migrations.mjs",
-    "migrate:production-web:preflight": "node scripts/apply-production-web-migrations.mjs --preflight"
+    "migrate:production-web:dry": "node scripts/apply-production-web-migrations.mjs --dry-run --through-022",
+    "migrate:production-web": "node scripts/apply-production-web-migrations.mjs --through-022",
+    "migrate:production-web:preflight": "node scripts/apply-production-web-migrations.mjs --preflight --through-022",
+    "migrate:production-web:through-022": "node scripts/apply-production-web-migrations.mjs --through-022",
+    "migrate:production-web:through-022:dry": "node scripts/apply-production-web-migrations.mjs --dry-run --through-022",
+    "migrate:production-web:through-022:preflight": "node scripts/apply-production-web-migrations.mjs --preflight --through-022",
+    "migrate:production-web:activate-023": "node scripts/apply-production-web-migrations.mjs --activate-023",
+    "migrate:production-web:activate-023:dry": "node scripts/apply-production-web-migrations.mjs --dry-run --activate-023",
+    "migrate:production-web:activate-023:preflight": "node scripts/apply-production-web-migrations.mjs --preflight --activate-023"
   },
   "dependencies": {
     "compression": "^1.7.5",

@@ -170,6 +170,7 @@ export function shouldReleaseLeaseOnPath(pathname: string): boolean {
     '/favorites',
     '/profile',
     '/premium',
+    '/login',
     '/recover',
     '/email/confirm',
     '/link-web',

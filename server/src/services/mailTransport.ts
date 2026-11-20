@@ -10,6 +10,7 @@
 
 import nodemailer from 'nodemailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport/index.js'
+import { isProductionLikeRuntime } from '../config/runtimeFlags.js'
 
 export type MailMessage = {
   to: string
@@ -62,18 +63,6 @@ let nodemailerFactory: NodemailerFactory = (options) =>
 /** Test helper: inject a mock createTransport. Pass null to restore. */
 export function setNodemailerFactoryForTests(factory: NodemailerFactory | null): void {
   nodemailerFactory = factory ?? ((options) => nodemailer.createTransport(options) as NodemailerTransportLike)
-}
-
-function isProductionLike(): boolean {
-  if (process.env.NODE_ENV === 'production') return true
-  if (process.env.GNH_PRODUCTION === '1' || process.env.GNH_PRODUCTION === 'true') return true
-  if (process.env.TIMEWEB === '1' || process.env.TIMEWEB === 'true') return true
-  return false
-}
-
-function envFlag(name: string): boolean {
-  const v = (process.env[name] || '').trim().toLowerCase()
-  return v === '1' || v === 'true' || v === 'yes'
 }
 
 function trimEnv(name: string): string {
@@ -144,7 +133,7 @@ function mailSendError(code: string, message: string): Error & { status: number;
  * Read-only SMTP configuration check. Never returns secrets or full FROM if unused.
  */
 export function diagnoseSmtpConfig(): SmtpConfigDiagnosis {
-  const productionLike = isProductionLike()
+  const productionLike = isProductionLikeRuntime()
   const enabled = smtpEnabled()
   const fromOk = fromConfigured()
   const relayOk = relayConfigured()
@@ -358,7 +347,7 @@ export function createSmtpMailTransport(opts?: { allowTestFallback?: boolean }):
   }
 
   // Incomplete config
-  if (opts?.allowTestFallback === false || isProductionLike()) {
+  if (opts?.allowTestFallback === false || isProductionLikeRuntime()) {
     if (relayConfigured() === false && !directSmtpConfigured()) {
       throw new Error(
         'SMTP requires SMTP_RELAY_URL or SMTP_HOST+SMTP_USER+SMTP_PASSWORD in production'
@@ -374,7 +363,7 @@ let cached: MailTransport | null = null
 
 export function getMailTransport(): MailTransport {
   if (cached) return cached
-  if (isProductionLike()) {
+  if (isProductionLikeRuntime()) {
     if (!smtpConfigured()) {
       throw new Error(
         'SMTP must be configured in production (SMTP_ENABLED, SMTP_FROM, and SMTP_RELAY_URL or SMTP_HOST credentials)'

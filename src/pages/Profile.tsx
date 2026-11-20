@@ -122,8 +122,15 @@ function Profile() {
     setRestoreLoading(true)
     try {
       const result = await refreshPremium()
-      const toast = result?.isPremium ? '✅ Покупки восстановлены' : 'Покупок не найдено'
-      setRestoreStatus(toast)
+      if (result?.isPremium) {
+        setRestoreStatus('✅ Покупки восстановлены')
+        return
+      }
+      if (web) {
+        navigate('/login')
+        return
+      }
+      setRestoreStatus('Покупок не найдено')
     } catch {
       setRestoreStatus('Ошибка синхронизации')
     } finally {
@@ -133,7 +140,7 @@ function Profile() {
         restoreTimerRef.current = null
       }, 2500)
     }
-  }, [refreshPremium])
+  }, [navigate, refreshPremium, web])
 
   const handleLinkTelegram = useCallback(async () => {
     if (!web) return
@@ -330,6 +337,13 @@ function Profile() {
   const handleLogout = useCallback(async () => {
     if (!web) return
     haptic('light')
+    const verified = Boolean(webSession.session?.emailVerified)
+    if (!verified) {
+      const ok = window.confirm(
+        'Почта ещё не подтверждена. После выхода Premium на этом устройстве может быть недоступен, пока вы не войдёте по email. Выйти?'
+      )
+      if (!ok) return
+    }
     setLogoutBusy(true)
     try {
       await webSession.logout()
@@ -519,7 +533,9 @@ function Profile() {
                   onClick={() => void handleLinkTelegram()}
                   disabled={restoreLoading || tgRestore?.phase === 'waiting'}
                 >
-                  {tgRestore?.phase === 'waiting' ? 'Ожидаем подтверждение…' : 'Связать с Telegram'}
+                  {tgRestore?.phase === 'waiting'
+                    ? 'Ожидаем подтверждение…'
+                    : 'Связать с Telegram (необязательно)'}
                 </button>
               )}
               {web && tgLinked && !tgRestore && (
@@ -562,7 +578,7 @@ function Profile() {
               <p className="profile-pass__desc">
                 Все игры, колоды, избранное и 18+ режимы — без автосписаний.
                 {web
-                  ? ' Покупка сохраняется на этом устройстве; email для переноса — необязателен.'
+                  ? ' Покупка привязана к аккаунту устройства. Подтвердите email, чтобы вернуть Premium на другом устройстве. Telegram — по желанию.'
                   : ''}
               </p>
               <div className="profile-pass__perks">
@@ -597,7 +613,9 @@ function Profile() {
                   onClick={() => void handleLinkTelegram()}
                   disabled={restoreLoading || tgRestore?.phase === 'waiting'}
                 >
-                  {tgRestore?.phase === 'waiting' ? 'Ожидаем подтверждение…' : 'Связать с Telegram'}
+                  {tgRestore?.phase === 'waiting'
+                    ? 'Ожидаем подтверждение…'
+                    : 'Связать с Telegram (необязательно)'}
                 </button>
               )}
               {web && tgLinked && !tgRestore && (
@@ -653,15 +671,15 @@ function Profile() {
                     onClick={() => void handleEmailConfirm()}
                     disabled={emailBusy}
                   >
-                    {emailBusy ? 'Отправка…' : 'Подтвердить почту'}
+                    {emailBusy ? 'Отправка…' : 'Отправить ссылку ещё раз'}
                   </button>
                 )}
               </>
             ) : (
               <>
                 <p className="profile-pass__desc">
-                  Почта появится после покупки Premium (email для чека) или можно указать её здесь
-                  для восстановления доступа.
+                  Привяжите email — это регистрация аккаунта. Позже вы сможете войти с другого
+                  устройства и вернуть Premium. Бесплатные игры работают и без почты.
                 </p>
                 <label className="profile-pass__email-label">
                   Ваш email
@@ -680,14 +698,14 @@ function Profile() {
                   onClick={() => void handleEmailConfirm()}
                   disabled={emailBusy || !emailDraft.trim()}
                 >
-                  {emailBusy ? 'Отправка…' : 'Подтвердить почту'}
+                  {emailBusy ? 'Отправка…' : 'Привязать почту'}
                 </button>
               </>
             )}
             {emailStatus && <span className="profile-pass__toast">{emailStatus}</span>}
             <p className="profile-pass__desc">
-              Потеряли доступ к cookie?{' '}
-              <Link to="/recover">Восстановить доступ</Link>
+              Уже есть аккаунт?{' '}
+              <Link to="/login">Войти по email</Link>
             </p>
           </section>
         )}

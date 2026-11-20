@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { haptic } from '../utils/telegram'
@@ -17,6 +17,7 @@ const EXPECTING_PAYMENT_FLAG = 'tcg_expecting_payment'
 
 function PremiumPage() {
   const handleBack = useBack('/')
+  const navigate = useNavigate()
   const { isPremium, activeUntil, refreshPremium } = usePremium()
   const [searchParams, setSearchParams] = useSearchParams()
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
@@ -70,8 +71,15 @@ function PremiumPage() {
     setRestoreLoading(true)
     try {
       const result = await refreshPremium()
-      const toast = result?.isPremium ? '✅ Покупки восстановлены' : 'Покупок не найдено'
-      setRestoreStatus(toast)
+      if (result?.isPremium) {
+        setRestoreStatus('✅ Покупки восстановлены')
+        return
+      }
+      if (isWebShell()) {
+        navigate('/login')
+        return
+      }
+      setRestoreStatus('Покупок не найдено')
     } catch {
       setRestoreStatus('Ошибка синхронизации')
     } finally {
@@ -81,7 +89,7 @@ function PremiumPage() {
         restoreTimerRef.current = null
       }, 2500)
     }
-  }, [refreshPremium])
+  }, [navigate, refreshPremium])
 
   if (isWebShell() && isPremium) {
     return (
@@ -109,7 +117,7 @@ function PremiumPage() {
               onClick={handleRestorePurchase}
               disabled={restoreLoading}
             >
-              {restoreLoading ? 'Загрузка…' : 'Восстановить покупки'}
+              {restoreLoading ? 'Загрузка…' : isWebShell() ? 'Войти по email' : 'Восстановить покупки'}
             </button>
             {restoreStatus && <span className="premium-page__toast">{restoreStatus}</span>}
           </div>

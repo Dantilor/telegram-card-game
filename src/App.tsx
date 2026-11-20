@@ -289,6 +289,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/wheel" element={<WebPremiumExperience initialView="wheel" />} />
+        <Route path="/login" element={<WebPurchaseRecover />} />
         <Route path="/recover" element={<WebPurchaseRecover />} />
         <Route path="/email/confirm" element={<WebEmailConfirm />} />
         <Route path="/link-web" element={<WebTelegramLink />} />

@@ -6,8 +6,8 @@ import HomeButton from '../components/HomeButton'
 import './Profile.css'
 
 /**
- * Restore WEB Premium after cookie loss via magic-link email.
- * No password / OTP codes / Telegram login required.
+ * WEB email login / Premium restore via magic link.
+ * Same account system as anonymous sessions + bind — no second identity store.
  */
 export default function WebPurchaseRecover() {
   const [email, setEmail] = useState('')
@@ -23,7 +23,7 @@ export default function WebPurchaseRecover() {
       await startEmailRecover(email.trim())
       setSent(true)
       setStatus(
-        'Проверьте почту. Мы отправили ссылку для входа, если этот адрес связан с вашим аккаунтом.'
+        'Проверьте почту. Мы отправили ссылку для входа, если этот адрес уже подтверждён или связан с покупкой.'
       )
     } catch {
       setStatus('Не удалось отправить ссылку. Попробуйте позже.')
@@ -35,7 +35,7 @@ export default function WebPurchaseRecover() {
   if (!isWebShell()) {
     return (
       <div className="profile-page">
-        <p>Восстановление WEB-покупок доступно только на сайте.</p>
+        <p>Вход по email доступен только на сайте GameNight Host.</p>
         <HomeButton />
       </div>
     )
@@ -47,11 +47,11 @@ export default function WebPurchaseRecover() {
         <HomeButton />
       </div>
       <section className="profile-pass">
-        <p className="profile-pass__eyebrow">Восстановление</p>
-        <p className="profile-pass__title">С возвращением!</p>
+        <p className="profile-pass__eyebrow">Вход</p>
+        <p className="profile-pass__title">Войти по email</p>
         <p className="profile-pass__desc">
-          Введите почту, которую указали при покупке. Мы отправим ссылку, чтобы вернуть ваши игры
-          и Premium.
+          Введите подтверждённую почту — пришлём одноразовую ссылку. Premium и покупки вернутся на
+          этом устройстве. Бесплатные игры доступны без входа.
         </p>
         {!sent && (
           <>
@@ -81,6 +81,13 @@ export default function WebPurchaseRecover() {
         {sent && (
           <p className="profile-pass__desc">
             <Link to="/">На главную</Link> · <Link to="/profile">Профиль</Link>
+          </p>
+        )}
+        {!sent && (
+          <p className="profile-pass__desc">
+            Ещё нет почты на этом устройстве? Откройте{' '}
+            <Link to="/profile">Профиль</Link> и нажмите «Привязать почту» — это и есть регистрация.
+            Telegram можно связать позже, по желанию.
           </p>
         )}
       </section>

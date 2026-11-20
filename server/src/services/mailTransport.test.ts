@@ -24,6 +24,8 @@ const SMTP_KEYS = [
   'NODE_ENV',
   'GNH_PRODUCTION',
   'TIMEWEB',
+  'RENDER',
+  'RENDER_EXTERNAL_URL',
 ] as const
 
 function snapshotEnv(): Record<string, string | undefined> {
@@ -337,6 +339,22 @@ test('sendOneShotMail refuses test fallback', async () => {
     await assert.rejects(() =>
       sendOneShotMail({ to: 'a@b.c', subject: 'x', text: 'y' })
     )
+  } finally {
+    restoreEnv(prev)
+  }
+})
+
+test('TIMEWEB=1 marks productionLike and refuses incomplete SMTP test fallback', () => {
+  const prev = snapshotEnv()
+  try {
+    clearSmtpEnv()
+    process.env.NODE_ENV = 'development'
+    process.env.TIMEWEB = '1'
+    process.env.SMTP_ENABLED = '1'
+    process.env.SMTP_FROM = 'noreply@example.test'
+    const d = diagnoseSmtpConfig()
+    assert.equal(d.productionLike, true)
+    assert.throws(() => createSmtpMailTransport({ allowTestFallback: true }), /SMTP/)
   } finally {
     restoreEnv(prev)
   }

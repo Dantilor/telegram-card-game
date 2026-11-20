@@ -321,15 +321,23 @@ export default function PremiumOverlay({
     setRestoreLoading(true)
     try {
       const result = await refresh()
-      setRestoreToast(result?.isPremium ? '✅ Покупки восстановлены' : 'Покупок не найдено')
       if (result?.isPremium) {
+        setRestoreToast('✅ Покупки восстановлены')
         setSuccess(true)
         setError(null)
         setTimeout(() => {
           onClose()
           setSuccess(false)
         }, 1500)
+        return
       }
+      if (isWebShell()) {
+        // Cookie/session miss: email magic-link login restores the same WEB account.
+        onClose()
+        navigate('/login')
+        return
+      }
+      setRestoreToast('Покупок не найдено')
     } catch {
       setRestoreToast('Ошибка синхронизации')
     } finally {
@@ -633,7 +641,11 @@ export default function PremiumOverlay({
               disabled={restoreLoading}
               aria-busy={restoreLoading}
             >
-              {restoreLoading ? 'Проверяем покупки…' : 'Восстановить покупки'}
+              {restoreLoading
+                ? 'Проверяем покупки…'
+                : isWebShell()
+                  ? 'Войти по email'
+                  : 'Восстановить покупки'}
             </button>
           </aside>
         </div>
@@ -720,7 +732,11 @@ export default function PremiumOverlay({
       >
         <img src={iconRestorePurchases} alt="" className="premium-overlay__btn-icon premium-overlay__btn-icon--restore" decoding="async" aria-hidden />
         <span className="premium-overlay__btn-label">
-          {restoreLoading ? 'Проверяем покупки…' : 'Восстановить покупки'}
+          {restoreLoading
+            ? 'Проверяем покупки…'
+            : isWebShell()
+              ? 'Войти по email'
+              : 'Восстановить покупки'}
         </span>
       </button>
     </div>

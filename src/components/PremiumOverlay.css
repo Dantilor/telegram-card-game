@@ -1287,6 +1287,8 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy[ari
 html[data-gnh-shell="web"] .premium-overlay__card--checkout-only.premium-checkout {
   width: min(100%, 440px);
   max-height: min(94vh, 860px);
+  display: flex;
+  flex-direction: column;
   border-radius: 24px;
   border: 1px solid rgba(227, 199, 255, 0.22);
   background:
@@ -1332,9 +1334,11 @@ html[data-gnh-shell="web"] .premium-checkout__close.premium-overlay__close {
   flex-shrink: 0;
 }
 html[data-gnh-shell="web"] .premium-checkout__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 16px 22px 12px;
   overflow-y: auto;
-  max-height: calc(min(94vh, 860px) - 180px);
+  -webkit-overflow-scrolling: touch;
 }
 html[data-gnh-shell="web"] .premium-checkout__eyebrow {
   margin: 0;
@@ -1484,9 +1488,10 @@ html[data-gnh-shell="web"] .premium-offer--checkout .premium-offer__hint {
   color: #a992bb;
 }
 html[data-gnh-shell="web"] .premium-overlay__dock--checkout {
+  flex: 0 0 auto;
   padding: 12px 18px max(14px, env(safe-area-inset-bottom));
   border-top: 1px solid rgba(214, 183, 238, 0.16);
-  background: rgba(12, 8, 20, 0.55);
+  background: rgba(12, 8, 20, 0.92);
   gap: 8px;
 }
 html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__btn--buy {
@@ -1499,19 +1504,29 @@ html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__bt
 }
 html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__btn--restore {
   min-height: 44px;
-  background: transparent;
-  border: 0;
-  color: #d4bceb;
+  margin-bottom: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(214, 183, 238, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  color: #efe4f8;
 }
 @media (max-width: 767px) {
   html[data-gnh-shell="web"] .premium-overlay__card--checkout-only.premium-checkout {
     width: 100%;
     max-width: none;
+    /* Fit inside overlay paddings so dock (Войти по email) stays on-screen */
+    max-height: calc(
+      100dvh
+      - max(56px, calc(env(safe-area-inset-top, 0px) + 18px))
+      - max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px))
+      - 8px
+    );
     border-radius: 20px 20px 16px 16px;
     margin-top: 0;
   }
 
   html[data-gnh-shell="web"] .premium-overlay__card--checkout-only .premium-checkout__top {
+    flex: 0 0 auto;
     padding: 14px 14px 6px 16px;
   }
 
@@ -1521,5 +1536,14 @@ html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__bt
     z-index: 3;
     min-height: 44px;
     touch-action: manipulation;
+  }
+
+  html[data-gnh-shell="web"] .premium-overlay__dock--checkout {
+    padding: 10px 14px max(18px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+    gap: 10px;
+  }
+
+  html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__btn--restore {
+    min-height: 48px;
   }
 }

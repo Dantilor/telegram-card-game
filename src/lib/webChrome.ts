@@ -23,9 +23,42 @@ export function getWebScrollRoot(): HTMLElement | null {
   if (typeof document === 'undefined') return null
   return (
     (document.querySelector('.app.app--web > .gnh-inside') as HTMLElement | null) ||
+    (document.querySelector('.app.app--web > .gnh-home-scroll') as HTMLElement | null) ||
     (document.querySelector('.app.app--web .gnh-home-scroll') as HTMLElement | null) ||
     (document.querySelector('.app.app--web') as HTMLElement | null)
   )
+}
+
+/** All containers that may own the scroll on different phones / browsers. */
+export function getWebScrollSources(): Array<HTMLElement | Window> {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return []
+  const nodes = [
+    document.querySelector('.app.app--web > .gnh-inside') as HTMLElement | null,
+    document.querySelector('.app.app--web > .gnh-home-scroll') as HTMLElement | null,
+    document.querySelector('.app.app--web') as HTMLElement | null,
+    document.documentElement,
+    document.body,
+  ]
+  const seen = new Set<HTMLElement | Window>()
+  const out: Array<HTMLElement | Window> = []
+  for (const node of nodes) {
+    if (!node || seen.has(node)) continue
+    seen.add(node)
+    out.push(node)
+  }
+  out.push(window)
+  return out
+}
+
+export function getWebScrollY(): number {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return 0
+  let y = window.scrollY || window.pageYOffset || 0
+  for (const source of getWebScrollSources()) {
+    if (source === window) continue
+    const el = source as HTMLElement
+    if (typeof el.scrollTop === 'number' && el.scrollTop > y) y = el.scrollTop
+  }
+  return y
 }
 
 export function scrollWebShellToTop(behavior: ScrollBehavior = 'auto'): void {

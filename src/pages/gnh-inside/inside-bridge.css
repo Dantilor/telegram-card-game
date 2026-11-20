@@ -1109,7 +1109,7 @@ html:has(.gnh-inside--kit-experience) body,
   display: none !important;
 }
 .gnh-inside.gnh-inside--kit-experience .web-premium-experience,
-.gnh-inside.gnh-inside--kit-experience .gnh-experience {
+.gnh-inside.gnh-inside--kit-experience .premium-page--web-experience {
   width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
@@ -1117,4 +1117,16 @@ html:has(.gnh-inside--kit-experience) body,
   border-radius: 0 !important;
   box-shadow: none !important;
   background: transparent !important;
+}
+.gnh-inside.gnh-inside--kit-experience .gnh-experience {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background:
+    radial-gradient(ellipse at 86% 7%, #54336c4f, transparent 36%),
+    radial-gradient(ellipse at 0 19%, #5c3b8047, transparent 29%),
+    #151025 !important;
 }

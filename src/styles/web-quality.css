@@ -13,17 +13,39 @@ html[data-gnh-shell="web"] .app.app--web {
   background-color: var(--web-shell-mauve, #887099);
 }
 
-/* Premium + Wheel keep original dark kit field (not mauve) */
+/* Premium + Wheel: original kit night field — beat mauve on every shell layer */
 html[data-gnh-shell="web"]:has(.gnh-inside--kit-experience),
 html[data-gnh-shell="web"]:has(.gnh-inside--kit-experience) body,
-html[data-gnh-shell="web"]:has(.gnh-inside--kit-experience) #root {
+html[data-gnh-shell="web"]:has(.gnh-inside--kit-experience) #root,
+html[data-gnh-shell="web"] .app.app--web:has(.gnh-inside--kit-experience),
+html[data-gnh-shell="web"] .app.app--web > .gnh-inside.gnh-inside--kit-experience,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside.gnh-inside--kit-experience,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside.gnh-inside--kit-experience > .content,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside.gnh-inside--kit-experience .web-premium-experience,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside.gnh-inside--kit-experience .premium-page--web-experience {
   background-color: #151025 !important;
   background-image: none !important;
 }
 
-html[data-gnh-shell="web"] .app.app--web:has(.gnh-inside--kit-experience) {
-  background-color: #151025 !important;
-  background-image: none !important;
+html[data-gnh-shell="web"] .app.app--web > .gnh-inside.gnh-inside--kit-experience,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside.gnh-inside--kit-experience {
+  background:
+    radial-gradient(ellipse at 86% 7%, #54336c4f, transparent 36%),
+    radial-gradient(ellipse at 0 19%, #5c3b8047, transparent 29%),
+    #151025 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Kit owns its night canvas — restore ambient, do not punch transparent hole */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside.gnh-inside--kit-experience .gnh-experience {
+  background:
+    radial-gradient(ellipse at 86% 7%, #54336c4f, transparent 36%),
+    radial-gradient(ellipse at 0 19%, #5c3b8047, transparent 29%),
+    #151025 !important;
+  min-height: 100svh !important;
 }
 
 /* Kill manufactured empty height from 100dvh content floors */
@@ -66,8 +88,9 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Unified bottom clearance — one token, no double padding */
-html[data-gnh-shell="web"] .app.app--web .gnh-inside,
+/* Unified bottom clearance — one token, no double padding.
+   Kit Premium/Wheel have no bottom nav — do not reserve empty strip. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside:not(.gnh-inside--kit-experience),
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
   padding-bottom: var(--web-bottom-nav-clear) !important;
 }
@@ -133,9 +156,15 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside > .web-site-footer {
   display: none !important;
 }
 
-html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside,
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside:not(.gnh-inside--kit-experience),
 html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-home-ref {
   padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Kit pages: no leftover bottom strip (nav clearance / immersive pad) */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside.gnh-inside--kit-experience,
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside.gnh-inside--kit-experience {
+  padding-bottom: 0 !important;
 }
 
 @media (min-width: 900px) {
@@ -143,7 +172,7 @@ html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-home-ref {
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav {
     display: none !important;
   }
-  html[data-gnh-shell="web"] .app.app--web .gnh-inside,
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside:not(.gnh-inside--kit-experience),
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
     padding-bottom: 24px !important;
   }

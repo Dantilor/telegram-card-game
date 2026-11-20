@@ -17,12 +17,16 @@
   color: rgba(255, 220, 220, 0.95);
 }
 
-/* Cyrillic «у» via Segoe local face in GnhNight @font-face; keep stack as fallback. */
+/* Cyrillic «у» via Segoe local face in GnhNight @font-face; keep stack as fallback.
+   Keep kit night canvas — do not flatten to transparent over mauve shell. */
 .gnh-experience {
   font-family: GnhNight, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
   min-height: auto !important;
   overflow: visible !important;
-  background: transparent !important;
+  background:
+    radial-gradient(ellipse at 86% 7%, #54336c4f, transparent 36%),
+    radial-gradient(ellipse at 0 19%, #5c3b8047, transparent 29%),
+    #151025 !important;
 }
 .gnh-experience .gnh-header,
 .gnh-experience .gnh-main,

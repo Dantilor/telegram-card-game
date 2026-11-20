@@ -761,7 +761,6 @@ html:has(.gnh-inside .rt-play)::before {
 
 .app.app--web .gnh-inside .game-page__category-card.is-active,
 .app.app--web .gnh-inside .truth-dare-setup__category-card.is-active {
-.app.app--web .gnh-inside .is-active {
   background: linear-gradient(115deg, #dca8ef79, #d7b4ee4d) !important;
   border-color: #ffebffbf !important;
   color: white !important;

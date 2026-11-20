@@ -8,13 +8,16 @@ describe('web UX pack helpers', () => {
     expect(sanitizeWebDisplayName('a'.repeat(100)).length).toBe(40)
   })
 
-  it('isGameplayPath hides install UI in game flows only', () => {
+  it('isGameplayPath hides install UI on immersive game and kit surfaces', () => {
     expect(isGameplayPath('/profile')).toBe(false)
     expect(isGameplayPath('/games')).toBe(false)
+    expect(isGameplayPath('/comics')).toBe(false)
     expect(isGameplayPath('/play/deck-1')).toBe(true)
     expect(isGameplayPath('/alias/play')).toBe(true)
     expect(isGameplayPath('/sled')).toBe(true)
-    expect(isGameplayPath('/premium')).toBe(false)
+    // Premium / Wheel kit pages also suppress install chrome (no bottom strip).
+    expect(isGameplayPath('/premium')).toBe(true)
+    expect(isGameplayPath('/wheel')).toBe(true)
   })
 
   it('isDismissedRecently reads future timestamp', () => {

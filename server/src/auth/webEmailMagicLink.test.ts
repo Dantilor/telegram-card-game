@@ -171,7 +171,7 @@ test('recover after cookie loss restores same account and Premium', async () => 
   }
 })
 
-test('cannot hijack verified email from another account without confirmation', async () => {
+test('entering known email restores existing account (and Premium stays there)', async () => {
   const harness = await createHarness()
   try {
     const a = await harness.query.query<{ id: string }>(
@@ -189,22 +189,26 @@ test('cannot hijack verified email from another account without confirmation', a
         WHERE id = $1::uuid`,
       [accountA]
     )
+    await grantWebEntitlement({
+      webAccountId: accountA,
+      planId: 'premium_1m',
+      activeUntil: new Date(Date.now() + 30 * 86400_000),
+      source: 'web_purchase',
+      paymentId: 'pay_restore_email',
+      db: harness.query,
+    })
 
-    await assert.rejects(
-      () => startEmailBind({ webAccountId: accountB, email: 'taken@example.com', db: harness.query }),
-      (err: Error & { code?: string }) => err.code === 'email_taken'
-    )
-
-    const recover = await startEmailRecover({
+    const restored = await startEmailBind({
+      webAccountId: accountB,
       email: 'taken@example.com',
       db: harness.query,
     })
-    assert.ok(recover.echoToken)
-    const completed = await completeEmailMagicLink({
-      token: recover.echoToken!,
-      db: harness.query,
-    })
-    assert.equal(completed.webAccountId, accountA)
+    assert.equal(restored.mode, 'restored')
+    assert.equal(restored.webAccountId, accountA)
+    assert.ok(restored.sessionToken)
+
+    const premium = await getWebAccountPremium(accountA, harness.query)
+    assert.equal(premium.isPremium, true)
   } finally {
     await harness.close()
   }

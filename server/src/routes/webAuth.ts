@@ -910,9 +910,22 @@ router.post('/web/email/bind/start', requireWebSession(), async (req: AuthedRequ
       webAccountId: auth.webAccountId,
       email,
       ip: clientIpFromRequest(req),
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
     })
+    if (started.mode === 'restored' && started.sessionToken && started.csrfToken) {
+      const maxAgeSec = Math.floor(
+        ((started.sessionExpiresAt || started.expiresAt).getTime() - Date.now()) / 1000
+      )
+      setSessionCookies(res, {
+        sessionToken: started.sessionToken,
+        csrfToken: started.csrfToken,
+        maxAgeSec: Math.max(60, maxAgeSec),
+      })
+    }
     res.status(200).json({
       ok: true,
+      mode: started.mode,
+      webAccountId: started.webAccountId,
       expiresAt: started.expiresAt.toISOString(),
       infoMailSent: started.infoMailSent,
       ...(started.echoToken ? { token: started.echoToken } : {}),

@@ -231,8 +231,11 @@ export async function unlinkTelegramLink(): Promise<{
 
 export async function startEmailBind(email: string): Promise<{
   ok: boolean
+  mode?: 'created' | 'restored' | 'updated'
+  webAccountId?: string
   expiresAt?: string
   token?: string
+  infoMailSent?: boolean
 }> {
   const csrf = readCsrfToken()
   const res = await fetch(`${apiBase()}/api/web/email/bind/start`, {
@@ -256,7 +259,14 @@ export async function startEmailBind(email: string): Promise<{
     }
     throw err
   }
-  return (await res.json()) as { ok: boolean; expiresAt?: string; token?: string }
+  return (await res.json()) as {
+    ok: boolean
+    mode?: 'created' | 'restored' | 'updated'
+    webAccountId?: string
+    expiresAt?: string
+    token?: string
+    infoMailSent?: boolean
+  }
 }
 
 export async function startEmailRecover(email: string): Promise<{

@@ -299,19 +299,55 @@ export async function afterWebPurchasePaid(input: {
   return { pendingEmail: receipt, linkSent: false }
 }
 
+export type EmailBindResult = {
+  /** created = new contact on current account; restored = switched to existing account; updated = same email again */
+  mode: 'created' | 'restored' | 'updated'
+  webAccountId: string
+  infoMailSent: boolean
+  expiresAt: Date
+  echoToken?: string
+  sessionToken?: string
+  csrfToken?: string
+  sessionExpiresAt?: Date
+}
+
+async function issueSessionForWebAccount(input: {
+  webAccountId: string
+  userAgent?: string | null
+  db?: Queryable
+}): Promise<{ sessionToken: string; csrfToken: string; expiresAt: Date }> {
+  const sessionToken = randomToken(32)
+  const csrfToken = randomToken(32)
+  const expiresAt = new Date(Date.now() + sessionTtlMs())
+  const uaHash = input.userAgent ? sha256Hex(input.userAgent.slice(0, 512)) : null
+  await db(input.db).query(
+    `INSERT INTO web_sessions (token_hash, csrf_hash, web_account_id, expires_at, user_agent_hash)
+     VALUES ($1, $2, $3::uuid, $4, $5)`,
+    [
+      sha256Hex(sessionToken),
+      sha256Hex(csrfToken),
+      input.webAccountId,
+      expiresAt.toISOString(),
+      uaHash,
+    ]
+  )
+  return { sessionToken, csrfToken, expiresAt }
+}
+
 /**
- * Save contact email on the current WEB account without verifying ownership.
- * No magic link. Optional one-shot welcome info mail (rate-limited).
- * Same webAccountId is kept; games/checkout stay unblocked.
+ * Save contact email on the current WEB account, or restore an existing account
+ * that already has this email (pending or verified) — including its Premium.
+ * No magic link / ownership proof beyond knowing the address (product choice).
  */
 export async function startEmailBind(input: {
   webAccountId: string
   email: string
   ip?: string | null
+  userAgent?: string | null
   db?: Queryable
   /** When false, skip welcome mail (e.g. checkout opt-in already paid). Default true. */
   sendWelcomeMail?: boolean
-}): Promise<{ expiresAt: Date; echoToken?: string; infoMailSent: boolean }> {
+}): Promise<EmailBindResult> {
   const emailNormalized = normalizeEmail(input.email)
   if (!emailNormalized) {
     const err = new Error('Invalid email') as Error & { status?: number; code?: string }
@@ -319,18 +355,55 @@ export async function startEmailBind(input: {
     err.code = 'invalid_email'
     throw err
   }
-  const taken = await db(input.db).query<{ id: string }>(
+
+  // Existing account with this email → restore that session (Premium stays on that webAccountId).
+  const existing = await db(input.db).query<{ id: string }>(
     `SELECT id FROM web_accounts
-      WHERE email_normalized = $1 AND email_verified_at IS NOT NULL AND revoked_at IS NULL AND id <> $2::uuid
+      WHERE revoked_at IS NULL
+        AND id <> $2::uuid
+        AND (
+          (email_normalized = $1 AND email_verified_at IS NOT NULL)
+          OR pending_email_normalized = $1
+        )
+      ORDER BY
+        CASE WHEN email_verified_at IS NOT NULL THEN 0 ELSE 1 END,
+        created_at ASC
       LIMIT 1`,
     [emailNormalized, input.webAccountId]
   )
-  if (taken.rows[0]) {
-    // Anti-enumeration: same generic conflict — do not reveal who owns the address.
-    const err = new Error('Email already linked') as Error & { status?: number; code?: string }
-    err.status = 409
-    err.code = 'email_taken'
-    throw err
+  if (existing.rows[0]) {
+    const ipKey = (input.ip || 'unknown').slice(0, 64)
+    const limited = await consumeSharedRateLimit(
+      `email_restore_ip:${ipKey}`,
+      20,
+      60 * 60_000,
+      input.db
+    )
+    if (!limited.ok) {
+      const err = new Error('Too many attempts') as Error & { status?: number; code?: string }
+      err.status = 429
+      err.code = 'rate_limited'
+      throw err
+    }
+    const targetId = String(existing.rows[0].id)
+    const session = await issueSessionForWebAccount({
+      webAccountId: targetId,
+      userAgent: input.userAgent,
+      db: input.db,
+    })
+    await db(input.db).query(
+      `UPDATE web_accounts SET last_seen_at = now() WHERE id = $1::uuid`,
+      [targetId]
+    )
+    return {
+      mode: 'restored',
+      webAccountId: targetId,
+      infoMailSent: false,
+      expiresAt: session.expiresAt,
+      sessionToken: session.sessionToken,
+      csrfToken: session.csrfToken,
+      sessionExpiresAt: session.expiresAt,
+    }
   }
 
   const before = await db(input.db).query<{
@@ -345,7 +418,7 @@ export async function startEmailBind(input: {
     [input.webAccountId]
   )
   const prev = before.rows[0]
-  // Never replace a different already-verified login email with an unverified contact.
+  // Never replace a different already-verified login email with another contact.
   if (
     prev?.email_verified_at &&
     prev.email_normalized &&
@@ -386,7 +459,12 @@ export async function startEmailBind(input: {
         input.db
       )
       if (!limited.ok) {
-        return { expiresAt: new Date(Date.now() + LINK_TTL_MS), infoMailSent: false }
+        return {
+          mode: 'created',
+          webAccountId: input.webAccountId,
+          expiresAt: new Date(Date.now() + LINK_TTL_MS),
+          infoMailSent: false,
+        }
       }
     }
     try {
@@ -401,11 +479,15 @@ export async function startEmailBind(input: {
     } catch (e) {
       const err = e as Error
       console.error('[webEmail] startEmailBind welcome mail failed', err.message)
-      // Email row stays saved even if SMTP fails.
     }
   }
 
-  return { expiresAt: new Date(Date.now() + LINK_TTL_MS), infoMailSent }
+  return {
+    mode: alreadySame ? 'updated' : 'created',
+    webAccountId: input.webAccountId,
+    expiresAt: new Date(Date.now() + LINK_TTL_MS),
+    infoMailSent,
+  }
 }
 
 /**

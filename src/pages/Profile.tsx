@@ -356,14 +356,23 @@ function Profile() {
     setEmailBusy(true)
     setEmailStatus(null)
     try {
-      await startEmailBind(target)
+      const result = await startEmailBind(target)
       await webSession.refreshSession()
-      setEmailStatus('Аккаунт создан')
+      try {
+        window.dispatchEvent(new Event('tcg_premium_sync'))
+      } catch {
+        /* ignore */
+      }
+      if (result.mode === 'restored') {
+        setEmailStatus('Аккаунт восстановлен')
+      } else {
+        setEmailStatus('Аккаунт создан')
+      }
     } catch (e) {
       const status = (e as Error & { status?: number }).status
       const code = (e as Error & { code?: string }).code
-      if (status === 409 || code === 'email_taken' || code === 'email_already_verified') {
-        setEmailStatus('Не удалось сохранить этот email. Попробуйте другой адрес или войдите на странице входа.')
+      if (status === 409 || code === 'email_already_verified') {
+        setEmailStatus('Не удалось сохранить этот email. Попробуйте другой адрес.')
       } else if (status === 429) {
         setEmailStatus('Слишком много попыток. Подождите минуту и попробуйте снова.')
       } else {
@@ -758,13 +767,6 @@ function Profile() {
               </>
             )}
             {emailStatus && <span className="profile-pass__toast">{emailStatus}</span>}
-            <Link
-              to="/login"
-              className="profile-pass__login-cta"
-              onClick={() => haptic('light')}
-            >
-              Уже есть аккаунт? Войти по email
-            </Link>
           </section>
         )}
 

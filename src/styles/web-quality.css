@@ -13,6 +13,19 @@ html[data-gnh-shell="web"] .app.app--web {
   background-color: var(--web-shell-mauve, #887099);
 }
 
+/* Premium + Wheel keep original dark kit field (not mauve) */
+html[data-gnh-shell="web"]:has(.gnh-inside--kit-experience),
+html[data-gnh-shell="web"]:has(.gnh-inside--kit-experience) body,
+html[data-gnh-shell="web"]:has(.gnh-inside--kit-experience) #root {
+  background-color: #151025 !important;
+  background-image: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web:has(.gnh-inside--kit-experience) {
+  background-color: #151025 !important;
+  background-image: none !important;
+}
+
 /* Kill manufactured empty height from 100dvh content floors */
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .content {
   min-height: 0 !important;
@@ -108,16 +121,16 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav svg {
 
 html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-inside .bottom-nav,
 html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-home-ref .mobile-nav,
-/* Legal site footer stays on home/catalog/profile — not inside games */
-html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .web-site-footer {
-  display: none !important;
-}
-
 html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .bottom-nav,
 html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-home-ref .mobile-nav {
   transform: translate3d(0, calc(100% + 8px), 0);
   opacity: 0;
   pointer-events: none;
+}
+
+/* Interior shell: no legal footer gap — home keeps its own footer */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside > .web-site-footer {
+  display: none !important;
 }
 
 html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside,
@@ -242,6 +255,17 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-iden
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity__guest {
   color: rgba(255, 248, 255, 0.88) !important;
   -webkit-text-fill-color: rgba(255, 248, 255, 0.88) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass--email .profile-pass__desc:last-child {
+  margin-top: 0.9rem !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass--email .profile-pass__desc a {
+  color: #f0c6ff !important;
+  -webkit-text-fill-color: #f0c6ff !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__title,

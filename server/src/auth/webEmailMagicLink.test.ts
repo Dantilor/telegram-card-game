@@ -90,22 +90,21 @@ test('receipt email saved on paid purchase; pending until magic confirm; no auto
       db: harness.query,
     })
     assert.equal(after.pendingEmail, 'buyer@example.com')
-    assert.equal(after.linkSent, true)
+    assert.equal(after.linkSent, false, 'no SMTP after purchase — only pending opt-in')
 
     const contact = await getWebAccountContact(webAccountId, harness.query)
     assert.equal(contact.email, 'buyer@example.com')
     assert.equal(contact.emailVerified, false)
     assert.equal(contact.emailPending, true)
 
-    const otp = await harness.query.query<{ id: number }>(
-      `SELECT id FROM web_email_otps WHERE web_account_id = $1::uuid AND purpose = 'bind' ORDER BY id DESC LIMIT 1`,
+    const otpAfterPay = await harness.query.query<{ c: string }>(
+      `SELECT count(*)::text AS c FROM web_email_otps WHERE web_account_id = $1::uuid`,
       [webAccountId]
     )
-    assert.ok(otp.rows[0], 'magic link row created')
+    assert.equal(otpAfterPay.rows[0]!.c, '0', 'no magic link sent on payment')
 
-    // Echo token via bind start for complete path
-    const started = await startEmailBind({
-      webAccountId,
+    // User later requests login link explicitly.
+    const started = await startEmailRecover({
       email: 'buyer@example.com',
       db: harness.query,
     })
@@ -211,7 +210,7 @@ test('cannot hijack verified email from another account without confirmation', a
   }
 })
 
-test('paid receipt email enables recover before first confirm; webhook does not duplicate Premium', async () => {
+test('checkout opt-in pending enables recover; bare paid receipt does not; no duplicate Premium', async () => {
   const harness = await createHarness()
   try {
     const account = await harness.query.query<{ id: string }>(
@@ -232,6 +231,16 @@ test('paid receipt email enables recover before first confirm; webhook does not 
       paymentId,
       db: harness.query,
     })
+
+    const skipped = await afterWebPurchasePaid({
+      webAccountId,
+      paymentId,
+      bindAccountEmail: false,
+      db: harness.query,
+    })
+    assert.equal(skipped.pendingEmail, null)
+    const bare = await startEmailRecover({ email: 'late@example.com', db: harness.query })
+    assert.equal(bare.echoToken, undefined, 'receipt alone must not unlock recover')
 
     await afterWebPurchasePaid({ webAccountId, paymentId, bindAccountEmail: true, db: harness.query })
     await afterWebPurchasePaid({ webAccountId, paymentId, bindAccountEmail: true, db: harness.query })
@@ -336,8 +345,13 @@ test('reused magic link is rejected', async () => {
       `INSERT INTO web_accounts DEFAULT VALUES RETURNING id`
     )
     const webAccountId = String(account.rows[0]!.id)
-    const started = await startEmailBind({
+    const bound = await startEmailBind({
       webAccountId,
+      email: 'once@example.com',
+      db: harness.query,
+    })
+    assert.equal(bound.echoToken, undefined)
+    const started = await startEmailRecover({
       email: 'once@example.com',
       db: harness.query,
     })

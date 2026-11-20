@@ -361,7 +361,7 @@ function Profile() {
     setEmailStatus(null)
     try {
       await startEmailBind(target)
-      setEmailStatus('Проверьте почту — мы отправили ссылку для подтверждения.')
+      setEmailStatus('Email добавлен. Можно продолжать играть')
       await webSession.refreshSession()
       webSession.startEmailPendingWatch()
     } catch (e) {
@@ -373,7 +373,7 @@ function Profile() {
       } else if (status === 429) {
         setEmailStatus('Слишком много попыток. Подождите минуту и попробуйте снова.')
       } else {
-        setEmailStatus('Не удалось отправить ссылку. Попробуйте позже.')
+        setEmailStatus('Не удалось сохранить email. Попробуйте позже.')
       }
     } finally {
       setEmailBusy(false)
@@ -387,10 +387,12 @@ function Profile() {
     try {
       const next = await webSession.refreshSession()
       if (next?.emailVerified) {
-        setEmailStatus('Почта подтверждена')
+        setEmailStatus('Авторизован — почта подтверждена')
         webSession.stopEmailPendingWatch()
       } else {
-        setEmailStatus('Пока не подтверждено. Откройте ссылку из письма и вернитесь сюда.')
+        setEmailStatus(
+          'Аккаунт создан. Чтобы подтвердить почту на другом устройстве, запросите ссылку на странице входа.'
+        )
         webSession.startEmailPendingWatch()
       }
     } catch {
@@ -747,7 +749,7 @@ function Profile() {
 
         {web && (
           <section className="profile-pass profile-pass--email">
-            <p className="profile-pass__eyebrow">Почта</p>
+            <p className="profile-pass__eyebrow">Аккаунт</p>
             {savedEmail ? (
               <>
                 <p className="profile-pass__desc">
@@ -755,10 +757,10 @@ function Profile() {
                   <br />
                   Статус:{' '}
                   {emailVerified
-                    ? 'Почта подтверждена'
+                    ? 'Авторизован'
                     : emailPending
-                      ? 'ожидает подтверждения'
-                      : 'сохранена'}
+                      ? 'Аккаунт создан'
+                      : 'Аккаунт создан'}
                 </p>
                 {!emailVerified && (
                   <div className="profile-pass__email-actions">
@@ -768,24 +770,19 @@ function Profile() {
                       onClick={() => void handleCheckEmailConfirm()}
                       disabled={emailBusy}
                     >
-                      {emailBusy ? 'Проверка…' : 'Проверить подтверждение'}
+                      {emailBusy ? 'Проверка…' : 'Обновить статус'}
                     </button>
-                    <button
-                      type="button"
-                      className="profile-pass__restore"
-                      onClick={() => void handleEmailConfirm()}
-                      disabled={emailBusy}
-                    >
-                      {emailBusy ? 'Отправка…' : 'Отправить ссылку ещё раз'}
-                    </button>
+                    <Link to="/login" className="profile-pass__restore" onClick={() => haptic('light')}>
+                      Войти на другом устройстве
+                    </Link>
                   </div>
                 )}
               </>
             ) : (
               <>
                 <p className="profile-pass__desc">
-                  Привяжите email — это регистрация аккаунта. Позже вы сможете войти с другого
-                  устройства и вернуть Premium. Бесплатные игры работают и без почты.
+                  Статус: Гость. Добавьте email, чтобы сохранить аккаунт. Игры и Premium можно
+                  продолжать без подтверждения письма.
                 </p>
                 <label className="profile-pass__email-label">
                   Ваш email
@@ -804,7 +801,7 @@ function Profile() {
                   onClick={() => void handleEmailConfirm()}
                   disabled={emailBusy || !emailDraft.trim()}
                 >
-                  {emailBusy ? 'Отправка…' : 'Привязать почту'}
+                  {emailBusy ? 'Сохранение…' : 'Добавить email'}
                 </button>
               </>
             )}

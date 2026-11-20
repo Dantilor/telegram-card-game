@@ -35,7 +35,7 @@ export default function WebPurchaseRecover() {
       await startEmailRecover(email.trim())
       setSent(true)
       setStatus(
-        'Проверьте почту. Мы отправили ссылку для входа, если этот адрес уже подтверждён или связан с покупкой.'
+        'Если этот адрес связан с аккаунтом, мы отправили одноразовую ссылку для входа. Откройте её на этом устройстве.'
       )
     } catch (e) {
       const statusCode = (e as Error & { status?: number }).status
@@ -75,8 +75,8 @@ export default function WebPurchaseRecover() {
         <p className="profile-pass__eyebrow">Вход</p>
         <p className="profile-pass__title">Войти по email</p>
         <p className="profile-pass__desc">
-          Введите подтверждённую почту — пришлём одноразовую ссылку. Premium и покупки вернутся на
-          этом устройстве. Бесплатные игры доступны без входа. Telegram не обязателен.
+          Введите почту аккаунта и запросите ссылку сами. После перехода по письму вход завершится
+          без лишних окон. Premium вернётся на этом устройстве. Telegram не обязателен.
         </p>
         {!sent && (
           <form className="profile-pass__email-form" onSubmit={onSubmit}>

@@ -914,6 +914,7 @@ router.post('/web/email/bind/start', requireWebSession(), async (req: AuthedRequ
     res.status(200).json({
       ok: true,
       expiresAt: started.expiresAt.toISOString(),
+      infoMailSent: started.infoMailSent,
       ...(started.echoToken ? { token: started.echoToken } : {}),
     })
   } catch (e) {

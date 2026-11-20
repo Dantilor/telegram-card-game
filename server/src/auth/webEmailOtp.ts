@@ -42,29 +42,15 @@ function magicConfirmPath(token: string): string {
   return `${origin}/email/confirm?token=${encodeURIComponent(token)}`
 }
 
-function buildMagicMail(input: {
-  purpose: 'bind' | 'recover'
-  link: string
-}): { subject: string; text: string; html: string } {
-  const isRecover = input.purpose === 'recover'
-  const subject = isRecover
-    ? 'GameNight Host — ссылка для входа'
-    : 'GameNight Host — подтвердите почту'
-  const lead = isRecover
-    ? 'Откройте ссылку, чтобы вернуть Premium и игры на этом устройстве.'
-    : 'Откройте ссылку, чтобы подтвердить почту для восстановления Premium.'
-  const title = isRecover ? 'С возвращением' : 'Подтвердите почту'
-  const cta = isRecover ? 'Войти по ссылке' : 'Подтвердить почту'
-  const text = [
-    'GameNight Host',
-    '',
-    lead,
-    '',
-    'Ссылка действует 30 минут и одноразовая:',
-    input.link,
-    '',
-    'Если вы не запрашивали письмо — просто проигнорируйте его.',
-  ].join('\n')
+function mailShell(title: string, bodyHtml: string, textBody: string): {
+  subject: string
+  text: string
+  html: string
+} {
+  const subject = `GameNight Host — ${title}`
+  const text = ['GameNight Host', '', textBody, '', 'Если вы не запрашивали это письмо — просто проигнорируйте его.'].join(
+    '\n'
+  )
   const html = `<!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
@@ -75,13 +61,8 @@ function buildMagicMail(input: {
         <tr><td>
           <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#6b645c;">GameNight Host</p>
           <h1 style="margin:0 0 12px;font-size:24px;font-weight:600;line-height:1.25;color:#1c1917;">${title}</h1>
-          <p style="margin:0 0 22px;font-size:16px;line-height:1.55;color:#44403c;">${lead}</p>
-          <p style="margin:0 0 22px;">
-            <a href="${input.link}" style="display:inline-block;padding:13px 24px;background:#1c1917;color:#faf8f4;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;">${cta}</a>
-          </p>
-          <p style="margin:0 0 10px;font-size:13px;line-height:1.45;color:#57534e;">Ссылка одноразовая и действует <strong>30 минут</strong>.</p>
-          <p style="margin:0 0 18px;font-size:12px;word-break:break-all;color:#78716c;">${input.link}</p>
-          <p style="margin:0;font-size:12px;color:#78716c;">Если вы не запрашивали письмо — просто проигнорируйте его.</p>
+          ${bodyHtml}
+          <p style="margin:18px 0 0;font-size:12px;color:#78716c;">Если вы не запрашивали это письмо — просто проигнорируйте его.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -89,6 +70,42 @@ function buildMagicMail(input: {
 </body>
 </html>`
   return { subject, text, html }
+}
+
+/** Informational only — does not verify ownership and has no login CTA. */
+function buildEmailSavedInfoMail(): { subject: string; text: string; html: string } {
+  return mailShell(
+    'Email сохранён',
+    `<p style="margin:0 0 14px;font-size:16px;line-height:1.55;color:#44403c;">Мы сохранили ваш адрес в аккаунте GameNight Host. Это ещё не подтверждение почты.</p>
+     <p style="margin:0;font-size:15px;line-height:1.55;color:#44403c;">Можно продолжать играть на этом устройстве. Чтобы войти на другом телефоне или в браузере, откройте страницу входа и запросите одноразовую ссылку сами.</p>`,
+    [
+      'Мы сохранили ваш адрес в аккаунте GameNight Host.',
+      'Это ещё не подтверждение почты — можно продолжать играть на этом устройстве.',
+      'Чтобы войти на другом устройстве, откройте страницу входа и запросите одноразовую ссылку сами.',
+    ].join('\n')
+  )
+}
+
+function buildMagicMail(input: {
+  purpose: 'bind' | 'recover'
+  link: string
+}): { subject: string; text: string; html: string } {
+  const isRecover = input.purpose === 'recover'
+  const title = isRecover ? 'Ссылка для входа' : 'Ссылка для подтверждения почты'
+  const lead = isRecover
+    ? 'Вы запросили вход в GameNight Host. Откройте ссылку на устройстве, где хотите продолжить.'
+    : 'Вы запросили подтверждение почты. Откройте ссылку, чтобы завершить вход.'
+  const cta = isRecover ? 'Войти' : 'Подтвердить и войти'
+  return mailShell(
+    title,
+    `<p style="margin:0 0 22px;font-size:16px;line-height:1.55;color:#44403c;">${lead}</p>
+     <p style="margin:0 0 22px;">
+       <a href="${input.link}" style="display:inline-block;padding:13px 24px;background:#1c1917;color:#faf8f4;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;">${cta}</a>
+     </p>
+     <p style="margin:0 0 10px;font-size:13px;line-height:1.45;color:#57534e;">Ссылка одноразовая и действует <strong>30 минут</strong>. Сам факт получения письма ничего не активирует.</p>
+     <p style="margin:0;font-size:12px;word-break:break-all;color:#78716c;">${input.link}</p>`,
+    [lead, '', 'Ссылка действует 30 минут и одноразовая:', input.link].join('\n')
+  )
 }
 
 export async function countRecentEmailOtps(
@@ -191,15 +208,16 @@ export async function savePaymentReceiptEmail(input: {
 }
 
 /**
- * After successful Premium grant: store receipt email as pending (not verified)
- * and send a magic-link confirmation for recovery. Never auto-merges accounts.
+ * After successful Premium grant: optionally remember receipt email as pending
+ * recovery address (not verified). Never sends SMTP mail — YooKassa receipt is enough.
+ * Never auto-merges accounts. Recover magic link is sent only on explicit user request.
  */
 export async function afterWebPurchasePaid(input: {
   webAccountId: string
   paymentId: string
   ip?: string | null
   db?: Queryable
-  /** Explicit checkout opt-in to use receipt email for account recovery. */
+  /** Explicit checkout opt-in to use receipt email for later Premium recovery. */
   bindAccountEmail?: boolean
 }): Promise<{ pendingEmail: string | null; linkSent: boolean }> {
   const pay = await db(input.db).query<{ receipt_email_normalized: string | null }>(
@@ -211,7 +229,7 @@ export async function afterWebPurchasePaid(input: {
     : null
   if (!receipt) return { pendingEmail: null, linkSent: false }
 
-  // Receipt alone never becomes verified ownership. Bind letter only on opt-in.
+  // Without opt-in, receipt stays on the payment only — not usable as account bind.
   if (!input.bindAccountEmail) {
     return { pendingEmail: null, linkSent: false }
   }
@@ -262,32 +280,21 @@ export async function afterWebPurchasePaid(input: {
     [input.webAccountId, receipt]
   )
 
-  try {
-    await insertAndSendMagicLink({
-      webAccountId: input.webAccountId,
-      emailNormalized: receipt,
-      purpose: 'bind',
-      ip: input.ip,
-      db: input.db,
-    })
-    return { pendingEmail: receipt, linkSent: true }
-  } catch (e) {
-    const err = e as Error & { code?: string }
-    if (err.code === 'rate_limited') {
-      return { pendingEmail: receipt, linkSent: false }
-    }
-    console.error('[webEmail] afterWebPurchasePaid mail failed', err.message)
-    return { pendingEmail: receipt, linkSent: false }
-  }
+  // No post-purchase SMTP from us — user requests a magic link later via /login.
+  return { pendingEmail: receipt, linkSent: false }
 }
 
-/** Bind / confirm email for the current anonymous WEB account via magic link. */
+/**
+ * Save email on the current WEB account as pending (not verified).
+ * Sends an informational note only — no magic-link confirmation after add.
+ * Same webAccountId is kept; games/checkout stay unblocked.
+ */
 export async function startEmailBind(input: {
   webAccountId: string
   email: string
   ip?: string | null
   db?: Queryable
-}): Promise<{ expiresAt: Date; echoToken?: string }> {
+}): Promise<{ expiresAt: Date; echoToken?: string; infoMailSent: boolean }> {
   const emailNormalized = normalizeEmail(input.email)
   if (!emailNormalized) {
     const err = new Error('Invalid email') as Error & { status?: number; code?: string }
@@ -317,18 +324,29 @@ export async function startEmailBind(input: {
     [input.webAccountId, emailNormalized]
   )
 
-  return insertAndSendMagicLink({
-    webAccountId: input.webAccountId,
-    emailNormalized,
-    purpose: 'bind',
-    ip: input.ip,
-    db: input.db,
-  })
+  let infoMailSent = false
+  try {
+    const mail = buildEmailSavedInfoMail()
+    await getMailTransport().send({
+      to: emailNormalized,
+      subject: mail.subject,
+      text: mail.text,
+      html: mail.html,
+    })
+    infoMailSent = true
+  } catch (e) {
+    const err = e as Error
+    console.error('[webEmail] startEmailBind info mail failed', err.message)
+  }
+
+  // No magic link here — user requests login link explicitly via recover/start.
+  return { expiresAt: new Date(Date.now() + LINK_TTL_MS), infoMailSent }
 }
 
 /**
- * Start recover magic link. Always returns generic ok (anti-enumeration).
- * Sends when verified email matches OR paid receipt/pending email matches.
+ * Start recover / login magic link. Always returns generic ok (anti-enumeration).
+ * Sends only for verified email OR pending email saved via opt-in bind / checkout checkbox.
+ * A paid receipt alone (without pending opt-in) is not enough to bind an account.
  */
 export async function startEmailRecover(input: {
   email: string
@@ -363,16 +381,7 @@ export async function startEmailRecover(input: {
       `SELECT a.id
          FROM web_accounts a
         WHERE a.revoked_at IS NULL
-          AND (
-            a.pending_email_normalized = $1
-            OR EXISTS (
-              SELECT 1 FROM web_payments p
-               WHERE p.web_account_id = a.id
-                 AND p.receipt_email_normalized = $1
-                 AND p.premium_granted_at IS NOT NULL
-                 AND p.status = 'succeeded'
-            )
-          )
+          AND a.pending_email_normalized = $1
           AND NOT EXISTS (
             SELECT 1 FROM web_accounts o
              WHERE o.email_normalized = $1

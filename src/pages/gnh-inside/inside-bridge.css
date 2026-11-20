@@ -191,7 +191,8 @@ html:has(.gnh-inside .rt-play)::before {
 }
 
 .app.app--web .gnh-inside .comics-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .app.app--web .gnh-inside .games-grid__card,
@@ -909,11 +910,15 @@ html:has(.gnh-inside .rt-play)::before {
   }
   .app.app--web .gnh-inside .games-grid:not(.comics-grid),
   .app.app--web .gnh-inside .games-grid,
-  .app.app--web .gnh-inside .comics-grid,
   .app.app--web .gnh-inside .card-entry-page__grid,
   .app.app--web .gnh-inside .favorites-page__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+  }
+
+  .app.app--web .gnh-inside .comics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
   }
   .app.app--web .gnh-inside .favorites-page__list {
     grid-template-columns: 1fr;

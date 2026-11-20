@@ -2161,13 +2161,19 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__cta--premium-l
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 20px rgba(140, 80, 200, 0.28) !important;
 }
 
-/* Comics: stacked cover + meta below (no overlay smear on cover art). */
+/* Comics: 3 proportional cards per row, cover + CTA only. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__card {
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important;
   height: auto !important;
   min-height: 0 !important;
+  min-width: 0 !important;
   aspect-ratio: auto !important;
   overflow: hidden;
 }
@@ -2219,7 +2225,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
   min-height: 0 !important;
   height: auto !important;
   margin: 0 !important;
-  padding: 10px 10px 12px !important;
+  padding: 8px !important;
   background: linear-gradient(180deg, #2a1c3c 0%, #221632 100%) !important;
 }
 
@@ -2243,10 +2249,10 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
   align-self: stretch !important;
   width: 100% !important;
   margin: 0 !important;
-  min-height: 40px;
-  padding: 0.55rem 0.85rem !important;
+  min-height: 34px;
+  padding: 0.4rem 0.45rem !important;
   border-radius: 999px !important;
-  font-size: 0.82rem !important;
+  font-size: 0.68rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.02em;
   color: #fff8ff !important;

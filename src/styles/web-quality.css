@@ -348,12 +348,26 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   -webkit-text-fill-color: rgba(255, 248, 255, 0.82) !important;
 }
 
-/* Game readability: force light ink on glass cards */
+/* Party-game panels: Mafia Lite neon outline + dark glass (not Cards / Online) */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page,
+  .alias-page,
+  .game-page:not(.play-page)
+) {
+  --games-card-bg: rgba(18, 12, 36, 0.92);
+  --games-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  --games-card-border-a: linear-gradient(135deg, #c45bff 0%, #5ecbff 55%, #ff6fd8 100%);
+  --games-card-border-b: linear-gradient(135deg, #5ecbff 0%, #8b4dff 55%, #ff8fd8 100%);
+  --games-play-glow: #c4a0ff;
+}
+
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   .alias-home__howto,
   .alias-home__panel,
+  .alias-page__panel,
   .mafia-page__howto,
   .mafia-page__panel,
+  .game-page__panel,
   .activity-home__howto,
   .sabotage-home__howto,
   .truth-dare-home__howto,
@@ -365,11 +379,70 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   .game-howto,
   .howto-card,
   .rules-card,
-  .teams-setup__card
+  .teams-setup__card,
+  .activity-teams-setup__card,
+  .alias-home__section:not(.alias-home__section--teams),
+  .activity-home__section:not(.activity-home__section--teams),
+  .sabotage-setup__section,
+  .truth-dare-setup__section,
+  .quiz-home__section,
+  .pt__section,
+  .mafia-setup__section,
+  .game-page:not(.play-page) > .game-page__section,
+  .game-page:not(.play-page) .game-page__section:not(.activity-home__section--teams)
 ) {
   color: #fff8ff !important;
-  border-color: rgba(255, 236, 255, 0.28) !important;
-  background: linear-gradient(165deg, rgba(36, 22, 54, 0.88), rgba(26, 16, 40, 0.92)) !important;
+  border: 1.5px solid transparent !important;
+  border-radius: 1rem !important;
+  background:
+    linear-gradient(165deg, rgba(36, 22, 54, 0.94), rgba(22, 14, 40, 0.96)) padding-box,
+    var(--games-card-border, var(--games-card-border-a, linear-gradient(135deg, #c45bff 0%, #5ecbff 55%, #ff6fd8 100%))) border-box !important;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.28),
+    0 0 18px rgba(196, 160, 255, 0.18) !important;
+  box-sizing: border-box;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .alias-home__section:not(.alias-home__section--teams),
+  .activity-home__section:not(.activity-home__section--teams),
+  .sabotage-setup__section,
+  .truth-dare-setup__section,
+  .quiz-home__section,
+  .pt__section,
+  .game-page:not(.play-page) .game-page__section:not(.activity-home__section--teams)
+) {
+  padding: 0.9rem 1rem 1rem !important;
+  margin-bottom: 0.85rem !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page__panel--glow-b,
+  .alias-page__panel--glow-b,
+  .game-page__panel--glow-b
+) {
+  --games-card-border: var(--games-card-border-b);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page__panel--glow-a,
+  .alias-page__panel--glow-a,
+  .game-page__panel--glow-a
+) {
+  --games-card-border: var(--games-card-border-a);
+}
+
+/* Keep Cards / Online without party-panel chrome */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .play-page,
+  .deck-select-page,
+  .card-entry-page
+) :is(.game-page__section, .game-page__panel) {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(

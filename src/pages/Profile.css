@@ -899,6 +899,13 @@ html:has(.profile-page):not([data-gnh-shell="web"]) #root {
   box-sizing: border-box;
 }
 
+.profile-pass__email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
 .profile-pass__email-label {
   display: flex;
   flex-direction: column;

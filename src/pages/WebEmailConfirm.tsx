@@ -28,14 +28,20 @@ export default function WebEmailConfirm() {
     setBusy(true)
     setStatus(null)
     try {
-      await completeEmailMagicLink(token)
+      const completed = await completeEmailMagicLink(token)
       await webSession.refreshSession()
-      await refreshPremium()
+      const premium = await refreshPremium()
       setDone(true)
-      setStatus('Готово. Premium и профиль восстановлены.')
+      if (premium?.isPremium) {
+        setStatus('Готово. Premium и профиль восстановлены.')
+      } else if (completed.purpose === 'recover') {
+        setStatus('Готово. Вход выполнен — аккаунт восстановлен.')
+      } else {
+        setStatus('Готово. Почта подтверждена, вход выполнен.')
+      }
       navigate('/profile', { replace: true })
     } catch {
-      setStatus('Ссылка недействительна или уже использована. Запросите новую на /recover.')
+      setStatus('Ссылка недействительна или уже использована. Запросите новую на странице входа.')
     } finally {
       setBusy(false)
     }
@@ -72,7 +78,7 @@ export default function WebEmailConfirm() {
         </button>
         {status && <span className="profile-pass__toast">{status}</span>}
         <p className="profile-pass__desc">
-          <Link to="/recover">Запросить новую ссылку</Link>
+          <Link to="/login">Запросить новую ссылку</Link>
         </p>
       </section>
     </div>

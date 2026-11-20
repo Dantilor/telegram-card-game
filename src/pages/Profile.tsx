@@ -317,8 +317,15 @@ function Profile() {
       await startEmailBind(target)
       setEmailStatus('Проверьте почту — мы отправили ссылку для подтверждения.')
       await webSession.refreshSession()
-    } catch {
-      setEmailStatus('Не удалось отправить ссылку. Попробуйте позже.')
+    } catch (e) {
+      const status = (e as Error & { status?: number }).status
+      if (status === 409) {
+        setEmailStatus('Этот email уже привязан к другому аккаунту. Войдите по email на странице входа.')
+      } else if (status === 429) {
+        setEmailStatus('Слишком много попыток. Подождите минуту и попробуйте снова.')
+      } else {
+        setEmailStatus('Не удалось отправить ссылку. Попробуйте позже.')
+      }
     } finally {
       setEmailBusy(false)
     }

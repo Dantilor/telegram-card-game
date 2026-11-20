@@ -210,7 +210,8 @@ function App() {
         >
         <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Home />} />
+        {/* Mini App: keep /login as Home. WEB login is WebPurchaseRecover below. */}
+        {!isWebShell() ? <Route path="/login" element={<Home />} /> : null}
         <Route element={<WebInsideLayout />}>
         <Route path="/games" element={<Games />} />
         <Route path="/comics" element={<Comics />} />
@@ -282,9 +283,9 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/wheel" element={<WebPremiumExperience initialView="wheel" />} />
-        <Route path="/login" element={<WebPurchaseRecover />} />
-        <Route path="/recover" element={<WebPurchaseRecover />} />
-        <Route path="/email/confirm" element={<WebEmailConfirm />} />
+        {isWebShell() ? <Route path="/login" element={<WebPurchaseRecover />} /> : null}
+        {isWebShell() ? <Route path="/recover" element={<WebPurchaseRecover />} /> : null}
+        {isWebShell() ? <Route path="/email/confirm" element={<WebEmailConfirm />} /> : null}
         <Route path="/link-web" element={<WebTelegramLink />} />
         <Route path="/legal/documents/:documentId/versions/:version" element={<LegalDocumentPage />} />
         <Route path="/legal/documents/:documentId" element={<LegalDocumentPage />} />

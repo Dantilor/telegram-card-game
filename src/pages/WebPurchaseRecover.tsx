@@ -1,19 +1,31 @@
-import { useCallback, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useMemo, useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { isWebShell } from '../config/shell'
 import { startEmailRecover } from '../lib/webAuth'
 import HomeButton from '../components/HomeButton'
 import './Profile.css'
+
+const AUTH_ERROR_HINTS: Record<string, string> = {
+  owner_only: 'Этот вход через Telegram сейчас недоступен. Войдите по email.',
+  auth_error: 'Не удалось войти через Telegram. Попробуйте email.',
+  csrf_failed: 'Сессия устарела. Запросите новую ссылку.',
+}
 
 /**
  * WEB email login / Premium restore via magic link.
  * Same account system as anonymous sessions + bind — no second identity store.
  */
 export default function WebPurchaseRecover() {
+  const [params] = useSearchParams()
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
-  const [status, setStatus] = useState<string | null>(null)
+  const [status, setStatus] = useState<string | null>(() => {
+    const err = (params.get('error') || '').trim()
+    return err ? AUTH_ERROR_HINTS[err] || 'Не удалось завершить вход. Попробуйте email.' : null
+  })
+
+  const canSubmit = useMemo(() => Boolean(email.trim()) && !busy, [email, busy])
 
   const start = useCallback(async () => {
     if (!email.trim()) return
@@ -25,12 +37,25 @@ export default function WebPurchaseRecover() {
       setStatus(
         'Проверьте почту. Мы отправили ссылку для входа, если этот адрес уже подтверждён или связан с покупкой.'
       )
-    } catch {
-      setStatus('Не удалось отправить ссылку. Попробуйте позже.')
+    } catch (e) {
+      const statusCode = (e as Error & { status?: number }).status
+      if (statusCode === 429) {
+        setStatus('Слишком много попыток. Подождите минуту и попробуйте снова.')
+      } else {
+        setStatus('Не удалось отправить ссылку. Попробуйте позже.')
+      }
     } finally {
       setBusy(false)
     }
   }, [email])
+
+  const onSubmit = useCallback(
+    (event: FormEvent) => {
+      event.preventDefault()
+      void start()
+    },
+    [start]
+  )
 
   if (!isWebShell()) {
     return (
@@ -51,10 +76,10 @@ export default function WebPurchaseRecover() {
         <p className="profile-pass__title">Войти по email</p>
         <p className="profile-pass__desc">
           Введите подтверждённую почту — пришлём одноразовую ссылку. Premium и покупки вернутся на
-          этом устройстве. Бесплатные игры доступны без входа.
+          этом устройстве. Бесплатные игры доступны без входа. Telegram не обязателен.
         </p>
         {!sent && (
-          <>
+          <form className="profile-pass__email-form" onSubmit={onSubmit}>
             <label className="profile-pass__email-label">
               Ваш email
               <input
@@ -64,18 +89,15 @@ export default function WebPurchaseRecover() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
                 autoComplete="email"
+                inputMode="email"
                 disabled={busy}
+                required
               />
             </label>
-            <button
-              type="button"
-              className="profile-pass__cta"
-              disabled={busy || !email.trim()}
-              onClick={() => void start()}
-            >
+            <button type="submit" className="profile-pass__cta" disabled={!canSubmit}>
               {busy ? 'Отправка…' : 'Получить ссылку'}
             </button>
-          </>
+          </form>
         )}
         {status && <span className="profile-pass__toast">{status}</span>}
         {sent && (

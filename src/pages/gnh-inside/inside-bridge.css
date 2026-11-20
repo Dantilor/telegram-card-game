@@ -132,10 +132,14 @@ html:has(.gnh-inside .rt-play)::before {
   width: 100% !important;
   max-width: none !important;
   margin-inline: 0 !important;
-  background: transparent !important;
-  background-image: none !important;
   color: #fff8ff;
   box-shadow: none;
+}
+
+/* Catalog pages stay transparent; online game shells keep their own paint */
+.app.app--web .gnh-inside .content > *:not(.sled-root):not(.infected-game):not(.doubles):not(.mafia-shadows) {
+  background: transparent !important;
+  background-image: none !important;
 }
 
 .app.app--web .gnh-inside .content > * {

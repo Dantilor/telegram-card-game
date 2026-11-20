@@ -87,13 +87,19 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .app-header {
   will-change: transform;
 }
 
-/* Same scroll-away chrome as home: sticky top bar hides with bottom nav */
-html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-inside .app-header,
-html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .app-header {
+/* Scroll-away top bar on catalog/home — keep GNH header visible inside games */
+html[data-gnh-shell="web"].gnh-web-nav--hidden:not(.gnh-web-nav--immersive) .app.app--web .gnh-inside .app-header {
   transform: translate3d(0, calc(-100% - 12px), 0) !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+}
+
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .app-header {
+  transform: translate3d(0, 0, 0) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header {
@@ -679,8 +685,50 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
 html[data-gnh-shell="web"]:has(.sled-root),
 html[data-gnh-shell="web"]:has(.sled-root) body,
 html[data-gnh-shell="web"]:has(.sled-root) #root,
-html[data-gnh-shell="web"] .app.app--web:has(.sled-root) {
+html[data-gnh-shell="web"] .app.app--web:has(.sled-root),
+html[data-gnh-shell="web"] .app.app--web:has(.sled-root) .gnh-inside {
   background-color: #090d29 !important;
+  background-image: none !important;
+}
+
+/* Restore СЛЕД shell paint wiped by content > * transparency */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > .sled-root.game-shell {
+  background:
+    radial-gradient(circle at 78% 14%, rgba(117, 67, 255, 0.32), transparent 33rem),
+    radial-gradient(circle at 8% 72%, rgba(28, 185, 229, 0.23), transparent 36rem),
+    radial-gradient(circle at 48% 108%, rgba(255, 74, 185, 0.13), transparent 30rem),
+    linear-gradient(135deg, #090d29 0%, #11183a 45%, #080b24 100%) !important;
+  color: #e9f8ff !important;
+  -webkit-text-fill-color: unset;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-nav.game-page {
+  background: transparent !important;
+  color: #e9f8ff !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .sled-nav .home-btn,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .sled-nav .game-page__nav-btn {
+  border: 1px solid rgba(117, 196, 242, 0.38) !important;
+  background: rgba(15, 25, 57, 0.72) !important;
+  background-image: none !important;
+  color: #e9f8ff !important;
+  box-shadow: inset 0 1px 0 rgba(99, 244, 255, 0.12) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .topbar {
+  background: rgba(10, 14, 39, 0.9) !important;
+  border-bottom-color: rgba(117, 196, 242, 0.32) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .header-join {
+  border: 1px solid rgba(183, 131, 255, 0.5) !important;
+  color: #eee8ff !important;
+  background: rgba(183, 131, 255, 0.12) !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 html[data-gnh-shell="web"]:has(.infected-game),

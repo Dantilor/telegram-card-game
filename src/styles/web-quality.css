@@ -200,7 +200,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__media {
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__media .smart-image__img {
-  object-fit: contain !important;
+  object-fit: cover !important;
   object-position: center top !important;
   background: #241632 !important;
 }

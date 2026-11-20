@@ -1686,12 +1686,22 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .hero-game-card .games-card
   left: auto;
 }
 
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid__card-image-wrap .smart-image__img {
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .games-grid:not(.comics-grid) .games-grid__card-image-wrap .smart-image__img {
   object-fit: contain !important;
   object-position: 50% 50% !important;
   width: 100% !important;
   height: 100% !important;
   transform: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .comics-grid .comics-grid__media .smart-image__img,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .comics-grid .games-grid__card-image-wrap .smart-image__img {
+  object-fit: cover !important;
+  object-position: center top !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page .hero-game-card .smart-image__img,
@@ -2151,28 +2161,64 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-page__cta--premium-l
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 20px rgba(140, 80, 200, 0.28) !important;
 }
 
-/* Comics: badges live in the bottom body — keep the cover clear at the top. */
+/* Comics: stacked cover + meta below (no overlay smear on cover art). */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  overflow: hidden;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__media,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-page .comics-grid__media.games-grid__card-image-wrap {
+  position: relative !important;
+  inset: auto !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 3 / 4 !important;
+  background: #1a1228 !important;
+  border-radius: inherit;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__media::after,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-page .comics-grid__media.games-grid__card-image-wrap::after {
   display: none !important;
   background: none !important;
 }
 
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .smart-image,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .smart-image__img {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .smart-image__img {
+  object-fit: cover !important;
+  object-position: center top !important;
+  image-rendering: auto;
+  filter: none !important;
+}
+
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__body {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 2;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-end !important;
+  justify-content: flex-start !important;
   align-items: flex-start;
-  gap: 6px;
-  min-height: 100%;
-  padding: 56% 14px 14px !important;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    transparent 42%,
-    rgba(24, 14, 40, 0.35) 68%,
-    rgba(22, 12, 36, 0.94) 100%
-  ) !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 12px 12px 14px !important;
+  background: linear-gradient(180deg, #2a1c3c 0%, #221632 100%) !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__body::before {
@@ -2184,7 +2230,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-bottom: 2px;
+  margin: 0 0 2px !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__kind {
@@ -2204,25 +2250,42 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-card-ba
   top: auto !important;
   left: auto !important;
   right: auto !important;
-  height: 18px !important;
-  padding: 0 8px !important;
+  height: 20px !important;
+  padding: 0 9px !important;
   font-size: 10px !important;
   letter-spacing: 0.04em;
 }
 
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle {
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__pages,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-grid__title {
+  margin: 0 !important;
   background: none !important;
   border: 0 !important;
   box-shadow: none !important;
   padding: 0 !important;
+  overflow: visible !important;
+  -webkit-line-clamp: unset !important;
+  white-space: normal !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-grid__title {
+  color: #fff8ff !important;
+  font-size: 1.05rem !important;
+  line-height: 1.25 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle {
   color: #f3e6fb !important;
   font-weight: 600;
 }
 
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .smart-image__img {
-  object-fit: contain !important;
-  object-position: center top !important;
-  filter: brightness(1.05) contrast(1.02);
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__pages {
+  color: rgba(255, 248, 255, 0.78) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__cta {
+  margin-top: 8px !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__card::before,
@@ -2726,4 +2789,97 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--restore
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mood:hover {
     transform: none !important;
   }
+}
+
+/* Beat .gnh-inside h2/p { margin:0 } — restore section gaps on game setups */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(
+  .game-page__section-title,
+  .alias-page__section-title,
+  .mafia-setup__section-title,
+  .mafia-page__section-title,
+  .teams-setup__title,
+  .activity-teams-setup__title,
+  .truth-dare-setup__how-title,
+  .alias-home__how-title,
+  .quiz-home__how-title
+) {
+  margin: 0 0 0.75rem !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(
+  .alias-home__category-hint,
+  .activity-home__category-hint,
+  .quiz-home__category-hint,
+  .alias-home__section-hint,
+  .activity-home__section-hint,
+  .quiz-home__section-hint,
+  .pt__section-hint,
+  .mafia-setup__section-note,
+  .mafia-setup__roles-line,
+  .teams-setup__hint,
+  .activity-teams-setup__hint,
+  .truth-dare-setup__section-hint,
+  .game-page__hint,
+  .alias-page__hint
+) {
+  margin: 0 0 0.7rem !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-setup__section-head {
+  margin-bottom: 0.85rem !important;
+  gap: 0.35rem;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside :is(
+  .pt__names,
+  .sabotage-setup__names,
+  .mafia-setup__names,
+  .alias-home__categories,
+  .activity-home__categories,
+  .quiz-home__categories,
+  .teams-setup__list,
+  .activity-teams-setup__list
+) {
+  margin-top: 0.15rem;
+}
+
+/* Profile: outline Save name */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass__restore {
+  border: 1px solid rgba(255, 236, 255, 0.48) !important;
+  border-radius: 12px !important;
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+  background: rgba(255, 248, 255, 0.06) !important;
+  min-height: 44px;
+  padding: 0.65rem 0.9rem !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-pass__restore:hover:not(:disabled) {
+  border-color: rgba(255, 244, 255, 0.72) !important;
+  background: rgba(255, 248, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+/* Sled: restore original navy cyber field on WEB shell (not mauve) */
+html[data-gnh-shell="web"]:has(.sled-root),
+html[data-gnh-shell="web"]:has(.sled-root) body,
+html[data-gnh-shell="web"]:has(.sled-root) #root {
+  background-color: #090d29 !important;
+  background-image: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web:has(.sled-root),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside:has(.sled-root),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content:has(.sled-root) {
+  background-color: #090d29 !important;
+  background-image: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .sled-root.game-shell,
+html[data-gnh-shell="web"] .app.app--web .sled-root {
+  background:
+    radial-gradient(circle at 78% 14%, rgba(117, 67, 255, 0.32), transparent 33rem),
+    radial-gradient(circle at 8% 72%, rgba(28, 185, 229, 0.23), transparent 36rem),
+    radial-gradient(circle at 48% 108%, rgba(255, 74, 185, 0.13), transparent 30rem),
+    linear-gradient(135deg, #090d29 0%, #11183a 45%, #080b24 100%) !important;
 }

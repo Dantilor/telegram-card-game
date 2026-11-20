@@ -72,7 +72,7 @@ function Comics() {
                   className="games-grid__card-img"
                   priority={i < 2}
                   aspectRatio=""
-                  objectFit="contain"
+                  objectFit="cover"
                 />
               </div>
               <div className="games-grid__card-body comics-grid__body">

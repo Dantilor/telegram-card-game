@@ -94,8 +94,8 @@ html:has(.comics-page) #root {
   height: 100%;
   max-width: none;
   max-height: none;
-  object-fit: contain !important;
-  object-position: center center;
+  object-fit: cover !important;
+  object-position: center top;
 }
 
 .comics-page .comics-grid__media.games-grid__card-image-wrap::after {

@@ -11,8 +11,25 @@ export type PlanOption = {
 }
 
 export function isLifetimePlan(planId: string, durationDays?: number): boolean {
-  if (planId === LIFETIME_PLAN_ID) return true
+  if (planId === LIFETIME_PLAN_ID || planId === 'premium_web_lifetime') return true
   return typeof durationDays === 'number' && durationDays >= LIFETIME_DURATION_DAYS
+}
+
+/** Checkout headline for WEB single-plan payment screen. */
+export function checkoutPlanCopy(plan: Pick<PlanOption, 'title' | 'durationDays'>): {
+  title: string
+  subtitle: string
+} {
+  if (plan.durationDays >= LIFETIME_DURATION_DAYS) {
+    return { title: 'Premium навсегда', subtitle: 'Один платёж — бессрочный доступ' }
+  }
+  if (plan.durationDays === 90) {
+    return { title: 'Premium на 3 месяца', subtitle: '90 дней доступа' }
+  }
+  if (plan.durationDays === 30) {
+    return { title: 'Premium на 1 месяц', subtitle: '30 дней доступа' }
+  }
+  return { title: plan.title, subtitle: formatPlanPeriod(plan.durationDays) }
 }
 
 export function formatPlanPeriod(durationDays: number): string {

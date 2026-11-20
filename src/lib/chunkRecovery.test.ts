@@ -24,7 +24,7 @@ describe('safe game loading across deployments', () => {
     const workflow = readFileSync(resolve(process.cwd(), '.github/workflows/deploy.yml'), 'utf8')
     expect(workflow.match(/keep_files: true/g)).toHaveLength(2)
     const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8')
-    expect(app).toMatch(/<PlayErrorBoundary>\s*<Suspense/)
+    expect(app).toMatch(/<PlayErrorBoundary>\s*<Play\s*\/>/)
     const entry = readFileSync(resolve(process.cwd(), 'src/main.tsx'), 'utf8')
     expect(entry).toMatch(/installChunkRecovery\(\)/)
   })

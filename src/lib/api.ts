@@ -3,6 +3,7 @@ import { getInitData } from './telegram'
 import { isWebShell } from '../config/shell'
 import { csrfHeadersForMutation } from './csrf'
 import { fetchGetWithRetry, parseRetryAfterMs } from './fetchWithRetry'
+import { waitForInitData } from './waitForInitData'
 
 const API_TIMEOUT_MS = 7000
 const isDev = import.meta.env.DEV
@@ -21,8 +22,16 @@ async function request<T>(path: string, options: RequestInit & { method?: string
   const method = (options.method ?? 'GET').toUpperCase()
   const isGet = method === 'GET'
   const publicRead = isGet && PUBLIC_GET_PATHS.has(path)
-  // Mini App only: never inject forged initData into WEB.
-  const initData = publicRead || isWebShell() ? null : getInitData()
+  // WEB uses cookie session; Mini App waits briefly for Telegram initData on protected calls.
+  let initData: string | null = null
+  if (!publicRead && !isWebShell()) {
+    initData = getInitData() || (await waitForInitData(3_500))
+    if (!initData) {
+      const err = new Error('API 401: initData required') as ApiError
+      err.status = 401
+      throw err
+    }
+  }
   const headers: Record<string, string> = {
     // A GET has no body; Content-Type on it would only force a CORS preflight.
     ...(isGet ? { Accept: 'application/json' } : { 'Content-Type': 'application/json' }),

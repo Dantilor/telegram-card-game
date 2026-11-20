@@ -202,9 +202,13 @@ function Home() {
   const navigate = useNavigate()
   const [premiumOverlayOpen, setPremiumOverlayOpen] = useState(false)
   const openPremiumOverlay = useCallback(() => {
+    if (web) {
+      navigate('/premium?focus=plans')
+      return
+    }
     prefetchPremiumOverlay()
     setPremiumOverlayOpen(true)
-  }, [])
+  }, [navigate, web])
   // Цена показывается только из ответа сервера, без зашитого значения.
   const [plansPriceLabel, setPlansPriceLabel] = useState('Тарифы')
   const favoritesLocked = isFavoritesLocked(isPremium)
@@ -213,7 +217,8 @@ function Home() {
     // Цена планов не блокирует первый экран: грузим после простоя / с небольшой задержкой.
     let cancelled = false
     const loadPlans = () => {
-      apiGet<{ ok?: boolean; plans?: PlanOption[] }>('/api/plans')
+      const plansPath = web ? '/api/plans?audience=web' : '/api/plans'
+      apiGet<{ ok?: boolean; plans?: PlanOption[] }>(plansPath)
         .then((res) => {
           if (cancelled) return
           if (res.ok && Array.isArray(res.plans)) {
@@ -236,7 +241,7 @@ function Home() {
       }
       if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
-  }, [])
+  }, [web])
 
   const handleFavoritesClick = useCallback(() => {
     haptic('light')
@@ -249,8 +254,17 @@ function Home() {
 
   const handlePremiumOpen = useCallback(() => {
     hapticImpact('light')
+    if (web) {
+      navigate('/premium')
+      return
+    }
     openPremiumOverlay()
-  }, [])
+  }, [navigate, openPremiumOverlay, web])
+
+  const handleWheelOpen = useCallback(() => {
+    hapticImpact('light')
+    navigate('/wheel')
+  }, [navigate])
 
   const handlePickClick = useCallback((to: string) => {
     haptic('light')
@@ -304,8 +318,10 @@ function Home() {
         showPremium={!isPremium || loading}
         onFavorites={handleFavoritesClick}
         onPremium={handlePremiumOpen}
+        onPremiumGate={openPremiumOverlay}
+        onWheel={handleWheelOpen}
         onPick={handlePickClick}
-        premiumOpen={premiumOverlayOpen}
+        premiumOpen={false}
         onPremiumClose={() => setPremiumOverlayOpen(false)}
       />
     )

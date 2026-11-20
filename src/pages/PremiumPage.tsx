@@ -9,6 +9,7 @@ import crystalUrl from './gnh-inside/assets/reference-crystal.webp'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import WebPremiumExperience from './WebPremiumExperience'
 import '../styles/GamePageShell.css'
 import './PremiumPage.css'
 
@@ -119,9 +120,9 @@ function PremiumPage() {
 
   if (isWebShell()) {
     return (
-      <div className="premium-page">
+      <div className="premium-page premium-page--web-experience">
         {paymentReturnStatus && <p className="premium-page__status">{paymentReturnStatus}</p>}
-        <PremiumOverlay isOpen onClose={handleBack} asPage />
+        <WebPremiumExperience initialView="premium" />
       </div>
     )
   }

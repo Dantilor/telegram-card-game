@@ -3,13 +3,22 @@
  * Цены и сроки тарифов — только из /api/plans (Supabase plans).
  */
 
+/** Telegram Mini App plan IDs (unchanged). */
 export const PREMIUM_PLAN_IDS = {
   month: 'premium_1m',
   quarter: 'premium_3m',
   lifetime: 'premium_lifetime',
 } as const
 
+/** WEB-only plan IDs (audience=web). Do not use in Telegram checkout. */
+export const WEB_PREMIUM_PLAN_IDS = {
+  month: 'premium_web_1m',
+  quarter: 'premium_web_3m',
+  lifetime: 'premium_web_lifetime',
+} as const
+
 export const DEFAULT_PREMIUM_PLAN_ID = PREMIUM_PLAN_IDS.quarter
+export const DEFAULT_WEB_PREMIUM_PLAN_ID = WEB_PREMIUM_PLAN_IDS.quarter
 
 /** @deprecated Используйте /api/plans; оставлено для совместимости типов */
 export const PREMIUM_PLAN = {
@@ -23,7 +32,6 @@ export const FREE_LIMIT_PER_DECK = 15
 export const FREE_GAMES = [
   'card',
   'quiz',
-  // Каталог открыт, чтобы гость мог войти по коду. Комнату создаёт только ведущий с Premium.
   'sled',
   'mafia-shadows',
   'doubles',
@@ -36,17 +44,6 @@ export const FREE_COMICS = ['series-1', 'series-2', 'series-3'] as const
 /**
  * Откат premium (было до временного снятия 2026-06-15):
  * FREE_GAMES = ['card', 'truth-dare', 'mafia', 'alias'] as const
- *
- * Игры, которые снова станут premium после отката:
- * - activity   (Активитус)
- * - sabotage   (Саботаж)
- * - quiz       (Битва умов)
- * - who-is-who (Кто тут кто?)
- * - phrase-translator (Переводчик фраз)
- * - freebie-trash (Фигня но бесплатно)
- * - russia-travel (Где мы?)
- *
- * Уже бесплатные (не трогать при откате): card, truth-dare, mafia, alias
  */
 
 /** Бесплатные колоды карточной игры (по 15 вопросов). */

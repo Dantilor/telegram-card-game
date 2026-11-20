@@ -47,3 +47,6 @@ incoming/*.zip
 incoming/comics-source/
 incoming/comics-extra/
 incoming/.comics-tmp/
+
+_kits/
+

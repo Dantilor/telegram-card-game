@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * Apply additive WEB migrations 012–021 (+ gnh_app grants) to production gnh_supabase.
+ * Apply additive WEB migrations 012–023 (+ gnh_app grants) to production gnh_supabase.
+ * 022 = audience column + inactive WEB plans (safe with legacy API).
+ * 023 = activate WEB plans (only after audience-aware API is live).
  *
  * Does NOT:
  *  - run on API container start
@@ -117,6 +119,26 @@ const steps = [
     file: 'db/migrations/021_game_session_leases.sql',
     kind: 'ddl',
     skipSql: `SELECT to_regclass('public.game_session_leases') IS NOT NULL AS present`,
+  },
+  {
+    label: '022',
+    file: 'db/migrations/022_web_plans_audience.sql',
+    kind: 'ddl',
+    skipSql: `SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema='public' AND table_name='plans' AND column_name='audience'
+    ) AND EXISTS (
+      SELECT 1 FROM plans WHERE plan_id = 'premium_web_3m'
+    ) AS present`,
+  },
+  {
+    label: '023',
+    file: 'db/migrations/023_web_plans_activate.sql',
+    kind: 'ddl',
+    skipSql: `SELECT EXISTS (
+      SELECT 1 FROM plans
+       WHERE plan_id = 'premium_web_3m' AND audience = 'web' AND is_active = true
+    ) AS present`,
   },
   {
     label: 'grants_web_gnh_app',

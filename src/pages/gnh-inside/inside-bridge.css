@@ -1030,3 +1030,73 @@ html:has(.gnh-inside .rt-play)::before {
     animation: none !important;
   }
 }
+/* Premium kit / wheel: full-bleed page, no inset site frame. */
+html:has(.gnh-inside--kit-experience),
+html:has(.gnh-inside--kit-experience) body,
+.app.app--web:has(.gnh-inside--kit-experience),
+#root:has(.gnh-inside--kit-experience) {
+  background: #151025 !important;
+}
+.app.app--web:has(.gnh-inside--kit-experience) {
+  overflow: auto !important;
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #151025 !important;
+}
+.app.app--web > .gnh-inside.gnh-inside--kit-experience,
+.gnh-inside.gnh-inside--kit-experience {
+  background:
+    radial-gradient(ellipse at 86% 7%, #54336c4f, transparent 36%),
+    radial-gradient(ellipse at 0 19%, #5c3b8047, transparent 29%),
+    #151025 !important;
+  min-height: 100svh !important;
+  height: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+  --layout-phone-max: none;
+  --layout-content-max: 100%;
+  --web-shell-max: 100%;
+  --web-container: 100%;
+  --web-pad: 0px;
+}
+.gnh-inside.gnh-inside--kit-experience > .app-header,
+.gnh-inside.gnh-inside--kit-experience > .bottom-nav,
+.gnh-inside.gnh-inside--kit-experience > .web-site-footer {
+  display: none !important;
+}
+.app.app--web .gnh-inside.gnh-inside--kit-experience > .content,
+.gnh-inside.gnh-inside--kit-experience > .content {
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  background: transparent !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.gnh-inside.gnh-inside--kit-experience > .ambient-layer {
+  display: none !important;
+}
+.gnh-inside.gnh-inside--kit-experience .web-premium-experience,
+.gnh-inside.gnh-inside--kit-experience .gnh-experience {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}

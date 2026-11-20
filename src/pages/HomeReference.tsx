@@ -49,6 +49,9 @@ type HomeReferenceProps = {
   showPremium: boolean
   onFavorites: () => void
   onPremium: () => void
+  /** Compact tariffs for locked games/modes (no long Premium pitch). */
+  onPremiumGate?: () => void
+  onWheel?: () => void
   onPick: (to: string) => void
   premiumOpen: boolean
   onPremiumClose: () => void
@@ -261,10 +264,14 @@ function HomeReference({
   showPremium,
   onFavorites,
   onPremium,
+  onPremiumGate,
+  onWheel,
   onPick,
   premiumOpen,
   onPremiumClose,
 }: HomeReferenceProps) {
+  const openPremiumGate = onPremiumGate || onPremium
+
   const navigate = useNavigate()
   const { isPremium } = usePremium()
   const heroRef = useRef<HTMLElement | null>(null)
@@ -298,7 +305,7 @@ function HomeReference({
     hapticSelection()
     setMenuOpen(false)
     if (isModeLocked(modeId, isPremium)) {
-      onPremium()
+      openPremiumGate()
       return
     }
     if (modeId === 'adult') {
@@ -403,20 +410,27 @@ function HomeReference({
                   <span>Host</span>
                 </h1>
                 <p className="hero-subtitle">Твои игры. Твои правила.</p>
-                <Link
-                  to="/games"
-                  className="button button-primary hero-play"
-                  onClick={() => {
-                    hapticImpact('light')
-                    requestFullscreenOnUserGesture()
-                  }}
-                  onPointerEnter={() => {
-                    void import('./Games')
-                  }}
-                >
-                  <PlayGlyph />
-                  Начать игру
-                </Link>
+                <div className="hero-cta-row">
+                  <Link
+                    to="/games"
+                    className="button button-primary hero-play"
+                    onClick={() => {
+                      hapticImpact('light')
+                      requestFullscreenOnUserGesture()
+                    }}
+                    onPointerEnter={() => {
+                      void import('./Games')
+                    }}
+                  >
+                    <PlayGlyph />
+                    Начать игру
+                  </Link>
+                  {onWheel ? (
+                    <button type="button" className="button button-light hero-wheel" onClick={onWheel}>
+                      Колесо игр
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
           </section>

@@ -15,7 +15,7 @@ function run(args, env = {}) {
   })
 }
 
-test('dry-run without URL lists 012-021 and grants without contacting DB', () => {
+test('dry-run without URL lists 012-023 and grants without contacting DB', () => {
   const result = run(['--dry-run'], {
     PRODUCTION_DATABASE_URL: '',
     DATABASE_URL: '',
@@ -25,6 +25,8 @@ test('dry-run without URL lists 012-021 and grants without contacting DB', () =>
   assert.match(result.stdout, /DRY 017/)
   assert.match(result.stdout, /DRY 020/)
   assert.match(result.stdout, /DRY 021/)
+  assert.match(result.stdout, /DRY 022/)
+  assert.match(result.stdout, /DRY 023/)
   assert.match(result.stdout, /DRY grants_web_gnh_app/)
   assert.match(result.stdout, /No database contacted/)
 })
@@ -34,6 +36,8 @@ test('apply refuses without backup confirmation', () => {
     PRODUCTION_DATABASE_URL: 'postgresql://migrate:x@db.example:5432/gnh_supabase?sslmode=verify-full',
     GNH_ALLOW_PROD_WEB_MIGRATE: '1',
     CONFIRM_PRODUCTION_WEB_MIGRATE: 'YES',
+    CONFIRM_PRODUCTION_BACKUP: '',
+    PRODUCTION_EXPECT_HOST: '',
     DATABASE_URL: '',
   })
   assert.notEqual(result.status, 0)

@@ -7,7 +7,12 @@ import {
   extendPremiumActiveUntil,
   logPgError,
 } from '../services/subscriptions.js'
-import { getActivePlanById, getPlanDurationDays, planReceiptDescription } from '../services/plans.js'
+import {
+  getActivePlanById,
+  getPlanDurationDays,
+  planAllowedForChannel,
+  planReceiptDescription,
+} from '../services/plans.js'
 import { resolvePlanIdForGrant, resolveTelegramIdForGrant } from '../utils/telegramId.js'
 import { assertCheckout, assertWebCheckout, customerForNewYookassaReceipt } from '../legal/checkout.js'
 import { LegalError, legalErrorBody } from '../legal/errors.js'
@@ -227,6 +232,10 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     // Anonymous / email-bound WEB account checkout — never invents telegram_id.
     if (webAccountId) {
+      if (!planAllowedForChannel(plan, 'web')) {
+        res.status(400).json({ ok: false, error: 'plan_channel_mismatch' })
+        return
+      }
       let webCheckout: { evidenceId: number }
       try {
         webCheckout = await assertWebCheckout(
@@ -339,6 +348,11 @@ async function handleCreatePayment(req: Request, res: Response) {
 
     if (!telegramId) {
       res.status(401).json({ ok: false, error: 'Unauthorized', code: 'unauthorized' })
+      return
+    }
+
+    if (!planAllowedForChannel(plan, 'telegram')) {
+      res.status(400).json({ ok: false, error: 'plan_channel_mismatch' })
       return
     }
 

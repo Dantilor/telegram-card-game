@@ -80,6 +80,7 @@ const TruthDareVote = lazy(() => import('./pages/TruthDareVote'))
 const TruthDareResult = lazy(() => import('./pages/TruthDareResult'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PremiumPage = lazy(() => import('./pages/PremiumPage'))
+const WebPremiumExperience = lazy(() => import('./pages/WebPremiumExperience'))
 const WebPurchaseRecover = lazy(() => import('./pages/WebPurchaseRecover'))
 const WebEmailConfirm = lazy(() => import('./pages/WebEmailConfirm'))
 const WebTelegramLink = lazy(() => import('./pages/WebTelegramLink'))
@@ -287,6 +288,7 @@ function App() {
         />
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
+        <Route path="/wheel" element={<WebPremiumExperience initialView="wheel" />} />
         <Route path="/recover" element={<WebPurchaseRecover />} />
         <Route path="/email/confirm" element={<WebEmailConfirm />} />
         <Route path="/link-web" element={<WebTelegramLink />} />

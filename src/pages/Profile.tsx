@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
@@ -59,6 +59,7 @@ function Profile() {
   const handleBack = useBack('/')
   const tgUser = getTgUser()
   const webSession = useWebSession()
+  const navigate = useNavigate()
   const web = isWebShell()
   const [localDisplayName, setLocalDisplayName] = useState(() => readWebDisplayName())
   const [nameDraft, setNameDraft] = useState(() => readWebDisplayName())
@@ -574,7 +575,8 @@ function Profile() {
                 className="profile-pass__cta"
                 onClick={() => {
                   haptic('medium')
-                  setPremiumOverlayOpen(true)
+                  if (web) navigate('/premium')
+                  else setPremiumOverlayOpen(true)
                 }}
               >
                 <span className="profile-pass__cta-shine" aria-hidden />

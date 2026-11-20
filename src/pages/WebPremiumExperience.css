@@ -1,0 +1,185 @@
+/* Full-bleed kit page — no inset rectangle over the site chrome. */
+.gnh-inside.gnh-inside--kit-experience {
+  background: #151025;
+}
+.gnh-inside.gnh-inside--kit-experience > .content {
+  padding: 0;
+  min-height: 100svh;
+  background: transparent;
+}
+.web-premium-experience {
+  min-height: 100svh;
+  padding-bottom: 0;
+  background: transparent;
+}
+.web-premium-experience__error {
+  margin: 12px 16px;
+  color: rgba(255, 220, 220, 0.95);
+}
+
+/* Cyrillic «у» via Segoe local face in GnhNight @font-face; keep stack as fallback. */
+.gnh-experience {
+  font-family: GnhNight, "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+  min-height: auto !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+.gnh-experience .gnh-header,
+.gnh-experience .gnh-main,
+.gnh-experience .gnh-footer {
+  max-width: 1240px !important;
+  width: min(100% - 48px, 1240px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.gnh-experience .gnh-footer {
+  padding-bottom: 40px !important;
+  margin-bottom: 0 !important;
+}
+.gnh-experience .gnh-pricing,
+.gnh-experience .gnh-included,
+.gnh-experience .gnh-how,
+.gnh-experience .gnh-faq,
+.gnh-experience .gnh-finale {
+  scroll-margin-top: 96px;
+}
+.gnh-experience .gnh-premium-hero {
+  min-height: 0 !important;
+  padding: 36px 0 40px !important;
+}
+.gnh-experience .gnh-section {
+  padding-top: 42px !important;
+  padding-bottom: 18px !important;
+}
+.gnh-experience .gnh-plans {
+  gap: 14px !important;
+}
+.gnh-experience .gnh-plan {
+  padding: 18px 16px 16px !important;
+  gap: 0 !important;
+}
+.gnh-experience .gnh-plan-top > p {
+  min-height: 0 !important;
+  margin-top: 6px !important;
+}
+.gnh-experience .gnh-saving {
+  margin-top: 10px !important;
+  min-height: 0 !important;
+}
+.gnh-experience .gnh-plan-list {
+  margin: 12px 0 14px !important;
+  gap: 8px !important;
+}
+.gnh-experience .gnh-plan > .gnh-button {
+  margin-top: 8px !important;
+}
+.gnh-experience .gnh-company-cost {
+  margin-top: 18px !important;
+}
+.gnh-experience .gnh-finale {
+  margin: 28px 0 8px !important;
+}
+
+/* Compact tariff gate */
+.gnh-experience.gnh-experience--plans-focus .gnh-premium-hero,
+.gnh-experience.gnh-experience--plans-focus .gnh-included,
+.gnh-experience.gnh-experience--plans-focus .gnh-how,
+.gnh-experience.gnh-experience--plans-focus .gnh-faq,
+.gnh-experience.gnh-experience--plans-focus .gnh-finale {
+  display: none !important;
+}
+.gnh-experience.gnh-experience--plans-focus .gnh-pricing {
+  padding-top: 20px !important;
+}
+
+/* Wheel layout polish */
+.gnh-experience .gnh-roulette-layout {
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) !important;
+  gap: 48px !important;
+  max-width: 1100px !important;
+  align-items: start !important;
+}
+.gnh-experience .gnh-wheel-stage {
+  width: min(100%, 460px) !important;
+}
+.gnh-experience .gnh-wheel-result-area {
+  margin-top: 28px !important;
+}
+.gnh-experience .gnh-result-waiting {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 0 !important;
+  padding: 14px 16px !important;
+  border-style: solid !important;
+  border-color: #d6a8f228 !important;
+  background: #a16dcc0d !important;
+}
+.gnh-experience .gnh-result-waiting b {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+.gnh-experience .gnh-result-waiting p {
+  font-size: 13px !important;
+  margin: 2px 0 0 !important;
+  color: #b9acc9 !important;
+}
+.gnh-experience .gnh-result {
+  min-height: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .gnh-experience .gnh-header,
+  .gnh-experience .gnh-main,
+  .gnh-experience .gnh-footer {
+    width: calc(100% - 32px) !important;
+  }
+  .gnh-experience .gnh-roulette-layout {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+  .gnh-experience .gnh-wheel-stage {
+    width: min(100%, 360px) !important;
+    margin-inline: auto;
+  }
+  .gnh-experience .gnh-plans {
+    grid-template-columns: 1fr !important;
+  }
+  .gnh-experience .gnh-result {
+    grid-template-columns: 1fr !important;
+  }
+  .gnh-experience h1 {
+    font-size: clamp(30px, 8vw, 38px) !important;
+    letter-spacing: -1.2px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .gnh-experience .gnh-header,
+  .gnh-experience .gnh-main,
+  .gnh-experience .gnh-footer {
+    width: calc(100% - 32px) !important;
+  }
+  .gnh-experience .gnh-header {
+    padding: 14px 0 !important;
+    gap: 12px !important;
+  }
+  .gnh-experience .gnh-header-note {
+    display: none !important;
+  }
+}
+.gnh-experience .gnh-hero-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+.gnh-experience .gnh-hero-actions .gnh-button,
+.gnh-experience .gnh-hero-actions .gnh-text-button {
+  min-height: 54px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+.gnh-experience .gnh-value-strip {
+  margin: 8px 0 12px !important;
+}

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('./telegram', () => ({ getInitData: mocks.initData }))
 vi.mock('./waitForInitData', () => ({ waitForInitData: mocks.waitForInitData }))
 vi.mock('./apiBase', () => ({ resolveApiBase: () => 'https://api.example.test' }))
+vi.mock('../config/shell', () => ({ isWebShell: () => false, isTelegramShell: () => true, getAppShell: () => 'telegram' }))
 
 import { apiGet, apiPost } from './api'
 

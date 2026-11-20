@@ -27,11 +27,11 @@ function markWelcomeSeen(): void {
   }
 }
 
-function rememberLegalClosed(): void {
+function legalSheetClosedThisSession(): boolean {
   try {
-    sessionStorage.setItem(LEGAL_SHEET_KEY, '1')
+    return sessionStorage.getItem(LEGAL_SHEET_KEY) === '1'
   } catch {
-    /* Dismissal is not acceptance. */
+    return false
   }
 }
 
@@ -69,7 +69,9 @@ function usePublicDocument(id: string, enabled: boolean) {
 }
 
 /**
- * Soft first-visit tip for WEB / PWA — also carries first-use agreement when needed.
+ * Soft first-visit tip for WEB / PWA.
+ * Does not replace FirstUseSheet — waits until the original legal sheet is done,
+ * then may also show agreement/privacy footnotes + checkbox.
  */
 export default function WebWelcomeSheet() {
   const navigate = useNavigate()
@@ -83,28 +85,30 @@ export default function WebWelcomeSheet() {
 
   const needsAgreement =
     legal.status === 'ready' && legal.records?.agreement?.active !== true
+  // Keep the original FirstUseSheet first; welcome follows after accept/later there.
+  const firstUseBlocking = needsAgreement && !legalSheetClosedThisSession()
   const agreement = usePublicDocument('agreement', open && needsAgreement)
   const privacy = usePublicDocument('privacy', open && needsAgreement)
 
   useEffect(() => {
     if (!isWebShell()) return
     if (welcomeSeen()) return
-    if (legal.status === 'loading') return
+    if (legal.status === 'loading' || legal.status === 'idle') return
+    if (firstUseBlocking) return
     const showTimer = window.setTimeout(() => {
       setOpen(true)
       requestAnimationFrame(() => setVisible(true))
     }, 700)
     return () => window.clearTimeout(showTimer)
-  }, [legal.status])
+  }, [legal.status, firstUseBlocking, legal.records?.agreement?.active])
 
   const dismiss = useCallback(() => {
     setVisible(false)
     window.setTimeout(() => {
       setOpen(false)
       markWelcomeSeen()
-      if (needsAgreement) rememberLegalClosed()
     }, 280)
-  }, [needsAgreement])
+  }, [])
 
   const goProfile = useCallback(() => {
     haptic('light')
@@ -125,11 +129,8 @@ export default function WebWelcomeSheet() {
     haptic('medium')
     try {
       await legal.postLegal('/api/legal/agreement', buildAgreementBody(agreement.document))
-      markWelcomeSeen()
-      rememberLegalClosed()
       void legal.refreshRecords()
-      setVisible(false)
-      window.setTimeout(() => setOpen(false), 280)
+      dismiss()
     } catch (reason) {
       if (reason instanceof LegalClientError && reason.code === 'version_mismatch') {
         agreement.retry()
@@ -184,25 +185,26 @@ export default function WebWelcomeSheet() {
           следующем входе.
         </p>
 
+        <p className="web-welcome__footnotes">
+          <button
+            type="button"
+            className="web-welcome__footnote"
+            onClick={() => legal.openDocument('agreement')}
+          >
+            Пользовательское соглашение
+          </button>
+          <span aria-hidden="true"> · </span>
+          <button
+            type="button"
+            className="web-welcome__footnote"
+            onClick={() => legal.openDocument('privacy')}
+          >
+            Политика конфиденциальности
+          </button>
+        </p>
+
         {needsAgreement ? (
           <>
-            <p className="web-welcome__footnotes">
-              <button
-                type="button"
-                className="web-welcome__footnote"
-                onClick={() => legal.openDocument('agreement')}
-              >
-                Пользовательское соглашение
-              </button>
-              <span aria-hidden="true"> · </span>
-              <button
-                type="button"
-                className="web-welcome__footnote"
-                onClick={() => legal.openDocument('privacy')}
-              >
-                Политика конфиденциальности
-              </button>
-            </p>
             {(agreement.error || privacy.error) && (
               <div className="web-welcome__feedback" role="alert">
                 <span>Не удалось загрузить документы.</span>

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { isWebShell } from '../config/shell'
 import { buildAgreementBody, buildChannelActionBody, LegalClientError, userFacingLoadError } from '../legal/client'
 import { cachedDocument, invalidateDocument, loadDocument } from '../legal/documentCache'
 import { blockAnalyticsTransport } from '../legal/analyticsGate'
@@ -47,13 +46,8 @@ export function FirstUseSheet() {
   const [busy, setBusy] = useState(false)
   const saving = useRef(false)
   const [message, setMessage] = useState<string | null>(null)
-  // WEB first-visit welcome already carries agreement + privacy; keep this sheet for Mini App.
   // Optional consent must never reopen already accepted terms.
-  const needed =
-    !isWebShell() &&
-    legal.status === 'ready' &&
-    !hidden &&
-    legal.records?.agreement?.active !== true
+  const needed = legal.status === 'ready' && !hidden && legal.records?.agreement?.active !== true
   const agreement = usePublicDocument('agreement', needed)
   const privacy = usePublicDocument('privacy', needed)
   const close = useCallback(() => { rememberClosed(); setHidden(true) }, [])

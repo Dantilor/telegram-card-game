@@ -74,11 +74,16 @@ test.describe('WEB auth (dev-login optional)', () => {
 
 test.describe('seeded premium users', () => {
   test('free / 1m / lifetime / expired premium-status', async ({ browser }) => {
-    const cases: Array<{ id: number; expectActive: boolean }> = [
+    const cases: Array<{
+      id: number
+      expectActive: boolean
+      expectLifetime?: boolean
+      expectLastEnded?: boolean
+    }> = [
       { id: USERS.free, expectActive: false },
-      { id: USERS.premium1m, expectActive: true },
-      { id: USERS.lifetime, expectActive: true },
-      { id: USERS.expired, expectActive: false },
+      { id: USERS.premium1m, expectActive: true, expectLifetime: false },
+      { id: USERS.lifetime, expectActive: true, expectLifetime: true },
+      { id: USERS.expired, expectActive: false, expectLastEnded: true },
     ]
     for (const c of cases) {
       const ctx = await browser.newContext()
@@ -88,7 +93,16 @@ test.describe('seeded premium users', () => {
       expect(premium.ok(), `premium-status ${c.id}`).toBeTruthy()
       const body = await premium.json()
       const active = isPremiumPayload(body)
-      expect(active, `user ${c.id} active=${active} body=${JSON.stringify(body)}`).toBe(c.expectActive)
+      expect(
+        active,
+        `user ${c.id} active=${active} body=${JSON.stringify(body)}. If 900004 is unexpectedly active, re-run deploy/local/seed_e2e.sql (auth seed drift).`
+      ).toBe(c.expectActive)
+      if (c.expectLifetime != null) {
+        expect(Boolean(body.isLifetime), `user ${c.id} isLifetime`).toBe(c.expectLifetime)
+      }
+      if (c.expectLastEnded) {
+        expect(body.lastEndedAt, `user ${c.id} lastEndedAt`).toBeTruthy()
+      }
       await ctx.close()
     }
   })

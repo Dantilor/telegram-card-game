@@ -84,12 +84,23 @@ export type WebPremiumStatus = {
   isPremium: boolean
   activeUntil: string | null
   sources: SharedPremiumSource[]
+  /** True when an active entitlement/subscription plan is lifetime (by plan_id). */
+  isLifetime: boolean
+  /** Most recent past end date when Premium is not currently active (for expired UI). */
+  lastEndedAt: string | null
 }
 
 export type TelegramPremiumStatus = {
   isPremium: boolean
   activeUntil: string | null
   sources: SharedPremiumSource[]
+  isLifetime: boolean
+  lastEndedAt: string | null
+}
+
+function planIdIsLifetime(planId: string | null | undefined): boolean {
+  const id = (planId || '').trim()
+  return id === 'premium_lifetime' || id === 'premium_web_lifetime'
 }
 
 function pickBestUntil(current: Date | null, candidate: Date | null, now: Date): Date | null {
@@ -135,12 +146,14 @@ export async function getWebAccountPremium(
   const now = new Date()
   const sources = new Set<SharedPremiumSource>()
   let best: Date | null = null
+  let isLifetime = false
 
   const entitlements = await db(customDb).query<{
     active_until: Date
     source: string
+    plan_id: string | null
   }>(
-    `SELECT e.active_until, e.source
+    `SELECT e.active_until, e.source, e.plan_id
        FROM web_entitlements e
       WHERE e.web_account_id = $1::uuid
         AND e.active_until > now()
@@ -155,7 +168,66 @@ export async function getWebAccountPremium(
     if (row.source === 'web_purchase' || row.source === 'manual_staging') {
       sources.add(row.source)
     }
+    if (planIdIsLifetime(row.plan_id)) isLifetime = true
   }
+
+  const link = await db(customDb).query<{ telegram_id: string }>(
+    `SELECT telegram_id::text
+       FROM web_telegram_links
+      WHERE web_account_id = $1::uuid AND revoked_at IS NULL
+      LIMIT 1`,
+    [webAccountId]
+  )
+  const telegramId = link.rows[0]?.telegram_id
+  if (telegramId) {
+    const sub = await db(customDb).query<{ active_until: Date; plan_id: string | null }>(
+      `SELECT active_until, plan_id FROM subscriptions
+        WHERE telegram_id = $1::bigint
+          AND active_until > now()
+        ORDER BY active_until DESC
+        LIMIT 1`,
+      [telegramId]
+    )
+    const until = sub.rows[0]?.active_until ? new Date(sub.rows[0].active_until) : null
+    if (until && until > now) {
+      best = pickBestUntil(best, until, now)
+      sources.add('telegram_subscription')
+      if (planIdIsLifetime(sub.rows[0]?.plan_id)) isLifetime = true
+    }
+  }
+
+  const isPremium = Boolean(best && best > now)
+  let lastEndedAt: string | null = null
+  if (!isPremium) {
+    lastEndedAt = await fetchLastEndedAtForWeb(webAccountId, customDb)
+  }
+
+  return {
+    isPremium,
+    activeUntil: isPremium && best ? best.toISOString() : null,
+    sources: [...sources],
+    isLifetime: Boolean(isPremium && isLifetime),
+    lastEndedAt,
+  }
+}
+
+async function fetchLastEndedAtForWeb(
+  webAccountId: string,
+  customDb?: Queryable
+): Promise<string | null> {
+  const ended = await db(customDb).query<{ active_until: Date }>(
+    `SELECT e.active_until
+       FROM web_entitlements e
+      WHERE e.web_account_id = $1::uuid
+        AND e.active_until <= now()
+        AND e.source IN ('web_purchase', 'manual_staging')
+      ORDER BY e.active_until DESC
+      LIMIT 1`,
+    [webAccountId]
+  )
+  let best: Date | null = ended.rows[0]?.active_until
+    ? new Date(ended.rows[0].active_until)
+    : null
 
   const link = await db(customDb).query<{ telegram_id: string }>(
     `SELECT telegram_id::text
@@ -169,23 +241,15 @@ export async function getWebAccountPremium(
     const sub = await db(customDb).query<{ active_until: Date }>(
       `SELECT active_until FROM subscriptions
         WHERE telegram_id = $1::bigint
-          AND active_until > now()
+          AND active_until <= now()
         ORDER BY active_until DESC
         LIMIT 1`,
       [telegramId]
     )
     const until = sub.rows[0]?.active_until ? new Date(sub.rows[0].active_until) : null
-    if (until && until > now) {
-      best = pickBestUntil(best, until, now)
-      sources.add('telegram_subscription')
-    }
+    if (until && (!best || until > best)) best = until
   }
-
-  return {
-    isPremium: Boolean(best && best > now),
-    activeUntil: best ? best.toISOString() : null,
-    sources: [...sources],
-  }
+  return best ? best.toISOString() : null
 }
 
 /**
@@ -200,10 +264,11 @@ export async function getTelegramPremium(
   const now = new Date()
   const sources = new Set<SharedPremiumSource>()
   let best: Date | null = null
+  let isLifetime = false
   const tg = String(telegramId)
 
-  const sub = await db(customDb).query<{ active_until: Date }>(
-    `SELECT active_until FROM subscriptions
+  const sub = await db(customDb).query<{ active_until: Date; plan_id: string | null }>(
+    `SELECT active_until, plan_id FROM subscriptions
       WHERE telegram_id = $1::bigint
         AND active_until > now()
       ORDER BY active_until DESC
@@ -214,13 +279,15 @@ export async function getTelegramPremium(
   if (subUntil && subUntil > now) {
     best = pickBestUntil(best, subUntil, now)
     sources.add('telegram_subscription')
+    if (planIdIsLifetime(sub.rows[0]?.plan_id)) isLifetime = true
   }
 
   const linkedWeb = await db(customDb).query<{
     active_until: Date
     source: string
+    plan_id: string | null
   }>(
-    `SELECT e.active_until, e.source
+    `SELECT e.active_until, e.source, e.plan_id
        FROM web_telegram_links l
        JOIN web_entitlements e ON e.web_account_id = l.web_account_id
       WHERE l.telegram_id = $1::bigint
@@ -236,13 +303,57 @@ export async function getTelegramPremium(
     if (row.source === 'web_purchase' || row.source === 'manual_staging') {
       sources.add(row.source)
     }
+    if (planIdIsLifetime(row.plan_id)) isLifetime = true
+  }
+
+  const isPremium = Boolean(best && best > now)
+  let lastEndedAt: string | null = null
+  if (!isPremium) {
+    lastEndedAt = await fetchLastEndedAtForTelegram(tg, customDb)
   }
 
   return {
-    isPremium: Boolean(best && best > now),
-    activeUntil: best ? best.toISOString() : null,
+    isPremium,
+    activeUntil: isPremium && best ? best.toISOString() : null,
     sources: [...sources],
+    isLifetime: Boolean(isPremium && isLifetime),
+    lastEndedAt,
   }
+}
+
+async function fetchLastEndedAtForTelegram(
+  telegramId: string,
+  customDb?: Queryable
+): Promise<string | null> {
+  const sub = await db(customDb).query<{ active_until: Date }>(
+    `SELECT active_until FROM subscriptions
+      WHERE telegram_id = $1::bigint
+        AND active_until <= now()
+      ORDER BY active_until DESC
+      LIMIT 1`,
+    [telegramId]
+  )
+  let best: Date | null = sub.rows[0]?.active_until
+    ? new Date(sub.rows[0].active_until)
+    : null
+
+  const linkedWeb = await db(customDb).query<{ active_until: Date }>(
+    `SELECT e.active_until
+       FROM web_telegram_links l
+       JOIN web_entitlements e ON e.web_account_id = l.web_account_id
+      WHERE l.telegram_id = $1::bigint
+        AND l.revoked_at IS NULL
+        AND e.active_until <= now()
+        AND e.source IN ('web_purchase', 'manual_staging')
+      ORDER BY e.active_until DESC
+      LIMIT 1`,
+    [telegramId]
+  )
+  const webUntil = linkedWeb.rows[0]?.active_until
+    ? new Date(linkedWeb.rows[0].active_until)
+    : null
+  if (webUntil && (!best || webUntil > best)) best = webUntil
+  return best ? best.toISOString() : null
 }
 
 export async function grantWebEntitlement(input: {

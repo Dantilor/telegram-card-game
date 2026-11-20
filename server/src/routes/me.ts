@@ -27,6 +27,8 @@ router.get('/me', async (req: Request, res: Response) => {
         premium: status.isPremium,
         premiumUntil: status.activeUntil,
         activeUntil: status.activeUntil,
+        isLifetime: status.isLifetime,
+        lastEndedAt: status.lastEndedAt,
         sources: status.sources,
         authSource: auth.source,
       })
@@ -51,6 +53,8 @@ router.get('/me', async (req: Request, res: Response) => {
       premium: status.isPremium,
       premiumUntil: status.activeUntil,
       activeUntil: status.activeUntil,
+      isLifetime: status.isLifetime,
+      lastEndedAt: status.lastEndedAt,
       sources: status.sources,
       authSource: auth.source,
     })

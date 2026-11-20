@@ -320,6 +320,7 @@ html:has(.profile-page):not([data-gnh-shell="web"]) #root {
 .profile-page .profile-identity__username,
 .profile-page .profile-identity__guest,
 .profile-page .profile-pass__active-date,
+.profile-page .profile-pass__active-days,
 .profile-page .profile-pass__desc,
 .profile-page .profile-pass__toast,
 .profile-page .profile-menu__label-sub,
@@ -330,6 +331,7 @@ html:has(.profile-page):not([data-gnh-shell="web"]) #root {
 .profile-page .profile-identity__name,
 .profile-page .profile-pass__title,
 .profile-page .profile-pass__active-label,
+.profile-page .profile-pass__active-until,
 .profile-page .profile-menu__label,
 .profile-page .profile-menu__label-main {
   color: var(--prof-text);
@@ -546,6 +548,20 @@ html:has(.profile-page):not([data-gnh-shell="web"]) #root {
 .profile-pass__active-date {
   margin: 0.15rem 0 0;
   font-size: 0.82rem;
+  color: var(--prof-muted);
+}
+
+.profile-pass__active-until {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--prof-text);
+  letter-spacing: 0.01em;
+}
+
+.profile-pass__active-days {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
   color: var(--prof-muted);
 }
 

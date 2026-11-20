@@ -10,6 +10,7 @@ import {
 } from 'react'
 import type { WebSessionMe } from '../lib/webAuth'
 import { ensureWebSession, fetchWebSessionMe, logoutWebSession } from '../lib/webAuth'
+import { applyIfCurrent, createSessionApplyGate } from './webSessionStale'
 
 export type WebAuthUiStatus = 'anonymous' | 'pending' | 'verified' | 'telegram'
 
@@ -55,6 +56,7 @@ export function WebSessionProvider({
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollStartedAtRef = useRef(0)
   const refreshInFlight = useRef<Promise<WebSessionMe | null> | null>(null)
+  const applyGateRef = useRef(createSessionApplyGate())
 
   useEffect(() => {
     sessionRef.current = session
@@ -89,6 +91,7 @@ export function WebSessionProvider({
 
   const setSession = useCallback(
     (next: WebSessionMe | null) => {
+      applyGateRef.current.bump()
       applySession(next)
     },
     [applySession]
@@ -96,11 +99,12 @@ export function WebSessionProvider({
 
   const refreshSession = useCallback(async () => {
     if (refreshInFlight.current) return refreshInFlight.current
+    const token = applyGateRef.current.generation
     const run = (async () => {
       try {
         const next = await fetchWebSessionMe()
-        applySession(next)
-        return next
+        const applied = applyIfCurrent(applyGateRef.current, token, next, applySession)
+        return applied ? next : sessionRef.current
       } catch {
         return sessionRef.current
       } finally {
@@ -131,6 +135,9 @@ export function WebSessionProvider({
 
   const logout = useCallback(async () => {
     stopEmailPendingWatch()
+    // Invalidate in-flight refresh before clearing so stale me cannot restore the session.
+    applyGateRef.current.bump()
+    refreshInFlight.current = null
     try {
       await logoutWebSession()
     } finally {

@@ -18,7 +18,6 @@ import {
   startTelegramLinkRestore,
   unlinkTelegramLink,
 } from '../lib/webAuth'
-import { LIFETIME_DURATION_DAYS } from '../utils/planLabel'
 import './Profile.css'
 import ProfileFaq from '../components/web/ProfileFaq'
 import { openWebInstallPrompt } from '../components/web/WebInstallBanner'
@@ -44,15 +43,29 @@ function getInitials(firstName?: string, lastName?: string): string {
   return (first + last).toUpperCase() || '?'
 }
 
-function formatPremiumUntilLabel(activeUntil: string | null): string {
-  if (!activeUntil) return 'Premium активен'
+function formatPremiumUntilDate(activeUntil: string | null): string | null {
+  if (!activeUntil) return null
   const until = new Date(activeUntil)
-  if (!Number.isFinite(until.getTime())) return 'Premium активен'
-  const daysLeft = (until.getTime() - Date.now()) / 86_400_000
-  if (daysLeft >= LIFETIME_DURATION_DAYS * 0.9 || until.getFullYear() >= 2090) {
-    return 'Lifetime'
-  }
-  return `до ${until.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`
+  if (!Number.isFinite(until.getTime())) return null
+  return until.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function daysRemaining(activeUntil: string | null): number | null {
+  if (!activeUntil) return null
+  const until = new Date(activeUntil).getTime()
+  if (!Number.isFinite(until)) return null
+  const days = Math.ceil((until - Date.now()) / 86_400_000)
+  return days > 0 ? days : null
+}
+
+function formatDaysLeftLabel(days: number): string {
+  const n = Math.abs(days) % 100
+  const n1 = n % 10
+  let word = 'дней'
+  if (n > 10 && n < 20) word = 'дней'
+  else if (n1 === 1) word = 'день'
+  else if (n1 >= 2 && n1 <= 4) word = 'дня'
+  return `Осталось ${days} ${word}`
 }
 
 function Profile() {
@@ -91,7 +104,16 @@ function Profile() {
         }
       })()
     : tgUser
-  const { isPremium, activeUntil, authError, authError401, serverError503, refreshPremium } = usePremium()
+  const {
+    isPremium,
+    activeUntil,
+    isLifetime,
+    lastEndedAt,
+    authError,
+    authError401,
+    serverError503,
+    refreshPremium,
+  } = usePremium()
   const initData = getInitData()
   const userId = web ? webSession.session?.telegramId : (initData.userId ?? initData.user?.id)
   const webAccountId = web ? webSession.session?.webAccountId : null
@@ -424,7 +446,9 @@ function Profile() {
   }
 
   const errorMessage = getErrorMessage()
-  const activeUntilLabel = formatPremiumUntilLabel(activeUntil)
+  const premiumUntilDate = formatPremiumUntilDate(activeUntil)
+  const premiumDaysLeft = daysRemaining(activeUntil)
+  const premiumExpired = !isPremium && Boolean(lastEndedAt)
   const tgExpiresLabel = tgRestore?.expiresAt
     ? new Date(tgRestore.expiresAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
     : null
@@ -450,7 +474,11 @@ function Profile() {
                 : tgRestore.message || 'Аккаунты связаны. Premium пока не активен.'}
             </p>
             <p className="profile-pass__active-date">
-              {formatPremiumUntilLabel(tgRestore.activeUntil ?? activeUntil)}
+              {tgRestore.isPremium
+                ? formatPremiumUntilDate(tgRestore.activeUntil ?? activeUntil)
+                  ? `Действует до: ${formatPremiumUntilDate(tgRestore.activeUntil ?? activeUntil)}`
+                  : 'Premium активен'
+                : 'Premium пока не активен'}
             </p>
           </>
         ) : null}
@@ -568,8 +596,20 @@ function Profile() {
               <div className="profile-pass__active-head">
                 <span className="profile-pass__gem" aria-hidden>💎</span>
                 <div>
-                  <p className="profile-pass__active-label">Premium</p>
-                  <p className="profile-pass__active-date">{activeUntilLabel}</p>
+                  <p className="profile-pass__active-label">GameNight Premium</p>
+                  <p className="profile-pass__active-date">Статус: Активен</p>
+                  {isLifetime ? (
+                    <p className="profile-pass__active-until">Premium навсегда ♾️</p>
+                  ) : (
+                    <>
+                      {premiumUntilDate ? (
+                        <p className="profile-pass__active-until">Действует до: {premiumUntilDate}</p>
+                      ) : null}
+                      {premiumDaysLeft != null ? (
+                        <p className="profile-pass__active-days">{formatDaysLeftLabel(premiumDaysLeft)}</p>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </div>
               <button
@@ -625,8 +665,10 @@ function Profile() {
               <div className="profile-pass__head">
                 <span className="profile-pass__gem" aria-hidden>💎</span>
                 <div>
-                  <p className="profile-pass__eyebrow">Premium-доступ</p>
-                  <p className="profile-pass__title">Полный доступ к играм</p>
+                  <p className="profile-pass__eyebrow">GameNight Premium</p>
+                  <p className="profile-pass__title">
+                    {premiumExpired ? 'Срок Premium закончился' : 'Premium не активен'}
+                  </p>
                 </div>
               </div>
               <p className="profile-pass__desc">
@@ -650,7 +692,7 @@ function Profile() {
                 }}
               >
                 <span className="profile-pass__cta-shine" aria-hidden />
-                Оформить Premium
+                {premiumExpired ? 'Продлить Premium' : 'Получить Premium'}
               </button>
               <button
                 type="button"

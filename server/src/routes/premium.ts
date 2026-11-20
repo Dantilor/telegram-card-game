@@ -30,6 +30,8 @@ router.get('/premium-status', async (req: Request, res: Response) => {
         authSource: auth.source,
         webAccountId: auth.webAccountId,
         sources: status.sources,
+        isLifetime: status.isLifetime,
+        lastEndedAt: status.lastEndedAt,
       })
       return
     }
@@ -44,6 +46,8 @@ router.get('/premium-status', async (req: Request, res: Response) => {
     safeResponse(res, status.isPremium, status.activeUntil, {
       authSource: auth.source,
       sources: status.sources,
+      isLifetime: status.isLifetime,
+      lastEndedAt: status.lastEndedAt,
     })
   } catch (e: unknown) {
     if (isDev) {

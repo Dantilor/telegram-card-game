@@ -1,15 +1,28 @@
 import { apiGet } from '../lib/api'
+import {
+  clearMeInFlightIfCurrent,
+  commitMeCache,
+  getMeGeneration,
+  getMeInFlight,
+  invalidateMeCache as invalidateMeCacheCore,
+  peekMeCache,
+  setMeInFlight,
+} from './meCache'
 
 export type MeResponse = {
   telegramId: number | null
   webAccountId?: string | null
   premium: boolean
-  premiumUntil?: string
+  premiumUntil?: string | null
+  isLifetime?: boolean
+  lastEndedAt?: string | null
 }
 
 export type PremiumStatusResponse = {
   isPremium: boolean
   activeUntil: string | null
+  isLifetime?: boolean
+  lastEndedAt?: string | null
 }
 
 export class ApiAuthError extends Error {
@@ -20,39 +33,38 @@ export class ApiAuthError extends Error {
 }
 
 const ME_CACHE_TTL_MS = 5000
-let meCache: { data: MeResponse; ts: number } | null = null
-let mePromise: Promise<MeResponse> | null = null
 
 export function invalidateMeCache(): void {
-  meCache = null
-  mePromise = null
+  invalidateMeCacheCore()
 }
 
 /** Кэш на 5 с и дедупликация запросов: prefetch и usePremiumStatus не дергают API дважды. */
 export async function getMe(): Promise<MeResponse> {
-  if (meCache && Date.now() - meCache.ts < ME_CACHE_TTL_MS) {
-    return meCache.data
-  }
-  if (mePromise) {
-    return mePromise
-  }
-  mePromise = (async () => {
+  const cached = peekMeCache(ME_CACHE_TTL_MS)
+  if (cached) return cached
+
+  const inFlight = getMeInFlight()
+  if (inFlight) return inFlight
+
+  const generation = getMeGeneration()
+  let promise!: Promise<MeResponse>
+  promise = (async () => {
     try {
       const data = await apiGet<MeResponse>('/api/me')
-      meCache = { data, ts: Date.now() }
+      commitMeCache(data, generation)
       return data
     } catch (e) {
-      mePromise = null
       const err = e as Error & { status?: number }
       if (err.status === 401) {
         throw new ApiAuthError('Не удалось подтвердить Telegram initData')
       }
       throw e
     } finally {
-      mePromise = null
+      clearMeInFlightIfCurrent(promise)
     }
   })()
-  return mePromise
+  setMeInFlight(promise)
+  return promise
 }
 
 export async function getPremiumStatus(): Promise<PremiumStatusResponse> {
@@ -60,5 +72,7 @@ export async function getPremiumStatus(): Promise<PremiumStatusResponse> {
   return {
     isPremium: me.premium,
     activeUntil: me.premiumUntil ?? null,
+    isLifetime: me.isLifetime,
+    lastEndedAt: me.lastEndedAt ?? null,
   }
 }

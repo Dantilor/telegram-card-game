@@ -188,6 +188,97 @@ test('shared Premium: unlink keeps original purchases on both sides', async () =
   }
 })
 
+test('shared Premium: isLifetime from plan_id, not far-future date; lastEndedAt after expiry', async () => {
+  const harness = await createHarness()
+  try {
+    const account = await harness.query.query<{ id: string }>(
+      `INSERT INTO web_accounts DEFAULT VALUES RETURNING id`
+    )
+    const webAccountId = String(account.rows[0]!.id)
+
+    const farFuture = new Date(Date.now() + 100 * 365 * 86400_000)
+    await grantWebEntitlement({
+      webAccountId,
+      planId: 'premium_1m',
+      activeUntil: farFuture,
+      source: 'web_purchase',
+      paymentId: 'pay_far_1m',
+      db: harness.query,
+    })
+    let status = await getWebAccountPremium(webAccountId, harness.query)
+    assert.equal(status.isPremium, true)
+    assert.equal(status.isLifetime, false, 'far future 1m must not be treated as lifetime')
+
+    await grantWebEntitlement({
+      webAccountId,
+      planId: 'premium_web_lifetime',
+      activeUntil: farFuture,
+      source: 'web_purchase',
+      paymentId: 'pay_life',
+      db: harness.query,
+    })
+    status = await getWebAccountPremium(webAccountId, harness.query)
+    assert.equal(status.isPremium, true)
+    assert.equal(status.isLifetime, true)
+    assert.equal(status.lastEndedAt, null)
+
+    const ended = new Date(Date.now() - 2 * 86400_000)
+    await harness.query.query(
+      `UPDATE web_entitlements SET active_until = $2 WHERE web_account_id = $1::uuid`,
+      [webAccountId, ended.toISOString()]
+    )
+    status = await getWebAccountPremium(webAccountId, harness.query)
+    assert.equal(status.isPremium, false)
+    assert.equal(status.isLifetime, false)
+    assert.ok(status.lastEndedAt)
+    assert.ok(new Date(status.lastEndedAt!) <= new Date())
+  } finally {
+    await harness.close()
+  }
+})
+
+test('shared Premium: two entitlements keep access until the later end date', async () => {
+  const harness = await createHarness()
+  try {
+    const account = await harness.query.query<{ id: string }>(
+      `INSERT INTO web_accounts DEFAULT VALUES RETURNING id`
+    )
+    const webAccountId = String(account.rows[0]!.id)
+    const soon = new Date(Date.now() + 5 * 86400_000)
+    const later = new Date(Date.now() + 40 * 86400_000)
+    await grantWebEntitlement({
+      webAccountId,
+      planId: 'premium_1m',
+      activeUntil: soon,
+      source: 'web_purchase',
+      paymentId: 'pay_soon',
+      db: harness.query,
+    })
+    await grantWebEntitlement({
+      webAccountId,
+      planId: 'premium_3m',
+      activeUntil: later,
+      source: 'web_purchase',
+      paymentId: 'pay_later',
+      db: harness.query,
+    })
+    const status = await getWebAccountPremium(webAccountId, harness.query)
+    assert.equal(status.isPremium, true)
+    assert.equal(status.activeUntil, later.toISOString())
+
+    await harness.query.query(
+      `UPDATE web_entitlements SET active_until = now() - interval '1 hour'
+        WHERE web_account_id = $1::uuid AND payment_id = 'pay_soon'`,
+      [webAccountId]
+    )
+    const after = await getWebAccountPremium(webAccountId, harness.query)
+    assert.equal(after.isPremium, true)
+    assert.equal(after.activeUntil, later.toISOString())
+  } finally {
+    await harness.close()
+  }
+})
+
 test('shared Premium: re-link does not extend original WEB purchase duration', async () => {
   const harness = await createHarness()
   try {

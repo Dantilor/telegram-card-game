@@ -39,38 +39,67 @@ function clearCache(accountId?: string | null): void {
   try {
     const key = cacheKeyFor(accountId ?? readAccountKey())
     sessionStorage.removeItem(key)
-    // Legacy unscoped key
     sessionStorage.removeItem(CACHE_KEY_PREFIX)
   } catch {
     // ignore
   }
 }
+
 const STATE_KEY = 'tcg_state'
 
-type PremiumStatus = {
+export type PremiumStatusSnapshot = {
   isPremium: boolean
   activeUntil: string | null
+  isLifetime: boolean
+  lastEndedAt: string | null
 }
 
-function readCache(accountId?: string | null): PremiumStatus | null {
+function normalizeSnapshot(raw: {
+  isPremium?: boolean
+  premium?: boolean
+  activeUntil?: string | null
+  premiumUntil?: string | null
+  isLifetime?: boolean
+  lastEndedAt?: string | null
+}): PremiumStatusSnapshot {
+  const activeUntil = raw.activeUntil ?? raw.premiumUntil ?? null
+  const isLifetimeFlag = Boolean(raw.isLifetime)
+  let isPremium = Boolean(raw.isPremium ?? raw.premium)
+  let lastEndedAt = raw.lastEndedAt ?? null
+  if (isPremium && activeUntil && !isLifetimeFlag) {
+    const until = new Date(activeUntil).getTime()
+    if (Number.isFinite(until) && until <= Date.now()) {
+      isPremium = false
+      lastEndedAt = lastEndedAt || activeUntil
+    }
+  }
+  return {
+    isPremium,
+    activeUntil: isPremium ? activeUntil : null,
+    isLifetime: Boolean(isPremium && isLifetimeFlag),
+    lastEndedAt: isPremium ? null : lastEndedAt,
+  }
+}
+
+function readCache(accountId?: string | null): PremiumStatusSnapshot | null {
   try {
     const raw = sessionStorage.getItem(cacheKeyFor(accountId ?? readAccountKey()))
     if (!raw) return null
-    const { data, ts, account } = JSON.parse(raw) as {
-      data: PremiumStatus
+    const parsed = JSON.parse(raw) as {
+      data: PremiumStatusSnapshot
       ts: number
       account?: string
     }
-    if (Date.now() - ts > CACHE_TTL_MS) return null
+    if (Date.now() - parsed.ts > CACHE_TTL_MS) return null
     const expected = accountId ?? readAccountKey()
-    if (account && account !== expected) return null
-    return data
+    if (parsed.account && parsed.account !== expected) return null
+    return normalizeSnapshot(parsed.data)
   } catch {
     return null
   }
 }
 
-function writeCache(data: PremiumStatus, accountId?: string | null): void {
+function writeCache(data: PremiumStatusSnapshot, accountId?: string | null): void {
   try {
     const account = accountId || readAccountKey()
     writeAccountKey(account)
@@ -100,18 +129,24 @@ function updateTcgState(isPremium: boolean): void {
 export function usePremiumStatus(): {
   isPremium: boolean
   activeUntil: string | null
+  isLifetime: boolean
+  lastEndedAt: string | null
   loading: boolean
   authError: boolean
   authError401: boolean
   serverError503: boolean
   refetch: () => void
-  refresh: () => Promise<{ isPremium: boolean; activeUntil: string | null } | null>
+  refresh: () => Promise<PremiumStatusSnapshot | null>
 } {
   const mountedRef = useRef(true)
+  const accountRef = useRef(readAccountKey())
+  const expiryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [state, setState] = useState<{
     isPremium: boolean
     activeUntil: string | null
+    isLifetime: boolean
+    lastEndedAt: string | null
     loading: boolean
     authError: boolean
     authError401: boolean
@@ -120,19 +155,18 @@ export function usePremiumStatus(): {
     const cached = readCache()
     if (cached) {
       return {
-        isPremium: cached.isPremium,
-        activeUntil: cached.activeUntil,
+        ...cached,
         loading: false,
         authError: false,
         authError401: false,
         serverError503: false,
       }
     }
-    // Home can render immediately, but games must know that Premium is
-    // *unverified*, not free, until the first signed /api/me result or timeout.
     return {
       isPremium: false,
       activeUntil: null,
+      isLifetime: false,
+      lastEndedAt: null,
       loading: true,
       authError: false,
       authError401: false,
@@ -140,109 +174,157 @@ export function usePremiumStatus(): {
     }
   })
 
-  const doneLoading = useCallback((data: { isPremium: boolean; activeUntil: string | null; authError?: boolean; authError401?: boolean; serverError503?: boolean }) => {
-    if (mountedRef.current) {
+  const clearExpiryTimer = useCallback(() => {
+    if (expiryTimerRef.current) {
+      clearTimeout(expiryTimerRef.current)
+      expiryTimerRef.current = null
+    }
+  }, [])
+
+  const doneLoading = useCallback(
+    (data: PremiumStatusSnapshot & { authError?: boolean; authError401?: boolean; serverError503?: boolean }) => {
+      if (!mountedRef.current) return
       setState({
-        ...data,
+        isPremium: data.isPremium,
+        activeUntil: data.activeUntil,
+        isLifetime: data.isLifetime,
+        lastEndedAt: data.lastEndedAt,
         loading: false,
         authError: data.authError ?? false,
         authError401: data.authError401 ?? false,
         serverError503: data.serverError503 ?? false,
       })
-    }
-  }, [])
+    },
+    []
+  )
 
-  const fetchStatus = useCallback(async (bypassCache = false): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
-    // Do not block Home shell; wait for late SDK/initData, then confirm with the server.
-    const initData = (await waitForInitData(3000)) || getInitData()
+  const fetchStatus = useCallback(
+    async (bypassCache = false): Promise<PremiumStatusSnapshot | null> => {
+      const initData = (await waitForInitData(3000)) || getInitData()
 
-    if (!initData && !isWebShell()) {
-      devLog('[TCG] Premium: no initData (open in Telegram)')
-      // No signed session → cannot claim Premium. Keep UI usable (not an infinite spinner).
-      doneLoading({ isPremium: false, activeUntil: null, authError: true, authError401: false, serverError503: false })
-      return null
-    }
-
-    if (!bypassCache) {
-      const cached = readCache()
-      if (cached) {
-        updateTcgState(cached.isPremium)
-        doneLoading({ isPremium: cached.isPremium, activeUntil: cached.activeUntil, authError: false, authError401: false, serverError503: false })
-        // Still refresh in background below? Cold path returns cache first; visibility/sdk will refresh.
-        return cached
-      }
-    }
-
-    // bypassCache (ручной refresh) может показать loading; фоновый cold-start — нет.
-    if (bypassCache && mountedRef.current) {
-      setState((s) => ({ ...s, loading: true }))
-    }
-    try {
-      const me = await getMe()
-      const data = {
-        isPremium: me.premium,
-        activeUntil: me.premiumUntil ?? null,
-      }
-      const accountId = me.webAccountId ? String(me.webAccountId) : readAccountKey()
-      writeCache(data, accountId)
-      writeAccountKey(accountId)
-      updateTcgState(data.isPremium)
-      devLog('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
-      doneLoading({ ...data, authError: false, authError401: false, serverError503: false })
-      return data
-    } catch (e) {
-      devWarn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
-      const err = e as Error & { status?: number }
-      const authError401 = e instanceof ApiAuthError || err.status === 401
-      // Transient network/5xx must not wipe a recently confirmed Premium cache.
-      const cached = !authError401 ? readCache() : null
-      if (cached) {
+      if (!initData && !isWebShell()) {
+        devLog('[TCG] Premium: no initData (open in Telegram)')
         doneLoading({
-          isPremium: cached.isPremium,
-          activeUntil: cached.activeUntil,
+          isPremium: false,
+          activeUntil: null,
+          isLifetime: false,
+          lastEndedAt: null,
           authError: true,
           authError401: false,
+          serverError503: false,
+        })
+        return null
+      }
+
+      if (!bypassCache) {
+        const cached = readCache(accountRef.current)
+        if (cached) {
+          updateTcgState(cached.isPremium)
+          doneLoading({ ...cached, authError: false, authError401: false, serverError503: false })
+          return cached
+        }
+      }
+
+      if (bypassCache && mountedRef.current) {
+        setState((s) => ({ ...s, loading: true }))
+      }
+      try {
+        const me = await getMe()
+        const accountId = me.webAccountId ? String(me.webAccountId) : accountRef.current
+        if (accountId !== accountRef.current) {
+          clearCache(accountRef.current)
+          accountRef.current = accountId
+          writeAccountKey(accountId)
+        }
+        const data = normalizeSnapshot({
+          isPremium: me.premium,
+          activeUntil: me.premiumUntil ?? null,
+          isLifetime: me.isLifetime,
+          lastEndedAt: me.lastEndedAt ?? null,
+        })
+        writeCache(data, accountId)
+        updateTcgState(data.isPremium)
+        devLog('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
+        doneLoading({ ...data, authError: false, authError401: false, serverError503: false })
+        return data
+      } catch (e) {
+        devWarn('[TCG] Premium fetch failed:', e instanceof Error ? e.message : e)
+        const err = e as Error & { status?: number }
+        const authError401 = e instanceof ApiAuthError || err.status === 401
+        // Transient network/5xx: keep recent cache only if still within activeUntil.
+        const cached = !authError401 ? readCache(accountRef.current) : null
+        if (cached?.isPremium) {
+          doneLoading({
+            ...cached,
+            authError: true,
+            authError401: false,
+            serverError503: err.status === 503,
+          })
+          return cached
+        }
+        // No confirmed active Premium — do not invent a successful subscription.
+        doneLoading({
+          isPremium: false,
+          activeUntil: null,
+          isLifetime: false,
+          lastEndedAt: cached?.lastEndedAt ?? null,
+          authError: true,
+          authError401,
           serverError503: err.status === 503,
         })
-        return cached
+        return null
       }
-      doneLoading({
-        isPremium: false,
-        activeUntil: null,
-        authError: true,
-        authError401,
-        serverError503: err.status === 503,
-      })
-      return null
-    }
-  }, [doneLoading])
+    },
+    [doneLoading]
+  )
 
   useEffect(() => {
     mountedRef.current = true
     return () => {
       mountedRef.current = false
+      clearExpiryTimer()
     }
-  }, [])
+  }, [clearExpiryTimer])
 
   useEffect(() => {
     void fetchStatus()
   }, [fetchStatus])
 
   useEffect(() => {
-    // Late SDK: re-bind Premium once signed initData becomes available (no loading flash).
     return subscribeTelegramSdkReady(() => {
       void fetchStatus(false)
     })
   }, [fetchStatus])
+
+  // Single timer until activeUntil — no frequent polling.
+  useEffect(() => {
+    clearExpiryTimer()
+    if (!state.isPremium || state.isLifetime || !state.activeUntil) return
+    const until = new Date(state.activeUntil).getTime()
+    if (!Number.isFinite(until)) return
+    const delay = until - Date.now()
+    if (delay <= 0) {
+      clearCache(accountRef.current)
+      invalidateMeCache()
+      void fetchStatus(true)
+      return
+    }
+    // Cap setTimeout to ~24h chunks to avoid 32-bit overflow for long plans.
+    const MAX_DELAY = 24 * 60 * 60 * 1000
+    expiryTimerRef.current = setTimeout(() => {
+      clearCache(accountRef.current)
+      invalidateMeCache()
+      void fetchStatus(true)
+    }, Math.min(delay + 250, MAX_DELAY))
+    return clearExpiryTimer
+  }, [state.isPremium, state.isLifetime, state.activeUntil, fetchStatus, clearExpiryTimer])
 
   const premiumPollingRef = useRef(false)
 
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return
-      // One-time refresh when tab becomes visible
-      fetchStatus()
-      // If user likely returned from YooKassa, poll until premium is active
+      fetchStatus(true)
       try {
         const raw = sessionStorage.getItem(EXPECTING_PAYMENT_FLAG)
         if (!raw || premiumPollingRef.current) return
@@ -284,22 +366,35 @@ export function usePremiumStatus(): {
   useEffect(() => {
     const onSync = () => {
       invalidateMeCache()
-      clearCache()
+      clearCache(accountRef.current)
+      // Drop UI Premium immediately so previous account cannot flash.
+      if (mountedRef.current) {
+        setState((s) => ({
+          ...s,
+          isPremium: false,
+          activeUntil: null,
+          isLifetime: false,
+          lastEndedAt: null,
+          loading: true,
+        }))
+      }
       fetchStatus(true)
     }
     window.addEventListener('tcg_premium_sync', onSync)
     return () => window.removeEventListener('tcg_premium_sync', onSync)
   }, [fetchStatus])
 
-  const refresh = useCallback(async (): Promise<{ isPremium: boolean; activeUntil: string | null } | null> => {
+  const refresh = useCallback(async (): Promise<PremiumStatusSnapshot | null> => {
     invalidateMeCache()
-    clearCache()
+    clearCache(accountRef.current)
     return fetchStatus(true)
   }, [fetchStatus])
 
   return {
     isPremium: state.isPremium,
     activeUntil: state.activeUntil,
+    isLifetime: state.isLifetime,
+    lastEndedAt: state.lastEndedAt,
     loading: state.loading,
     authError: state.authError,
     authError401: state.authError401,

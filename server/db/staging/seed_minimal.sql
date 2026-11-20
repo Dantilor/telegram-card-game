@@ -9,13 +9,14 @@ INSERT INTO users (telegram_id) VALUES
   (900004)  -- expired
 ON CONFLICT (telegram_id) DO NOTHING;
 
+-- Force-reset seed Premium so local/staging drift cannot leave 900004 still active.
+DELETE FROM subscriptions WHERE telegram_id BETWEEN 900001 AND 900004;
+
 INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
 VALUES
   (900002, 'premium_1m', now() + interval '30 days', now()),
   (900003, 'premium_lifetime', now() + interval '100 years', now()),
-  (900004, 'premium_1m', now() - interval '7 days', now() - interval '40 days')
-ON CONFLICT (telegram_id, plan_id) DO UPDATE SET
-  active_until = EXCLUDED.active_until;
+  (900004, 'premium_1m', now() - interval '7 days', now() - interval '40 days');
 
 -- Demo Sled lobby (guest join by code only; host must create via authenticated API for real play).
 DO $$

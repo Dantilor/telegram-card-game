@@ -18,16 +18,15 @@ INSERT INTO users (telegram_id) VALUES
   (900004)  -- expired
 ON CONFLICT (telegram_id) DO NOTHING;
 
--- Free user must never keep leftover Premium from prior mock webhooks.
-DELETE FROM subscriptions WHERE telegram_id = 900001;
+-- Force-reset seed Premium rows so local drift (mock payments, prior grants)
+-- cannot leave 900004 "expired" still active, or 900001 free with leftover Premium.
+DELETE FROM subscriptions WHERE telegram_id BETWEEN 900001 AND 900004;
 
 INSERT INTO subscriptions (telegram_id, plan_id, active_until, created_at)
 VALUES
   (900002, 'premium_1m', now() + interval '30 days', now()),
   (900003, 'premium_lifetime', now() + interval '100 years', now()),
-  (900004, 'premium_1m', now() - interval '7 days', now() - interval '40 days')
-ON CONFLICT (telegram_id, plan_id) DO UPDATE SET
-  active_until = EXCLUDED.active_until;
+  (900004, 'premium_1m', now() - interval '7 days', now() - interval '40 days');
 
 -- Minimal synthetic offer for local Premium checkout (not production legal text).
 INSERT INTO legal_document_versions (

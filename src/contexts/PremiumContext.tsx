@@ -4,18 +4,32 @@ import { usePremiumStatus } from '../hooks/usePremiumStatus'
 type PremiumContextValue = {
   isPremium: boolean
   activeUntil: string | null
+  isLifetime: boolean
+  lastEndedAt: string | null
   loading: boolean
   authError: boolean
   authError401: boolean
   serverError503: boolean
   refetch: () => void
-  refresh: () => Promise<{ isPremium: boolean; activeUntil: string | null } | null>
-  refreshPremium: () => Promise<{ isPremium: boolean; activeUntil: string | null } | null>
+  refresh: () => Promise<{
+    isPremium: boolean
+    activeUntil: string | null
+    isLifetime: boolean
+    lastEndedAt: string | null
+  } | null>
+  refreshPremium: () => Promise<{
+    isPremium: boolean
+    activeUntil: string | null
+    isLifetime: boolean
+    lastEndedAt: string | null
+  } | null>
 }
 
 const PremiumContext = createContext<PremiumContextValue>({
   isPremium: false,
   activeUntil: null,
+  isLifetime: false,
+  lastEndedAt: null,
   loading: false,
   authError: false,
   authError401: false,

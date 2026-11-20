@@ -18,7 +18,8 @@ const icons = {
   bolt:'<path d="m13 2-9 12h7l-1 8 10-12h-7l1-8Z"/>',
   moon:'<path d="M21 12.8A9 9 0 0 1 11.2 3 9 9 0 1 0 21 12.8Z"/>',
   brain:'<path d="M12 4c-3-4-8 0-6 3-5 0-5 7-1 8-1 5 5 7 7 3m0-14c3-4 8 0 6 3 5 0 5 7 1 8 1 5-5 7-7 3V4Z"/>',
-  cup:'<path d="M6 3h12v6a6 6 0 0 1-12 0V3Zm0 2H3v3a4 4 0 0 0 4 4m11-7h3v3a4 4 0 0 1-4 4M12 15v6m-4 0h8"/>'
+  cup:'<path d="M6 3h12v6a6 6 0 0 1-12 0V3Zm0 2H3v3a4 4 0 0 0 4 4m11-7h3v3a4 4 0 0 1-4 4M12 15v6m-4 0h8"/>',
+  home:'<path d="m3 10 9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/>'
 };
 const icon = (name, cls='') => `<svg class="gnh-icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.spark}</svg>`;
 
@@ -72,7 +73,7 @@ export function mountGnhExperience(root, options = {}) {
     current.showModal();
   }
   function header() {
-    return `<header class="gnh-header"><button class="gnh-brand" data-action="go-home" aria-label="GameNight Host, на главную"><img src="${esc(assets)}brand.webp" alt="" width="44" height="44"><span>GameNight <b>Host</b></span></button><nav class="gnh-tabs" aria-label="Разделы макета"><button data-action="view-premium" ${state.view==='premium'?'aria-current="page"':''}>${icon('diamond')}<span>Premium</span></button><button data-action="view-wheel" ${state.view==='wheel'?'aria-current="page"':''}>${icon('wheel')}<span>Колесо игр</span></button></nav><button type="button" class="gnh-header-note gnh-header-home" data-action="go-home">На главную</button></header>`;
+    return `<header class="gnh-header"><button class="gnh-brand" data-action="go-home" aria-label="GameNight Host, на главную"><img src="${esc(assets)}brand.webp" alt="" width="44" height="44"><span>GameNight <b>Host</b></span></button><nav class="gnh-tabs" aria-label="Разделы макета"><button data-action="view-premium" ${state.view==='premium'?'aria-current="page"':''}>${icon('diamond')}<span>Premium</span></button><button data-action="view-wheel" ${state.view==='wheel'?'aria-current="page"':''}>${icon('wheel')}<span>Колесо игр</span></button></nav><button type="button" class="gnh-header-home" data-action="go-home" aria-label="На главную">${icon('home')}<span class="gnh-header-home__label">Домой</span></button></header>`;
   }
   function planCards() {
     const short = plans.find(p=>p.days===30);
@@ -179,6 +180,8 @@ export function mountGnhExperience(root, options = {}) {
     if (motion.matches) { state.rotation=next;state.timer=setTimeout(finish,60);return; }
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       if (!svg?.isConnected||state.destroyed) return;
+      svg.style.transformBox='view-box';
+      svg.style.transformOrigin='50% 50%';
       svg.style.transition='transform 4.2s cubic-bezier(.13,.65,.12,1)';
       svg.style.transform=`rotate(${next}deg)`;
       svg.addEventListener('transitionend',event=>{if(event.propertyName==='transform')finish();},{once:true});

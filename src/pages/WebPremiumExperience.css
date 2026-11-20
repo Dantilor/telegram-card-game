@@ -101,6 +101,28 @@
 }
 .gnh-experience .gnh-wheel-stage {
   width: min(100%, 460px) !important;
+  isolation: isolate;
+  contain: layout style;
+}
+.gnh-experience .gnh-wheel-svg {
+  filter: none !important;
+  transform-box: view-box !important;
+  transform-origin: 50% 50% !important;
+  backface-visibility: hidden;
+}
+.gnh-experience .gnh-wheel-center {
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  inset: 0 !important;
+  margin: auto !important;
+  transform: none !important;
+}
+.gnh-experience .gnh-wheel-center:hover,
+.gnh-experience .gnh-wheel-center:active,
+.gnh-experience .gnh-wheel-center:disabled {
+  transform: none !important;
 }
 .gnh-experience .gnh-wheel-result-area {
   margin-top: 28px !important;
@@ -163,9 +185,6 @@
   .gnh-experience .gnh-header {
     padding: 14px 0 !important;
     gap: 12px !important;
-  }
-  .gnh-experience .gnh-header-note {
-    display: none !important;
   }
 }
 .gnh-experience .gnh-hero-actions {
@@ -232,21 +251,65 @@ html[data-theme] .app.app--web .gnh-experience .gnh-button-primary {
 }
 
 .gnh-experience .gnh-header-home {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(228, 192, 255, 0.42) !important;
+  background: rgba(229, 200, 241, 0.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 246, 255, 0.14);
+  backdrop-filter: blur(12px);
   cursor: pointer;
-  background: none;
-  border: 0;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  color: #d7b6eb !important;
-  -webkit-text-fill-color: #d7b6eb !important;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #fff4ff !important;
+  -webkit-text-fill-color: #fff4ff !important;
+  text-decoration: none !important;
+}
+.gnh-experience .gnh-header-home .gnh-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 .gnh-experience .gnh-header-home:hover {
-  color: #fff2ff !important;
-  -webkit-text-fill-color: #fff2ff !important;
+  background: rgba(236, 210, 255, 0.2) !important;
+  border-color: rgba(245, 220, 255, 0.62) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 .gnh-experience .gnh-brand {
   cursor: pointer;
+}
+@media (max-width: 1100px) {
+  .gnh-experience .gnh-header-home {
+    display: inline-flex !important;
+  }
+}
+@media (max-width: 600px) {
+  .gnh-experience .gnh-header-home {
+    min-height: 38px;
+    padding: 0 12px;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .gnh-experience .gnh-header-home .gnh-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+@media (max-width: 370px) {
+  .gnh-experience .gnh-header-home__label {
+    display: none;
+  }
+  .gnh-experience .gnh-header-home {
+    width: 38px;
+    padding: 0;
+  }
 }
 
 /* Company pill above caption; caption below pill with clear gap. */

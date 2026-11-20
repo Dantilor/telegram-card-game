@@ -1288,10 +1288,43 @@ html[data-gnh-shell="web"] .premium-overlay__card--checkout-only.premium-checkou
   color: #faf3ff;
   overflow: hidden;
 }
+html[data-gnh-shell="web"] .premium-checkout__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 0 16px;
+}
+html[data-gnh-shell="web"] .premium-checkout__home {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(228, 192, 255, 0.4);
+  background: rgba(229, 200, 241, 0.12);
+  color: #fff4ff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+html[data-gnh-shell="web"] .premium-checkout__home:hover {
+  background: rgba(236, 210, 255, 0.22);
+  border-color: rgba(245, 220, 255, 0.62);
+  color: #fff;
+}
+html[data-gnh-shell="web"] .premium-checkout__close.premium-overlay__close {
+  position: static;
+  margin: 0;
+  flex-shrink: 0;
+}
 html[data-gnh-shell="web"] .premium-checkout__scroll {
-  padding: 28px 22px 12px;
+  padding: 16px 22px 12px;
   overflow-y: auto;
-  max-height: calc(min(94vh, 860px) - 140px);
+  max-height: calc(min(94vh, 860px) - 180px);
 }
 html[data-gnh-shell="web"] .premium-checkout__eyebrow {
   margin: 0;

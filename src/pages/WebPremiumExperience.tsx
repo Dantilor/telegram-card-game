@@ -124,6 +124,13 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
     setCheckoutOnly(false)
   }, [])
 
+  const onCheckoutGoHome = useCallback(() => {
+    setCheckoutPlanId(null)
+    setCheckoutPlanSnap(null)
+    setCheckoutOnly(false)
+    navigate('/', { replace: false })
+  }, [navigate])
+
   const onChangePlan = useCallback(() => {
     setCheckoutPlanId(null)
     setCheckoutPlanSnap(null)
@@ -174,6 +181,7 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
         preferredPlan={checkoutPlanSnap || undefined}
         checkoutOnly={checkoutOnly}
         onChangePlan={onChangePlan}
+        onGoHome={onCheckoutGoHome}
         onBecamePremium={onBecamePremium}
       />
     </div>

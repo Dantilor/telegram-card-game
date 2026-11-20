@@ -179,12 +179,14 @@
 .gnh-experience .gnh-matches button{background:none;border:0;padding:4px 0;color:#bc98d8;font-size:10px;text-decoration:underline;text-underline-offset:3px}
 .gnh-experience .gnh-empty-note{font-size:12px;color:#c8abdd;margin-top:12px}
 .gnh-experience .gnh-wheel-play{display:flex;flex-direction:column;align-items:center;min-width:0}
-.gnh-experience .gnh-wheel-stage{width:min(100%,535px);aspect-ratio:1;position:relative;display:grid;place-items:center}
-.gnh-experience .gnh-wheel-svg{position:relative;width:100%;height:100%;filter:drop-shadow(0 16px 28px #05000f90);transform-origin:center;will-change:transform}
-.gnh-experience .gnh-wheel-halo{position:absolute;width:120%;height:120%;border-radius:50%;background:radial-gradient(ellipse,#bd83f427,transparent 67%);inset:-10%;pointer-events:none}
+.gnh-experience .gnh-wheel-stage{width:min(100%,535px);aspect-ratio:1;position:relative;display:grid;place-items:center;isolation:isolate;contain:layout style}
+.gnh-experience .gnh-wheel-stage:before{content:"";position:absolute;inset:3%;border-radius:50%;box-shadow:0 16px 28px #05000f90;pointer-events:none;z-index:0}
+.gnh-experience .gnh-wheel-svg{position:relative;z-index:1;width:100%;height:100%;transform-box:view-box;transform-origin:50% 50%;will-change:transform;backface-visibility:hidden}
+.gnh-experience .gnh-wheel-halo{position:absolute;width:120%;height:120%;border-radius:50%;background:radial-gradient(ellipse,#bd83f427,transparent 67%);inset:-10%;pointer-events:none;z-index:0}
 .gnh-experience .gnh-wheel-halo:after{content:"";position:absolute;inset:9%;border:1px solid #c998f922;border-radius:50%;box-shadow:0 0 70px #d89cff13,inset 0 0 55px #d89cff09}
 .gnh-experience .gnh-wheel-pointer{position:absolute;top:-5px;left:50%;transform:translateX(-50%);width:28px;height:39px;clip-path:polygon(0 0,100% 0,50% 100%);background:linear-gradient(#ffe7ff,#c692f4);z-index:3;filter:drop-shadow(0 0 10px #ce9cf5)}
-.gnh-experience .gnh-wheel-center{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);width:24%;height:24%;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;border:1px solid #edc7ffa8;border-radius:50%;background:radial-gradient(ellipse at 30% 10%,#8462a7,#3b284f 70%);box-shadow:0 0 0 8px #1c122d60,0 6px 25px #10071f8f,inset 0 0 20px #ecb7ff15;color:#f1d6ff}
+.gnh-experience .gnh-wheel-center{position:absolute;z-index:2;inset:0;margin:auto;width:24%;height:24%;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;border:1px solid #edc7ffa8;border-radius:50%;background:radial-gradient(ellipse at 30% 10%,#8462a7,#3b284f 70%);box-shadow:0 0 0 8px #1c122d60,0 6px 25px #10071f8f,inset 0 0 20px #ecb7ff15;color:#f1d6ff;transform:none;transition:none}
+.gnh-experience .gnh-wheel-center:hover,.gnh-experience .gnh-wheel-center:active,.gnh-experience .gnh-wheel-center:disabled{transform:none}
 .gnh-experience .gnh-wheel-center .gnh-icon{width:30px;height:30px;stroke-width:1}
 .gnh-experience .gnh-wheel-center span{font-size:12px;letter-spacing:2px;line-height:1.35;text-align:center;font-weight:600}
 .gnh-experience .gnh-wheel-star{position:absolute;font-style:normal;color:#d3a7ef;pointer-events:none}

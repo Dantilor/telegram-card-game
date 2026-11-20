@@ -215,6 +215,8 @@ type Props = {
   checkoutOnly?: boolean
   /** Return to plan picker without losing payment context. */
   onChangePlan?: () => void
+  /** Leave checkout / Premium flow and return to the site home. */
+  onGoHome?: () => void
   onBecamePremium?: () => void
 }
 
@@ -227,6 +229,7 @@ export default function PremiumOverlay({
   preferredPlan,
   checkoutOnly,
   onChangePlan,
+  onGoHome,
   onBecamePremium,
 }: Props) {
   const location = useLocation()
@@ -723,24 +726,41 @@ export default function PremiumOverlay({
     </div>
   )
 
+  const goHome = () => {
+    haptic('light')
+    if (onGoHome) onGoHome()
+    else {
+      onClose()
+      navigate('/')
+    }
+  }
+
   const cardContent = checkoutOnly ? (
     <div
       className="premium-overlay__card premium-overlay__card--checkout-only premium-checkout"
       onClick={asPage ? undefined : (e: React.MouseEvent) => e.stopPropagation()}
     >
-      {!asPage && (
-        <button
-          type="button"
-          className="premium-overlay__close"
-          onClick={() => {
-            haptic('light')
-            onClose()
-          }}
-          aria-label="Закрыть"
-        >
-          <img src={iconCloseX} alt="" className="premium-overlay__close-icon" decoding="async" />
+      <div className="premium-checkout__top">
+        <button type="button" className="premium-checkout__home" onClick={goHome}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="m3 10 9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" />
+          </svg>
+          Домой
         </button>
-      )}
+        {!asPage && (
+          <button
+            type="button"
+            className="premium-overlay__close premium-checkout__close"
+            onClick={() => {
+              haptic('light')
+              onClose()
+            }}
+            aria-label="Закрыть"
+          >
+            <img src={iconCloseX} alt="" className="premium-overlay__close-icon" decoding="async" />
+          </button>
+        )}
+      </div>
       <div className="premium-checkout__scroll">
         <header className="premium-checkout__head">
           <p className="premium-checkout__eyebrow">GAMENIGHT HOST</p>

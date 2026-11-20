@@ -393,7 +393,7 @@ function HomeReference({
           </Link>
           {showPremium ? (
             <button type="button" className="nav-link" onClick={() => { onPremium(); setMenuOpen(false) }}>
-              {priceLabel}
+              Premium
             </button>
           ) : null}
         </div>

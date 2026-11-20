@@ -288,7 +288,8 @@ html:has(.gnh-inside .rt-play)::before {
 }
 
 .app.app--web .gnh-inside .comics-grid .comics-grid__media .smart-image__img {
-  object-fit: cover !important;
+  object-fit: contain !important;
+  object-position: center top !important;
   object-position: center 30%;
 }
 

@@ -3,7 +3,7 @@ import { GameClient } from '../games/mafia-shadows/GameClient'
 import '../games/mafia-shadows/mafia-shadows.css'
 
 const art = {
-  '--mafia-shadows-hero': `url("${import.meta.env.BASE_URL}games/mafia-shadows/mafia-hero.png")`,
+  '--mafia-shadows-hero': `url("${import.meta.env.BASE_URL}games/mafia-shadows/mafia-hero.webp")`,
 } as CSSProperties
 
 export default function MafiaShadowsLayout() {

@@ -200,7 +200,8 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__media {
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__media .smart-image__img {
-  object-fit: cover !important;
+  object-fit: contain !important;
+  object-position: center top !important;
   background: #241632 !important;
 }
 
@@ -232,7 +233,20 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
   color: rgba(255, 248, 255, 0.82) !important;
 }
 
-/* Profile contrast */
+/* Profile: WEB mauve glass stays dark — keep light ink on every theme */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page {
+  --prof-text: #fff8ff;
+  --prof-muted: rgba(255, 248, 255, 0.78);
+  --prof-eyebrow: #f0c6ff;
+  --prof-perk-border: rgba(255, 236, 255, 0.3);
+  --prof-perk-bg: rgba(255, 255, 255, 0.1);
+  --prof-row-border: rgba(255, 236, 255, 0.14);
+  --prof-row-active-bg: rgba(255, 255, 255, 0.06);
+  --prof-icon-bg: rgba(255, 255, 255, 0.1);
+  color: #fff8ff;
+  -webkit-text-fill-color: #fff8ff;
+}
+
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__panel,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity {
@@ -245,21 +259,121 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__active-date,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__email-label,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__label-sub,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__chev,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity__username,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity__guest {
   color: rgba(255, 248, 255, 0.88) !important;
+  -webkit-text-fill-color: rgba(255, 248, 255, 0.88) !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__title,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__label-main,
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__eyebrow {
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__eyebrow,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__perk,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity__name {
   color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__perk {
+  border-color: rgba(255, 236, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__title {
+  margin: 0 0 0.28rem !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__email-input {
   color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
   background: rgba(18, 10, 32, 0.55) !important;
   border: 1px solid rgba(255, 228, 255, 0.4) !important;
+}
+
+/* Footer: always light on WEB mauve (all themes) */
+html[data-gnh-shell="web"] .app.app--web .web-site-footer,
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__inner,
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__tagline,
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__legal,
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__legal p {
+  color: rgba(255, 248, 255, 0.78) !important;
+  -webkit-text-fill-color: rgba(255, 248, 255, 0.78) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__name {
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__help a,
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__nav button,
+html[data-gnh-shell="web"] .app.app--web .web-site-footer__nav a {
+  color: #f7eaff !important;
+  -webkit-text-fill-color: #f7eaff !important;
+}
+
+/* Games: WEB glass stays dark — override light-theme dark ink tokens */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page,
+  .alias-page,
+  .game-page,
+  .activity-page,
+  .sabotage-page,
+  .truth-dare-page,
+  .quiz-page,
+  .who-is-who-page,
+  .phrase-page,
+  .freebie-page,
+  .russia-travel-page,
+  .rt-page
+) {
+  --mafia-readable-text: #fff8ff;
+  --mafia-readable-muted: rgba(255, 248, 255, 0.82);
+  --mafia-readable-accent: #f0e6ff;
+  --alias-readable-text: #fff8ff;
+  --alias-readable-muted: rgba(255, 248, 255, 0.82);
+  --alias-readable-accent: #f0e6ff;
+  --game-shell-readable-text: #fff8ff;
+  --game-shell-readable-muted: rgba(255, 248, 255, 0.82);
+  --game-shell-readable-accent: #f0e6ff;
+  --games-text: #fff8ff;
+  --games-muted: rgba(255, 248, 255, 0.82);
+  --text: #fff8ff;
+  --muted: rgba(255, 248, 255, 0.82);
+  color: #fff8ff;
+  -webkit-text-fill-color: #fff8ff;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-setup__section-title,
+  .mafia-page__section-title,
+  .teams-setup__title,
+  .teams-setup__label,
+  .teams-setup__players-label,
+  .teams-setup__player-name,
+  .activity-teams-setup__title,
+  .activity-teams-setup__label,
+  .activity-teams-setup__players-label,
+  .alias-page__section-title,
+  .alias-home__how-title,
+  .alias-home__category-title
+) {
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-setup__section-note,
+  .mafia-setup__roles-line,
+  .alias-home__section-hint,
+  .alias-home__how-list,
+  .alias-home__howto li,
+  .teams-setup__hint
+) {
+  color: rgba(255, 248, 255, 0.82) !important;
+  -webkit-text-fill-color: rgba(255, 248, 255, 0.82) !important;
 }
 
 /* Game readability: force light ink on glass cards */
@@ -267,6 +381,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   .alias-home__howto,
   .alias-home__panel,
   .mafia-page__howto,
+  .mafia-page__panel,
   .activity-home__howto,
   .sabotage-home__howto,
   .truth-dare-home__howto,
@@ -277,7 +392,8 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   .freebie-home__howto,
   .game-howto,
   .howto-card,
-  .rules-card
+  .rules-card,
+  .teams-setup__card
 ) {
   color: #fff8ff !important;
   border-color: rgba(255, 236, 255, 0.28) !important;
@@ -297,7 +413,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   .game-howto,
   .howto-card,
   .rules-card
-) :is(p, li, span, h2, h3, strong, b) {
+) :is(p, li, span, h2, h3, strong, b, label) {
   color: inherit !important;
   -webkit-text-fill-color: currentColor !important;
 }
@@ -305,11 +421,25 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .content input[type="text"],
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .content input[type="email"],
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .content input:not([type]),
-html[data-gnh-shell="web"] .app.app--web .gnh-inside .content textarea {
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content textarea,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-page__input,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .alias-page__input,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .teams-setup__input {
   color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+  caret-color: #fff8ff;
   background: rgba(18, 10, 32, 0.55) !important;
   border: 1px solid rgba(255, 228, 255, 0.35) !important;
   min-height: 44px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  input,
+  textarea
+)::placeholder {
+  color: rgba(255, 248, 255, 0.55) !important;
+  -webkit-text-fill-color: rgba(255, 248, 255, 0.55) !important;
+  opacity: 1;
 }
 
 /* Russia Travel / Где мы? card scrim */
@@ -320,8 +450,10 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside [class*="rt-"] [class*="car
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-route-card :is(h3, p, span, button) {
   color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav,

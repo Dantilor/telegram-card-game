@@ -2220,7 +2220,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .smart-image__img {
-  object-fit: cover !important;
+  object-fit: contain !important;
   object-position: center top !important;
   filter: brightness(1.05) contrast(1.02);
 }

@@ -114,26 +114,42 @@ html[data-gnh-shell="web"] .app.app--web .web-site-footer__nav a:hover {
 
 [data-theme="sunset"] .web-site-footer {
   border-top-color: rgba(255, 154, 139, 0.22);
+}
+
+[data-theme="sunset"]:not([data-gnh-shell="web"]) .web-site-footer {
   color: #6f5a52;
 }
 
-[data-theme="sunset"] .web-site-footer__name,
-[data-theme="sunset"] .web-site-footer__help a,
-[data-theme="sunset"] .web-site-footer__nav button,
-[data-theme="sunset"] .web-site-footer__nav a {
+[data-theme="sunset"]:not([data-gnh-shell="web"]) .web-site-footer__name,
+[data-theme="sunset"]:not([data-gnh-shell="web"]) .web-site-footer__help a,
+[data-theme="sunset"]:not([data-gnh-shell="web"]) .web-site-footer__nav button,
+[data-theme="sunset"]:not([data-gnh-shell="web"]) .web-site-footer__nav a {
   color: #2d1f1a;
+}
+
+[data-theme="sunset"]:not([data-gnh-shell="web"]) .web-site-footer__tagline,
+[data-theme="sunset"]:not([data-gnh-shell="web"]) .web-site-footer__legal {
+  color: #9a7b72;
 }
 
 [data-theme="minimal-calm"] .web-site-footer {
   border-top-color: rgba(139, 168, 150, 0.24);
+}
+
+[data-theme="minimal-calm"]:not([data-gnh-shell="web"]) .web-site-footer {
   color: #5f6a72;
 }
 
-[data-theme="minimal-calm"] .web-site-footer__name,
-[data-theme="minimal-calm"] .web-site-footer__help a,
-[data-theme="minimal-calm"] .web-site-footer__nav button,
-[data-theme="minimal-calm"] .web-site-footer__nav a {
+[data-theme="minimal-calm"]:not([data-gnh-shell="web"]) .web-site-footer__name,
+[data-theme="minimal-calm"]:not([data-gnh-shell="web"]) .web-site-footer__help a,
+[data-theme="minimal-calm"]:not([data-gnh-shell="web"]) .web-site-footer__nav button,
+[data-theme="minimal-calm"]:not([data-gnh-shell="web"]) .web-site-footer__nav a {
   color: #2f3640;
+}
+
+[data-theme="minimal-calm"]:not([data-gnh-shell="web"]) .web-site-footer__tagline,
+[data-theme="minimal-calm"]:not([data-gnh-shell="web"]) .web-site-footer__legal {
+  color: #8a9199;
 }
 
 @media (min-width: 900px) {
@@ -147,11 +163,5 @@ html[data-gnh-shell="web"] .app.app--web .web-site-footer__nav a:hover {
   .web-site-footer__nav {
     display: grid;
     gap: 8px;
-  }
-}
-
-@media (max-width: 899px) {
-  html[data-gnh-shell="web"] .app.app--web .gnh-inside .web-site-footer {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 }

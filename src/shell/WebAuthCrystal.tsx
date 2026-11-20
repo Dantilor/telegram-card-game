@@ -1,4 +1,4 @@
-﻿import crystalUrl from '../assets/gnh-loading-crystal.png'
+﻿import crystalUrl from '../assets/gnh-loading-crystal.webp'
 
 /** Premium WEB loader crystal — new asset + CSS float/tilt/particles (reduced-motion safe). */
 export function WebAuthCrystal({ className = '' }: { className?: string }) {

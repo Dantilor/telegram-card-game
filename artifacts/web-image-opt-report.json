@@ -1,0 +1,79 @@
+[
+  {
+    "input": "public/games/infected/station-containment.png",
+    "output": "public/games/infected/station-containment.webp",
+    "beforeKB": 2035,
+    "afterKB": 96,
+    "width": 941
+  },
+  {
+    "input": "public/games/mafia-shadows/mafia-hero.png",
+    "output": "public/games/mafia-shadows/mafia-hero.webp",
+    "beforeKB": 2003,
+    "afterKB": 83,
+    "width": 1122
+  },
+  {
+    "input": "src/assets/gnh-loading-crystal.png",
+    "output": "src/assets/gnh-loading-crystal.webp",
+    "beforeKB": 767,
+    "afterKB": 44,
+    "width": 512
+  },
+  {
+    "input": "public/brand/gnh-loading-crystal.png",
+    "output": "public/brand/gnh-loading-crystal.webp",
+    "beforeKB": 767,
+    "afterKB": 44,
+    "width": 512
+  },
+  {
+    "input": "src/assets/optimized/catalog-who-is-who-desktop.webp",
+    "output": "src/assets/optimized/catalog-who-is-who-desktop-sm.webp",
+    "beforeKB": 735,
+    "afterKB": 84,
+    "width": 900
+  },
+  {
+    "input": "src/assets/optimized/catalog-who-is-who.webp",
+    "output": "src/assets/optimized/catalog-who-is-who-sm.webp",
+    "beforeKB": 610,
+    "afterKB": 74,
+    "width": 720
+  },
+  {
+    "input": "src/assets/optimized/catalog-russia-travel.webp",
+    "output": "src/assets/optimized/catalog-russia-travel-sm.webp",
+    "beforeKB": 714,
+    "afterKB": 86,
+    "width": 720
+  },
+  {
+    "input": "src/assets/optimized/catalog-russia-travel-desktop.webp",
+    "output": "src/assets/optimized/catalog-russia-travel-desktop-sm.webp",
+    "beforeKB": 703,
+    "afterKB": 76,
+    "width": 900
+  },
+  {
+    "input": "src/assets/optimized/catalog-card-game-desktop.webp",
+    "output": "src/assets/optimized/catalog-card-game-desktop-sm.webp",
+    "beforeKB": 589,
+    "afterKB": 58,
+    "width": 900
+  },
+  {
+    "input": "src/assets/optimized/catalog-infected.webp",
+    "output": "src/assets/optimized/catalog-infected-sm.webp",
+    "beforeKB": 425,
+    "afterKB": 67,
+    "width": 900
+  },
+  {
+    "input": "src/assets/optimized/catalog-mafia-shadows.webp",
+    "output": "src/assets/optimized/catalog-mafia-shadows-sm.webp",
+    "beforeKB": 459,
+    "afterKB": 71,
+    "width": 900
+  }
+]

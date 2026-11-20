@@ -54,6 +54,7 @@ function buildMagicMail(input: {
     ? 'Откройте ссылку, чтобы вернуть Premium и игры на этом устройстве.'
     : 'Откройте ссылку, чтобы подтвердить почту для восстановления Premium.'
   const title = isRecover ? 'С возвращением' : 'Подтвердите почту'
+  const cta = isRecover ? 'Войти по ссылке' : 'Подтвердить почту'
   const text = [
     'GameNight Host',
     '',
@@ -66,21 +67,21 @@ function buildMagicMail(input: {
   ].join('\n')
   const html = `<!DOCTYPE html>
 <html lang="ru">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /></head>
-<body style="margin:0;padding:0;background:#1a1420;font-family:Georgia,'Times New Roman',serif;color:#f4efe8;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#1a1420;padding:32px 16px;">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#ece7df;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#1c1917;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ece7df;padding:36px 16px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" style="max-width:520px;background:linear-gradient(160deg,#2a2030,#1e1624);border:1px solid rgba(244,239,232,0.12);border-radius:16px;padding:28px 24px;">
+      <table role="presentation" width="100%" style="max-width:520px;background:#faf8f4;border:1px solid #d6d0c6;border-radius:12px;padding:28px 26px;">
         <tr><td>
-          <p style="margin:0 0 8px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#c9b8a4;">GameNight Host</p>
-          <h1 style="margin:0 0 12px;font-size:24px;font-weight:normal;color:#f4efe8;">${title}</h1>
-          <p style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#d8cfc3;">${lead}</p>
-          <p style="margin:0 0 24px;">
-            <a href="${input.link}" style="display:inline-block;padding:12px 22px;background:#e8d5b5;color:#1a1420;text-decoration:none;border-radius:999px;font-size:15px;">Открыть ссылку</a>
+          <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#6b645c;">GameNight Host</p>
+          <h1 style="margin:0 0 12px;font-size:24px;font-weight:600;line-height:1.25;color:#1c1917;">${title}</h1>
+          <p style="margin:0 0 22px;font-size:16px;line-height:1.55;color:#44403c;">${lead}</p>
+          <p style="margin:0 0 22px;">
+            <a href="${input.link}" style="display:inline-block;padding:13px 24px;background:#1c1917;color:#faf8f4;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;">${cta}</a>
           </p>
-          <p style="margin:0 0 8px;font-size:13px;line-height:1.45;color:#a89a8c;">Ссылка одноразовая и действует 30 минут.</p>
-          <p style="margin:0 0 20px;font-size:12px;word-break:break-all;color:#8f8276;">${input.link}</p>
-          <p style="margin:0;font-size:12px;color:#7a6f66;">Если вы не запрашивали письмо — просто проигнорируйте его.</p>
+          <p style="margin:0 0 10px;font-size:13px;line-height:1.45;color:#57534e;">Ссылка одноразовая и действует <strong>30 минут</strong>.</p>
+          <p style="margin:0 0 18px;font-size:12px;word-break:break-all;color:#78716c;">${input.link}</p>
+          <p style="margin:0;font-size:12px;color:#78716c;">Если вы не запрашивали письмо — просто проигнорируйте его.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -149,12 +150,20 @@ async function insertAndSendMagicLink(input: {
 
   const link = magicConfirmPath(token)
   const mail = buildMagicMail({ purpose: input.purpose, link })
-  await getMailTransport().send({
-    to: input.emailNormalized,
-    subject: mail.subject,
-    text: mail.text,
-    html: mail.html,
-  })
+  try {
+    await getMailTransport().send({
+      to: input.emailNormalized,
+      subject: mail.subject,
+      text: mail.text,
+      html: mail.html,
+    })
+  } catch (e) {
+    const err = e as Error & { status?: number; code?: string }
+    // Never treat a send failure as a successful bind / recover start.
+    if (!err.status) err.status = 502
+    if (!err.code) err.code = 'mail_send_failed'
+    throw err
+  }
 
   const echo =
     process.env.WEB_EMAIL_OTP_ECHO === '1' && process.env.NODE_ENV !== 'production'

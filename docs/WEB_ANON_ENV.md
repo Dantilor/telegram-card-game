@@ -35,18 +35,20 @@
 ## Auth notes
 
 - Pairing / OTP codes are 8 digits from `crypto.randomInt`.
-- Production SMTP requires `SMTP_ENABLED=1`, `SMTP_FROM`, `SMTP_RELAY_URL` (no silent test fallback).
+- Production SMTP requires `SMTP_ENABLED=1`, `SMTP_FROM`, and either direct SMTP (`SMTP_HOST` + user/password) or `SMTP_RELAY_URL` (no silent test fallback). See `WEB_SMTP_DNS_SETUP.md`.
 
-## Email OTP
+## Email OTP / magic link
 
 | Variable | Purpose |
 | --- | --- |
-| `WEB_EMAIL_OTP_ECHO=1` | Return OTP in API JSON for E2E (never production) |
-| `SMTP_ENABLED=1` | Use relay transport |
+| `WEB_EMAIL_OTP_ECHO=1` | Return token in API JSON for E2E (never production) |
+| `SMTP_ENABLED=1` | Enable real mail transport |
 | `SMTP_FROM` | From address |
-| `SMTP_RELAY_URL` | HTTPS relay endpoint |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | Direct SMTP (Timeweb: smtp.timeweb.ru:465) |
+| `SMTP_USER` / `SMTP_PASSWORD` | Mailbox credentials |
+| `SMTP_TRANSPORT` | Optional `smtp` or `relay` when both are configured |
+| `SMTP_RELAY_URL` | HTTPS relay endpoint (legacy; optional if direct SMTP set) |
 | `SMTP_RELAY_TOKEN` | Optional bearer for relay |
-| `SMTP_HOST` | Present for “configured” detection with SMTP_FROM |
 
 Default without `SMTP_ENABLED`: test transport (logs only, no marketing).
 

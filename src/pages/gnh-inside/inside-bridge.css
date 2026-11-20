@@ -59,6 +59,7 @@ html:has(.gnh-inside .rt-play)::before {
   inset: 0;
   min-height: 100%;
   z-index: 0;
+  pointer-events: none;
 }
 
 .app.app--web .gnh-inside .app-header,

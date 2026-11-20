@@ -58,6 +58,44 @@ html[data-gnh-shell="web"] .app.app--web > .gnh-home-scroll {
 }
 
 /*
+ * iPhone scroll lock fix:
+ * html/body are overflow:hidden; .app must NOT also scroll when a child owns scroll.
+ * Dual overflow-y:auto (app + home/inside) freezes pan on some iPhones (12 Pro Max).
+ */
+html[data-gnh-shell="web"] .app.app--web:has(> .gnh-home-scroll),
+html[data-gnh-shell="web"] .app.app--web:has(> .gnh-inside) {
+  overflow: hidden !important;
+  height: var(--app-height, 100dvh) !important;
+  max-height: var(--app-height, 100dvh) !important;
+  min-height: 0 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web > .gnh-home-scroll,
+html[data-gnh-shell="web"] .app.app--web > .gnh-inside {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Game shells must grow with content so .gnh-inside remains the only scroll owner. */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root.game-shell,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .mafia-shadows,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .doubles,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .infected-game {
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+/*
  * Games/Comics/Profile CSS punch html/body/#root/.app to transparent and rely on
  * html::before theme photos. On WEB that photo layer is hidden → white iPhone gap.
  * Restore opaque mauve (and kill the fixed ::before wash) for the shell.
@@ -858,6 +896,19 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .header-join {
   background: rgba(183, 131, 255, 0.12) !important;
   background-image: none !important;
   box-shadow: none !important;
+  min-height: 30px !important;
+  height: 30px !important;
+  padding: 0 8px !important;
+  gap: 4px !important;
+  font-size: 9px !important;
+  letter-spacing: 0.04em !important;
+  border-radius: 8px !important;
+  white-space: nowrap !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .sled-root .header-join svg {
+  width: 12px !important;
+  height: 12px !important;
 }
 
 html[data-gnh-shell="web"]:has(.infected-game),
@@ -875,15 +926,23 @@ html[data-gnh-shell="web"] .app.app--web:has(.mafia-shadows) {
   background-color: #070914 !important;
 }
 
-/* Premium / Wheel kit header — clear status bar / notch on phone */
+/* Premium / Wheel kit header — clear status bar / notch; Домой a bit lower */
 html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header {
-  padding-top: calc(14px + env(safe-area-inset-top, 0px)) !important;
+  padding-top: calc(18px + env(safe-area-inset-top, 0px)) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header-home {
+  margin-top: 4px;
 }
 
 @media (max-width: 600px) {
   html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header {
-    padding-top: calc(12px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
     padding-bottom: 12px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header-home {
+    margin-top: 6px;
   }
 }
 

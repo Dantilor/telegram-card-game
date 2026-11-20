@@ -372,3 +372,26 @@ html[data-theme] .app.app--web .gnh-experience .gnh-button-primary {
     padding-bottom: 0 !important;
   }
 }
+
+.web-premium-experience__banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 16px 0;
+}
+.web-premium-experience__retry {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 222, 255, 0.45);
+  background: rgba(255, 246, 255, 0.12);
+  color: #fff8ff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.web-premium-experience__retry:active {
+  transform: scale(0.98);
+}

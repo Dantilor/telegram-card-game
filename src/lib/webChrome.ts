@@ -47,14 +47,29 @@ export function getWebScrollY(): number {
 }
 
 export function scrollWebShellToTop(behavior: ScrollBehavior = 'auto'): void {
-  const root = getWebScrollRoot()
   const run = () => {
-    if (root) root.scrollTo({ top: 0, left: 0, behavior })
+    // Re-query each pass — route mounts may replace the scroll root after first paint.
+    const root = getWebScrollRoot()
+    if (root) {
+      root.scrollTop = 0
+      root.scrollTo({ top: 0, left: 0, behavior })
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }
     window.scrollTo({ top: 0, left: 0, behavior })
   }
   run()
-  // One layout pass retry — avoid 50/200ms thrash on every route change.
   if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(run)
+    requestAnimationFrame(() => {
+      run()
+      // Second frame: heavy game shells (Sled/Mafia/etc.) often shift layout after images/fonts.
+      requestAnimationFrame(run)
+    })
+  }
+  // One short delayed pass for late layout — still cheap vs 50/200 thrash chains.
+  if (typeof window !== 'undefined') {
+    window.setTimeout(run, 120)
   }
 }

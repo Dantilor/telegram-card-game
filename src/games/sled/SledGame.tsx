@@ -958,7 +958,7 @@ export default function SledGame() {
             {session ? connection === "syncing" ? "СИНХРОНИЗАЦИЯ" : connection === "error" ? "КАНАЛ НАРУШЕН" : `КОМНАТА ${session.code}` : "СЕТЬ ГОТОВА"}
           </span>
           {!session && screen !== "rules" && (
-            <button className="header-join" onClick={() => { playSound("click"); setJoinOpen(true); }}><DoorOpen /> ВОЙТИ ПО КОДУ</button>
+            <button className="header-join" onClick={() => { playSound("click"); setJoinOpen(true); }}><DoorOpen /> ПО КОДУ</button>
           )}
           <label className="sound-control">
             {soundOn ? <Volume2 /> : <VolumeX />}

@@ -5,6 +5,7 @@ import type { PremiumPlan, ReturnContext } from '../components/gnh-premium-wheel
 import '../components/gnh-premium-wheel/gnh-experience.css'
 import { usePremium } from '../contexts/PremiumContext'
 import { apiGet } from '../lib/api'
+import { scrollWebShellToTop } from '../lib/webChrome'
 import {
   buildWebPremiumPlans,
   gameStartPath,
@@ -47,7 +48,9 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
   const [searchParams, setSearchParams] = useSearchParams()
   const catalog = useWheelCatalog()
   const [apiPlans, setApiPlans] = useState<ApiPlan[]>([])
+  const [plansLoading, setPlansLoading] = useState(true)
   const [plansError, setPlansError] = useState<string | null>(null)
+  const [plansRetry, setPlansRetry] = useState(0)
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null)
   const [checkoutPlanSnap, setCheckoutPlanSnap] = useState<{
     id: string
@@ -70,19 +73,62 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
   }, [pendingGame])
 
   useEffect(() => {
+    scrollWebShellToTop('auto')
+  }, [])
+
+  useEffect(() => {
     const ac = new AbortController()
-    apiGet<{ ok?: boolean; plans?: ApiPlan[] }>('/api/plans?audience=web', { signal: ac.signal })
-      .then((res) => {
-        if (res.ok && Array.isArray(res.plans)) {
+    let cancelled = false
+    setPlansLoading(true)
+    setPlansError(null)
+
+    const load = async (attempt: number): Promise<void> => {
+      try {
+        const res = await apiGet<{ ok?: boolean; plans?: ApiPlan[] }>('/api/plans?audience=web', {
+          signal: ac.signal,
+        })
+        if (cancelled) return
+        if (res.ok && Array.isArray(res.plans) && res.plans.length > 0) {
           setApiPlans(res.plans)
           setPlansError(null)
-        } else {
-          setPlansError('Тарифы временно недоступны')
+          setPlansLoading(false)
+          return
         }
-      })
-      .catch(() => setPlansError('Не удалось загрузить тарифы'))
-    return () => ac.abort()
-  }, [])
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 400 * (attempt + 1)))
+          if (!cancelled && !ac.signal.aborted) return load(attempt + 1)
+        }
+        setPlansError('Тарифы временно недоступны. Нажмите «Обновить».')
+        setPlansLoading(false)
+      } catch {
+        if (cancelled || ac.signal.aborted) return
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 400 * (attempt + 1)))
+          if (!cancelled && !ac.signal.aborted) return load(attempt + 1)
+        }
+        setPlansError('Не удалось загрузить тарифы. Проверьте сеть и нажмите «Обновить».')
+        setPlansLoading(false)
+      }
+    }
+
+    void load(0)
+    return () => {
+      cancelled = true
+      ac.abort()
+    }
+  }, [plansRetry])
+
+  useEffect(() => {
+    if (!focusPlans) return
+    const id = window.setTimeout(() => {
+      const el =
+        document.querySelector('.gnh-experience .gnh-plans') ||
+        document.querySelector('.gnh-experience [data-view="plans"]') ||
+        document.querySelector('.web-premium-experience--plans .gnh-main')
+      el?.scrollIntoView({ block: 'start', behavior: 'auto' })
+    }, 80)
+    return () => window.clearTimeout(id)
+  }, [focusPlans, plansLoading, apiPlans.length])
 
   const plans = useMemo(() => buildWebPremiumPlans(apiPlans), [apiPlans])
   const view = focusPlans ? 'plans' : initialView === 'wheel' ? 'wheel' : 'premium'
@@ -173,27 +219,38 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
 
   return (
     <div className={`web-premium-experience${focusPlans ? ' web-premium-experience--plans' : ''}`}>
-      {plansError && <p className="web-premium-experience__error">{plansError}</p>}
-      {plans.length === 0 && !plansError ? (
-        <p className="web-premium-experience__error">Загрузка тарифов…</p>
-      ) : (
-        <GnhPremiumWheel
-          catalog={catalog}
-          plans={plans}
-          isPremium={isPremium}
-          assetBase={assetBase.endsWith('/') ? assetBase : `${assetBase}/`}
-          resolveAsset={resolveWheelAsset}
-          featuredGameIds={[...WEB_PREMIUM_FEATURED_IDS]}
-          initialView={view}
-          showHeader
-          showFooter
-          onCheckout={onCheckout}
-          onStartGame={onStartGame}
-          onNeedPremium={onNeedPremium}
-          onViewChange={onViewChange}
-          onGoHome={onGoHome}
-        />
+      {(plansError || plansLoading) && (
+        <div className="web-premium-experience__banner" role="status">
+          <p className="web-premium-experience__error">
+            {plansLoading ? 'Загрузка тарифов…' : plansError}
+          </p>
+          {!plansLoading && plansError ? (
+            <button
+              type="button"
+              className="web-premium-experience__retry"
+              onClick={() => setPlansRetry((n) => n + 1)}
+            >
+              Обновить
+            </button>
+          ) : null}
+        </div>
       )}
+      <GnhPremiumWheel
+        catalog={catalog}
+        plans={plans}
+        isPremium={isPremium}
+        assetBase={assetBase.endsWith('/') ? assetBase : `${assetBase}/`}
+        resolveAsset={resolveWheelAsset}
+        featuredGameIds={[...WEB_PREMIUM_FEATURED_IDS]}
+        initialView={view}
+        showHeader
+        showFooter
+        onCheckout={onCheckout}
+        onStartGame={onStartGame}
+        onNeedPremium={onNeedPremium}
+        onViewChange={onViewChange}
+        onGoHome={onGoHome}
+      />
       <PremiumOverlay
         isOpen={Boolean(checkoutPlanId)}
         onClose={onCheckoutClose}

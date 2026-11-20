@@ -3,7 +3,6 @@ import { useBack } from "../../hooks/useBack";
 import { usePremium } from "../../contexts/PremiumContext";
 import { hapticSelection } from "../../utils/haptics";
 import { ensureHostGameSessionLease } from "../../lib/gameSessionLease";
-import HomeButton from "../../components/HomeButton";
 import BackButton from "../../components/BackButton";
 import PremiumOverlay from "../../components/PremiumOverlay";
 import {
@@ -936,12 +935,6 @@ export default function SledGame() {
           <p>Разведите пальцы, чтобы увеличить изображение</p>
         </section>
       )}
-      <div className="game-page sled-nav">
-        <div className="game-page__top">
-          <HomeButton className="game-page__nav-btn" />
-          <BackButton className="game-page__nav-btn" onClick={handleBackToGames} />
-        </div>
-      </div>
       <header className="topbar">
         <button
           className="brand"
@@ -975,6 +968,11 @@ export default function SledGame() {
           </label>
         </div>
       </header>
+      <div className="game-page sled-nav">
+        <div className="game-page__top">
+          <BackButton className="game-page__nav-btn" onClick={handleBackToGames} />
+        </div>
+      </div>
 
       {screen === "intro" && (
         <section className="intro-screen screen-pad">

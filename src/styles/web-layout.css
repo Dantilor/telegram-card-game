@@ -1409,14 +1409,21 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-asset-hero__visual {
     ) !important;
   }
 
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-play {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-cta-row {
     order: 4;
-    width: calc(100% - 40px) !important;
-    max-width: 340px !important;
-    height: 52px !important;
-    min-height: 52px !important;
-    min-width: 0 !important;
+    width: calc(100% - 32px) !important;
+    max-width: 420px !important;
     margin: 8px auto 0 !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-play {
+    order: 1;
+    width: auto !important;
+    max-width: none !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    min-width: 0 !important;
+    margin: 0 !important;
   }
 
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-player-count--mobile {
@@ -2586,22 +2593,17 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--restore
     text-shadow: 0 1px 8px rgba(28, 12, 48, 0.28);
   }
 
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-play {
-    margin-top: 24px !important;
-    height: 54px !important;
-    min-height: 54px !important;
-    min-width: 210px;
-    padding: 0 26px !important;
-    font-size: 18px !important;
-    align-self: flex-start;
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-cta-row {
+    margin-top: 20px !important;
   }
 
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-cta-row .hero-play,
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-cta-row .hero-wheel {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
-    height: 54px !important;
-    min-height: 54px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    font-size: 15px !important;
     align-self: center !important;
   }
 

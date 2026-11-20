@@ -131,14 +131,15 @@ html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-home-ref {
   }
 }
 
-/* Home CTA: keep wheel + start in one row */
+/* Home CTA: «Начать игру» left, «Колесо» right; compact equal height */
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
   align-items: stretch !important;
-  gap: 10px !important;
+  gap: 8px !important;
   width: 100%;
+  order: 4;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-play,
@@ -147,23 +148,36 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-wheel
   width: auto !important;
   max-width: none !important;
   min-width: 0 !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  font-size: 15px !important;
-  padding-inline: 12px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  font-size: 14px !important;
+  padding-inline: 10px !important;
   white-space: nowrap;
+  margin: 0 !important;
 }
 
 html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-play {
-  flex: 1.15 1 0 !important;
-  box-shadow: 0 8px 22px rgba(120, 60, 160, 0.35);
+  order: 1 !important;
+  flex: 1.12 1 0 !important;
+  box-shadow: 0 6px 18px rgba(120, 60, 160, 0.32);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-wheel {
+  order: 2 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-play svg {
+  width: 16px !important;
+  height: 16px !important;
 }
 
 @media (max-width: 340px) {
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-play,
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-wheel {
-    font-size: 13px !important;
+    font-size: 12px !important;
     padding-inline: 8px !important;
+    height: 40px !important;
+    min-height: 40px !important;
   }
 }
 

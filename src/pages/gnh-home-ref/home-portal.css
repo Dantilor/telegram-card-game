@@ -180,13 +180,23 @@
     border-radius: 0 !important;
   }
 
-  .gnh-home-ref .hero.gnh-asset-hero .hero-play {
+  .gnh-home-ref .hero.gnh-asset-hero .hero-cta-row {
     order: 4;
     position: relative;
     z-index: 2;
+    width: calc(100% - 32px);
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .gnh-home-ref .hero.gnh-asset-hero .hero-play {
+    order: 1;
+    position: relative;
+    z-index: 2;
     display: inline-flex;
-    width: calc(100% - 40px);
-    max-width: 340px;
+    width: auto;
+    max-width: none;
     height: 52px;
     min-width: 0;
     min-height: 52px;

@@ -5,11 +5,15 @@ export const CLAIM_PREMIUM_GRANT_SQL = `UPDATE payments
        AND premium_granted_at IS NULL
      RETURNING id, status, telegram_id, plan_id, premium_granted_at`
 
-/** Checkout insert. Amount is the tariff price in rubles, the same unit as plans.price_rub. */
+/**
+ * Checkout insert. Amount is the tariff price in rubles, the same unit as plans.price_rub.
+ * Production `payments` (live Mini App) does NOT have a `provider` column — keep this aligned
+ * with ac49d0c. Do not reintroduce `provider` without a verified production schema check.
+ */
 export const INSERT_CHECKOUT_PAYMENT_SQL = `INSERT INTO payments (
-       telegram_id, provider, plan_id, currency, total_amount, provider_payment_charge_id, status,
+       telegram_id, plan_id, currency, total_amount, provider_payment_charge_id, status,
        offer_evidence_id, receipt_contact, receipt_contact_kind
-     ) VALUES ($1::bigint, 'yookassa', $2, 'RUB', $3, $4, 'pending', $5, $6, $7)`
+     ) VALUES ($1::bigint, $2, 'RUB', $3, $4, 'pending', $5, $6, $7)`
 
 /**
  * Recovery insert when a paid YooKassa id has no local row yet.

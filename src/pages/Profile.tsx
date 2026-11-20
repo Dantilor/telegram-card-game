@@ -224,6 +224,7 @@ function Profile() {
       }
     }
     const openDeepLink = (deepLink: string) => {
+      // Prefer a real navigation to t.me — most reliable on iOS Safari/PWA.
       if (sameWindowOpen) {
         window.location.assign(deepLink)
         return
@@ -240,7 +241,19 @@ function Profile() {
           }
         }
       }
-      // Popup blocked or navigation failed — stay reliable with same-window open.
+      try {
+        const anchor = document.createElement('a')
+        anchor.href = deepLink
+        anchor.target = '_blank'
+        anchor.rel = 'noopener noreferrer'
+        anchor.style.display = 'none'
+        document.body.appendChild(anchor)
+        anchor.click()
+        anchor.remove()
+        return
+      } catch {
+        /* fall through */
+      }
       window.location.assign(deepLink)
     }
     const closeOpener = () => {

@@ -116,6 +116,13 @@ export function LegalProvider({ children }: { children: ReactNode }) {
       void refreshRecords()
     }
     window.addEventListener('tcg_legal_sync', onLegalSync)
+    // WEB session cookie may appear a moment after first paint — retry once so FirstUseSheet can open.
+    const retryTimer =
+      isWebShell()
+        ? window.setTimeout(() => {
+            void refreshRecords()
+          }, 700)
+        : 0
     // Тексты документов не нужны для первого кадра Home: сначала hero, затем idle.
     let cancelIdle: (() => void) | null = null
     const cancelWait = afterCriticalImages(() => {
@@ -123,6 +130,7 @@ export function LegalProvider({ children }: { children: ReactNode }) {
     })
     return () => {
       window.removeEventListener('tcg_legal_sync', onLegalSync)
+      if (retryTimer) window.clearTimeout(retryTimer)
       cancelWait()
       cancelIdle?.()
     }

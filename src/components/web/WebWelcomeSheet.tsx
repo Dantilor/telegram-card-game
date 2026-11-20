@@ -1,13 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { isWebShell } from '../../config/shell'
 import { useLegal } from '../../legal/LegalProvider'
 import { haptic } from '../../utils/telegram'
 import './WebWelcomeSheet.css'
 
 const STORAGE_KEY = 'gnh_web_welcome_v1'
-const LEGAL_SHEET_KEY = 'gnh_legal_sheet_closed'
-export const LEGAL_FIRST_USE_CLOSED_EVENT = 'gnh_legal_first_use_closed'
+const PENDING_KEY = 'gnh_web_welcome_pending'
+
+export function markWebWelcomePending(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY) === '1') return
+    sessionStorage.setItem(PENDING_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
 
 function welcomeSeen(): boolean {
   try {
@@ -20,59 +28,43 @@ function welcomeSeen(): boolean {
 function markWelcomeSeen(): void {
   try {
     localStorage.setItem(STORAGE_KEY, '1')
+    sessionStorage.removeItem(PENDING_KEY)
   } catch {
     /* ignore */
   }
 }
 
-function legalSheetClosedThisSession(): boolean {
+function welcomePending(): boolean {
   try {
-    return sessionStorage.getItem(LEGAL_SHEET_KEY) === '1'
+    return sessionStorage.getItem(PENDING_KEY) === '1'
   } catch {
     return false
   }
 }
 
 /**
- * Soft first-visit tip for WEB / PWA.
- * Always after the original FirstUseSheet (documents + accept), never instead of it.
+ * Soft tip for WEB / PWA after the user taps «Начать игру» on the home screen.
+ * Does not replace FirstUseSheet.
  */
 export default function WebWelcomeSheet() {
   const navigate = useNavigate()
+  const location = useLocation()
   const legal = useLegal()
   const [open, setOpen] = useState(false)
   const [visible, setVisible] = useState(false)
 
-  const needsAgreement =
-    legal.status === 'ready' && legal.records?.agreement?.active !== true
-  const firstUseBlocking = needsAgreement && !legalSheetClosedThisSession()
-
-  const showWelcome = useCallback(() => {
-    if (!isWebShell() || welcomeSeen() || open) return
-    if (legal.status === 'loading') return
-    if (needsAgreement && !legalSheetClosedThisSession()) return
-    setOpen(true)
-    requestAnimationFrame(() => setVisible(true))
-  }, [legal.status, needsAgreement, open])
-
   useEffect(() => {
     if (!isWebShell()) return
-    if (welcomeSeen()) return
-    if (legal.status === 'loading') return
-    if (firstUseBlocking) return
-    // Right after documents sheet — short beat, not a long delay.
-    const showTimer = window.setTimeout(() => showWelcome(), 180)
+    if (welcomeSeen() || open) return
+    if (!welcomePending()) return
+    // Show on the catalog transition after «Начать игру».
+    if (location.pathname !== '/games') return
+    const showTimer = window.setTimeout(() => {
+      setOpen(true)
+      requestAnimationFrame(() => setVisible(true))
+    }, 220)
     return () => window.clearTimeout(showTimer)
-  }, [legal.status, firstUseBlocking, legal.records?.agreement?.active, showWelcome])
-
-  useEffect(() => {
-    if (!isWebShell()) return
-    const onLegalClosed = () => {
-      window.setTimeout(() => showWelcome(), 120)
-    }
-    window.addEventListener(LEGAL_FIRST_USE_CLOSED_EVENT, onLegalClosed)
-    return () => window.removeEventListener(LEGAL_FIRST_USE_CLOSED_EVENT, onLegalClosed)
-  }, [showWelcome])
+  }, [location.pathname, open])
 
   const dismiss = useCallback(() => {
     setVisible(false)

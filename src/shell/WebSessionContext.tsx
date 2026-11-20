@@ -162,6 +162,11 @@ export function WebSessionProvider({
         if (!cancelled) {
           applySession(next)
           setReady(true)
+          try {
+            window.dispatchEvent(new Event('tcg_legal_sync'))
+          } catch {
+            /* ignore */
+          }
         }
       } catch {
         if (!cancelled) {

@@ -12,6 +12,7 @@ import { formatGameTags } from '../utils/gameTags'
 import { apiGet } from '../lib/api'
 import WebSiteFooter from '../components/web/WebSiteFooter'
 import HomeCommunitySection from '../components/web/HomeCommunitySection'
+import { markWebWelcomePending } from '../components/web/WebWelcomeSheet'
 
 const PremiumOverlay = lazy(() => import('../components/PremiumOverlay'))
 const AdultConfirmModal = lazy(() => import('../components/AdultConfirmModal'))
@@ -419,6 +420,7 @@ function HomeReference({
                     onClick={() => {
                       hapticImpact('light')
                       requestFullscreenOnUserGesture()
+                      markWebWelcomePending()
                     }}
                     onPointerEnter={() => {
                       void import('./Games')

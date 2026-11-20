@@ -249,25 +249,36 @@ html[data-theme] .app.app--web .gnh-experience .gnh-button-primary {
   cursor: pointer;
 }
 
-/* Company pill: below the cover stack, not overlapping cards. */
+/* Company pill above caption; caption below pill with clear gap. */
 .gnh-experience .gnh-hero-visual {
-  height: 460px !important;
+  height: 480px !important;
+  padding-bottom: 28px !important;
 }
 .gnh-experience .gnh-stack {
-  inset: 8px 0 98px 0 !important;
+  inset: 8px 0 118px 0 !important;
 }
 .gnh-experience .gnh-company-pill {
-  bottom: 14px !important;
+  bottom: 42px !important;
   left: 4% !important;
   right: 4% !important;
   z-index: 4 !important;
 }
+.gnh-experience .gnh-visual-caption {
+  bottom: 6px !important;
+  z-index: 2 !important;
+  color: #d8c4e8 !important;
+  -webkit-text-fill-color: #d8c4e8 !important;
+  pointer-events: none;
+}
 @media (max-width: 1100px) {
   .gnh-experience .gnh-hero-visual {
-    height: 430px !important;
+    height: 450px !important;
   }
   .gnh-experience .gnh-stack {
-    inset: 8px 0 104px 0 !important;
+    inset: 8px 0 122px 0 !important;
+  }
+  .gnh-experience .gnh-company-pill {
+    bottom: 40px !important;
   }
 }
 @media (max-width: 800px) {
@@ -278,6 +289,12 @@ html[data-theme] .app.app--web .gnh-experience .gnh-button-primary {
     bottom: auto !important;
     margin-top: 16px !important;
   }
+  .gnh-experience .gnh-visual-caption {
+    position: relative !important;
+    bottom: auto !important;
+    display: block;
+    margin-top: 10px !important;
+  }
   .gnh-experience .gnh-stack {
     inset: auto !important;
     position: relative !important;
@@ -285,5 +302,6 @@ html[data-theme] .app.app--web .gnh-experience .gnh-button-primary {
   }
   .gnh-experience .gnh-hero-visual {
     height: auto !important;
+    padding-bottom: 0 !important;
   }
 }

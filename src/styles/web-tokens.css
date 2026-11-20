@@ -34,6 +34,11 @@
   --web-card-gap: 16px;
   --web-card-pad: 20px;
   --web-radius: 20px;
+  /* Compact bottom nav: bar + inset + home indicator */
+  --web-bottom-nav-h: 56px;
+  --web-bottom-nav-inset: 0px;
+  --web-bottom-nav-clear: calc(var(--web-bottom-nav-h) + var(--web-bottom-nav-inset) + env(safe-area-inset-bottom, 0px));
+  --web-shell-mauve: #887099;
   color: var(--web-ink);
 }
 

@@ -218,7 +218,10 @@ function saveSession(session: Session) {
   localStorage.setItem("gnh_doubles_last", session.code);
 }
 function scrollAppTop() {
-  document.querySelector(".app")?.scrollTo({ top: 0, behavior: "auto" });
+  ;(document.querySelector(".app.app--web > .gnh-inside") || document.querySelector(".app"))?.scrollTo({
+    top: 0,
+    behavior: "auto",
+  });
 }
 
 function readSession(code: string) {

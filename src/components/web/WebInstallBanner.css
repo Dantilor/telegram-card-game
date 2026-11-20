@@ -1,4 +1,4 @@
-﻿.web-install-banner {
+.web-install-banner {
   position: fixed;
   left: 0;
   right: 0;
@@ -118,4 +118,32 @@ html[data-gnh-shell="web"] .web-install-banner {
   html[data-gnh-shell="web"] .web-install-banner {
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
+}
+
+/* WEB: ensure install CTA contrast on light themes */
+html[data-gnh-shell="web"][data-theme="neon-light"] .web-install-banner__btn--primary,
+html[data-gnh-shell="web"][data-theme="sunset"] .web-install-banner__btn--primary,
+html[data-gnh-shell="web"][data-theme="minimal-calm"] .web-install-banner__btn--primary {
+  color: #1a102a !important;
+  border: 1px solid rgba(90, 40, 140, 0.35);
+  background: linear-gradient(110deg, #f6d7b4 0%, #e7c0ee 55%, #c9a6f0 100%);
+  box-shadow: 0 8px 20px rgba(80, 40, 120, 0.22);
+}
+
+html[data-gnh-shell="web"][data-theme="neon-light"] .web-install-banner__btn--ghost,
+html[data-gnh-shell="web"][data-theme="sunset"] .web-install-banner__btn--ghost,
+html[data-gnh-shell="web"][data-theme="minimal-calm"] .web-install-banner__btn--ghost {
+  color: #2a1a3a !important;
+  border: 1px solid rgba(60, 40, 90, 0.28);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+html[data-gnh-shell="web"] .web-install-banner {
+  padding-bottom: calc(10px + var(--web-bottom-nav-clear, 72px));
+  z-index: 90;
+}
+
+html[data-gnh-shell="web"].gnh-web-nav--immersive .web-install-banner,
+html[data-gnh-shell="web"].gnh-web-nav--hidden .web-install-banner {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }

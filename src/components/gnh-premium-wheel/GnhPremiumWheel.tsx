@@ -13,6 +13,8 @@ type Props = {
   plans: PremiumPlan[]
   isPremium: boolean
   assetBase: string
+  /** Vite-emitted URLs for kit assets (brand.webp, ambient.webp, …). */
+  resolveAsset?: (file: string) => string | undefined
   featuredGameIds?: string[]
   initialView?: 'premium' | 'wheel' | 'plans'
   showHeader?: boolean
@@ -46,6 +48,7 @@ export const GnhPremiumWheel = forwardRef<Pick<ExperienceHandle, 'showPremium' |
         catalog: props.catalog,
         plans: props.plans,
         assetBase: props.assetBase,
+        resolveAsset: (file) => latest.current.resolveAsset?.(file),
         featuredGameIds: props.featuredGameIds,
         initialView: props.initialView,
         demoMode: false,

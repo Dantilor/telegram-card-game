@@ -1,0 +1,317 @@
+/* WEB quality overhaul — scoped to standalone shell only. Never touch Mini App. */
+
+html[data-gnh-shell="web"],
+html[data-gnh-shell="web"] body,
+html[data-gnh-shell="web"] #root {
+  background-color: var(--web-shell-mauve, #887099) !important;
+  background-image: none;
+  min-height: 100%;
+  overscroll-behavior-y: none;
+}
+
+html[data-gnh-shell="web"] .app.app--web {
+  background-color: var(--web-shell-mauve, #887099);
+}
+
+/* Kill manufactured empty height from 100dvh content floors */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content {
+  min-height: 0 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside {
+  min-height: 100% !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .page-atmosphere,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .ambient-layer {
+  min-height: 100% !important;
+}
+
+/* Safe-area top for interior sticky header (home already pads) */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .app-header {
+  top: 0;
+  padding-top: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: linear-gradient(
+    110deg,
+    rgba(108, 88, 132, 0.96),
+    rgba(120, 98, 142, 0.94) 55%,
+    rgba(108, 88, 132, 0.96)
+  ) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .site-header {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Unified bottom clearance — one token, no double padding */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
+  padding-bottom: var(--web-bottom-nav-clear) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .web-site-footer,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .web-site-footer {
+  padding-bottom: 12px !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .play-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .games-page {
+  padding-bottom: 12px !important;
+}
+
+/* Compact bottom nav pinned to screen bottom (fills home-indicator strip) */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav {
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: var(--web-bottom-nav-h);
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+  border-radius: 18px 18px 0 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+  will-change: transform;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav a,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav button,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav a,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav button {
+  gap: 2px !important;
+  font-size: 10px !important;
+  min-height: 44px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav svg,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-inside .bottom-nav,
+html[data-gnh-shell="web"].gnh-web-nav--hidden .app.app--web .gnh-home-ref .mobile-nav,
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside .bottom-nav,
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-home-ref .mobile-nav {
+  transform: translate3d(0, calc(100% + 8px), 0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-inside,
+html[data-gnh-shell="web"].gnh-web-nav--immersive .app.app--web .gnh-home-ref {
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (min-width: 900px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav {
+    display: none !important;
+  }
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref {
+    padding-bottom: 24px !important;
+  }
+}
+
+/* Home CTA: keep wheel + start in one row */
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  width: 100%;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-play,
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-wheel {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  font-size: 15px !important;
+  padding-inline: 12px !important;
+  white-space: nowrap;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-play {
+  flex: 1.15 1 0 !important;
+  box-shadow: 0 8px 22px rgba(120, 60, 160, 0.35);
+}
+
+@media (max-width: 340px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-play,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero-cta-row .hero-wheel {
+    font-size: 13px !important;
+    padding-inline: 8px !important;
+  }
+}
+
+/* Comics: meta below cover — no clipped overlay text */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__card {
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(46, 30, 68, 0.92), rgba(32, 20, 48, 0.96)) !important;
+  border: 1px solid rgba(244, 220, 255, 0.28) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__media {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  aspect-ratio: 3 / 4;
+  background: #241632 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__media .smart-image__img {
+  object-fit: cover !important;
+  background: #241632 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid__body {
+  position: relative !important;
+  inset: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 12px 12px 14px !important;
+  background: transparent !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .games-grid__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__pages {
+  overflow: visible !important;
+  text-overflow: unset !important;
+  white-space: normal !important;
+  -webkit-line-clamp: unset !important;
+  color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__subtitle,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .comics-grid .comics-grid__pages {
+  color: rgba(255, 248, 255, 0.82) !important;
+}
+
+/* Profile contrast */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__panel,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity {
+  border: 1px solid rgba(255, 236, 255, 0.32) !important;
+  background: linear-gradient(160deg, rgba(54, 36, 78, 0.88), rgba(36, 24, 54, 0.9)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 28px rgba(20, 8, 40, 0.22);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__desc,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__active-date,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__email-label,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__label-sub,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity__username,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-identity__guest {
+  color: rgba(255, 248, 255, 0.88) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__title,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-menu__label-main,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__eyebrow {
+  color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .profile-page .profile-pass__email-input {
+  color: #fff8ff !important;
+  background: rgba(18, 10, 32, 0.55) !important;
+  border: 1px solid rgba(255, 228, 255, 0.4) !important;
+}
+
+/* Game readability: force light ink on glass cards */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .alias-home__howto,
+  .alias-home__panel,
+  .mafia-page__howto,
+  .activity-home__howto,
+  .sabotage-home__howto,
+  .truth-dare-home__howto,
+  .rt-route-card,
+  .rt-howto,
+  .who-is-who__howto,
+  .phrase-home__howto,
+  .freebie-home__howto,
+  .game-howto,
+  .howto-card,
+  .rules-card
+) {
+  color: #fff8ff !important;
+  border-color: rgba(255, 236, 255, 0.28) !important;
+  background: linear-gradient(165deg, rgba(36, 22, 54, 0.88), rgba(26, 16, 40, 0.92)) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .alias-home__howto,
+  .mafia-page__howto,
+  .activity-home__howto,
+  .sabotage-home__howto,
+  .truth-dare-home__howto,
+  .rt-howto,
+  .who-is-who__howto,
+  .phrase-home__howto,
+  .freebie-home__howto,
+  .game-howto,
+  .howto-card,
+  .rules-card
+) :is(p, li, span, h2, h3, strong, b) {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content input[type="text"],
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content input[type="email"],
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content input:not([type]),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content textarea {
+  color: #fff8ff !important;
+  background: rgba(18, 10, 32, 0.55) !important;
+  border: 1px solid rgba(255, 228, 255, 0.35) !important;
+  min-height: 44px;
+}
+
+/* Russia Travel / Где мы? card scrim */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-route-card,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside [class*="rt-"] [class*="card"] {
+  position: relative;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-route-card :is(h3, p, span, button) {
+  color: #fff8ff !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .bottom-nav,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav {
+    transition: none !important;
+  }
+}

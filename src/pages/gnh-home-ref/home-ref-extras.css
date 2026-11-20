@@ -581,14 +581,15 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .her
   font-size: 17px !important;
   padding-inline: 22px !important;
 }
+/* WEB keeps a horizontal CTA row via web-quality.css; Mini App may stack. */
 @media (max-width: 430px) {
-  .gnh-home-ref .hero-cta-row {
+  html:not([data-gnh-shell="web"]) .gnh-home-ref .hero-cta-row {
     flex-direction: column;
     align-items: stretch;
     margin-top: 16px;
   }
-  .gnh-home-ref .hero-cta-row .hero-play,
-  .gnh-home-ref .hero-cta-row .hero-wheel {
+  html:not([data-gnh-shell="web"]) .gnh-home-ref .hero-cta-row .hero-play,
+  html:not([data-gnh-shell="web"]) .gnh-home-ref .hero-cta-row .hero-wheel {
     width: 100%;
   }
 }

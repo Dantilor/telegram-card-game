@@ -128,7 +128,10 @@ function readSession(code: string) {
   }
 }
 function scrollAppTop() {
-  document.querySelector('.app')?.scrollTo({ top: 0, behavior: 'auto' })
+  ;(document.querySelector('.app.app--web > .gnh-inside') || document.querySelector('.app'))?.scrollTo({
+    top: 0,
+    behavior: 'auto',
+  })
 }
 
 function Button({ className = '', children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {

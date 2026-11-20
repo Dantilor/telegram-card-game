@@ -18,6 +18,25 @@ import './WebPremiumExperience.css'
 
 const assetBase = new URL('../components/gnh-premium-wheel/assets/', import.meta.url).href
 
+const wheelAssetModules = import.meta.glob('../components/gnh-premium-wheel/assets/*.{webp,png}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
+
+const wheelAssetByFile = (() => {
+  const map = new Map<string, string>()
+  for (const [path, url] of Object.entries(wheelAssetModules)) {
+    const file = path.split('/').pop()
+    if (file) map.set(file, url)
+  }
+  return map
+})()
+
+function resolveWheelAsset(file: string): string | undefined {
+  return wheelAssetByFile.get(file)
+}
+
 type Props = {
   initialView?: 'premium' | 'wheel' | 'plans'
 }
@@ -163,6 +182,7 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
           plans={plans}
           isPremium={isPremium}
           assetBase={assetBase.endsWith('/') ? assetBase : `${assetBase}/`}
+          resolveAsset={resolveWheelAsset}
           featuredGameIds={[...WEB_PREMIUM_FEATURED_IDS]}
           initialView={view}
           showHeader

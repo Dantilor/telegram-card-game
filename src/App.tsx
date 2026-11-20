@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense, useState, type ReactNode } from 'react'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { useAppHeight } from './hooks/useAppHeight'
+import { useWebShellChrome } from './hooks/useWebShellChrome'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
 import { LegalProvider } from './legal/LegalProvider'
@@ -141,6 +142,7 @@ function GameSessionLeaseHost() {
 function App() {
   const [isReady, setReady] = useState(false)
   useAppHeight()
+  useWebShellChrome()
   useTelegramThemeSync()
   useEffect(() => {
     const raf = requestAnimationFrame(() => setReady(true))

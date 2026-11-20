@@ -37,6 +37,9 @@ function useThrottledAppHeight() {
     update()
     window.addEventListener('resize', schedule)
     window.addEventListener('orientationchange', schedule)
+    const vv = window.visualViewport
+    vv?.addEventListener('resize', schedule)
+    vv?.addEventListener('scroll', schedule)
     const tg = getTg()
     const onEvent = tg && (tg as { onEvent?: (e: string, fn: () => void) => void }).onEvent
     if (typeof onEvent === 'function') {
@@ -45,6 +48,8 @@ function useThrottledAppHeight() {
     return () => {
       window.removeEventListener('resize', schedule)
       window.removeEventListener('orientationchange', schedule)
+      vv?.removeEventListener('resize', schedule)
+      vv?.removeEventListener('scroll', schedule)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [])

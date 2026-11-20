@@ -28,6 +28,13 @@ export function mountGnhExperience(root, options = {}) {
   const catalog = options.catalog ?? [];
   const plans = options.plans ?? [];
   const assets = options.assetBase ?? './assets/';
+  const resolveAsset = (file) => {
+    if (typeof options.resolveAsset === 'function') {
+      const resolved = options.resolveAsset(file);
+      if (resolved) return resolved;
+    }
+    return assets + file;
+  };
   const uid = `gnh-${Math.random().toString(36).slice(2,9)}`;
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const plansFocus = options.initialView === 'plans';
@@ -36,7 +43,7 @@ export function mountGnhExperience(root, options = {}) {
   let opener = null;
   const hasPremium = () => typeof options.isPremium === 'function' ? options.isPremium() : Boolean(options.isPremium);
   root.classList.add('gnh-experience');
-  root.style.setProperty('--gnh-ambient', `url("${assets.replace(/["\\\n\r]/g,'')}ambient.webp")`);
+  root.style.setProperty('--gnh-ambient', `url("${resolveAsset('ambient.webp').replace(/["\\\n\r]/g,'')}")`);
 
   function notify(message) {
     const node = root.querySelector('.gnh-toast');
@@ -73,7 +80,7 @@ export function mountGnhExperience(root, options = {}) {
     current.showModal();
   }
   function header() {
-    return `<header class="gnh-header"><button class="gnh-brand" data-action="go-home" aria-label="GameNight Host, на главную"><img src="${esc(assets)}brand.webp" alt="" width="44" height="44"><span>GameNight <b>Host</b></span></button><nav class="gnh-tabs" aria-label="Разделы макета"><button data-action="view-premium" ${state.view==='premium'?'aria-current="page"':''}>${icon('diamond')}<span>Premium</span></button><button data-action="view-wheel" ${state.view==='wheel'?'aria-current="page"':''}>${icon('wheel')}<span>Колесо игр</span></button></nav><button type="button" class="gnh-header-home" data-action="go-home" aria-label="На главную">${icon('home')}<span class="gnh-header-home__label">Домой</span></button></header>`;
+    return `<header class="gnh-header"><button class="gnh-brand" data-action="go-home" aria-label="GameNight Host, на главную"><img src="${esc(resolveAsset('brand.webp'))}" alt="" width="44" height="44"><span>GameNight <b>Host</b></span></button><nav class="gnh-tabs" aria-label="Разделы макета"><button data-action="view-premium" ${state.view==='premium'?'aria-current="page"':''}>${icon('diamond')}<span>Premium</span></button><button data-action="view-wheel" ${state.view==='wheel'?'aria-current="page"':''}>${icon('wheel')}<span>Колесо игр</span></button></nav><button type="button" class="gnh-header-home" data-action="go-home" aria-label="На главную">${icon('home')}<span class="gnh-header-home__label">Домой</span></button></header>`;
   }
   function planCards() {
     const short = plans.find(p=>p.days===30);

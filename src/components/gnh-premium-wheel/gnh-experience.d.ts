@@ -32,6 +32,8 @@ export type ExperienceOptions = {
   catalog: CatalogGame[];
   plans: PremiumPlan[];
   assetBase: string;
+  /** Prefer Vite-resolved asset URLs so production builds emit brand/ambient files. */
+  resolveAsset?: (file: string) => string | undefined;
   featuredGameIds?: string[];
   initialView?: 'premium' | 'wheel' | 'plans';
   demoMode?: boolean;

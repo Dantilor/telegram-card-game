@@ -1,6 +1,7 @@
 ﻿@import "./styles/responsive.css";
 @import "./styles/web-tokens.css";
 @import "./styles/web-desktop.css";
+@import "./styles/web-quality.css";
 
 /* Роуты: не сжимать контент — страница скроллится в .app */
 .app > *:not(.gnh-theme-background) {

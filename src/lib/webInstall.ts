@@ -1,3 +1,5 @@
+import { isImmersiveWebPath } from './webChrome'
+
 const DISMISS_KEY = 'gnh_web_install_dismiss_until_v1'
 const DISMISS_MS = 14 * 24 * 60 * 60 * 1000
 const ENGAGED_KEY = 'gnh_web_install_engaged_v1'
@@ -64,16 +66,9 @@ export function hasInstallEngaged(): boolean {
   }
 }
 
-/** Hide automatic install UI during active game flows. */
+/** Hide automatic install UI during active game / setup flows. */
 export function isGameplayPath(pathname: string): boolean {
-  const p = pathname || '/'
-  if (p.startsWith('/play/')) return true
-  if (/^\/russia-travel\/play\//.test(p)) return true
-  if (/^\/(alias|activity|mafia|sabotage|quiz|truth-dare)\/(play|roles|night|day|voting|turn|card|vote|task|role|result|final|mini-summary)(\/|$)/.test(p)) {
-    return true
-  }
-  if (/^\/(sled|mafia-shadows|doubles|infected|who-is-who|phrase-translator|freebie-trash)(\/|$)/.test(p)) return true
-  return false
+  return isImmersiveWebPath(pathname)
 }
 
 export async function registerWebServiceWorker(): Promise<void> {

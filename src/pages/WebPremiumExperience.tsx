@@ -114,6 +114,10 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
     [focusPlans, navigate]
   )
 
+  const onGoHome = useCallback(() => {
+    navigate('/', { replace: false })
+  }, [navigate])
+
   const onCheckoutClose = useCallback(() => {
     setCheckoutPlanId(null)
     setCheckoutPlanSnap(null)
@@ -160,6 +164,7 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
           onStartGame={onStartGame}
           onNeedPremium={onNeedPremium}
           onViewChange={onViewChange}
+          onGoHome={onGoHome}
         />
       )}
       <PremiumOverlay

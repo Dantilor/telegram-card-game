@@ -21,6 +21,7 @@ type Props = {
   onStartGame: (gameId: string) => void | Promise<void>
   onNeedPremium?: (gameId: string) => void
   onViewChange?: (view: 'premium' | 'wheel') => void
+  onGoHome?: () => void
 }
 
 export const GnhPremiumWheel = forwardRef<Pick<ExperienceHandle, 'showPremium' | 'showWheel'>, Props>(
@@ -55,6 +56,7 @@ export const GnhPremiumWheel = forwardRef<Pick<ExperienceHandle, 'showPremium' |
         onStartGame: (gameId) => latest.current.onStartGame(gameId),
         onNeedPremium: (gameId) => latest.current.onNeedPremium?.(gameId),
         onViewChange: (view) => latest.current.onViewChange?.(view),
+        onGoHome: () => latest.current.onGoHome?.(),
       })
       widget.current = instance
       return () => {

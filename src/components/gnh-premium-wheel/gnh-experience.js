@@ -72,7 +72,7 @@ export function mountGnhExperience(root, options = {}) {
     current.showModal();
   }
   function header() {
-    return `<header class="gnh-header"><button class="gnh-brand" data-action="view-premium" aria-label="GameNight Host, Premium"><img src="${esc(assets)}brand.webp" alt="" width="44" height="44"><span>GameNight <b>Host</b></span></button><nav class="gnh-tabs" aria-label="Разделы макета"><button data-action="view-premium" ${state.view==='premium'?'aria-current="page"':''}>${icon('diamond')}<span>Premium</span></button><button data-action="view-wheel" ${state.view==='wheel'?'aria-current="page"':''}>${icon('wheel')}<span>Колесо игр</span></button></nav><span class="gnh-header-note">Вечер начинается здесь</span></header>`;
+    return `<header class="gnh-header"><button class="gnh-brand" data-action="go-home" aria-label="GameNight Host, на главную"><img src="${esc(assets)}brand.webp" alt="" width="44" height="44"><span>GameNight <b>Host</b></span></button><nav class="gnh-tabs" aria-label="Разделы макета"><button data-action="view-premium" ${state.view==='premium'?'aria-current="page"':''}>${icon('diamond')}<span>Premium</span></button><button data-action="view-wheel" ${state.view==='wheel'?'aria-current="page"':''}>${icon('wheel')}<span>Колесо игр</span></button></nav><button type="button" class="gnh-header-note gnh-header-home" data-action="go-home">На главную</button></header>`;
   }
   function planCards() {
     const short = plans.find(p=>p.days===30);
@@ -114,8 +114,8 @@ export function mountGnhExperience(root, options = {}) {
       const [x1,y1]=point(i*step-step/2),[x2,y2]=point(i*step+step/2);
       const d = count===1 ? '' : `M300 300L${x1} ${y1}A286 286 0 ${step>180?1:0} 1 ${x2} ${y2}Z`;
       const lines=String(game.wheelLabel || game.title).split('|').slice(0,3);
-      const thumbnail=`<defs><clipPath id="${uid}-thumb-${i}"><rect x="258" y="76" width="84" height="56" rx="10"/></clipPath></defs><image href="${esc(game.image)}" x="258" y="76" width="84" height="56" preserveAspectRatio="xMidYMid meet" clip-path="url(#${uid}-thumb-${i})"/><rect x="258" y="76" width="84" height="56" rx="10" fill="none" stroke="#ecd7ff70" stroke-width="1.5"/>`;
-      return `<g>${count===1?`<circle cx="300" cy="300" r="286" fill="${fills[i%6]}"/>`:`<path d="${d}" fill="${fills[i%6]}" stroke="#e5cbff38" stroke-width="1.5"/>`}<g transform="rotate(${i*step} 300 300)">${thumbnail}<text text-anchor="middle" fill="#fff8ff" font-size="${lines.some(s=>s.length>12)?20:24}" font-weight="650">${lines.map((line,j)=>`<tspan x="300" y="${162+j*24}">${esc(line)}</tspan>`).join('')}</text></g></g>`;
+      const thumbnail=`<defs><clipPath id="${uid}-thumb-${i}"><rect x="252" y="58" width="96" height="64" rx="10"/></clipPath></defs><image href="${esc(game.image)}" x="252" y="58" width="96" height="64" preserveAspectRatio="xMidYMid meet" clip-path="url(#${uid}-thumb-${i})"/><rect x="252" y="58" width="96" height="64" rx="10" fill="none" stroke="#ecd7ff70" stroke-width="1.5"/>`;
+      return `<g>${count===1?`<circle cx="300" cy="300" r="286" fill="${fills[i%6]}"/>`:`<path d="${d}" fill="${fills[i%6]}" stroke="#e5cbff38" stroke-width="1.5"/>`}<g transform="rotate(${i*step} 300 300)">${thumbnail}<text text-anchor="middle" fill="#fff8ff" font-size="${lines.some(s=>s.length>12)?20:24}" font-weight="650">${lines.map((line,j)=>`<tspan x="300" y="${148+j*26}">${esc(line)}</tspan>`).join('')}</text></g></g>`;
     }).join('');
     return `<svg class="gnh-wheel-svg" viewBox="0 0 600 600" role="img" aria-label="Колесо: ${esc(pool.map(g=>g.title).join(', '))}" style="transform:rotate(${state.rotation}deg)"><circle cx="300" cy="300" r="299" fill="#21182e"/>${paths}<circle cx="300" cy="300" r="286" fill="none" stroke="#efceff99" stroke-width="2"/><circle cx="300" cy="300" r="294" fill="none" stroke="#e9d7ff33" stroke-width="5"/></svg>`;
   }
@@ -219,6 +219,7 @@ export function mountGnhExperience(root, options = {}) {
     if (!button||!root.contains(button)||button.disabled) return;
     const {action,value,game,plan}=button.dataset;
     if(action==='close-dialog')return closeDialog();
+    if(action==='go-home'){ if (typeof options.onGoHome === 'function') return void options.onGoHome(); return; }
     if(action==='view-premium')return go('premium');
     if(action==='view-wheel')return go('wheel');
     if(action==='scroll-plans')return root.querySelector(`#${uid}-plans`)?.scrollIntoView({behavior:motion.matches?'instant':'smooth',block:'start'});

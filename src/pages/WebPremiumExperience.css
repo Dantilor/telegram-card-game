@@ -183,3 +183,107 @@
 .gnh-experience .gnh-value-strip {
   margin: 8px 0 12px !important;
 }
+
+/*
+ * App.css forces `.app p { color: var(--text) }` on neon themes — on neon-light
+ * that is near-black and kills Premium/wheel copy. Restore kit palette.
+ */
+html[data-theme] .app.app--web .gnh-experience,
+html[data-theme] .app.app--web .gnh-experience p,
+html[data-theme] .app.app--web .gnh-experience span,
+html[data-theme] .app.app--web .gnh-experience li,
+html[data-theme] .app.app--web .gnh-experience summary,
+html[data-theme] .app.app--web .gnh-experience footer {
+  color: var(--gnh-text, #faf3ff) !important;
+  -webkit-text-fill-color: currentColor;
+}
+html[data-theme] .app.app--web .gnh-experience .gnh-hero-description,
+html[data-theme] .app.app--web .gnh-experience .gnh-hero-assurance,
+html[data-theme] .app.app--web .gnh-experience .gnh-price-term,
+html[data-theme] .app.app--web .gnh-experience .gnh-plan-top > p,
+html[data-theme] .app.app--web .gnh-experience .gnh-section-heading > p,
+html[data-theme] .app.app--web .gnh-experience .gnh-cost-copy p,
+html[data-theme] .app.app--web .gnh-experience .gnh-how li p,
+html[data-theme] .app.app--web .gnh-experience .gnh-faq > div > p,
+html[data-theme] .app.app--web .gnh-experience .gnh-faq-list details > p,
+html[data-theme] .app.app--web .gnh-experience .gnh-finale p,
+html[data-theme] .app.app--web .gnh-experience .gnh-wheel-intro p,
+html[data-theme] .app.app--web .gnh-experience .gnh-wheel-footnote,
+html[data-theme] .app.app--web .gnh-experience .gnh-wheel-upgrade p,
+html[data-theme] .app.app--web .gnh-experience .gnh-benefit-row p,
+html[data-theme] .app.app--web .gnh-experience .gnh-header-note,
+html[data-theme] .app.app--web .gnh-experience .gnh-footer,
+html[data-theme] .app.app--web .gnh-experience .gnh-muted {
+  color: #c4b3d6 !important;
+  -webkit-text-fill-color: #c4b3d6 !important;
+}
+html[data-theme] .app.app--web .gnh-experience .gnh-price,
+html[data-theme] .app.app--web .gnh-experience .gnh-plan h3,
+html[data-theme] .app.app--web .gnh-experience .gnh-cost-copy b,
+html[data-theme] .app.app--web .gnh-experience .gnh-hero-description strong,
+html[data-theme] .app.app--web .gnh-experience .gnh-plan-list,
+html[data-theme] .app.app--web .gnh-experience .gnh-value-strip span {
+  color: #faf3ff !important;
+  -webkit-text-fill-color: #faf3ff !important;
+}
+html[data-theme] .app.app--web .gnh-experience .gnh-button-primary {
+  color: #231132 !important;
+  -webkit-text-fill-color: #231132 !important;
+}
+
+.gnh-experience .gnh-header-home {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: #d7b6eb !important;
+  -webkit-text-fill-color: #d7b6eb !important;
+}
+.gnh-experience .gnh-header-home:hover {
+  color: #fff2ff !important;
+  -webkit-text-fill-color: #fff2ff !important;
+}
+.gnh-experience .gnh-brand {
+  cursor: pointer;
+}
+
+/* Company pill: below the cover stack, not overlapping cards. */
+.gnh-experience .gnh-hero-visual {
+  height: 460px !important;
+}
+.gnh-experience .gnh-stack {
+  inset: 8px 0 98px 0 !important;
+}
+.gnh-experience .gnh-company-pill {
+  bottom: 14px !important;
+  left: 4% !important;
+  right: 4% !important;
+  z-index: 4 !important;
+}
+@media (max-width: 1100px) {
+  .gnh-experience .gnh-hero-visual {
+    height: 430px !important;
+  }
+  .gnh-experience .gnh-stack {
+    inset: 8px 0 104px 0 !important;
+  }
+}
+@media (max-width: 800px) {
+  .gnh-experience .gnh-company-pill {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin-top: 16px !important;
+  }
+  .gnh-experience .gnh-stack {
+    inset: auto !important;
+    position: relative !important;
+    height: 280px !important;
+  }
+  .gnh-experience .gnh-hero-visual {
+    height: auto !important;
+  }
+}

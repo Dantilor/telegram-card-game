@@ -42,5 +42,6 @@ export type ExperienceOptions = {
   onStartGame?: (gameId: string) => void | Promise<void>;
   onNeedPremium?: (gameId: string) => void;
   onViewChange?: (view: 'premium' | 'wheel') => void;
+  onGoHome?: () => void;
 };
 export function mountGnhExperience(root: HTMLElement, options: ExperienceOptions): ExperienceHandle;

@@ -2596,6 +2596,15 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--restore
     align-self: flex-start;
   }
 
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-cta-row .hero-play,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-cta-row .hero-wheel {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    align-self: center !important;
+  }
+
   /* Modes: title above, six equal glass cards in one row. */
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section,
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .categories-section.wrap {

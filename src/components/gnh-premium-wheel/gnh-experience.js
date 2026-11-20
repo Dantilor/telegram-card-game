@@ -38,7 +38,8 @@ export function mountGnhExperience(root, options = {}) {
   const uid = `gnh-${Math.random().toString(36).slice(2,9)}`;
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const plansFocus = options.initialView === 'plans';
-  const state = {view:options.initialView === 'wheel' ? 'wheel' : 'premium',players:6,mood:'any',minutes:0,rotation:0,spinning:false,result:null,pool:[],timer:null,toast:null,destroyed:false};
+  const defaultPlan = plans.find(p=>p.recommended) || plans.find(p=>p.days===30) || plans[0] || null;
+  const state = {view:options.initialView === 'wheel' ? 'wheel' : 'premium',players:6,mood:'any',minutes:0,rotation:0,spinning:false,result:null,pool:[],timer:null,toast:null,destroyed:false,selectedPlanId:defaultPlan?String(defaultPlan.id):null};
   let dialog = null;
   let opener = null;
   const hasPremium = () => typeof options.isPremium === 'function' ? options.isPremium() : Boolean(options.isPremium);
@@ -85,22 +86,50 @@ export function mountGnhExperience(root, options = {}) {
   function planCards() {
     const short = plans.find(p=>p.days===30);
     if (!plans.length) return '<p class="gnh-muted">Тарифы появятся после загрузки.</p>';
+    const premiumOn = hasPremium();
     return plans.map(plan => {
-      const saving = short ? savings(short,plan) : 0;
-      return `<article class="gnh-plan ${plan.recommended?'gnh-plan-featured':''}">${plan.badge?`<span class="gnh-plan-badge">${esc(plan.badge)}</span>`:''}<div class="gnh-plan-top"><span class="gnh-plan-icon">${icon(plan.days===null?'diamond':plan.days===90?'spark':'moon')}</span><h3>${esc(plan.label)}</h3><p>${esc(plan.description)}</p></div><p class="gnh-price">${esc(rub(plan.price))}</p><p class="gnh-price-term">${plan.days===null?'одна покупка · без продлений':`за ${plan.days} дней · без автопродления`}</p><div class="gnh-saving">${saving?`<del>${esc(rub(short.price * plan.days / short.days))}</del><span>Экономия ${esc(rub(saving))}</span>`:plan.days===null?'':`${icon('heart')} Подойдёт, чтобы попробовать`}</div><ul class="gnh-plan-list"><li>${icon('check')}Все Premium-игры и режимы</li><li>${icon('check')}Гости играют бесплатно</li><li>${icon('check')}Новые игры и обновления</li></ul><button class="gnh-button ${plan.recommended?'gnh-button-primary':'gnh-button-glass'}" data-action="choose-plan" data-plan="${esc(plan.id)}">${esc(plan.cta || 'Выбрать тариф')}</button><span class="gnh-plan-foot">Оплата через YooKassa</span></article>`;
+      const saving = short && plan.days ? savings(short,plan) : 0;
+      const selected = state.selectedPlanId != null && String(plan.id) === String(state.selectedPlanId);
+      const classes = ['gnh-plan'];
+      if (plan.recommended) classes.push('gnh-plan-featured');
+      if (selected) classes.push('gnh-plan-selected');
+      const cta = premiumOn
+        ? (plan.days === null ? 'Продлить навсегда' : ('Продлить · ' + plan.days + ' дней'))
+        : (plan.cta || 'Выбрать тариф');
+      return '<article class="' + classes.join(' ') + '" data-action="select-plan" data-plan="' + esc(plan.id) + '" role="button" tabindex="0" aria-pressed="' + (selected?'true':'false') + '">'
+        + (plan.badge ? '<span class="gnh-plan-badge">' + esc(plan.badge) + '</span>' : '')
+        + (premiumOn && selected ? '<span class="gnh-plan-owned-badge">Premium активен</span>' : '')
+        + '<div class="gnh-plan-top"><span class="gnh-plan-icon">' + icon(plan.days===null?'diamond':plan.days===90?'spark':'moon') + '</span><h3>' + esc(plan.label) + '</h3><p>' + esc(plan.description) + '</p></div>'
+        + '<p class="gnh-price">' + esc(rub(plan.price)) + '</p>'
+        + '<p class="gnh-price-term">' + (plan.days===null?'одна покупка · без продлений':('за ' + plan.days + ' дней · без автопродления')) + '</p>'
+        + '<div class="gnh-saving">' + (saving ? ('<del>' + esc(rub(short.price * plan.days / short.days)) + '</del><span>Экономия ' + esc(rub(saving)) + '</span>') : (plan.days===null?'':(icon('heart') + ' Подойдёт, чтобы попробовать'))) + '</div>'
+        + '<ul class="gnh-plan-list"><li>' + icon('check') + 'Все Premium-игры и режимы</li><li>' + icon('check') + 'Гости играют бесплатно</li><li>' + icon('check') + 'Новые игры и обновления</li></ul>'
+        + '<button class="gnh-button ' + (plan.recommended || selected?'gnh-button-primary':'gnh-button-glass') + '" data-action="choose-plan" data-plan="' + esc(plan.id) + '">' + esc(cta) + '</button>'
+        + '<span class="gnh-plan-foot">Оплата через YooKassa</span></article>';
     }).join('');
   }
-  function premium() {
+
+  function companyCostBlock() {
+    const focus = plans.find(p => state.selectedPlanId != null && String(p.id) === String(state.selectedPlanId))
+      || plans.find(p => p.recommended)
+      || plans.find(p => p.days === 30)
+      || plans[0];
+    if (!focus) return '';
+    const per = Math.max(1, Math.round(focus.price / state.players));
+    const term = focus.days == null ? 'Покупка навсегда.' : ('За ' + focus.days + ' дней игр.');
+    return '<div class="gnh-company-cost"><span class="gnh-cost-icon">' + icon('users') + '</span><div class="gnh-cost-copy"><b>Вас ' + state.players + '? Это примерно <span>' + esc(rub(per)) + '</span> на человека</b><p>' + term + ' Полную сумму ' + esc(rub(focus.price)) + ' оплачивает ведущий · тариф «' + esc(focus.label) + '».</p></div><div class="gnh-stepper" role="group" aria-label="Размер компании для расчёта"><button data-action="cost-minus" ' + (state.players<=2?'disabled':'') + ' aria-label="Уменьшить компанию">−</button><output aria-label="Игроков">' + state.players + '</output><button data-action="cost-plus" ' + (state.players>=16?'disabled':'') + ' aria-label="Увеличить компанию">+</button></div></div>';
+  }
+
+function premium() {
     const preferred = options.featuredGameIds ?? ['mafia-shadows','who-is-who','card','sled','russia-travel'];
     const ordered = [...new Set([...preferred.map(id=>catalog.find(g=>g.id===id)).filter(Boolean), ...catalog])];
     const displayGames = ordered.slice(0,3);
     const featured = [...new Set([...['mafia-shadows','who-is-who','sled','russia-travel'].map(id=>catalog.find(g=>g.id===id)).filter(Boolean), ...ordered])].slice(0,4);
-    const short = plans.find(p=>p.days===30);
     return `<main class="gnh-main">
       ${state.result?`<div class="gnh-return-banner">${icon('wheel')}<span>Колесо выбрало: <b>${esc(state.result.title)}</b></span><button data-action="view-wheel">К результату</button></div>`:''}
       <section class="gnh-premium-hero" aria-labelledby="${uid}-hero"><div class="gnh-hero-copy"><span class="gnh-eyebrow">${icon('diamond')} GAME NIGHT PREMIUM</span><h1 id="${uid}-hero">Один Premium.<br><span>Играют все.</span></h1><p class="gnh-hero-description">Лучшие игры для компании, пары и друзей.<br>Подписка нужна <strong>только ведущему</strong> —<br class="gnh-desktop-break"> остальные присоединяются бесплатно.</p><div class="gnh-hero-actions"><button class="gnh-button gnh-button-primary" data-action="scroll-plans">${icon('spark')}Выбрать тариф</button><button class="gnh-text-button" data-action="view-wheel">${icon('wheel')}Сначала выбрать игру</button></div><p class="gnh-hero-assurance">${icon('shield')}Без автопродления и скрытых списаний</p></div><div class="gnh-hero-visual" aria-label="Игры для всей компании"><div class="gnh-orbit gnh-orbit-one"></div><div class="gnh-orbit gnh-orbit-two"></div><span class="gnh-orbit-star">✦</span><div class="gnh-stack">${displayGames.map((game,i)=>`<div class="gnh-stack-card gnh-stack-card-${i}"><img src="${esc(game.image)}" alt="" width="1536" height="1024" fetchpriority="${i===1?'high':'auto'}"><div><span>GAME NIGHT</span><b>${esc(game.title)}</b></div></div>`).join('')}</div><div class="gnh-company-pill"><span class="gnh-avatar gnh-host">${icon('diamond')}</span><div><b>Ведущий с Premium</b><span>Одна подписка на всю компанию</span></div><div class="gnh-mini-avatars"><span>А</span><span>М</span><span>Д</span><span>+3</span></div></div><span class="gnh-visual-caption">Больше смеха. Больше историй. Больше вас.</span></div></section>
       <div class="gnh-value-strip"><span>${icon('users')}Платит только ведущий</span><span>${icon('heart')}Друзья играют бесплатно</span><span>${icon('shield')}Без автопродления</span></div>
-      <section class="gnh-pricing gnh-section" id="${uid}-plans" aria-labelledby="${uid}-pricing-title"><div class="gnh-section-heading"><div><span class="gnh-eyebrow">ВАШ ПРОПУСК В ХОРОШИЙ ВЕЧЕР</span><h2 id="${uid}-pricing-title">Больше планов на вечер.<br><span>Один понятный тариф.</span></h2></div><p>Все Premium-возможности — в каждом тарифе.<br>Выберите, как долго хотите играть.</p></div><div class="gnh-plans">${planCards()}</div>${short?`<div class="gnh-company-cost"><span class="gnh-cost-icon">${icon('users')}</span><div class="gnh-cost-copy"><b>Вас ${state.players}? Это примерно <span>${esc(rub(short.price/state.players))}</span> на человека</b><p>За ${short.days} дней игр. Полную сумму ${esc(rub(short.price))} оплачивает ведущий.</p></div><div class="gnh-stepper" role="group" aria-label="Размер компании для расчёта"><button data-action="cost-minus" ${state.players<=2?'disabled':''} aria-label="Уменьшить компанию">−</button><output aria-label="Игроков">${state.players}</output><button data-action="cost-plus" ${state.players>=16?'disabled':''} aria-label="Увеличить компанию">+</button></div></div>`:''}</section>
+      <section class="gnh-pricing gnh-section" id="${uid}-plans" aria-labelledby="${uid}-pricing-title"><div class="gnh-section-heading"><div><span class="gnh-eyebrow">ВАШ ПРОПУСК В ХОРОШИЙ ВЕЧЕР</span><h2 id="${uid}-pricing-title">Больше планов на вечер.<br><span>Один понятный тариф.</span></h2></div><p>Все Premium-возможности — в каждом тарифе.<br>Выберите, как долго хотите играть.</p></div><div class="gnh-plans">${planCards()}</div>${companyCostBlock()} aria-label="Уменьшить компанию">−</button><output aria-label="Игроков">${state.players}</output><button data-action="cost-plus" ${state.players>=16?'disabled':''} aria-label="Увеличить компанию">+</button></div></div>`:''}</section>
       <section class="gnh-section gnh-included" aria-labelledby="${uid}-included"><div class="gnh-section-heading"><div><span class="gnh-eyebrow">БОЛЬШЕ, ЧЕМ ОДНА ИГРА</span><h2 id="${uid}-included">Под настроение.<br><span>Под вашу компанию.</span></h2></div><p>Шумная вечеринка, свидание или домашний вечер.<br>Хорошая игра найдётся для каждого.</p></div><div class="gnh-game-showcase">${featured.map(game=>`<button class="gnh-showcase-card" data-action="preview-game" data-game="${esc(game.id)}"><div class="gnh-showcase-art"><img src="${esc(game.image)}" alt="" width="1536" height="1024" loading="lazy"><span>${icon('play')}</span></div><b>${esc(game.title)}</b><span>${esc(game.players[0])}–${esc(game.players[1])} игроков · ~${esc(game.minutes)} мин</span></button>`).join('')}</div><div class="gnh-benefit-row"><article>${icon('diamond')}<div><h3>Весь Premium-каталог</h3><p>Больше режимов, механик и историй в одном доступе.</p></div></article><article>${icon('spark')}<div><h3>Новые игры и обновления</h3><p>Возвращайтесь за новыми поводами собраться вместе.</p></div></article><article>${icon('heart')}<div><h3>Для пары и друзей</h3><p>Разговоры по душам, дружеский азарт и много смеха.</p></div></article></div></section>
       <section class="gnh-how gnh-section" aria-labelledby="${uid}-how"><div><span class="gnh-eyebrow">ТРИ ПРОСТЫХ ШАГА</span><h2 id="${uid}-how">От идеи до игры —<br><span>пара минут.</span></h2></div><ol><li><span>1</span><div><h3>Выберите тариф</h3><p>30 дней, 90 дней или одна покупка навсегда.</p></div></li><li><span>2</span><div><h3>Оплатите через YooKassa</h3><p>Доступ открывается после подтверждения успешной оплаты.</p></div></li><li><span>3</span><div><h3>Соберите своих</h3><p>Пригласите друзей. В онлайн-играх они входят по коду бесплатно.</p></div></li></ol></section>
       <section class="gnh-faq gnh-section" aria-labelledby="${uid}-faq"><div><span class="gnh-eyebrow">ВСЁ ПРОЗРАЧНО</span><h2 id="${uid}-faq">Остались <br><span>вопросы?</span></h2><p>Одна оплата, понятные условия.<br>Без неожиданных продлений.</p></div><div class="gnh-faq-list">${[
@@ -195,9 +224,16 @@ export function mountGnhExperience(root, options = {}) {
       state.timer=setTimeout(finish,4550);
     }));
   }
+  function selectPlan(id) {
+    const plan=plans.find(p=>String(p.id)===id);
+    if (!plan) return;
+    state.selectedPlanId = String(plan.id);
+    render();
+  }
   async function choosePlan(id) {
     const plan=plans.find(p=>String(p.id)===id);
     if (!plan) return;
+    state.selectedPlanId = String(plan.id);
     if (options.onCheckout) {
       const button=root.querySelector(`[data-plan="${CSS.escape(id)}"]`);
       if (button?.disabled) return;
@@ -235,6 +271,7 @@ export function mountGnhExperience(root, options = {}) {
     if(action==='scroll-plans')return root.querySelector(`#${uid}-plans`)?.scrollIntoView({behavior:motion.matches?'instant':'smooth',block:'start'});
     if(['mood','time','players-minus','players-plus','cost-minus','cost-plus','reset-filters'].includes(action))return updateFilter(action,value);
     if(action==='spin')return spin();
+    if(action==='select-plan')return selectPlan(plan);
     if(action==='choose-plan')return void choosePlan(plan);
     if(action==='preview-game')return previewGame(catalog.find(g=>g.id===game));
     if(action==='start-result')return void startGame(state.result);

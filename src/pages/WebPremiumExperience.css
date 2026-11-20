@@ -80,6 +80,45 @@
 .gnh-experience .gnh-company-cost {
   margin-top: 18px !important;
 }
+
+/* Featured = soft gold; selected = lavender outline (former featured). */
+.gnh-experience .gnh-plan {
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.gnh-experience .gnh-plan-featured {
+  border-color: rgba(232, 198, 120, 0.72) !important;
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(232, 198, 120, 0.16), transparent 70%),
+    linear-gradient(120deg, rgba(90, 68, 40, 0.35), rgba(42, 30, 58, 0.45)) !important;
+  box-shadow: 0 0 36px rgba(212, 170, 90, 0.14), inset 0 0 28px rgba(255, 228, 170, 0.05) !important;
+}
+.gnh-experience .gnh-plan-featured .gnh-plan-badge {
+  background: linear-gradient(100deg, #f0d7a2, #d4a85e) !important;
+  color: #3a2a12 !important;
+  border-color: rgba(255, 236, 190, 0.7) !important;
+}
+.gnh-experience .gnh-plan-selected,
+.gnh-experience .gnh-plan.gnh-plan-featured.gnh-plan-selected {
+  border-color: #c69af9 !important;
+  background:
+    radial-gradient(ellipse at 80% 0%, #dc9df126, transparent 70%),
+    linear-gradient(120deg, #6f478e44, #3b294d50) !important;
+  box-shadow: 0 0 45px #ab72e214, inset 0 0 35px #d49aff08, 0 0 0 1px rgba(214, 180, 255, 0.35) !important;
+}
+.gnh-experience .gnh-plan-owned-badge {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(160, 230, 190, 0.45);
+  background: rgba(80, 160, 120, 0.18);
+  color: #d8ffe8;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
 .gnh-experience .gnh-finale {
   margin: 28px 0 8px !important;
 }

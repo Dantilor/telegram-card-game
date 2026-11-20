@@ -1247,14 +1247,17 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy[ari
 
 @media (max-width: 767px) {
   html[data-gnh-shell="web"] .premium-overlay {
-    padding-left: 12px;
+    align-items: flex-start;
+    padding-top: max(18px, calc(env(safe-area-inset-top, 0px) + 14px));
     padding-right: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    padding-left: 12px;
   }
 
   html[data-gnh-shell="web"] .premium-overlay__card {
     width: 100%;
     max-width: none;
-    max-height: min(94vh, 980px);
+    max-height: min(92dvh, 980px);
   }
 
   html[data-gnh-shell="web"] .premium-overlay__scroll {
@@ -1263,6 +1266,10 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy[ari
 
   html[data-gnh-shell="web"] .premium-overlay__dock {
     padding: 14px 1.2rem max(14px, env(safe-area-inset-bottom));
+  }
+
+  html[data-gnh-shell="web"] .premium-checkout__top {
+    padding-top: 10px;
   }
 }
 
@@ -1294,6 +1301,8 @@ html[data-gnh-shell="web"] .premium-checkout__top {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 14px 0 16px;
+  position: relative;
+  z-index: 2;
 }
 html[data-gnh-shell="web"] .premium-checkout__home {
   appearance: none;
@@ -1498,5 +1507,14 @@ html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__bt
     width: 100%;
     max-width: none;
     border-radius: 20px 20px 16px 16px;
+    margin-top: 0;
+  }
+
+  html[data-gnh-shell="web"] .premium-overlay__card--checkout-only .premium-checkout__top {
+    padding: 12px 14px 4px 16px;
+  }
+
+  html[data-gnh-shell="web"] .premium-checkout__home {
+    min-height: 40px;
   }
 }

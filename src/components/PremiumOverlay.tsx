@@ -855,8 +855,8 @@ export default function PremiumOverlay({
           <p className="premium-overlay__error">Тариф не выбран</p>
         )}
         {offerBlock}
+        {payDock}
       </div>
-      {payDock}
     </div>
   ) : (
     <div

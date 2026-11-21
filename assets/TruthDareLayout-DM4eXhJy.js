@@ -1,0 +1,1 @@
+import{j as r,O as t}from"./index-BQPUBSOm.js";import{T as o}from"./TruthDareContext-CO3DVXFZ.js";/* empty css                      */function u(){return r.jsx(o,{children:r.jsx(t,{})})}export{u as default};

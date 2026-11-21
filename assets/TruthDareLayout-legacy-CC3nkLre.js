@@ -1,0 +1,1 @@
+System.register(["./index-legacy-Dskg0P4D.js","./TruthDareContext-legacy-DSbNqAtw.js","./GamePageShell-legacy-BmOGXbHQ.js"],function(e,t){"use strict";var r,n,s;return{setters:[e=>{r=e.j,n=e.O},e=>{s=e.T},null],execute:function(){e("default",function(){return r.jsx(s,{children:r.jsx(n,{})})})}}});

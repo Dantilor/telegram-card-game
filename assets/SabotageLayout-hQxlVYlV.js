@@ -1,0 +1,1 @@
+import{j as t,O as o}from"./index-BQPUBSOm.js";import{S as r}from"./SabotageGameContext-DQ2-is5P.js";/* empty css                      */function i(){return t.jsx(r,{children:t.jsx(o,{})})}export{i as default};

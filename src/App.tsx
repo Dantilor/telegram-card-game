@@ -79,6 +79,7 @@ function TelegramLinkStartRedirect() {
     void (async () => {
       const param = await waitForTelegramStartParam(4000)
       if (cancelled) return
+      // Consumed tokens return '' from getTelegramStartParam — still guard explicitly.
       if (!/^wl_[A-Za-z0-9_-]{16,60}$/.test(param)) return
       const hash = window.location.hash || ''
       if (hash.includes('/link-web')) return

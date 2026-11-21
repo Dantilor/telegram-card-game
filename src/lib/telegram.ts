@@ -58,6 +58,7 @@ export function getInitData(): string {
 }
 
 const LAUNCH_START_PARAM_KEY = 'gnh_tg_launch_start_param'
+const CONSUMED_START_PARAMS_KEY = 'gnh_tg_consumed_start_params'
 
 function rememberLaunchStartParam(value: string): string {
   const trimmed = value.trim()
@@ -77,6 +78,66 @@ function readRememberedLaunchStartParam(): string {
   } catch {
     return ''
   }
+}
+
+function readConsumedStartParams(): string[] {
+  try {
+    const raw = sessionStorage.getItem(CONSUMED_START_PARAMS_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+  } catch {
+    return []
+  }
+}
+
+export function isTelegramStartParamConsumed(token: string): boolean {
+  const trimmed = token.trim()
+  if (!trimmed) return false
+  return readConsumedStartParams().includes(trimmed)
+}
+
+/**
+ * Mark a one-time startapp token as finished after successful WEB link.
+ * Does not touch signed initData / Telegram auth caches.
+ */
+export function markTelegramStartParamConsumed(token: string): void {
+  const trimmed = token.trim()
+  if (!trimmed) return
+  try {
+    const next = [...readConsumedStartParams().filter((item) => item !== trimmed), trimmed].slice(-20)
+    sessionStorage.setItem(CONSUMED_START_PARAMS_KEY, JSON.stringify(next))
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (sessionStorage.getItem(LAUNCH_START_PARAM_KEY) === trimmed) {
+      sessionStorage.removeItem(LAUNCH_START_PARAM_KEY)
+    }
+  } catch {
+    /* ignore */
+  }
+  // Drop launch-only startapp from SDK initParams mirror; keep the rest intact.
+  try {
+    const raw = sessionStorage.getItem('__telegram__initParams')
+    if (!raw) return
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return
+    const record = parsed as Record<string, unknown>
+    if (record.tgWebAppStartParam !== trimmed) return
+    delete record.tgWebAppStartParam
+    sessionStorage.setItem('__telegram__initParams', JSON.stringify(record))
+  } catch {
+    /* ignore */
+  }
+}
+
+function acceptLaunchStartParam(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (isTelegramStartParamConsumed(trimmed)) return ''
+  return rememberLaunchStartParam(trimmed)
 }
 
 /** Telegram launch URL / SDK storage — not proof of identity. */
@@ -140,25 +201,41 @@ export function getTelegramStartParam(): string {
   const tg = getTelegramWebApp()
   const liveInit = typeof tg?.initData === 'string' ? tg.initData : ''
   const fromLiveSigned = startParamFromInitDataRaw(liveInit)
-  if (fromLiveSigned) return rememberLaunchStartParam(fromLiveSigned)
+  if (fromLiveSigned) {
+    const accepted = acceptLaunchStartParam(fromLiveSigned)
+    if (accepted) return accepted
+  }
 
   const unsafe = tg?.initDataUnsafe?.start_param
   if (typeof unsafe === 'string' && unsafe.trim()) {
-    return rememberLaunchStartParam(unsafe.trim())
+    const accepted = acceptLaunchStartParam(unsafe)
+    if (accepted) return accepted
   }
 
   const fromUrl = readTelegramLaunchStartParamFromLocation()
-  if (fromUrl) return rememberLaunchStartParam(fromUrl)
+  if (fromUrl) {
+    const accepted = acceptLaunchStartParam(fromUrl)
+    if (accepted) return accepted
+  }
 
   const fromSdkStore = readTelegramSdkInitParamsStartParam()
-  if (fromSdkStore) return rememberLaunchStartParam(fromSdkStore)
+  if (fromSdkStore) {
+    const accepted = acceptLaunchStartParam(fromSdkStore)
+    if (accepted) return accepted
+  }
 
   const remembered = readRememberedLaunchStartParam()
-  if (remembered) return remembered
+  if (remembered) {
+    const accepted = acceptLaunchStartParam(remembered)
+    if (accepted) return accepted
+  }
 
   const cachedRaw = getCachedInitData()?.initDataRaw ?? ''
   const fromCached = startParamFromInitDataRaw(cachedRaw)
-  if (fromCached) return rememberLaunchStartParam(fromCached)
+  if (fromCached) {
+    const accepted = acceptLaunchStartParam(fromCached)
+    if (accepted) return accepted
+  }
 
   return ''
 }

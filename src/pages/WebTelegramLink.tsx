@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { waitForTelegramStartParam } from '../lib/telegram'
+import { markTelegramStartParamConsumed, waitForTelegramStartParam } from '../lib/telegram'
 import { completeTelegramWebLink } from '../lib/telegramWebLink'
 import { waitForInitData } from '../lib/waitForInitData'
 import { haptic } from '../utils/telegram'
@@ -71,6 +71,7 @@ export default function WebTelegramLink() {
     setBusy(true)
     try {
       const result = await completeTelegramWebLink(token)
+      markTelegramStartParamConsumed(token)
       setDone(true)
       await refreshPremium()
       try {
@@ -148,9 +149,16 @@ export default function WebTelegramLink() {
       ) : null}
       {done ? (
         <p className="web-tg-link__foot">
-          Вернитесь на сайт или в установленное приложение — Premium подтянется автоматически.
-          <button type="button" className="web-tg-link__submit" onClick={() => navigate('/profile')}>
-            Открыть профиль
+          Можно вернуться на сайт — Premium уже доступен. Или продолжите в Mini App.
+          <button
+            type="button"
+            className="web-tg-link__submit"
+            onClick={() => {
+              haptic('light')
+              navigate('/', { replace: true })
+            }}
+          >
+            Открыть GameNight Host
           </button>
         </p>
       ) : null}

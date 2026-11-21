@@ -141,12 +141,23 @@ export function parseAndCacheFromHash(): CachedInitData | null {
     if (!primeTelegramSdkInitParams(params)) return null
     sessionStorage.setItem(TG_INIT_CACHE, JSON.stringify(cached))
     // Preserve startapp across hash normalization (tgWebAppStartParam lives outside tgWebAppData).
+    // Skip tokens already finished by WEB Premium restore so /link-web is not reopened.
     try {
       const launchStart =
         params.get('tgWebAppStartParam')?.trim() ||
         new URLSearchParams(parsed.initDataRaw ?? tgWebAppData).get('start_param')?.trim() ||
         ''
-      if (launchStart) sessionStorage.setItem('gnh_tg_launch_start_param', launchStart)
+      if (launchStart) {
+        let consumed = false
+        try {
+          const raw = sessionStorage.getItem('gnh_tg_consumed_start_params')
+          const list: unknown = raw ? JSON.parse(raw) : []
+          consumed = Array.isArray(list) && list.includes(launchStart)
+        } catch {
+          consumed = false
+        }
+        if (!consumed) sessionStorage.setItem('gnh_tg_launch_start_param', launchStart)
+      }
     } catch {
       /* ignore */
     }

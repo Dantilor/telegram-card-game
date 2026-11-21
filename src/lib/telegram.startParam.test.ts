@@ -64,4 +64,48 @@ describe('telegram startapp helpers', () => {
     const { getTelegramStartParam } = await import('./telegram')
     expect(getTelegramStartParam()).toBe('wl_from_sdk_store_token')
   })
+
+  it('ignores a consumed startapp token and still accepts a new one', async () => {
+    installTg({
+      initData: 'user=%7B%7D&start_param=wl_used_token_abcdefg&hash=x',
+      initDataUnsafe: { start_param: 'wl_used_token_abcdefg' },
+      ready: () => undefined,
+    })
+    const {
+      getTelegramStartParam,
+      markTelegramStartParamConsumed,
+      isTelegramStartParamConsumed,
+    } = await import('./telegram')
+    expect(getTelegramStartParam()).toBe('wl_used_token_abcdefg')
+    markTelegramStartParamConsumed('wl_used_token_abcdefg')
+    expect(isTelegramStartParamConsumed('wl_used_token_abcdefg')).toBe(true)
+    expect(getTelegramStartParam()).toBe('')
+    expect(sessionStorage.getItem('gnh_tg_launch_start_param')).toBeNull()
+
+    installTg({
+      initData: 'user=%7B%7D&start_param=wl_fresh_token_abcdefg&hash=x',
+      initDataUnsafe: { start_param: 'wl_fresh_token_abcdefg' },
+      ready: () => undefined,
+    })
+    expect(getTelegramStartParam()).toBe('wl_fresh_token_abcdefg')
+  })
+
+  it('removes consumed tgWebAppStartParam from SDK initParams only', async () => {
+    sessionStorage.setItem(
+      '__telegram__initParams',
+      JSON.stringify({
+        tgWebAppData: 'user=%7B%7D&hash=keep',
+        tgWebAppStartParam: 'wl_sdk_consume_token_ok',
+      })
+    )
+    const { markTelegramStartParamConsumed, getTelegramStartParam } = await import('./telegram')
+    markTelegramStartParamConsumed('wl_sdk_consume_token_ok')
+    expect(getTelegramStartParam()).toBe('')
+    const stored = JSON.parse(sessionStorage.getItem('__telegram__initParams') || '{}') as {
+      tgWebAppData?: string
+      tgWebAppStartParam?: string
+    }
+    expect(stored.tgWebAppData).toBe('user=%7B%7D&hash=keep')
+    expect(stored.tgWebAppStartParam).toBeUndefined()
+  })
 })

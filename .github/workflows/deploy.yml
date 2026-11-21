@@ -42,7 +42,10 @@ jobs:
           # Preserve previous hashed JS chunks for clients still running an older WebView bundle.
           keep_files: true
 
+  # Skip on workflow_dispatch so a manual run from a hotfix branch can
+  # publish only GitHub Pages (Telegram Mini App) without touching Timeweb.
   deploy-timeweb-static:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -1,4 +1,4 @@
-﻿.web-tg-link {
+.web-tg-link {
   width: 100%;
   max-width: var(--layout-phone-max, 29.375rem);
   margin-inline: auto;
@@ -64,4 +64,47 @@
   margin: 0;
   color: #4ade80;
   font-size: 0.9rem;
+}
+
+.web-tg-link__devices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.web-tg-link__device {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(214, 183, 238, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.web-tg-link__device strong {
+  display: block;
+}
+
+.web-tg-link__device span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--muted, rgba(245, 247, 255, 0.72));
+}
+
+.web-tg-link__secondary {
+  min-height: 2.4rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(214, 183, 238, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  padding: 0 0.75rem;
+  cursor: pointer;
 }

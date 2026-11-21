@@ -7,7 +7,24 @@ import {
   clearSessionCookies,
   readCookies,
   setSessionCookies,
+  clearDeviceCookie,
+  setDeviceCookie,
 } from '../auth/cookies.js'
+import {
+  WEB_DEVICE_LIMIT,
+  countActiveDevices,
+  hashDeviceToken,
+  listDevicesForTelegram,
+  registerOrReuseDevice,
+  registerDeviceFromChallengeHash,
+  revokeAllDevicesForTelegram,
+  revokeDeviceById,
+  revokeDeviceByTokenHash,
+  getWebAccountEmailState,
+  rebindWebSessionAccount,
+  touchDeviceActivity,
+} from '../auth/webTelegramDevices.js'
+import { ensureDeviceToken, readDeviceTokenHash } from '../auth/webDeviceRequest.js'
 import { requireWebSession, type AuthedRequest } from '../auth/middleware.js'
 import { resolveAuth } from '../auth/resolveAuth.js'
 import { completeTelegramOidcLogin, startTelegramOidcLogin } from '../auth/telegramOidc.js'
@@ -54,16 +71,21 @@ function oidcWebLoginEnabled(): boolean {
 }
 
 function errorPayload(e: unknown): { status: number; body: Record<string, unknown> } {
-  const err = e as Error & { status?: number; code?: string }
-  const status = err.status ?? 500
-  return {
-    status,
-    body: {
-      error: status === 401 ? 'Unauthorized' : status === 503 ? 'Service unavailable' : 'Auth error',
-      code: err.code ?? (status === 401 ? 'unauthorized' : 'auth_error'),
-      message: status >= 500 ? undefined : err.message,
-    },
+  const err = e as Error & {
+    status?: number
+    code?: string
+    devicesUsed?: number
+    devicesLimit?: number
   }
+  const status = err.status ?? 500
+  const body: Record<string, unknown> = {
+    error: status === 401 ? 'Unauthorized' : status === 503 ? 'Service unavailable' : 'Auth error',
+    code: err.code ?? (status === 401 ? 'unauthorized' : 'auth_error'),
+    message: status >= 500 ? undefined : err.message,
+  }
+  if (typeof err.devicesUsed === 'number') body.devicesUsed = err.devicesUsed
+  if (typeof err.devicesLimit === 'number') body.devicesLimit = err.devicesLimit
+  return { status, body }
 }
 
 function safeReturnPath(returnTo: string | null | undefined): string {
@@ -285,9 +307,14 @@ router.post('/web/auth/logout', async (req: Request, res: Response) => {
       }
       await revokeSessionByToken(sessionToken)
     }
+    const deviceHash = readDeviceTokenHash(req)
+    if (deviceHash) {
+      await revokeDeviceByTokenHash({ tokenHash: deviceHash, reason: 'user_logout' })
+    }
 
     clearSessionCookies(res)
-    res.status(200).json({ ok: true })
+    clearDeviceCookie(res)
+    res.status(200).json({ ok: true, deviceRevoked: Boolean(deviceHash) })
   } catch (e) {
     const { status, body } = errorPayload(e)
     res.status(status).json(body)
@@ -308,7 +335,9 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
   let emailVerified = false
   let emailPending = false
   if (auth.webAccountId) {
-    const status = await getWebAccountPremium(auth.webAccountId)
+    const status = await getWebAccountPremium(auth.webAccountId, undefined, {
+      deviceTokenHash: readDeviceTokenHash(req),
+    })
     premium = {
       isPremium: status.isPremium,
       activeUntil: status.activeUntil,
@@ -375,6 +404,7 @@ router.post('/web/session/ensure', async (req: Request, res: Response) => {
       csrfToken: created.csrfToken,
       maxAgeSec,
     })
+    ensureDeviceToken(req, res)
     res.status(200).json({
       ok: true,
       created: true,
@@ -417,29 +447,15 @@ router.post('/web/telegram-link/start', requireWebSession(), async (req: AuthedR
       return
     }
 
-    const already = await query<{ telegram_id: string }>(
-      `SELECT telegram_id::text AS telegram_id
-         FROM web_telegram_links
-        WHERE web_account_id = $1::uuid AND revoked_at IS NULL
-        ORDER BY linked_at DESC NULLS LAST, id DESC
-        LIMIT 1`,
-      [auth.webAccountId]
-    )
-    if (already.rows[0]) {
-      res.status(409).json({
-        error: 'Already linked',
-        code: 'web_already_linked',
-        message: 'Этот WEB-аккаунт уже связан с Telegram. Сначала отвяжите текущую привязку.',
-      })
-      return
-    }
+    const deviceToken = ensureDeviceToken(req, res)
+    const deviceHash = hashDeviceToken(deviceToken)
 
     const token = `${TG_LINK_START_PREFIX}${randomToken(16)}`
     const expiresAt = new Date(Date.now() + 10 * 60_000)
     await query(
-      `INSERT INTO web_telegram_link_challenges (web_account_id, code_hash, expires_at)
-       VALUES ($1::uuid, $2, $3)`,
-      [auth.webAccountId, sha256Hex(token), expiresAt.toISOString()]
+      `INSERT INTO web_telegram_link_challenges (web_account_id, code_hash, expires_at, device_token_hash)
+       VALUES ($1::uuid, $2, $3, $4)`,
+      [auth.webAccountId, sha256Hex(token), expiresAt.toISOString(), deviceHash]
     )
     const deepLink = buildTelegramLinkDeepLink(token)
     res.status(200).json({
@@ -467,6 +483,26 @@ router.get('/web/telegram-link/status', requireWebSession(), async (req: AuthedR
       res.status(400).json({ error: 'Anonymous WEB account required', code: 'web_account_required' })
       return
     }
+    // If a recent challenge adopted this anonymous account into a primary, rebind session first.
+    const adopted = await query<{ adopted_web_account_id: string; consumed_at: Date }>(
+      `SELECT adopted_web_account_id::text AS adopted_web_account_id, consumed_at
+         FROM web_telegram_link_challenges
+        WHERE web_account_id = $1::uuid
+          AND adopted_web_account_id IS NOT NULL
+          AND consumed_at IS NOT NULL
+          AND consumed_at > now() - interval '30 minutes'
+        ORDER BY id DESC
+        LIMIT 1`,
+      [auth.webAccountId]
+    )
+    if (adopted.rows[0]?.adopted_web_account_id && auth.sessionId) {
+      await rebindWebSessionAccount({
+        sessionId: auth.sessionId,
+        toWebAccountId: adopted.rows[0].adopted_web_account_id,
+      })
+      auth.webAccountId = adopted.rows[0].adopted_web_account_id
+    }
+
     const link = await query<{ telegram_id: string; linked_at: Date }>(
       `SELECT telegram_id::text AS telegram_id, linked_at
          FROM web_telegram_links
@@ -475,8 +511,8 @@ router.get('/web/telegram-link/status', requireWebSession(), async (req: AuthedR
         LIMIT 1`,
       [auth.webAccountId]
     )
-    const pending = await query<{ expires_at: Date }>(
-      `SELECT expires_at
+    const pending = await query<{ expires_at: Date; last_error_code: string | null }>(
+      `SELECT expires_at, last_error_code
          FROM web_telegram_link_challenges
         WHERE web_account_id = $1::uuid
           AND consumed_at IS NULL
@@ -485,8 +521,31 @@ router.get('/web/telegram-link/status', requireWebSession(), async (req: AuthedR
         LIMIT 1`,
       [auth.webAccountId]
     )
-    const premium = await getWebAccountPremium(auth.webAccountId)
+    const recentFail = await query<{ last_error_code: string | null }>(
+      `SELECT last_error_code
+         FROM web_telegram_link_challenges
+        WHERE web_account_id = $1::uuid
+          AND last_error_code IS NOT NULL
+          AND last_error_at > now() - interval '30 minutes'
+        ORDER BY last_error_at DESC NULLS LAST, id DESC
+        LIMIT 1`,
+      [auth.webAccountId]
+    )
+
+    const deviceHash = readDeviceTokenHash(req)
+    const premium = await getWebAccountPremium(auth.webAccountId, undefined, {
+      deviceTokenHash: deviceHash,
+    })
     const row = link.rows[0]
+    let devicesUsed = 0
+    if (row?.telegram_id) {
+      devicesUsed = await countActiveDevices(Number(row.telegram_id))
+      if (deviceHash) {
+        const { findActiveDeviceByTokenHash } = await import('../auth/webTelegramDevices.js')
+        const current = await findActiveDeviceByTokenHash(deviceHash)
+        if (current) await touchDeviceActivity(current.id)
+      }
+    }
     res.status(200).json({
       ok: true,
       linked: Boolean(row),
@@ -498,6 +557,10 @@ router.get('/web/telegram-link/status', requireWebSession(), async (req: AuthedR
       isPremium: premium.isPremium,
       activeUntil: premium.activeUntil,
       sources: premium.sources,
+      devicesUsed,
+      devicesLimit: WEB_DEVICE_LIMIT,
+      lastErrorCode:
+        pending.rows[0]?.last_error_code || recentFail.rows[0]?.last_error_code || null,
     })
   } catch (e) {
     const { status, body } = errorPayload(e)
@@ -601,6 +664,13 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       return
     }
 
+    const displayLabel =
+      typeof req.body?.displayLabel === 'string' ? req.body.displayLabel.trim().slice(0, 120) : null
+
+    let devicesUsed = 0
+    let deviceId: string | null = null
+    let adopted = false
+
     const result = await withTransaction(async (tx) => {
       const challenge = await tx.query<{
         id: number
@@ -608,8 +678,10 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         attempts: number
         expires_at: Date
         consumed_at: Date | null
+        device_token_hash: string | null
       }>(
-        `SELECT id, web_account_id::text AS web_account_id, attempts, expires_at, consumed_at
+        `SELECT id, web_account_id::text AS web_account_id, attempts, expires_at, consumed_at,
+                device_token_hash
            FROM web_telegram_link_challenges
           WHERE code_hash = $1
           ORDER BY id DESC
@@ -643,16 +715,6 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
           FOR UPDATE`,
         [auth.telegramId]
       )
-      if (tgOwned.rows[0] && tgOwned.rows[0].web_account_id !== row.web_account_id) {
-        const err = new Error('Telegram already linked to another WEB account') as Error & {
-          status?: number
-          code?: string
-        }
-        err.status = 409
-        err.code = 'telegram_already_linked'
-        throw err
-      }
-
       const webOwned = await tx.query<{ telegram_id: string }>(
         `SELECT telegram_id::text AS telegram_id
            FROM web_telegram_links
@@ -672,6 +734,36 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         throw err
       }
 
+      let targetWebAccountId = row.web_account_id
+      let didAdopt = false
+
+      if (tgOwned.rows[0] && tgOwned.rows[0].web_account_id !== row.web_account_id) {
+        const primaryId = tgOwned.rows[0].web_account_id
+        const challengeEmail = await getWebAccountEmailState(row.web_account_id, tx)
+        const primaryEmail = await getWebAccountEmailState(primaryId, tx)
+        if (
+          challengeEmail.emailVerified &&
+          (!primaryEmail.emailVerified ||
+            challengeEmail.emailNormalized !== primaryEmail.emailNormalized)
+        ) {
+          const err = new Error('Telegram already linked to another WEB account') as Error & {
+            status?: number
+            code?: string
+          }
+          err.status = 409
+          err.code = 'telegram_already_linked'
+          throw err
+        }
+        targetWebAccountId = primaryId
+        didAdopt = true
+        await tx.query(
+          `UPDATE web_telegram_link_challenges
+              SET adopted_web_account_id = $2::uuid
+            WHERE id = $1`,
+          [row.id, primaryId]
+        )
+      }
+
       const consumed = await tx.query<{ id: number }>(
         `UPDATE web_telegram_link_challenges SET consumed_at = now()
           WHERE id = $1 AND consumed_at IS NULL
@@ -686,16 +778,34 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       }
 
       const alreadySame =
-        Boolean(tgOwned.rows[0]) &&
-        tgOwned.rows[0].web_account_id === row.web_account_id &&
-        Boolean(webOwned.rows[0]) &&
-        Number(webOwned.rows[0].telegram_id) === auth.telegramId
+        Boolean(tgOwned.rows[0]) && tgOwned.rows[0].web_account_id === targetWebAccountId
 
-      if (!alreadySame) {
+      if (!tgOwned.rows[0]) {
         await tx.query(
           `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
-          [row.web_account_id, auth.telegramId]
+          [targetWebAccountId, auth.telegramId]
         )
+      }
+
+      const reg = await registerDeviceFromChallengeHash({
+        telegramId: auth.telegramId!,
+        webAccountId: targetWebAccountId,
+        deviceTokenHash: row.device_token_hash,
+        displayLabel,
+        db: tx,
+      })
+      if (!reg.ok) {
+        const err = new Error('All 3 devices are connected') as Error & {
+          status?: number
+          code?: string
+          devicesUsed?: number
+          devicesLimit?: number
+        }
+        err.status = 409
+        err.code = 'device_limit_reached'
+        err.devicesUsed = reg.devicesUsed
+        err.devicesLimit = reg.devicesLimit
+        throw err
       }
 
       const sub = await tx.query<{ active_until: Date; plan_id: string }>(
@@ -704,9 +814,9 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
           ORDER BY active_until DESC LIMIT 1`,
         [auth.telegramId]
       )
-      if (sub.rows[0] && !alreadySame) {
+      if (sub.rows[0] && !alreadySame && !didAdopt) {
         await grantWebEntitlement({
-          webAccountId: row.web_account_id,
+          webAccountId: targetWebAccountId,
           planId: sub.rows[0].plan_id || 'premium_1m',
           activeUntil: new Date(sub.rows[0].active_until),
           source: 'telegram_link',
@@ -715,11 +825,18 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         })
       }
       return {
-        webAccountId: row.web_account_id,
+        webAccountId: targetWebAccountId,
         premiumRestored: Boolean(sub.rows[0]),
-        alreadyLinked: alreadySame,
+        alreadyLinked: alreadySame || didAdopt,
+        adopted: didAdopt,
+        devicesUsed: reg.devicesUsed,
+        deviceId: reg.device.id,
       }
     })
+
+    devicesUsed = result.devicesUsed
+    deviceId = result.deviceId
+    adopted = result.adopted
 
     await ensureUser(auth.telegramId!)
     if (gameSessionLimitEnabled()) {
@@ -750,10 +867,27 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
       activeUntil,
       sources,
       alreadyLinked: result.alreadyLinked,
+      adopted,
+      devicesUsed,
+      devicesLimit: WEB_DEVICE_LIMIT,
+      deviceId,
       webPremium,
       telegramPremium: tgPremium,
     })
   } catch (e) {
+    const err = e as Error & { code?: string; devicesUsed?: number; devicesLimit?: number }
+    if (err.code === 'device_limit_reached') {
+      try {
+        await query(
+          `UPDATE web_telegram_link_challenges
+              SET last_error_code = 'device_limit_reached', last_error_at = now()
+            WHERE code_hash = $1 AND consumed_at IS NULL`,
+          [sha256Hex(token)]
+        )
+      } catch (markErr) {
+        console.error('[telegram-link] failed to mark device_limit on challenge', markErr)
+      }
+    }
     const { status, body } = errorPayload(e)
     res.status(status).json(body)
   }
@@ -1053,6 +1187,120 @@ router.get('/web/auth/whoami', async (req: Request, res: Response) => {
       source: auth.source,
       sessionId: auth.sessionId ?? null,
     })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+
+/**
+ * GET /api/web/telegram-devices — list slots for the linked Telegram of this WEB session.
+ */
+router.get('/web/telegram-devices', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const auth = req.auth!
+    if (!auth.webAccountId) {
+      res.status(400).json({ error: 'Anonymous WEB account required', code: 'web_account_required' })
+      return
+    }
+    const link = await query<{ telegram_id: string }>(
+      `SELECT telegram_id::text AS telegram_id
+         FROM web_telegram_links
+        WHERE web_account_id = $1::uuid AND revoked_at IS NULL
+        ORDER BY linked_at DESC NULLS LAST, id DESC
+        LIMIT 1`,
+      [auth.webAccountId]
+    )
+    if (!link.rows[0]) {
+      res.status(200).json({ ok: true, linked: false, devices: [], devicesUsed: 0, devicesLimit: WEB_DEVICE_LIMIT })
+      return
+    }
+    const telegramId = Number(link.rows[0].telegram_id)
+    const listed = await listDevicesForTelegram(telegramId, readDeviceTokenHash(req))
+    res.status(200).json({ ok: true, linked: true, telegramId, ...listed })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * POST /api/web/telegram-devices/logout-current — revoke this device slot + WEB session (CSRF).
+ */
+router.post('/web/telegram-devices/logout-current', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const deviceHash = readDeviceTokenHash(req)
+    let devicesUsed = 0
+    if (deviceHash) {
+      const revoked = await revokeDeviceByTokenHash({ tokenHash: deviceHash, reason: 'user_logout' })
+      if (revoked) {
+        devicesUsed = await countActiveDevices(Number(revoked.telegram_id))
+      }
+    }
+    if (cookies[SESSION_COOKIE]) await revokeSessionByToken(cookies[SESSION_COOKIE])
+    clearSessionCookies(res)
+    clearDeviceCookie(res)
+    res.status(200).json({ ok: true, devicesUsed, devicesLimit: WEB_DEVICE_LIMIT })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * POST /api/web/telegram-devices/revoke — remote revoke by deviceId.
+ * Requires Telegram Mini App initData (owner of the slots). Body: { deviceId }
+ */
+router.post('/web/telegram-devices/revoke', async (req: Request, res: Response) => {
+  try {
+    const auth = await resolveAuth(req)
+    if (!auth?.telegramId || auth.source !== 'telegram_init_data') {
+      res.status(401).json({ error: 'Telegram Mini App auth required', code: 'telegram_init_required' })
+      return
+    }
+    const deviceId = typeof req.body?.deviceId === 'string' ? req.body.deviceId.trim() : ''
+    if (!/^[0-9a-f-]{36}$/i.test(deviceId)) {
+      res.status(400).json({ error: 'Invalid device id', code: 'invalid_device' })
+      return
+    }
+    const ok = await revokeDeviceById({
+      deviceId,
+      telegramId: auth.telegramId,
+      reason: 'remote_revoke',
+    })
+    const listed = await listDevicesForTelegram(auth.telegramId, null)
+    res.status(200).json({
+      ok: true,
+      revoked: ok,
+      devicesUsed: listed.devicesUsed,
+      devicesLimit: listed.devicesLimit,
+      devices: listed.devices,
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * GET /api/web/telegram-devices/telegram — list devices for Mini App management (initData).
+ */
+router.get('/web/telegram-devices/telegram', async (req: Request, res: Response) => {
+  try {
+    const auth = await resolveAuth(req)
+    if (!auth?.telegramId || auth.source !== 'telegram_init_data') {
+      res.status(401).json({ error: 'Telegram Mini App auth required', code: 'telegram_init_required' })
+      return
+    }
+    const listed = await listDevicesForTelegram(auth.telegramId, null)
+    res.status(200).json({ ok: true, telegramId: auth.telegramId, ...listed })
   } catch (e) {
     const { status, body } = errorPayload(e)
     res.status(status).json(body)

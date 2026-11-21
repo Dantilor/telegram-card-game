@@ -1,6 +1,7 @@
 import type { Request } from 'express'
 import { resolveAuth } from './resolveAuth.js'
 import { getTelegramPremium, getWebAccountPremium } from './webAccounts.js'
+import { readDeviceTokenHash } from './webDeviceRequest.js'
 
 /**
  * Premium host check for party rooms.
@@ -13,7 +14,9 @@ export async function callerIsPremium(req: Request): Promise<boolean> {
   if (!auth) return false
   try {
     if (auth.webAccountId) {
-      const status = await getWebAccountPremium(auth.webAccountId)
+      const status = await getWebAccountPremium(auth.webAccountId, undefined, {
+        deviceTokenHash: readDeviceTokenHash(req),
+      })
       return status.isPremium
     }
     if (auth.telegramId) {

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { resolveAuth } from '../auth/resolveAuth.js'
 import { getTelegramPremium, getWebAccountPremium } from '../auth/webAccounts.js'
+import { readDeviceTokenHash } from '../auth/webDeviceRequest.js'
 import { sqlTimingLog } from '../middleware/requestTiming.js'
 
 const router = Router()
@@ -15,7 +16,9 @@ router.get('/me', async (req: Request, res: Response) => {
   try {
     if (auth.webAccountId) {
       const started = process.hrtime.bigint()
-      const status = await getWebAccountPremium(auth.webAccountId)
+      const status = await getWebAccountPremium(auth.webAccountId, undefined, {
+        deviceTokenHash: readDeviceTokenHash(req),
+      })
       const sqlMs = Number(process.hrtime.bigint() - started) / 1e6
       sqlTimingLog('me.web_premium', sqlMs)
       res.setHeader('Cache-Control', 'no-store')

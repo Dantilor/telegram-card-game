@@ -2,6 +2,9 @@ import type { Request, Response } from 'express'
 
 export const SESSION_COOKIE = process.env.WEB_SESSION_COOKIE_NAME?.trim() || 'gnh_sid'
 export const CSRF_COOKIE = process.env.WEB_CSRF_COOKIE_NAME?.trim() || 'gnh_csrf'
+export const DEVICE_COOKIE = process.env.WEB_DEVICE_COOKIE_NAME?.trim() || 'gnh_web_device'
+/** Long-lived install credential (~400 days). */
+export const DEVICE_COOKIE_MAX_AGE_SEC = 400 * 24 * 60 * 60
 
 export function cookieSecure(): boolean {
   if (process.env.WEB_COOKIE_SECURE === '0' || process.env.WEB_COOKIE_SECURE === 'false') return false
@@ -95,5 +98,23 @@ export function clearSessionCookies(res: Response): void {
   appendSetCookie(
     res,
     serializeCookie(CSRF_COOKIE, '', { httpOnly: false, maxAgeSec: 0, sameSite: 'Lax' })
+  )
+}
+
+export function setDeviceCookie(res: Response, deviceToken: string): void {
+  appendSetCookie(
+    res,
+    serializeCookie(DEVICE_COOKIE, deviceToken, {
+      httpOnly: true,
+      maxAgeSec: DEVICE_COOKIE_MAX_AGE_SEC,
+      sameSite: 'Lax',
+    })
+  )
+}
+
+export function clearDeviceCookie(res: Response): void {
+  appendSetCookie(
+    res,
+    serializeCookie(DEVICE_COOKIE, '', { httpOnly: true, maxAgeSec: 0, sameSite: 'Lax' })
   )
 }

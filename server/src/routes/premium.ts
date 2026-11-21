@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { resolveAuth } from '../auth/resolveAuth.js'
 import { getTelegramPremium, getWebAccountPremium } from '../auth/webAccounts.js'
+import { readDeviceTokenHash } from '../auth/webDeviceRequest.js'
 
 const isDev = process.env.NODE_ENV !== 'production'
 
@@ -25,7 +26,9 @@ router.get('/premium-status', async (req: Request, res: Response) => {
 
   try {
     if (auth.webAccountId) {
-      const status = await getWebAccountPremium(auth.webAccountId)
+      const status = await getWebAccountPremium(auth.webAccountId, undefined, {
+        deviceTokenHash: readDeviceTokenHash(req),
+      })
       safeResponse(res, status.isPremium, status.activeUntil, {
         authSource: auth.source,
         webAccountId: auth.webAccountId,

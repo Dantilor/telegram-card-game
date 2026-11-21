@@ -139,9 +139,17 @@ export async function getWebAccountContact(
  * Own WEB purchases stay local; Telegram Premium is visible only while an active verified link exists.
  * Copied telegram_link entitlement rows are audit-only — live subscriptions table is the source of truth.
  */
+export type GetWebAccountPremiumOpts = {
+  /** SHA-256 of gnh_web_device cookie. Required for telegram_subscription when device limit flag is on. */
+  deviceTokenHash?: string | null
+  /** When true, skip device-slot gate (internal/admin). Default false. */
+  bypassDeviceGate?: boolean
+}
+
 export async function getWebAccountPremium(
   webAccountId: string,
-  customDb?: Queryable
+  customDb?: Queryable,
+  opts?: GetWebAccountPremiumOpts
 ): Promise<WebPremiumStatus> {
   const now = new Date()
   const sources = new Set<SharedPremiumSource>()
@@ -180,19 +188,37 @@ export async function getWebAccountPremium(
   )
   const telegramId = link.rows[0]?.telegram_id
   if (telegramId) {
-    const sub = await db(customDb).query<{ active_until: Date; plan_id: string | null }>(
-      `SELECT active_until, plan_id FROM subscriptions
-        WHERE telegram_id = $1::bigint
-          AND active_until > now()
-        ORDER BY active_until DESC
-        LIMIT 1`,
-      [telegramId]
-    )
-    const until = sub.rows[0]?.active_until ? new Date(sub.rows[0].active_until) : null
-    if (until && until > now) {
-      best = pickBestUntil(best, until, now)
-      sources.add('telegram_subscription')
-      if (planIdIsLifetime(sub.rows[0]?.plan_id)) isLifetime = true
+    let deviceOk = true
+    if (!opts?.bypassDeviceGate) {
+      const { hasActiveDeviceForAccount, webDeviceLimitEnabled } = await import(
+        './webTelegramDevices.js'
+      )
+      if (webDeviceLimitEnabled()) {
+        deviceOk = await hasActiveDeviceForAccount(
+          {
+            webAccountId,
+            deviceTokenHash: opts?.deviceTokenHash ?? null,
+            telegramId: Number(telegramId),
+          },
+          customDb
+        )
+      }
+    }
+    if (deviceOk) {
+      const sub = await db(customDb).query<{ active_until: Date; plan_id: string | null }>(
+        `SELECT active_until, plan_id FROM subscriptions
+          WHERE telegram_id = $1::bigint
+            AND active_until > now()
+          ORDER BY active_until DESC
+          LIMIT 1`,
+        [telegramId]
+      )
+      const until = sub.rows[0]?.active_until ? new Date(sub.rows[0].active_until) : null
+      if (until && until > now) {
+        best = pickBestUntil(best, until, now)
+        sources.add('telegram_subscription')
+        if (planIdIsLifetime(sub.rows[0]?.plan_id)) isLifetime = true
+      }
     }
   }
 

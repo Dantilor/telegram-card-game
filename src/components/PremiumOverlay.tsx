@@ -829,33 +829,35 @@ export default function PremiumOverlay({
         {success && <p className="premium-overlay__success">Premium активирован</p>}
         {error && <p className="premium-overlay__error" role="alert">{error}</p>}
         {restoreToast && <p className="premium-overlay__toast" role="status">{restoreToast}</p>}
-        {selectedPlan && checkoutCopy ? (
-          <article className="premium-checkout__plan" aria-label="Выбранный тариф">
-            <h3 className="premium-checkout__plan-title">{checkoutCopy.title}</h3>
-            <p className="premium-checkout__plan-sub">{checkoutCopy.subtitle}</p>
-            <p className="premium-checkout__plan-price">
-              <span>{selectedPlan.priceRub}</span>
-              <span className="premium-checkout__plan-currency">₽</span>
-            </p>
-            <p className="premium-checkout__plan-note">Без автопродления</p>
-            {onChangePlan ? (
-              <button
-                type="button"
-                className="premium-checkout__change"
-                onClick={() => {
-                  haptic('light')
-                  onChangePlan()
-                }}
-              >
-                Изменить тариф
-              </button>
-            ) : null}
-          </article>
-        ) : (
-          <p className="premium-overlay__error">Тариф не выбран</p>
-        )}
-        {offerBlock}
-        {payDock}
+        <div className="premium-checkout__body">
+          {selectedPlan && checkoutCopy ? (
+            <article className="premium-checkout__plan" aria-label="Выбранный тариф">
+              <h3 className="premium-checkout__plan-title">{checkoutCopy.title}</h3>
+              <p className="premium-checkout__plan-sub">{checkoutCopy.subtitle}</p>
+              <p className="premium-checkout__plan-price">
+                <span>{selectedPlan.priceRub}</span>
+                <span className="premium-checkout__plan-currency">₽</span>
+              </p>
+              <p className="premium-checkout__plan-note">Без автопродления</p>
+              {onChangePlan ? (
+                <button
+                  type="button"
+                  className="premium-checkout__change"
+                  onClick={() => {
+                    haptic('light')
+                    onChangePlan()
+                  }}
+                >
+                  Изменить тариф
+                </button>
+              ) : null}
+            </article>
+          ) : (
+            <p className="premium-overlay__error">Тариф не выбран</p>
+          )}
+          {offerBlock}
+          {payDock}
+        </div>
       </div>
     </div>
   ) : (

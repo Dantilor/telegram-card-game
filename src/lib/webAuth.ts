@@ -124,6 +124,9 @@ export async function fetchTelegramLinkStatus(): Promise<{
   isPremium: boolean
   activeUntil: string | null
   sources: string[]
+  devicesUsed?: number
+  devicesLimit?: number
+  lastErrorCode?: string | null
 }> {
   const res = await fetch(`${apiBase()}/api/web/telegram-link/status`, {
     method: 'GET',
@@ -144,7 +147,58 @@ export async function fetchTelegramLinkStatus(): Promise<{
     isPremium: boolean
     activeUntil: string | null
     sources: string[]
+    devicesUsed?: number
+    devicesLimit?: number
+    lastErrorCode?: string | null
   }
+}
+
+export type WebTelegramDevice = {
+  id: string
+  label: string
+  linkedAt: string
+  lastActiveAt: string
+  isCurrent: boolean
+  isLegacy: boolean
+}
+
+export async function fetchTelegramDevices(): Promise<{
+  ok: boolean
+  linked: boolean
+  devices: WebTelegramDevice[]
+  devicesUsed: number
+  devicesLimit: number
+}> {
+  const res = await fetch(`${apiBase()}/api/web/telegram-devices`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  })
+  if (!res.ok) {
+    const err = new Error('telegram_devices_failed') as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as {
+    ok: boolean
+    linked: boolean
+    devices: WebTelegramDevice[]
+    devicesUsed: number
+    devicesLimit: number
+  }
+}
+
+/** Exit this WEB install: revoke device slot + session. */
+export async function logoutCurrentWebDevice(): Promise<void> {
+  const csrf = readCsrfToken()
+  await fetch(`${apiBase()}/api/web/telegram-devices/logout-current`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+  })
 }
 
 /** Complete WEB↔Telegram link from Mini App (signed initData + one-time startapp token). */

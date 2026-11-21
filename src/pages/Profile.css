@@ -957,3 +957,20 @@ html:has(.profile-page):not([data-gnh-shell="web"]) #root {
   margin-top: 0.85rem;
   text-align: left;
 }
+
+.profile-devices {
+  margin-top: 1rem;
+}
+
+.profile-devices__row {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.profile-devices__row .profile-pass__secondary {
+  margin-left: auto;
+  min-height: 2.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+}

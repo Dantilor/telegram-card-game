@@ -13,10 +13,13 @@ import PremiumOverlay from '../components/PremiumOverlay'
 import { isWebShell } from '../config/shell'
 import { useWebSession } from '../shell/WebSessionContext'
 import {
+  fetchTelegramDevices,
   fetchTelegramLinkStatus,
+  logoutCurrentWebDevice,
   startEmailBind,
   startTelegramLinkRestore,
   unlinkTelegramLink,
+  type WebTelegramDevice,
 } from '../lib/webAuth'
 import './Profile.css'
 import ProfileFaq from '../components/web/ProfileFaq'
@@ -161,6 +164,11 @@ function Profile() {
   const [tgLinked, setTgLinked] = useState(false)
   const [tgLinkPremium, setTgLinkPremium] = useState(false)
   const [logoutBusy, setLogoutBusy] = useState(false)
+  const [devices, setDevices] = useState<WebTelegramDevice[]>([])
+  const [devicesUsed, setDevicesUsed] = useState(0)
+  const [devicesLimit, setDevicesLimit] = useState(3)
+  const [devicesBusy, setDevicesBusy] = useState(false)
+  const [devicesError, setDevicesError] = useState<string | null>(null)
   const [emailDraft, setEmailDraft] = useState('')
   const [emailBusy, setEmailBusy] = useState(false)
   const [emailStatus, setEmailStatus] = useState<string | null>(null)
@@ -417,6 +425,20 @@ function Profile() {
         }
         const status = await fetchTelegramLinkStatus()
         if (cancelled) return
+        if (status.lastErrorCode === 'device_limit_reached') {
+          stopTgPoll()
+          setTgRestore((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  phase: 'error',
+                  message:
+                    'Все 3 устройства уже подключены. Откройте Telegram Mini App GameNight Host (управление устройствами), отключите одно и повторите восстановление.',
+                }
+              : prev
+          )
+          return
+        }
         if (status.linked) {
           stopTgPoll()
           setTgLinked(true)
@@ -576,19 +598,50 @@ function Profile() {
     }
   }, [])
 
+  const refreshDevices = useCallback(async () => {
+    if (!web || !tgLinked) {
+      setDevices([])
+      setDevicesUsed(0)
+      return
+    }
+    try {
+      const listed = await fetchTelegramDevices()
+      setDevices(listed.devices || [])
+      setDevicesUsed(listed.devicesUsed ?? listed.devices?.length ?? 0)
+      setDevicesLimit(listed.devicesLimit ?? 3)
+      setDevicesError(null)
+    } catch {
+      setDevicesError('Не удалось загрузить список устройств')
+    }
+  }, [web, tgLinked])
+
+  useEffect(() => {
+    if (!web || !tgLinked) return
+    void refreshDevices()
+  }, [web, tgLinked, refreshDevices])
+
   const handleLogout = useCallback(async () => {
     if (!web) return
     haptic('light')
     const verified = Boolean(webSession.session?.emailVerified)
     if (!verified) {
       const ok = window.confirm(
-        'Почта ещё не подтверждена. После выхода Premium на этом устройстве может быть недоступен, пока вы не войдёте по email. Выйти?'
+        'Почта ещё не подтверждена. После выхода Premium на этом устройстве может быть недоступен, пока вы не войдёте по email. Выйти на этом устройстве?'
+      )
+      if (!ok) return
+    } else {
+      const ok = window.confirm(
+        'Выйти на этом устройстве? Слот Premium освободится для другого устройства.'
       )
       if (!ok) return
     }
     setLogoutBusy(true)
     try {
-      await webSession.logout()
+      try {
+        await logoutCurrentWebDevice()
+      } catch {
+        await webSession.logout()
+      }
       window.location.assign('/')
     } finally {
       setLogoutBusy(false)
@@ -977,6 +1030,64 @@ function Profile() {
 
         <ConsentsPanel />
 
+        {web && tgLinked ? (
+          <section className="profile-menu profile-devices" aria-label="Мои устройства">
+            <h2 className="profile-menu__title">Мои устройства</h2>
+            <p className="profile-pass__desc">
+              Устройства с доступом к Premium · {devicesUsed} из {devicesLimit}
+            </p>
+            {devicesError ? <p className="profile-pass__desc">{devicesError}</p> : null}
+            <div className="profile-menu__panel">
+              {devices.length === 0 && !devicesBusy ? (
+                <p className="profile-pass__desc">Пока нет зарегистрированных устройств.</p>
+              ) : null}
+              {devices.map((device) => (
+                <div key={device.id} className="profile-menu__row profile-devices__row">
+                  <span className="profile-menu__icon" aria-hidden>
+                    {device.isCurrent ? '●' : '○'}
+                  </span>
+                  <span className="profile-menu__label">
+                    <span className="profile-menu__label-main">{device.label}</span>
+                    <span className="profile-menu__label-sub">
+                      {device.isCurrent
+                        ? 'Это устройство'
+                        : `Активность: ${new Date(device.lastActiveAt).toLocaleDateString('ru-RU')}`}
+                    </span>
+                  </span>
+                  {device.isCurrent ? (
+                    <button
+                      type="button"
+                      className="profile-pass__secondary"
+                      disabled={logoutBusy}
+                      onClick={() => void handleLogout()}
+                    >
+                      Выйти на этом устройстве
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="profile-pass__secondary"
+                      onClick={() => {
+                        haptic('light')
+                        const ok = window.confirm(
+                          `Отключить «${device.label}»? Подтверждение откроется в Telegram.`
+                        )
+                        if (!ok) return
+                        const tg = getTelegramWebApp()
+                        const url = 'https://t.me/GameNightHostBot?startapp=devices'
+                        if (tg?.openTelegramLink) tg.openTelegramLink(url)
+                        else window.open(url, '_blank', 'noopener,noreferrer')
+                      }}
+                    >
+                      Отключить
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <section className="profile-menu profile-menu--support">
           <h2 className="profile-menu__title">Поддержка</h2>
           <div className="profile-menu__panel">
@@ -1019,9 +1130,9 @@ function Profile() {
                 <span className="profile-menu__icon" aria-hidden>⎋</span>
                 <span className="profile-menu__label">
                   <span className="profile-menu__label-main">
-                    {logoutBusy ? 'Выход…' : 'Выйти'}
+                    {logoutBusy ? 'Выход…' : 'Выйти на этом устройстве'}
                   </span>
-                  <span className="profile-menu__label-sub">Завершить WEB-сессию</span>
+                  <span className="profile-menu__label-sub">Освободить слот Premium</span>
                 </span>
                 <span className="profile-menu__chev" aria-hidden>›</span>
               </button>

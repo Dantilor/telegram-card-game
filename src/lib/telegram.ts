@@ -7,6 +7,9 @@ import { getCachedInitData } from '../utils/telegramInitCache'
 
 export function getTelegramWebApp(): {
   initData?: string
+  initDataUnsafe?: {
+    start_param?: string
+  }
   ready?: () => void
   expand?: () => void
   openInvoice?: (url: string, cb?: (status: string) => void) => void
@@ -15,7 +18,16 @@ export function getTelegramWebApp(): {
 } | null {
   try {
     const w = typeof window !== 'undefined' ? window : null
-    return (w as Window & { Telegram?: { WebApp?: unknown } })?.Telegram?.WebApp ?? null
+    const tg = (w as Window & { Telegram?: { WebApp?: unknown } })?.Telegram?.WebApp
+    return (tg ?? null) as {
+      initData?: string
+      initDataUnsafe?: { start_param?: string }
+      ready?: () => void
+      expand?: () => void
+      openInvoice?: (url: string, cb?: (status: string) => void) => void
+      openTelegramLink?: (url: string) => void
+      openLink?: (url: string) => void
+    } | null
   } catch {
     return null
   }
@@ -43,6 +55,134 @@ export function getInitData(): string {
   if (preview) return preview
   const cached = getCachedInitData()
   return cached?.initDataRaw ?? ''
+}
+
+const LAUNCH_START_PARAM_KEY = 'gnh_tg_launch_start_param'
+
+function rememberLaunchStartParam(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  try {
+    sessionStorage.setItem(LAUNCH_START_PARAM_KEY, trimmed)
+  } catch {
+    /* ignore */
+  }
+  return trimmed
+}
+
+function readRememberedLaunchStartParam(): string {
+  try {
+    const value = sessionStorage.getItem(LAUNCH_START_PARAM_KEY)
+    return typeof value === 'string' ? value.trim() : ''
+  } catch {
+    return ''
+  }
+}
+
+/** Telegram launch URL / SDK storage — not proof of identity. */
+export function readTelegramLaunchStartParamFromLocation(
+  loc: Pick<Location, 'search' | 'hash'> = typeof window !== 'undefined'
+    ? window.location
+    : { search: '', hash: '' }
+): string {
+  try {
+    const fromSearch = new URLSearchParams(loc.search || '').get('tgWebAppStartParam')
+    if (fromSearch?.trim()) return fromSearch.trim()
+  } catch {
+    /* ignore */
+  }
+  try {
+    const hash = loc.hash || ''
+    const hashBody = hash.startsWith('#') ? hash.slice(1) : hash
+    if (!hashBody) return ''
+    const query = hashBody.includes('?')
+      ? hashBody.slice(hashBody.indexOf('?') + 1)
+      : hashBody.includes('tgWebApp')
+        ? hashBody
+        : ''
+    if (!query) return ''
+    const fromHash = new URLSearchParams(query).get('tgWebAppStartParam')
+    if (fromHash?.trim()) return fromHash.trim()
+  } catch {
+    /* ignore */
+  }
+  return ''
+}
+
+function readTelegramSdkInitParamsStartParam(): string {
+  try {
+    const raw = sessionStorage.getItem('__telegram__initParams')
+    if (!raw) return ''
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return ''
+    const value = (parsed as Record<string, unknown>).tgWebAppStartParam
+    return typeof value === 'string' ? value.trim() : ''
+  } catch {
+    return ''
+  }
+}
+
+function startParamFromInitDataRaw(initDataRaw: string): string {
+  if (!initDataRaw) return ''
+  try {
+    return new URLSearchParams(initDataRaw).get('start_param')?.trim() || ''
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * One-time Mini App startapp payload for WEB Premium restore.
+ * Prefer live WebApp / launch URL over stale session initData cache.
+ * Do not treat this as proof of identity.
+ */
+export function getTelegramStartParam(): string {
+  const tg = getTelegramWebApp()
+  const liveInit = typeof tg?.initData === 'string' ? tg.initData : ''
+  const fromLiveSigned = startParamFromInitDataRaw(liveInit)
+  if (fromLiveSigned) return rememberLaunchStartParam(fromLiveSigned)
+
+  const unsafe = tg?.initDataUnsafe?.start_param
+  if (typeof unsafe === 'string' && unsafe.trim()) {
+    return rememberLaunchStartParam(unsafe.trim())
+  }
+
+  const fromUrl = readTelegramLaunchStartParamFromLocation()
+  if (fromUrl) return rememberLaunchStartParam(fromUrl)
+
+  const fromSdkStore = readTelegramSdkInitParamsStartParam()
+  if (fromSdkStore) return rememberLaunchStartParam(fromSdkStore)
+
+  const remembered = readRememberedLaunchStartParam()
+  if (remembered) return remembered
+
+  const cachedRaw = getCachedInitData()?.initDataRaw ?? ''
+  const fromCached = startParamFromInitDataRaw(cachedRaw)
+  if (fromCached) return rememberLaunchStartParam(fromCached)
+
+  return ''
+}
+
+/** Wait for late SDK / launch params so startapp=wl_… is not missed on cold Mini App launch. */
+export async function waitForTelegramStartParam(
+  timeoutMs = 3500,
+  intervalMs = 60
+): Promise<string> {
+  const existing = getTelegramStartParam()
+  if (existing) return existing
+  const tg = getTelegramWebApp()
+  try {
+    tg?.ready?.()
+  } catch {
+    /* ignore */
+  }
+  const started = Date.now()
+  while (Date.now() - started < timeoutMs) {
+    const next = getTelegramStartParam()
+    if (next) return next
+    await new Promise((r) => setTimeout(r, intervalMs))
+  }
+  return getTelegramStartParam()
 }
 
 let readyCalled = false

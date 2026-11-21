@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense, useState, type ReactNode } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useNavigate } from 'react-router-dom'
+import { waitForTelegramStartParam } from './lib/telegram'
 import { useAppHeight } from './hooks/useAppHeight'
 import { useTelegramThemeSync } from './hooks/useTelegramThemeSync'
 import { PremiumProvider } from './contexts/PremiumContext'
@@ -69,6 +70,26 @@ const TruthDareResult = lazy(() => import('./pages/TruthDareResult'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PremiumPage = lazy(() => import('./pages/PremiumPage'))
 const LegalDocumentPage = lazy(() => import('./pages/LegalDocumentPage'))
+const WebTelegramLink = lazy(() => import('./pages/WebTelegramLink'))
+
+function TelegramLinkStartRedirect() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const param = await waitForTelegramStartParam(4000)
+      if (cancelled) return
+      if (!/^wl_[A-Za-z0-9_-]{16,60}$/.test(param)) return
+      const hash = window.location.hash || ''
+      if (hash.includes('/link-web')) return
+      navigate('/link-web', { replace: true })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [navigate])
+  return null
+}
 
 function DelayedFallback({ delayMs, children }: { delayMs: number; children: ReactNode }) {
   const [show, setShow] = useState(false)
@@ -140,6 +161,7 @@ function App() {
             </DelayedFallback>
           }
         >
+        <TelegramLinkStartRedirect />
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<Games />} />
@@ -211,6 +233,7 @@ function App() {
         />
         <Route path="/profile" element={<Profile />} />
         <Route path="/premium" element={<PremiumPage />} />
+        <Route path="/link-web" element={<WebTelegramLink />} />
         <Route path="/legal/documents/:documentId/versions/:version" element={<LegalDocumentPage />} />
         <Route path="/legal/documents/:documentId" element={<LegalDocumentPage />} />
         <Route path="/legal/privacy" element={<LegalDocumentPage documentId="privacy" />} />

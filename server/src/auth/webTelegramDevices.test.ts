@@ -321,3 +321,85 @@ test('migration seed: one legacy device per active link', async () => {
     await harness.close()
   }
 })
+
+
+test('legacy touch keeps idle window while flag on and cookie missing', async () => {
+  const prev = process.env.GNH_WEB_DEVICE_LIMIT_ENABLED
+  process.env.GNH_WEB_DEVICE_LIMIT_ENABLED = '1'
+  const harness = await createHarness()
+  try {
+    const tg = 920007
+    await seedTgPremium(harness.query, tg)
+    const webAccountId = await newAccount(harness.query)
+    await harness.query.query(
+      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+      [webAccountId, tg]
+    )
+    await harness.query.query(
+      `INSERT INTO web_telegram_devices (
+         telegram_id, web_account_id, device_token_hash, display_label, is_legacy,
+         linked_at, last_active_at, idle_expires_at
+       ) VALUES (
+         $1::bigint, $2::uuid,
+         md5('legacy-a:x') || md5('legacy-b:x'),
+         'Current device', true, now(), now(), now() + interval '1 day'
+       )`,
+      [tg, webAccountId]
+    )
+    const { hasActiveDeviceForAccount } = await import('./webTelegramDevices.js')
+    const ok = await hasActiveDeviceForAccount({ webAccountId }, harness.query)
+    assert.equal(ok, true)
+    const row = await harness.query.query(
+      `SELECT idle_expires_at FROM web_telegram_devices WHERE web_account_id = $1::uuid AND is_legacy = true`,
+      [webAccountId]
+    )
+    assert.ok(new Date(row.rows[0].idle_expires_at).getTime() > Date.now() + 20 * 86400_000)
+  } finally {
+    if (prev === undefined) delete process.env.GNH_WEB_DEVICE_LIMIT_ENABLED
+    else process.env.GNH_WEB_DEVICE_LIMIT_ENABLED = prev
+    await harness.close()
+  }
+})
+
+test('flag off: slot cap returns device_limit but premium still by link', async () => {
+  const prev = process.env.GNH_WEB_DEVICE_LIMIT_ENABLED
+  delete process.env.GNH_WEB_DEVICE_LIMIT_ENABLED
+  const harness = await createHarness()
+  try {
+    const tg = 920008
+    await seedTgPremium(harness.query, tg)
+    const webAccountId = await newAccount(harness.query)
+    await harness.query.query(
+      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+      [webAccountId, tg]
+    )
+    for (let i = 0; i < 3; i++) {
+      assert.equal(
+        (
+          await registerOrReuseDevice({
+            telegramId: tg,
+            webAccountId,
+            deviceToken: mintDeviceToken(),
+            db: harness.query,
+          })
+        ).ok,
+        true
+      )
+    }
+    const fourth = await registerOrReuseDevice({
+      telegramId: tg,
+      webAccountId,
+      deviceToken: mintDeviceToken(),
+      db: harness.query,
+    })
+    assert.equal(fourth.ok, false)
+    const premium = await getWebAccountPremium(webAccountId, harness.query)
+    assert.equal(premium.isPremium, true)
+    assert.ok(premium.sources.includes('telegram_subscription'))
+  } finally {
+    if (prev === undefined) delete process.env.GNH_WEB_DEVICE_LIMIT_ENABLED
+    else process.env.GNH_WEB_DEVICE_LIMIT_ENABLED = prev
+    await harness.close()
+  }
+})
+

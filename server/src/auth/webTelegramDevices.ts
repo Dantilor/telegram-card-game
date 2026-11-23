@@ -181,7 +181,12 @@ export async function hasActiveDeviceForAccount(
       LIMIT 1`,
     [input.webAccountId]
   )
-  return Boolean(legacy.rows[0])
+  if (legacy.rows[0]) {
+    // Keep transitional Premium alive until the browser claims a real device cookie.
+    await touchDeviceActivity(legacy.rows[0].id, customDb)
+    return true
+  }
+  return false
 }
 
 export async function touchDeviceActivity(
@@ -422,16 +427,8 @@ export async function registerOrReuseDevice(input: {
   }
 
   const usedBefore = await countActiveDevices(input.telegramId, customDb)
-  if (webDeviceLimitEnabled() && usedBefore >= WEB_DEVICE_LIMIT) {
-    return {
-      ok: false,
-      code: 'device_limit_reached',
-      devicesUsed: usedBefore,
-      devicesLimit: WEB_DEVICE_LIMIT,
-    }
-  }
-
-  // Best-effort write slots even when flag is off (still respect hard 3 to avoid junk).
+  // Never create a 4th slot. When the feature flag is off, /complete soft-skips this error
+  // so linking/Premium-by-link still succeeds without a new device row.
   if (usedBefore >= WEB_DEVICE_LIMIT) {
     return {
       ok: false,

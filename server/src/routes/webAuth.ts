@@ -12,6 +12,7 @@ import {
 } from '../auth/cookies.js'
 import {
   WEB_DEVICE_LIMIT,
+  webDeviceLimitEnabled,
   countActiveDevices,
   hashDeviceToken,
   listDevicesForTelegram,
@@ -641,6 +642,7 @@ router.post('/web/telegram-link/unlink', requireWebSession(), async (req: Authed
  * Never trusts telegram_id from the body or query string.
  */
 router.post('/web/telegram-link/complete', async (req: Request, res: Response) => {
+  let linkTokenForError: string | null = null
   try {
     const auth = await resolveAuth(req)
     if (!auth?.telegramId || auth.source !== 'telegram_init_data') {
@@ -659,6 +661,7 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         : typeof req.body?.code === 'string'
           ? req.body.code.trim()
           : ''
+    linkTokenForError = token
     if (!isTelegramLinkStartParam(token)) {
       res.status(400).json({ error: 'Invalid link token', code: 'invalid_token' })
       return
@@ -795,6 +798,18 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
         db: tx,
       })
       if (!reg.ok) {
+        // Flag off: keep pre-limit linking behaviour — do not create a 4th slot, but finish link/adoption.
+        if (!webDeviceLimitEnabled()) {
+          return {
+            webAccountId: targetWebAccountId,
+            premiumRestored: false,
+            alreadyLinked: alreadySame || didAdopt,
+            adopted: didAdopt,
+            devicesUsed: reg.devicesUsed,
+            deviceId: null as string | null,
+            slotSkipped: true,
+          }
+        }
         const err = new Error('All 3 devices are connected') as Error & {
           status?: number
           code?: string
@@ -882,7 +897,7 @@ router.post('/web/telegram-link/complete', async (req: Request, res: Response) =
           `UPDATE web_telegram_link_challenges
               SET last_error_code = 'device_limit_reached', last_error_at = now()
             WHERE code_hash = $1 AND consumed_at IS NULL`,
-          [sha256Hex(token)]
+          [sha256Hex(linkTokenForError || '')]
         )
       } catch (markErr) {
         console.error('[telegram-link] failed to mark device_limit on challenge', markErr)

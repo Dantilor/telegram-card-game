@@ -1034,7 +1034,7 @@ function Profile() {
         <ConsentsPanel />
 
         {web && tgLinked ? (
-          <section className="profile-menu profile-devices" aria-label="Мои устройства">
+          <section className="profile-menu profile-devices" aria-label="Мои устройства" data-testid="profile-devices">
             <h2 className="profile-menu__title">Мои устройства</h2>
             <p className="profile-pass__desc">
               Устройства с доступом к Premium · {devicesUsed} из {devicesLimit}

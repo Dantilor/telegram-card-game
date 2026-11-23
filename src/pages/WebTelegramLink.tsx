@@ -13,6 +13,7 @@ import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import { useBack } from '../hooks/useBack'
 import './WebTelegramLink.css'
+import { resolveMiniAppDeviceLabel } from '../lib/deviceDisplayLabel'
 
 const WL_TOKEN_RE = /^wl_[A-Za-z0-9_-]{16,60}$/
 
@@ -205,7 +206,11 @@ export default function WebTelegramLink() {
         <BackButton onClick={handleBack} className="web-tg-link__nav" />
       </div>
       <h1 className="web-tg-link__title">
-        {limitReached || manageMode ? 'Управление устройствами' : 'Подключить Premium к сайту'}
+        {limitReached
+          ? 'Все 3 устройства подключены'
+          : manageMode
+            ? 'Управление устройствами'
+            : 'Подключить Premium к сайту'}
       </h1>
       {!manageMode && !limitReached ? (
         <p className="web-tg-link__lead">
@@ -235,12 +240,28 @@ export default function WebTelegramLink() {
           {busy ? 'Подключаем…' : 'Подключить'}
         </button>
       ) : null}
+      {limitReached && devices.length === 0 ? (
+        <button
+          type="button"
+          className="web-tg-link__submit"
+          data-testid="miniapp-manage-devices"
+          disabled={busy}
+          onClick={() => {
+            haptic('light')
+            void loadDevices().then(() => setManageMode(true)).catch(() => {
+              setError('Не удалось загрузить устройства. Попробуйте ещё раз.')
+            })
+          }}
+        >
+          Управление устройствами
+        </button>
+      ) : null}
       {(manageMode || limitReached) && devices.length > 0 ? (
         <ul className="web-tg-link__devices">
           {devices.map((device) => (
             <li key={device.id} className="web-tg-link__device">
               <div>
-                <strong>{device.label}</strong>
+                <strong>{resolveMiniAppDeviceLabel(device.label)}</strong>
                 <span>
                   {device.isCurrent
                     ? 'Текущая сессия Mini App не занимает слот WEB'
@@ -251,7 +272,7 @@ export default function WebTelegramLink() {
                 type="button"
                 className="web-tg-link__secondary"
                 disabled={busy}
-                onClick={() => void onRevoke(device.id, device.label)}
+                onClick={() => void onRevoke(device.id, resolveMiniAppDeviceLabel(device.label))}
               >
                 Отключить
               </button>
@@ -274,6 +295,7 @@ export default function WebTelegramLink() {
           <button
             type="button"
             className="web-tg-link__submit"
+            data-testid="miniapp-open-gnh"
             onClick={() => {
               haptic('light')
               navigate('/', { replace: true })

@@ -1,1 +1,7 @@
-{"source_commit":"323bb13b217c120e0069c4f4e61ff4c6263bce29","prepared_at":"2026-11-23T23:57:34.9177674+03:00","api_url":"https://dantilor-telegram-card-game-3706.twc1.net","base":"/"}
+{
+    "source_commit":  "658a08610b6a2cf3de678e8ca43d6c5198a276b1",
+    "prepared_at":  "2026-11-24T00:33:01.3432439+03:00",
+    "api_url":  "https://dantilor-telegram-card-game-3706.twc1.net",
+    "note":  "devices nav hotfix: Profile /devices + home redirect fix",
+    "base":  "/"
+}

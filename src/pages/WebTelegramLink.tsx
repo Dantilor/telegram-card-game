@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { markTelegramStartParamConsumed, waitForTelegramStartParam } from '../lib/telegram'
+import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  dismissDevicesLaunchStartParam,
+  markTelegramStartParamConsumed,
+  waitForTelegramStartParam,
+} from '../lib/telegram'
+import { isDevicesStartParam } from '../lib/telegramStartRedirect'
 import {
   completeTelegramWebLink,
   fetchTelegramDevicesForMiniApp,
@@ -26,7 +31,9 @@ type DeviceRow = {
 }
 
 export default function WebTelegramLink() {
-  const handleBack = useBack('/')
+  const location = useLocation()
+  const forceDevicesRoute = location.pathname === '/devices' || location.pathname.endsWith('/devices')
+  const rawBack = useBack(forceDevicesRoute ? '/profile' : '/')
   const navigate = useNavigate()
   const { refreshPremium } = usePremium()
   const [token, setToken] = useState('')
@@ -37,9 +44,20 @@ export default function WebTelegramLink() {
   const [limitReached, setLimitReached] = useState(false)
   const [devicesUsed, setDevicesUsed] = useState<number | null>(null)
   const [devicesLimit, setDevicesLimit] = useState(3)
-  const [manageMode, setManageMode] = useState(false)
+  const [manageMode, setManageMode] = useState(forceDevicesRoute)
   const [devices, setDevices] = useState<DeviceRow[]>([])
   const [bootHint, setBootHint] = useState('Подключаем Telegram…')
+
+  const goToGamesHome = useCallback(() => {
+    dismissDevicesLaunchStartParam()
+    haptic('light')
+    navigate('/', { replace: true })
+  }, [navigate])
+
+  const handleBack = useCallback(() => {
+    dismissDevicesLaunchStartParam()
+    rawBack()
+  }, [rawBack])
 
   const loadDevices = useCallback(async () => {
     const listed = await fetchTelegramDevicesForMiniApp()
@@ -52,12 +70,31 @@ export default function WebTelegramLink() {
     let cancelled = false
     void (async () => {
       setBootHint('Подключаем Telegram…')
+      if (forceDevicesRoute) {
+        dismissDevicesLaunchStartParam()
+        setManageMode(true)
+        setBootHint('')
+        const initData = await waitForInitData(4000)
+        if (cancelled) return
+        if (initData) {
+          try {
+            await loadDevices()
+          } catch {
+            setError('Не удалось загрузить устройства. Откройте Mini App из Telegram ещё раз.')
+          }
+        } else {
+          setBootHint('Откройте эту страницу внутри Telegram Mini App GameNight Host.')
+        }
+        return
+      }
+
       const [initData, startParam] = await Promise.all([
         waitForInitData(4000),
         waitForTelegramStartParam(4000),
       ])
       if (cancelled) return
-      if (startParam === 'devices' || startParam.startsWith('devices')) {
+      if (isDevicesStartParam(startParam)) {
+        dismissDevicesLaunchStartParam()
         setManageMode(true)
         setBootHint('')
         if (initData) {
@@ -86,7 +123,7 @@ export default function WebTelegramLink() {
     return () => {
       cancelled = true
     }
-  }, [loadDevices])
+  }, [forceDevicesRoute, loadDevices])
 
   const onConfirm = useCallback(async () => {
     haptic('medium')
@@ -202,7 +239,13 @@ export default function WebTelegramLink() {
   return (
     <div className="web-tg-link">
       <div className="web-tg-link__top">
-        <HomeButton className="web-tg-link__nav" />
+        <HomeButton
+          className="web-tg-link__nav"
+          onBeforeNavigate={() => {
+            dismissDevicesLaunchStartParam()
+            return false
+          }}
+        />
         <BackButton onClick={handleBack} className="web-tg-link__nav" />
       </div>
       <h1 className="web-tg-link__title">
@@ -296,10 +339,7 @@ export default function WebTelegramLink() {
             type="button"
             className="web-tg-link__submit"
             data-testid="miniapp-open-gnh"
-            onClick={() => {
-              haptic('light')
-              navigate('/', { replace: true })
-            }}
+            onClick={goToGamesHome}
           >
             Открыть GameNight Host
           </button>

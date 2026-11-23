@@ -108,4 +108,36 @@ describe('telegram startapp helpers', () => {
     expect(stored.tgWebAppData).toBe('user=%7B%7D&hash=keep')
     expect(stored.tgWebAppStartParam).toBeUndefined()
   })
+
+  it('dismisses devices launch so home stays reachable', async () => {
+    installTg({
+      initData: 'user=%7B%7D&start_param=devices&hash=x',
+      initDataUnsafe: { start_param: 'devices' },
+      ready: () => undefined,
+    })
+    const {
+      getTelegramStartParam,
+      dismissDevicesLaunchStartParam,
+      isTelegramStartParamConsumed,
+    } = await import('./telegram')
+    expect(getTelegramStartParam()).toBe('devices')
+    dismissDevicesLaunchStartParam()
+    expect(isTelegramStartParamConsumed('devices')).toBe(true)
+    expect(getTelegramStartParam()).toBe('')
+  })
+
+  it('revives devices startapp for a fresh cold launch after dismiss', async () => {
+    sessionStorage.setItem('gnh_tg_consumed_start_params', JSON.stringify(['devices']))
+    const { reviveTelegramStartParamForFreshLaunch, isTelegramStartParamConsumed, getTelegramStartParam } =
+      await import('./telegram')
+    reviveTelegramStartParamForFreshLaunch('devices')
+    expect(isTelegramStartParamConsumed('devices')).toBe(false)
+    installTg({
+      initData: 'user=%7B%7D&start_param=devices&hash=x',
+      initDataUnsafe: { start_param: 'devices' },
+      ready: () => undefined,
+    })
+    expect(getTelegramStartParam()).toBe('devices')
+  })
+
 })

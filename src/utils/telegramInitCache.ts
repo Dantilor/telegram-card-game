@@ -148,6 +148,20 @@ export function parseAndCacheFromHash(): CachedInitData | null {
         new URLSearchParams(parsed.initDataRaw ?? tgWebAppData).get('start_param')?.trim() ||
         ''
       if (launchStart) {
+        // Fresh cold launch with startapp=devices must work after an earlier in-app dismiss.
+        if (launchStart === 'devices' || launchStart.startsWith('devices')) {
+          try {
+            const raw = sessionStorage.getItem('gnh_tg_consumed_start_params')
+            const list: unknown = raw ? JSON.parse(raw) : []
+            if (Array.isArray(list) && list.includes(launchStart)) {
+              const next = list.filter((item) => item !== launchStart)
+              if (next.length) sessionStorage.setItem('gnh_tg_consumed_start_params', JSON.stringify(next))
+              else sessionStorage.removeItem('gnh_tg_consumed_start_params')
+            }
+          } catch {
+            /* ignore */
+          }
+        }
         let consumed = false
         try {
           const raw = sessionStorage.getItem('gnh_tg_consumed_start_params')

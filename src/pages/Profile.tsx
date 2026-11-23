@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
@@ -9,6 +10,7 @@ import { haptic, getTgUser, getInitData } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import { fetchTelegramDevicesForMiniApp } from '../lib/telegramWebLink'
 import './Profile.css'
 
 const SUPPORT_BOT_URL = 'https://t.me/GameNightHelp'
@@ -33,6 +35,26 @@ function Profile() {
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [devicesUsed, setDevicesUsed] = useState<number | null>(null)
+  const [devicesLimit, setDevicesLimit] = useState(3)
+
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    void fetchTelegramDevicesForMiniApp()
+      .then((listed) => {
+        if (cancelled) return
+        setDevicesUsed(typeof listed.devicesUsed === 'number' ? listed.devicesUsed : listed.devices?.length ?? 0)
+        setDevicesLimit(listed.devicesLimit || 3)
+      })
+      .catch(() => {
+        /* counter is optional — menu row still works */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const handleRestorePurchase = useCallback(async () => {
     haptic('medium')
@@ -196,7 +218,30 @@ function Profile() {
         </section>
 
         <div className="profile-aside">
-        <section className="profile-menu">
+                <section className="profile-menu">
+          <h2 className="profile-menu__title">WEB-устройства</h2>
+          <div className="profile-menu__panel">
+            <Link
+              to="/devices"
+              className="profile-menu__row"
+              data-testid="miniapp-profile-devices"
+              onClick={() => haptic('light')}
+            >
+              <span className="profile-menu__icon" aria-hidden>💻</span>
+              <span className="profile-menu__label">
+                <span className="profile-menu__label-main">Мои WEB-устройства</span>
+                <span className="profile-menu__label-sub">
+                  {devicesUsed != null
+                    ? `Подключённые устройства и доступ к Premium · ${devicesUsed} из ${devicesLimit}`
+                    : 'Подключённые устройства и доступ к Premium'}
+                </span>
+              </span>
+              <span className="profile-menu__chev" aria-hidden>›</span>
+            </Link>
+          </div>
+        </section>
+
+<section className="profile-menu">
           <h2 className="profile-menu__title">Документы</h2>
           <div className="profile-menu__panel">
             {PROFILE_DOCUMENTS.map((item) => (

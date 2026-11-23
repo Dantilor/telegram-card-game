@@ -701,6 +701,12 @@ html:has(.profile-page) #root {
   box-shadow: var(--prof-panel-shadow);
 }
 
+a.profile-menu__row {
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+}
+
 .profile-menu__row {
   display: flex;
   align-items: flex-start;
@@ -813,7 +819,13 @@ html:has(.profile-page) #root {
     font-size: 1.35rem;
   }
 
-  .profile-menu__row {
+  a.profile-menu__row {
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.profile-menu__row {
     min-height: 3.15rem;
     padding: 0.7rem 1rem;
   }

@@ -133,6 +133,28 @@ export function markTelegramStartParamConsumed(token: string): void {
   }
 }
 
+/**
+ * Allow a fresh cold-launch startapp=devices after an in-app dismiss.
+ * Does not touch signed initData / Telegram auth caches.
+ */
+export function reviveTelegramStartParamForFreshLaunch(token: string): void {
+  const trimmed = token.trim()
+  if (!trimmed) return
+  if (trimmed !== 'devices' && !trimmed.startsWith('devices')) return
+  try {
+    const next = readConsumedStartParams().filter((item) => item !== trimmed)
+    if (next.length) sessionStorage.setItem(CONSUMED_START_PARAMS_KEY, JSON.stringify(next))
+    else sessionStorage.removeItem(CONSUMED_START_PARAMS_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Dismiss devices launch so in-app Home stays on games (Suspense remount safe). */
+export function dismissDevicesLaunchStartParam(): void {
+  markTelegramStartParamConsumed('devices')
+}
+
 function acceptLaunchStartParam(value: string): string {
   const trimmed = value.trim()
   if (!trimmed) return ''

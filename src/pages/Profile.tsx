@@ -604,6 +604,7 @@ function Profile() {
       setDevicesUsed(0)
       return
     }
+    setDevicesBusy(true)
     try {
       const listed = await fetchTelegramDevices()
       setDevices(listed.devices || [])
@@ -612,6 +613,8 @@ function Profile() {
       setDevicesError(null)
     } catch {
       setDevicesError('Не удалось загрузить список устройств')
+    } finally {
+      setDevicesBusy(false)
     }
   }, [web, tgLinked])
 

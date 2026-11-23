@@ -342,3 +342,20 @@ html[data-theme] .app .infected-game p { color: #d5e4ea; }
 .infected-game .exit-actions .secondary-action { margin-top: 0; }
 .infected-game .resume-action { margin-bottom: 4px; }
 .infected-game .mini-brand span { font-size: 13px; }
+
+
+/* === UI readability hotfix 20261124 === */
+.infected-game .vote-option {
+  border-color: rgba(142, 239, 255, 0.32);
+  background: rgba(8, 22, 32, 0.92);
+  color: #eef9ff;
+}
+.infected-game .vote-option strong,
+.infected-game .roster-row strong {
+  color: #f3fbff;
+  font-weight: 800;
+}
+.infected-game .entry-footer,
+.infected-game .muted-copy {
+  color: #b7cdd6;
+}

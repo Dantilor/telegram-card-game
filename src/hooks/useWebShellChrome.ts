@@ -12,8 +12,8 @@ const HIDE_CLASS = 'gnh-web-nav--hidden'
 const IMMERSIVE_CLASS = 'gnh-web-nav--immersive'
 
 /**
- * WEB-only: scroll-to-top on route change, hide top header + bottom nav while
- * scrolling down and on immersive game paths. Does not run in Telegram Mini App.
+ * Scroll-to-top on route change for WEB and Mini App.
+ * WEB-only: hide top header + bottom nav while scrolling down and on immersive paths.
  *
  * Listens on every possible scroll root + touch direction — some phones scroll
  * window/.app instead of .gnh-inside, so a single listener misses the gesture.
@@ -25,7 +25,7 @@ export function useWebShellChrome(): void {
   const ticking = useRef(false)
 
   useEffect(() => {
-    if (!isWebShell()) return
+    // Always reset to top when entering a game/route — including Telegram Mini App.
     scrollWebShellToTop('auto')
   }, [location.pathname, location.search])
 

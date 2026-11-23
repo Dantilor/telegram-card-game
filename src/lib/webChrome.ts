@@ -52,13 +52,17 @@ export function scrollWebShellToTop(behavior: ScrollBehavior = 'auto'): void {
     const root = getWebScrollRoot()
     if (root) {
       root.scrollTop = 0
-      root.scrollTo({ top: 0, left: 0, behavior })
+      if (typeof root.scrollTo === 'function') {
+        root.scrollTo({ top: 0, left: 0, behavior })
+      }
     }
     if (typeof document !== 'undefined') {
       document.documentElement.scrollTop = 0
       document.body.scrollTop = 0
     }
-    window.scrollTo({ top: 0, left: 0, behavior })
+    if (typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0, left: 0, behavior })
+    }
   }
   run()
   if (typeof requestAnimationFrame === 'function') {

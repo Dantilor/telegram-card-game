@@ -1,6 +1,10 @@
 .games-page-header {
+  position: relative;
+  z-index: 1;
   margin: 0.35rem 0 1.15rem;
   text-align: center;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .games-page-header__title {
@@ -48,9 +52,10 @@
   background: linear-gradient(180deg, #fff 0%, #ffd8f8 42%, #d8a8ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
+  /* Keep glow inside the header box so it does not cover Back/Home. */
   color: transparent;
   text-shadow: none;
-  filter: drop-shadow(0 0 20px rgba(255, 90, 200, 0.55)) drop-shadow(0 2px 0 rgba(90, 30, 140, 0.85));
+  filter: drop-shadow(0 0 10px rgba(255, 90, 200, 0.35)) drop-shadow(0 1px 0 rgba(90, 30, 140, 0.7));
 }
 
 .games-page-header--neon-dark .games-page-header__tagline {

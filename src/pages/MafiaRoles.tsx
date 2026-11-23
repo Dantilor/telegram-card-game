@@ -262,9 +262,11 @@ function MafiaRoles() {
                 type="button"
                 className={`mafia-roles__hold-btn${holdProgress > 0 ? ' is-holding' : ''}`}
                 onPointerDown={(e) => {
+                  e.preventDefault()
                   e.currentTarget.setPointerCapture(e.pointerId)
                   startHold()
                 }}
+                onContextMenu={(e) => e.preventDefault()}
                 onPointerUp={cancelHold}
                 onPointerCancel={cancelHold}
                 onPointerLeave={cancelHold}

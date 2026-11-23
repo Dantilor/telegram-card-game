@@ -423,16 +423,27 @@ html:has(.rt-play)::before {
   cursor: pointer;
   background: var(--rt-cta);
   box-shadow: var(--rt-cta-shadow);
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .rt-page__deck-cta:active {
   transform: scale(0.98);
+  filter: brightness(0.92);
 }
 
 .rt-page__deck--locked .rt-page__deck-cta {
   background: var(--rt-premium-cta);
   box-shadow: 0 10px 24px rgba(212, 168, 83, 0.28);
+  color: #1a1410;
+  text-shadow: none;
+}
+
+[data-theme='neon-light'] .rt-page__deck--locked .rt-page__deck-cta,
+[data-theme='soft-light'] .rt-page__deck--locked .rt-page__deck-cta,
+[data-theme='sunset'] .rt-page__deck--locked .rt-page__deck-cta,
+[data-theme='minimal-calm'] .rt-page__deck--locked .rt-page__deck-cta {
+  color: #1a1410;
 }
 
 .rt-page .game-page__section-title,
@@ -448,4 +459,6 @@ html:has(.rt-play)::before {
 .rt-play .game-page__cta {
   background: var(--rt-cta);
   box-shadow: var(--rt-cta-shadow);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }

@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { scrollWebShellToTop } from "../../lib/webChrome";
 import type { Assignments, PackProgress, Player, Screen, Situation, SituationPack } from "./whoIsWhoTypes";
 import {
   drawFromPack,
@@ -79,6 +80,10 @@ export default function WhoIsWhoGame() {
   const [assignments, setAssignments] = useState<Assignments>({});
   const { startLocked, premiumOverlayOpen, closePremiumOverlay, gatedStart, startCtaClassName } =
     useGameStartGate("who-is-who");
+
+  useLayoutEffect(() => {
+    scrollWebShellToTop("auto");
+  }, [screen]);
 
   const selectedPack = useMemo(
     () => getPackById(selectedPackId) ?? SITUATION_PACKS[0],

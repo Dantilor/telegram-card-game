@@ -4340,3 +4340,15 @@ html[data-theme="neon-light"] .app:not(:has(.mafia-page)) .sled-root.game-shell 
   }
 }
 
+
+
+/* === UI readability hotfix 20261124 === */
+.sled-game .vote-list > span {
+  min-height: 36px;
+  padding: 4px 6px;
+  color: #e8e0ff;
+  font-size: 11px;
+  font-weight: 700;
+  border-color: rgba(185, 140, 255, 0.35);
+  background: rgba(40, 28, 70, 0.55);
+}

@@ -2,10 +2,15 @@
   margin: 0 auto 1.25rem;
   max-width: min(28rem, 92vw);
   font-size: clamp(1.05rem, 2.8vw, 1.15rem);
-  font-weight: 600;
+  font-weight: 800;
   color: var(--mafia-readable-text);
   text-align: center;
   line-height: 1.35;
+}
+
+.mafia-voting__targets .mafia-page__target {
+  font-weight: 700;
+  color: var(--mafia-readable-text);
 }
 
 .mafia-voting__targets {
@@ -38,7 +43,8 @@
   margin: 0 auto 1rem;
   max-width: min(28rem, 92vw);
   font-size: clamp(0.95rem, 2.5vw, 1.05rem);
-  color: var(--mafia-readable-muted);
+  font-weight: 600;
+  color: color-mix(in srgb, var(--mafia-readable-muted) 55%, var(--mafia-readable-text));
   text-align: center;
   line-height: 1.45;
 }

@@ -280,3 +280,24 @@ html[data-theme] .app .mafia-shadows .game-title > strong { color: var(--red); }
     gap: 16px;
   }
 }
+
+
+/* === UI readability hotfix 20261124 === */
+.mafia-shadows .player {
+  background: rgba(18, 22, 48, 0.92);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f7f5ff;
+}
+.mafia-shadows .player-name strong {
+  color: #f7f5ff;
+  font-weight: 800;
+}
+.mafia-shadows .player-name small {
+  color: #c0c5e0;
+}
+.mafia-shadows .tabs button {
+  color: #c7cce6;
+}
+.mafia-shadows .tabs button.active {
+  color: #fff;
+}

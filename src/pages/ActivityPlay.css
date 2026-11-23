@@ -188,14 +188,28 @@
 }
 
 .activity-play__exit {
-  font-size: 0.88rem !important;
-  font-weight: 600 !important;
-  color: var(--game-shell-readable-muted) !important;
-  background: transparent !important;
-  border: none !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  color: var(--game-shell-readable-text) !important;
+  background: var(--game-shell-chip-bg) !important;
+  border: 1.5px solid var(--game-shell-chip-border) !important;
   box-shadow: none !important;
-  min-height: auto !important;
-  padding: 0.5rem !important;
+  min-height: 2.75rem !important;
+  padding: 0.55rem 1.1rem !important;
+  border-radius: 999px !important;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease !important;
+}
+
+.activity-play__exit:active {
+  transform: scale(0.98) !important;
+  background: var(--game-shell-chip-active-bg) !important;
+  border-color: var(--game-shell-chip-active-border) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .activity-play__exit:hover {
+    border-color: var(--game-shell-chip-active-border) !important;
+  }
 }
 
 .activity-play__results-stats {

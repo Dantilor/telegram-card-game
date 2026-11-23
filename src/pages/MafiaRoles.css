@@ -298,11 +298,21 @@
   cursor: pointer;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   flex-shrink: 0;
 }
 
 .mafia-roles__hold-btn.is-holding {
   transform: scale(1.04);
+}
+
+.mafia-roles__hold-btn,
+.mafia-roles__hold-btn * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .mafia-roles__hold-ring {
@@ -344,13 +354,18 @@
   color: #fff;
   background: var(--mafia-cta-bg);
   box-shadow: var(--mafia-cta-shadow);
-  transition: transform 0.15s ease;
-  text-shadow: none;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .mafia-roles__hold-btn.is-holding .mafia-roles__hold-label {
   transform: scale(0.96);
+  filter: brightness(0.88);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35), var(--mafia-cta-shadow);
 }
 
 .mafia-roles__reveal {

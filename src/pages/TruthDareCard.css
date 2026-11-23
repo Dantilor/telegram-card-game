@@ -3,9 +3,26 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Keep nav above the decorative card glow so Back/Home borders stay clear. */
+.truth-dare-card > .game-page__top {
+  position: relative;
+  z-index: 6;
+  margin-bottom: 1.15rem;
+  isolation: isolate;
+}
+
+.truth-dare-card > .game-page__progress {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0.85rem;
 }
 
 .truth-dare-card__card {
+  position: relative;
+  z-index: 1;
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
@@ -13,9 +30,24 @@
   justify-content: center;
   gap: 0.85rem;
   min-height: 11rem;
+  margin-top: 0.15rem;
   margin-bottom: 1rem;
   padding: 1.5rem 1.1rem;
   text-align: center;
+  /* Contain glow so it does not bleed into the Back button chrome. */
+  overflow: hidden;
+  isolation: isolate;
+}
+
+@media (max-height: 740px) {
+  .truth-dare-card__card {
+    min-height: 9.5rem;
+    padding: 1.2rem 1rem;
+  }
+
+  .truth-dare-card > .game-page__top {
+    margin-bottom: 0.95rem;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

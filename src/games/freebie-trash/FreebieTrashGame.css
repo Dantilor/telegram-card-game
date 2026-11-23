@@ -56,7 +56,26 @@
 
 .ft__category-card.is-active {
   border-color: var(--game-shell-chip-active-border);
-  box-shadow: var(--games-card-shadow);
+  background: color-mix(in srgb, var(--games-play-glow) 16%, var(--games-card-bg));
+  box-shadow: var(--game-shell-chip-active-glow), var(--games-card-shadow);
+  outline: 2px solid color-mix(in srgb, var(--games-play-glow) 65%, transparent);
+  outline-offset: 1px;
+}
+
+.ft__category-card.is-active .ft__category-title {
+  color: var(--game-shell-readable-accent);
+  font-weight: 800;
+}
+
+.ft__category-card.is-active::after {
+  content: '✓';
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--game-shell-readable-accent);
+  line-height: 1;
 }
 
 .ft__category-emoji {

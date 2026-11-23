@@ -562,8 +562,11 @@ html:has(.mafia-page):not([data-gnh-shell="web"]) #root {
 
 .mafia-page__target.is-selected {
   border-color: var(--mafia-chip-active-border);
+  border-width: 2px;
   box-shadow: var(--mafia-chip-active-glow);
   background: var(--mafia-chip-active-bg);
+  color: var(--mafia-readable-text);
+  font-weight: 800;
 }
 
 .mafia-page__target:active:not(:disabled) {

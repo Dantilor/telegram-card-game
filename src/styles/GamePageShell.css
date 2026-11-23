@@ -244,12 +244,15 @@ html:has(.game-page) #root {
 }
 
 .game-page__top {
+  position: relative;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
   flex-shrink: 0;
   margin-bottom: 0.85rem;
+  isolation: isolate;
 }
 
 .game-page__top--solo {
@@ -409,12 +412,14 @@ html:has(.game-page) #root {
 .game-page__chip.is-active {
   background: var(--game-shell-chip-active-bg);
   border-color: var(--game-shell-chip-active-border);
-  box-shadow: none;
+  box-shadow: var(--game-shell-chip-active-glow);
   color: var(--game-shell-readable-text);
+  font-weight: 700;
 }
 
 .game-page__chip:active {
   transform: scale(0.96);
+  filter: brightness(0.94);
 }
 
 .game-page__chip-row {
@@ -453,10 +458,15 @@ html:has(.game-page) #root {
   background: var(--game-shell-chip-bg);
   border: 1.5px solid var(--game-shell-chip-border);
   box-shadow: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.15s ease, background 0.15s ease, filter 0.15s ease;
 }
 
 .game-page__btn--secondary:active {
   transform: scale(0.985);
+  background: var(--game-shell-chip-active-bg);
+  border-color: var(--game-shell-chip-active-border);
+  box-shadow: var(--game-shell-chip-active-glow);
+  filter: brightness(0.97);
 }
 
 .game-page__input {
@@ -498,12 +508,14 @@ html:has(.game-page) #root {
   border-radius: 999px;
   background: var(--game-shell-cta-bg);
   box-shadow: var(--game-shell-cta-shadow);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .game-page__cta:active:not(:disabled) {
   transform: scale(0.985);
+  filter: brightness(0.9);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35), var(--game-shell-cta-shadow);
 }
 
 .game-page__cta:disabled {
@@ -565,8 +577,11 @@ html:has(.game-page) #root {
 
 .game-page__target.is-selected {
   border-color: var(--game-shell-chip-active-border);
+  border-width: 2px;
   box-shadow: var(--game-shell-chip-active-glow);
   background: var(--game-shell-chip-active-bg);
+  color: var(--game-shell-readable-text);
+  font-weight: 700;
 }
 
 .game-page__target:active:not(:disabled) {
@@ -693,13 +708,31 @@ html:has(.game-page) #root {
 
 .game-page__category-card.game-page__panel.is-active {
   background:
-    linear-gradient(color-mix(in srgb, var(--games-play-glow) 12%, var(--games-card-bg)), color-mix(in srgb, var(--games-play-glow) 12%, var(--games-card-bg))) padding-box,
+    linear-gradient(color-mix(in srgb, var(--games-play-glow) 18%, var(--games-card-bg)), color-mix(in srgb, var(--games-play-glow) 18%, var(--games-card-bg))) padding-box,
     var(--games-card-border-a) border-box;
   box-shadow: var(--game-shell-chip-active-glow), var(--games-card-shadow);
+  outline: 2px solid color-mix(in srgb, var(--games-play-glow) 70%, transparent);
+  outline-offset: 1px;
 }
 
 .game-page__category-card.game-page__panel.is-active .game-page__category-title {
   color: var(--game-shell-readable-accent);
+  font-weight: 800;
+}
+
+.game-page__category-card.game-page__panel.is-active::after {
+  content: '✓';
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--game-shell-readable-accent);
+  line-height: 1;
+}
+
+.game-page__category-card.game-page__panel {
+  position: relative;
 }
 
 /* Shared modal overlay — portaled to body */

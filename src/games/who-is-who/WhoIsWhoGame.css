@@ -200,8 +200,9 @@
 
 .wiw-verdict__player {
   font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--game-shell-readable-accent);
+  font-weight: 800;
+  color: var(--game-shell-readable-text);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--games-card-bg) 55%, transparent);
 }
 
 .wiw-timer-hint {
@@ -571,12 +572,13 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--games-play-glow) 35%, transparent) 0%,
+    color-mix(in srgb, var(--games-play-glow) 18%, transparent) 0%,
     transparent 70%
   );
   pointer-events: none;
   z-index: 0;
   filter: blur(40px);
+  opacity: 0.7;
 }
 
 .wiw-celebrate {
@@ -620,15 +622,17 @@
 
 .wiw-celebrate__text {
   margin: 0 0 0.75rem;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   line-height: 1.45;
-  color: var(--game-shell-readable-muted);
+  font-weight: 600;
+  color: var(--game-shell-readable-text);
 }
 
 .wiw-celebrate__meta {
   margin: 0;
-  font-size: 0.8rem;
-  color: var(--game-shell-readable-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--game-shell-readable-muted) 70%, var(--game-shell-readable-text));
 }
 
 .wiw-celebrate__actions {

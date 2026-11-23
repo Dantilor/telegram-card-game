@@ -10,6 +10,9 @@
 
 .sabotage-vote .game-page__screen-subtitle {
   margin-bottom: 1.15rem;
+  color: var(--game-shell-readable-text);
+  font-weight: 600;
+  opacity: 0.92;
 }
 
 .sabotage-vote__targets {
@@ -24,4 +27,15 @@
 
 .sabotage-vote__target {
   min-height: 3.5rem;
+  font-weight: 700;
+  color: var(--game-shell-readable-text);
+  background: color-mix(in srgb, var(--game-shell-input-bg) 90%, var(--games-card-bg));
+  border: 1.5px solid var(--game-shell-input-border);
+}
+
+.sabotage-vote__target.is-selected {
+  border-width: 2px;
+  border-color: var(--game-shell-chip-active-border);
+  background: var(--game-shell-chip-active-bg);
+  box-shadow: var(--game-shell-chip-active-glow);
 }

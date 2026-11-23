@@ -2427,3 +2427,16 @@ html[data-theme] .app .doubles p { color: #e7e6f4; }
     max-height: none;
   }
 }
+
+
+/* === UI readability hotfix 20261124 === */
+.doubles-game .player-row small,
+.doubles-root .player-row small {
+  color: #c5cbe0;
+  font-weight: 600;
+}
+.doubles-game .player-row strong,
+.doubles-root .player-row strong {
+  color: #f4f6ff;
+  font-weight: 800;
+}

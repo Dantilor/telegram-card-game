@@ -2466,6 +2466,21 @@ html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__card {
   color: #f5f7ff !important;
 }
 
+/* Checkout card: start higher and keep email/login reachable above the fold. */
+html[data-gnh-shell="web"] .premium-overlay:has(.premium-checkout),
+html[data-gnh-shell="web"] .gnh-inside-portal.premium-overlay:has(.premium-checkout) {
+  align-items: flex-start !important;
+  padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+  overflow-y: auto !important;
+}
+
+html[data-gnh-shell="web"] .premium-overlay__card--checkout-only.premium-checkout,
+html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__card--checkout-only.premium-checkout {
+  max-height: min(88svh, 780px) !important;
+  margin-top: 0 !important;
+}
+
 html[data-gnh-shell="web"] .premium-overlay__scroll,
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-overlay__scroll,
 html[data-gnh-shell="web"] .gnh-inside-portal .premium-overlay__scroll {

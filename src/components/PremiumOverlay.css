@@ -1284,9 +1284,22 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--buy[ari
 }
 
 /* ——— WEB single-plan checkout (from Premium kit) ——— */
+/* Keep checkout near the top so email/login at the bottom stays reachable. */
+html[data-gnh-shell="web"] .premium-overlay:has(.premium-checkout),
+html[data-gnh-shell="web"] .gnh-inside-portal.premium-overlay:has(.premium-checkout) {
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: max(10px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 html[data-gnh-shell="web"] .premium-overlay__card--checkout-only.premium-checkout {
   width: min(100%, 440px);
-  max-height: min(94vh, 860px);
+  max-height: min(88svh, 780px);
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   border-radius: 24px;
@@ -1537,6 +1550,7 @@ html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__bt
     overflow-y: auto;
     overscroll-behavior: contain;
     align-items: flex-start;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1546,9 +1560,9 @@ html[data-gnh-shell="web"] .premium-overlay__dock--checkout .premium-overlay__bt
     height: auto;
     max-height: calc(
       100svh
-      - max(52px, calc(env(safe-area-inset-top, 0px) + 12px))
+      - max(24px, calc(env(safe-area-inset-top, 0px) + 8px))
       - max(12px, env(safe-area-inset-bottom, 0px))
-      - 12px
+      - 8px
     );
     border-radius: 20px 20px 16px 16px;
     margin-top: 0;

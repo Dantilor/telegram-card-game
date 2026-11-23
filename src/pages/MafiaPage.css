@@ -254,7 +254,7 @@ html:has(.mafia-page):not([data-gnh-shell="web"]) #root {
 .mafia-page__top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.5rem;
   flex-shrink: 0;
   width: 100%;
@@ -263,7 +263,7 @@ html:has(.mafia-page):not([data-gnh-shell="web"]) #root {
 
 .mafia-page__back {
   flex-shrink: 0;
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .mafia-page__actions {

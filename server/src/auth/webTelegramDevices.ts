@@ -98,15 +98,55 @@ export async function expireIdleDevices(
   return result.rows.length
 }
 
+/** True when the engine lacks pg_advisory_xact_lock (PGlite in unit tests). */
+export function isAdvisoryLockUnsupportedError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err)
+  if (!/pg_advisory_xact_lock/i.test(msg)) return false
+  return (
+    /does not exist/i.test(msg) ||
+    /undefined function/i.test(msg) ||
+    /unknown function/i.test(msg) ||
+    /function .* not found/i.test(msg) ||
+    /not supported/i.test(msg)
+  )
+}
+
+/**
+ * Swallow missing advisory locks only in explicit test/dev harnesses (PGlite).
+ * Production PostgreSQL must fail closed — never continue without the lock.
+ */
+export function shouldTolerateMissingAdvisoryLock(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  if (env.NODE_ENV === 'production') return false
+  if (env.GNH_STAGING === '1' || env.GNH_STAGING === 'true') return false
+  if (env.TIMEWEB === '1' || env.TIMEWEB === 'true') return false
+  if (env.GNH_ALLOW_MISSING_ADVISORY_LOCKS === '1') return true
+  return env.NODE_ENV === 'test'
+}
+
 async function advisoryLockTelegram(telegramId: number, customDb?: Queryable): Promise<void> {
   // Two-int advisory lock derived from telegram id (stable within transaction).
   const hi = Math.floor(Number(telegramId) / 2147483647) || 1
   const lo = Number(telegramId) % 2147483647
   try {
     await db(customDb).query(`SELECT pg_advisory_xact_lock($1::int, $2::int)`, [hi, lo])
-  } catch {
-    // PGlite / older engines may lack advisory locks — still serialize via FOR UPDATE rows.
+  } catch (err) {
+    if (shouldTolerateMissingAdvisoryLock() && isAdvisoryLockUnsupportedError(err)) {
+      // PGlite unit tests: serialize via FOR UPDATE on device rows instead.
+      return
+    }
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new Error(`web device advisory lock failed: ${detail}`)
   }
+}
+
+/** Test/harness seam for advisoryLockTelegram fail-closed behavior. */
+export async function acquireTelegramDeviceLockForTests(
+  telegramId: number,
+  customDb?: Queryable
+): Promise<void> {
+  await advisoryLockTelegram(telegramId, customDb)
 }
 
 export async function countActiveDevices(

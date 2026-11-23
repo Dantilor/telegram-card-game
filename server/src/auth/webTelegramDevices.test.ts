@@ -8,13 +8,16 @@ import type { Queryable } from '../legal/types.js'
 import { getWebAccountPremium, grantWebEntitlement } from './webAccounts.js'
 import {
   WEB_DEVICE_LIMIT,
+  acquireTelegramDeviceLockForTests,
   countActiveDevices,
+  isAdvisoryLockUnsupportedError,
   registerDeviceFromChallengeHash,
   registerOrReuseDevice,
   revokeDeviceById,
   revokeDeviceByTokenHash,
   hashDeviceToken,
   mintDeviceToken,
+  shouldTolerateMissingAdvisoryLock,
 } from './webTelegramDevices.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -23,6 +26,8 @@ function readSql(relativePath: string): string {
   return fs.readFileSync(path.join(serverRoot, relativePath), 'utf8')
 }
 async function createHarness() {
+  // PGlite lacks pg_advisory_xact_lock; tolerate only under NODE_ENV=test.
+  process.env.NODE_ENV = 'test'
   const pg = new PGlite()
   await pg.exec(readSql('db/schema.sql'))
   await pg.exec(readSql('db/migrations/012_web_sessions.sql'))
@@ -483,6 +488,93 @@ test('remote revoke requires matching telegram_id (authz)', async () => {
     })
     assert.equal(ok, true)
     assert.equal(await countActiveDevices(tgOwner, harness.query), 0)
+  } finally {
+    await harness.close()
+  }
+})
+
+test('advisory lock: unsupported error detection is narrow', () => {
+  assert.equal(
+    isAdvisoryLockUnsupportedError(
+      new Error('function pg_advisory_xact_lock(integer, integer) does not exist')
+    ),
+    true
+  )
+  assert.equal(
+    isAdvisoryLockUnsupportedError(new Error('connection terminated unexpectedly')),
+    false
+  )
+  assert.equal(isAdvisoryLockUnsupportedError(new Error('permission denied for table')), false)
+})
+
+test('advisory lock: production/staging never tolerate missing locks', () => {
+  assert.equal(shouldTolerateMissingAdvisoryLock({ NODE_ENV: 'production' }), false)
+  assert.equal(
+    shouldTolerateMissingAdvisoryLock({
+      NODE_ENV: 'production',
+      GNH_ALLOW_MISSING_ADVISORY_LOCKS: '1',
+    }),
+    false
+  )
+  assert.equal(shouldTolerateMissingAdvisoryLock({ NODE_ENV: 'test', GNH_STAGING: '1' }), false)
+  assert.equal(shouldTolerateMissingAdvisoryLock({ NODE_ENV: 'test', TIMEWEB: '1' }), false)
+  assert.equal(shouldTolerateMissingAdvisoryLock({ NODE_ENV: 'test' }), true)
+  assert.equal(
+    shouldTolerateMissingAdvisoryLock({
+      NODE_ENV: 'development',
+      GNH_ALLOW_MISSING_ADVISORY_LOCKS: '1',
+    }),
+    true
+  )
+  assert.equal(shouldTolerateMissingAdvisoryLock({ NODE_ENV: 'development' }), false)
+})
+
+test('advisory lock: production-like failures fail closed', async () => {
+  const prevNode = process.env.NODE_ENV
+  const prevAllow = process.env.GNH_ALLOW_MISSING_ADVISORY_LOCKS
+  process.env.NODE_ENV = 'production'
+  delete process.env.GNH_ALLOW_MISSING_ADVISORY_LOCKS
+  const failingDb: Queryable = {
+    query: async () => {
+      throw new Error('function pg_advisory_xact_lock(integer, integer) does not exist')
+    },
+  }
+  try {
+    await assert.rejects(
+      () => acquireTelegramDeviceLockForTests(424242, failingDb),
+      /advisory lock failed/
+    )
+  } finally {
+    if (prevNode === undefined) delete process.env.NODE_ENV
+    else process.env.NODE_ENV = prevNode
+    if (prevAllow === undefined) delete process.env.GNH_ALLOW_MISSING_ADVISORY_LOCKS
+    else process.env.GNH_ALLOW_MISSING_ADVISORY_LOCKS = prevAllow
+  }
+})
+
+test('advisory lock: arbitrary Postgres errors are never swallowed', async () => {
+  const prevNode = process.env.NODE_ENV
+  process.env.NODE_ENV = 'test'
+  const failingDb: Queryable = {
+    query: async () => {
+      throw new Error('could not serialize access due to concurrent update')
+    },
+  }
+  try {
+    await assert.rejects(
+      () => acquireTelegramDeviceLockForTests(424243, failingDb),
+      /advisory lock failed|concurrent update/
+    )
+  } finally {
+    if (prevNode === undefined) delete process.env.NODE_ENV
+    else process.env.NODE_ENV = prevNode
+  }
+})
+
+test('advisory lock: PGlite missing function is tolerated only in test', async () => {
+  const harness = await createHarness()
+  try {
+    await assert.doesNotReject(() => acquireTelegramDeviceLockForTests(424244, harness.query))
   } finally {
     await harness.close()
   }

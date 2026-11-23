@@ -61,6 +61,9 @@ export default defineConfig(({ mode }) => {
     },
     server: isWeb
       ? {
+          watch: {
+            ignored: ['**/playwright-report/**', '**/test-results/**', '**/artifacts/**'],
+          },
           proxy: {
             '/api': { target: apiProxy, changeOrigin: true },
             '/legal': { target: apiProxy, changeOrigin: true },

@@ -403,3 +403,88 @@ test('flag off: slot cap returns device_limit but premium still by link', async 
   }
 })
 
+
+test('fourth and later registrations reject once three slots are filled', async () => {
+  const prev = process.env.GNH_WEB_DEVICE_LIMIT_ENABLED
+  process.env.GNH_WEB_DEVICE_LIMIT_ENABLED = '1'
+  const harness = await createHarness()
+  try {
+    const tg = 920010
+    await seedTgPremium(harness.query, tg)
+    const webAccountId = await newAccount(harness.query)
+    await harness.query.query(
+      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+      [webAccountId, tg]
+    )
+    for (let i = 0; i < 3; i++) {
+      const reg = await registerOrReuseDevice({
+        telegramId: tg,
+        webAccountId,
+        deviceToken: mintDeviceToken(),
+        displayLabel: 'P' + i,
+        db: harness.query,
+      })
+      assert.equal(reg.ok, true)
+    }
+    // Burst of additional attempts after the cap is reached (PGlite has no advisory locks).
+    const burst = await Promise.all(
+      Array.from({ length: 4 }, (_, i) =>
+        registerOrReuseDevice({
+          telegramId: tg,
+          webAccountId,
+          deviceToken: mintDeviceToken(),
+          displayLabel: 'X' + i,
+          db: harness.query,
+        })
+      )
+    )
+    assert.ok(burst.every((r) => !r.ok))
+    assert.equal(await countActiveDevices(tg, harness.query), WEB_DEVICE_LIMIT)
+  } finally {
+    if (prev === undefined) delete process.env.GNH_WEB_DEVICE_LIMIT_ENABLED
+    else process.env.GNH_WEB_DEVICE_LIMIT_ENABLED = prev
+    await harness.close()
+  }
+})
+
+test('remote revoke requires matching telegram_id (authz)', async () => {
+  const harness = await createHarness()
+  try {
+    const tgOwner = 920011
+    const tgOther = 920012
+    await seedTgPremium(harness.query, tgOwner)
+    await seedTgPremium(harness.query, tgOther)
+    const webAccountId = await newAccount(harness.query)
+    await harness.query.query(
+      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, $2::bigint)`,
+      [webAccountId, tgOwner]
+    )
+    const reg = await registerOrReuseDevice({
+      telegramId: tgOwner,
+      webAccountId,
+      deviceToken: mintDeviceToken(),
+      db: harness.query,
+    })
+    assert.equal(reg.ok, true)
+    if (!reg.ok) return
+    const stolen = await revokeDeviceById({
+      deviceId: reg.device.id,
+      telegramId: tgOther,
+      reason: 'remote_revoke',
+      db: harness.query,
+    })
+    assert.equal(stolen, false)
+    assert.equal(await countActiveDevices(tgOwner, harness.query), 1)
+    const ok = await revokeDeviceById({
+      deviceId: reg.device.id,
+      telegramId: tgOwner,
+      reason: 'remote_revoke',
+      db: harness.query,
+    })
+    assert.equal(ok, true)
+    assert.equal(await countActiveDevices(tgOwner, harness.query), 0)
+  } finally {
+    await harness.close()
+  }
+})
+

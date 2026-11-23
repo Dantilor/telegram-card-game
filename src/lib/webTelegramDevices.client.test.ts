@@ -62,3 +62,26 @@ describe('web telegram devices client helpers', () => {
     expect(status.devicesUsed).toBe(3)
   })
 })
+
+describe('logoutCurrentWebDevice', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.unstubAllGlobals()
+  })
+
+  it('throws when server returns non-OK so UI cannot claim success', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: false,
+        status: 500,
+        json: async () => ({ code: 'device_logout_failed' }),
+      }))
+    )
+    const { logoutCurrentWebDevice } = await import('./webAuth')
+    await expect(logoutCurrentWebDevice()).rejects.toMatchObject({
+      message: 'device_logout_failed',
+      status: 500,
+    })
+  })
+})

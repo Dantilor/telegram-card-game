@@ -640,12 +640,10 @@ function Profile() {
     }
     setLogoutBusy(true)
     try {
-      try {
-        await logoutCurrentWebDevice()
-      } catch {
-        await webSession.logout()
-      }
+      await logoutCurrentWebDevice()
       window.location.assign('/')
+    } catch {
+      setDevicesError('Не удалось выйти на этом устройстве. Слот не освобождён — попробуйте ещё раз.')
     } finally {
       setLogoutBusy(false)
     }

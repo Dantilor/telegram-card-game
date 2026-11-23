@@ -245,6 +245,86 @@ export async function inspectAppRole(client) {
   }
 }
 
+/**
+ * Read-only privilege probe for 024 DDL + grants.
+ * Does not CREATE/ALTER/GRANT — only has_*_privilege / ownership checks.
+ *
+ * @param {{
+ *   canCreateInPublic: boolean,
+ *   ownsChallenges: boolean,
+ *   isSuperuser: boolean,
+ *   gnhAppExists: boolean,
+ *   challengesOwner: string | null,
+ *   migrateUser: string,
+ *   gnhAppCanLogin: boolean,
+ * }} row
+ */
+export function evaluateMigratePrivileges(row) {
+  const blockers = []
+  if (!row.gnhAppExists) blockers.push('role gnh_app does not exist')
+  if (!row.canCreateInPublic && !row.isSuperuser) {
+    blockers.push('migrate user lacks CREATE on schema public (cannot CREATE TABLE web_telegram_devices)')
+  }
+  if (!row.ownsChallenges && !row.isSuperuser) {
+    blockers.push(
+      `migrate user cannot ALTER web_telegram_link_challenges (owner=${row.challengesOwner || 'unknown'}, user=${row.migrateUser})`
+    )
+  }
+  // New table is owned by creator → owner may GRANT to gnh_app without membership.
+  if (!row.canCreateInPublic && !row.isSuperuser) {
+    blockers.push('migrate user cannot GRANT on a new web_telegram_devices table (not creatable/ownable)')
+  }
+
+  return {
+    ok: blockers.length === 0,
+    blockers,
+    canCreateDevicesTable: Boolean(row.canCreateInPublic || row.isSuperuser),
+    canAlterChallenges: Boolean(row.ownsChallenges || row.isSuperuser),
+    canGrantDevicesToGnhApp: Boolean(row.canCreateInPublic || row.isSuperuser),
+    gnhAppCanLogin: Boolean(row.gnhAppCanLogin),
+    challengesOwner: row.challengesOwner || null,
+    migrateUser: row.migrateUser,
+  }
+}
+
+export async function inspectMigratePrivileges(client) {
+  const { rows } = await client.query(
+    `SELECT
+       current_user AS migrate_user,
+       has_schema_privilege(current_user, 'public', 'CREATE') AS can_create_in_public,
+       EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1) AS gnh_app_exists,
+       (SELECT r.rolcanlogin FROM pg_roles r WHERE r.rolname = $1) AS gnh_app_can_login,
+       (SELECT r.rolsuper FROM pg_roles r WHERE r.rolname = current_user) AS is_superuser,
+       (
+         SELECT pg_get_userbyid(c.relowner)
+           FROM pg_class c
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public'
+            AND c.relkind = 'r'
+            AND c.relname = 'web_telegram_link_challenges'
+       ) AS challenges_owner,
+       (
+         SELECT pg_get_userbyid(c.relowner) = current_user
+           FROM pg_class c
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public'
+            AND c.relkind = 'r'
+            AND c.relname = 'web_telegram_link_challenges'
+       ) AS owns_challenges`,
+    [APP_ROLE]
+  )
+  const raw = rows[0] || {}
+  return evaluateMigratePrivileges({
+    migrateUser: String(raw.migrate_user || ''),
+    canCreateInPublic: Boolean(raw.can_create_in_public),
+    ownsChallenges: Boolean(raw.owns_challenges),
+    isSuperuser: Boolean(raw.is_superuser),
+    gnhAppExists: Boolean(raw.gnh_app_exists),
+    challengesOwner: raw.challenges_owner != null ? String(raw.challenges_owner) : null,
+    gnhAppCanLogin: Boolean(raw.gnh_app_can_login),
+  })
+}
+
 async function listPlan(client, steps = STEPS) {
   const plan = []
   for (const step of steps) {
@@ -279,13 +359,22 @@ async function runPreflight(databaseUrl) {
     if (!row.ssl) throw new Error('TLS not active')
     await assertPrerequisites(client)
     const appRole = await inspectAppRole(client)
+    const priv = await inspectMigratePrivileges(client)
     const plan = await listPlan(client)
-    console.log('PREFLIGHT_OK')
     console.log(
       `phase=024-devices database=${row.db} migrate_user=${row.usr} tls=on ca=${resolved.summary.caSource}`
     )
     console.log(
       `app_role=${appRole.role} can_login=${appRole.canLogin} migrate_user_member_of_app_role=${appRole.migrateUserIsMember}`
+    )
+    if (appRole.canLogin) {
+      console.log(
+        'NOTE: gnh_app currently has LOGIN privilege (rolcanlogin=true). Docs historically called it NOLOGIN; do not ALTER ROLE — grants still target gnh_app.'
+      )
+    }
+    console.log(
+      `priv create_devices=${priv.canCreateDevicesTable} alter_challenges=${priv.canAlterChallenges} ` +
+        `grant_devices_to_gnh_app=${priv.canGrantDevicesToGnhApp} challenges_owner=${priv.challengesOwner || 'unknown'}`
     )
     console.log(
       'NOTE: production API uses DATABASE_URL; table DML is granted to gnh_app (see grants_web_gnh_app.sql).'
@@ -293,6 +382,11 @@ async function runPreflight(databaseUrl) {
     for (const step of plan) {
       console.log(`${step.skip ? 'SKIP' : 'NEED'} ${step.label} ${step.file}`)
     }
+    if (!priv.ok) {
+      throw new Error(`PRIVILEGE_BLOCKER: ${priv.blockers.join('; ')}`)
+    }
+    console.log('PREFLIGHT_OK')
+    console.log('PRIVILEGES_OK for 024 DDL + gnh_app grants (read-only checks only)')
   })
 }
 
@@ -317,6 +411,10 @@ async function runApply(databaseUrl) {
     if (meta.rows[0].db !== EXPECTED_DB) throw new Error(`Wrong database: ${meta.rows[0].db}`)
     await assertPrerequisites(client)
     await inspectAppRole(client)
+    const priv = await inspectMigratePrivileges(client)
+    if (!priv.ok) {
+      throw new Error(`Refusing apply: ${priv.blockers.join('; ')}`)
+    }
 
     const plan = await listPlan(client)
     const todo = plan.filter((s) => !s.skip)

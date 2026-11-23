@@ -11,6 +11,7 @@ import {
   assertApplyConfirmations,
   assertFilesExist,
   assertProductionTarget,
+  evaluateMigratePrivileges,
   parseArgs,
   parseDbUrl,
 } from './apply-production-024-web-telegram-devices.mjs'
@@ -176,4 +177,60 @@ test('024 migrator is not imported by API entrypoints', () => {
     const text = fs.readFileSync(p, 'utf8')
     assert.doesNotMatch(text, /apply-production-024|024_web_telegram_devices/)
   }
+})
+test('evaluateMigratePrivileges GO when gen_user owns challenges and can CREATE', () => {
+  const result = evaluateMigratePrivileges({
+    migrateUser: 'gen_user',
+    canCreateInPublic: true,
+    ownsChallenges: true,
+    isSuperuser: false,
+    gnhAppExists: true,
+    challengesOwner: 'gen_user',
+    gnhAppCanLogin: true,
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.canCreateDevicesTable, true)
+  assert.equal(result.canAlterChallenges, true)
+  assert.equal(result.canGrantDevicesToGnhApp, true)
+  assert.equal(result.gnhAppCanLogin, true)
+  assert.deepEqual(result.blockers, [])
+})
+
+test('evaluateMigratePrivileges NO-GO without CREATE or challenges ownership', () => {
+  const noCreate = evaluateMigratePrivileges({
+    migrateUser: 'gen_user',
+    canCreateInPublic: false,
+    ownsChallenges: true,
+    isSuperuser: false,
+    gnhAppExists: true,
+    challengesOwner: 'gen_user',
+    gnhAppCanLogin: true,
+  })
+  assert.equal(noCreate.ok, false)
+  assert.ok(noCreate.blockers.some((b) => /CREATE on schema public/i.test(b)))
+
+  const noOwner = evaluateMigratePrivileges({
+    migrateUser: 'gen_user',
+    canCreateInPublic: true,
+    ownsChallenges: false,
+    isSuperuser: false,
+    gnhAppExists: true,
+    challengesOwner: 'other_owner',
+    gnhAppCanLogin: false,
+  })
+  assert.equal(noOwner.ok, false)
+  assert.ok(noOwner.blockers.some((b) => /ALTER web_telegram_link_challenges/i.test(b)))
+})
+
+test('evaluateMigratePrivileges allows superuser even without ownership flags', () => {
+  const result = evaluateMigratePrivileges({
+    migrateUser: 'gen_user',
+    canCreateInPublic: false,
+    ownsChallenges: false,
+    isSuperuser: true,
+    gnhAppExists: true,
+    challengesOwner: 'someone_else',
+    gnhAppCanLogin: true,
+  })
+  assert.equal(result.ok, true)
 })

@@ -1,5 +1,5 @@
 -- Production grants for WEB objects to existing app role gnh_app.
--- Apply ONLY on gnh_supabase after WEB migrations 012–021.
+-- Apply ONLY on gnh_supabase after WEB migrations 012–021 (+ 024 devices when present).
 -- Does NOT copy staging role gnh_web_stage. Safe to re-run.
 
 DO $$
@@ -30,6 +30,7 @@ BEGIN
     'web_entitlements',
     'web_telegram_links',
     'web_telegram_link_challenges',
+    'web_telegram_devices',
     'web_email_otps',
     'web_payments',
     'web_rate_buckets',

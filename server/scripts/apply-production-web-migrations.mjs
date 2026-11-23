@@ -16,6 +16,7 @@
  *  - re-apply steps whose schema markers already exist
  *  - use staging role gnh_web_stage
  *  - activate 023 unless --activate-023 + CONFIRM_PRODUCTION_WEB_PLANS_ACTIVATE=YES
+ *  - apply 024 (web_telegram_devices) — use apply-production-024-web-telegram-devices.mjs
  *
  * Modes:
  *   --dry-run         list selected phase steps / skip detection (read-only with URL)
@@ -184,6 +185,10 @@ export const ALL_STEPS = [
       AND (
         to_regclass('public.game_session_leases') IS NULL
         OR has_table_privilege('gnh_app', 'game_session_leases', 'SELECT')
+      )
+      AND (
+        to_regclass('public.web_telegram_devices') IS NULL
+        OR has_table_privilege('gnh_app', 'web_telegram_devices', 'SELECT')
       )
     ) AS present`,
   },

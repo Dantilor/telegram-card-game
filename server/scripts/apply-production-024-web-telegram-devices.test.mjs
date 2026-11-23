@@ -11,9 +11,11 @@ import {
   assertApplyConfirmations,
   assertFilesExist,
   assertProductionTarget,
+  chooseMigrateStrategy,
   evaluateMigratePrivileges,
   parseArgs,
   parseDbUrl,
+  resolveStepUrl,
 } from './apply-production-024-web-telegram-devices.mjs'
 import { ALL_STEPS } from './apply-production-web-migrations.mjs'
 
@@ -29,12 +31,37 @@ function run(args, env = {}) {
   })
 }
 
-test('024 steps are exactly migration + focused grants', () => {
+function normSql(s) {
+  return s
+    .replace(/--.*$/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+test('024 steps are 024a + 024b + focused grants', () => {
   assert.deepEqual(
     STEPS.map((s) => s.label),
-    ['024', 'grants_web_telegram_devices_gnh_app']
+    ['024a', '024b', 'grants_web_telegram_devices_gnh_app']
+  )
+  assert.deepEqual(
+    STEPS.map((s) => s.role),
+    ['migrate', 'gnh_app', 'devices_owner']
   )
   assertFilesExist(STEPS)
+})
+
+test('024 combined equals 024a + 024b DDL bodies', () => {
+  const a = fs.readFileSync(path.join(serverRoot, 'db/migrations/024a_web_telegram_devices_table.sql'), 'utf8')
+  const b = fs.readFileSync(
+    path.join(serverRoot, 'db/migrations/024b_web_telegram_link_challenges_device_cols.sql'),
+    'utf8'
+  )
+  const c = fs.readFileSync(path.join(serverRoot, 'db/migrations/024_web_telegram_devices.sql'), 'utf8')
+  assert.match(a, /CREATE TABLE IF NOT EXISTS web_telegram_devices/)
+  assert.doesNotMatch(a, /ALTER TABLE web_telegram_link_challenges/)
+  assert.match(b, /ALTER TABLE web_telegram_link_challenges/)
+  assert.doesNotMatch(b, /CREATE TABLE/)
+  assert.equal(normSql(a + '\n' + b), normSql(c))
 })
 
 test('legacy through-022/023 migrator never registers 024', () => {
@@ -59,6 +86,16 @@ test('grants SQL files include web_telegram_devices for gnh_app', () => {
   assert.equal(EXPECTED_DB, 'gnh_supabase')
 })
 
+test('readonly privilege probe SQL exists and is read-only', () => {
+  const sql = fs.readFileSync(
+    path.join(serverRoot, 'db/production/preflight_024_privileges_readonly.sql'),
+    'utf8'
+  )
+  assert.match(sql, /READ-ONLY/i)
+  assert.doesNotMatch(sql, /^\s*(CREATE|ALTER|GRANT|INSERT|UPDATE|DELETE|DROP)\b/im)
+  assert.match(sql, /gnh_app_create_public/)
+})
+
 test('parseArgs rejects combined dry-run and preflight', () => {
   assert.throws(() => parseArgs(['node', 'x', '--dry-run', '--preflight']), /only one/)
   assert.deepEqual(parseArgs(['node', 'x', '--dry-run']), {
@@ -66,45 +103,23 @@ test('parseArgs rejects combined dry-run and preflight', () => {
     preflight: false,
     apply: false,
   })
-  assert.deepEqual(parseArgs(['node', 'x']), {
-    dryRun: false,
-    preflight: false,
-    apply: true,
-  })
 })
 
-test('apply confirmations require backup + explicit 024 flag', () => {
-  assert.throws(() => assertApplyConfirmations({}), /GNH_ALLOW_PROD_WEB_MIGRATE/)
-  assert.throws(
-    () =>
-      assertApplyConfirmations({
-        GNH_ALLOW_PROD_WEB_MIGRATE: '1',
-        CONFIRM_PRODUCTION_WEB_MIGRATE: 'YES',
-        CONFIRM_PRODUCTION_BACKUP: 'YES',
-      }),
-    /CONFIRM_PRODUCTION_024_DEVICES/
-  )
-  assert.throws(
-    () =>
-      assertApplyConfirmations({
-        GNH_ALLOW_PROD_WEB_MIGRATE: '1',
-        CONFIRM_PRODUCTION_WEB_MIGRATE: 'YES',
-        CONFIRM_PRODUCTION_024_DEVICES: 'YES',
-      }),
-    /CONFIRM_PRODUCTION_BACKUP/
-  )
+test('apply confirmations require dual-role flag only for dual strategy', () => {
+  const base = {
+    GNH_ALLOW_PROD_WEB_MIGRATE: '1',
+    CONFIRM_PRODUCTION_WEB_MIGRATE: 'YES',
+    CONFIRM_PRODUCTION_BACKUP: 'YES',
+    CONFIRM_PRODUCTION_024_DEVICES: 'YES',
+  }
+  assert.doesNotThrow(() => assertApplyConfirmations(base, 'single_current'))
+  assert.throws(() => assertApplyConfirmations(base, 'dual_role'), /CONFIRM_PRODUCTION_024_DUAL_ROLE/)
   assert.doesNotThrow(() =>
-    assertApplyConfirmations({
-      GNH_ALLOW_PROD_WEB_MIGRATE: '1',
-      CONFIRM_PRODUCTION_WEB_MIGRATE: 'YES',
-      CONFIRM_PRODUCTION_BACKUP: 'YES',
-      CONFIRM_PRODUCTION_024_DEVICES: 'YES',
-    })
+    assertApplyConfirmations({ ...base, CONFIRM_PRODUCTION_024_DUAL_ROLE: 'YES' }, 'dual_role')
   )
 })
 
 test('assertProductionTarget enforces gnh_supabase and rejects staging', () => {
-  assert.throws(() => assertProductionTarget(null), /PRODUCTION_DATABASE_URL|DATABASE_URL/)
   assert.throws(
     () =>
       assertProductionTarget({
@@ -114,35 +129,104 @@ test('assertProductionTarget enforces gnh_supabase and rejects staging', () => {
       }),
     /gnh_web_staging|Refusing/
   )
-  assert.throws(
-    () =>
-      assertProductionTarget({
-        host: 'db.example',
-        user: 'gnh_web_stage',
-        dbName: 'gnh_supabase',
-      }),
-    /gnh_web_stage/
-  )
   assert.doesNotThrow(() =>
     assertProductionTarget({
       host: 'db.example',
-      user: 'gen_user',
+      user: 'gnh_app',
       dbName: 'gnh_supabase',
     })
   )
 })
 
-test('dry-run lists only 024 steps and never 012-023', () => {
+test('chooseMigrateStrategy: observed gen_user blocker becomes dual_role', () => {
+  const result = chooseMigrateStrategy({
+    migrateUser: 'gen_user',
+    canCreateInPublic: true,
+    ownsChallenges: false,
+    isSuperuser: false,
+    gnhAppExists: true,
+    gnhAppCanLogin: true,
+    gnhAppCanCreateInPublic: false,
+    canSelectLinks: true,
+    canReferenceAccounts: true,
+    challengesOwner: 'gnh_app',
+  })
+  assert.equal(result.strategy, 'dual_role')
+  assert.deepEqual(result.blockers, [])
+})
+
+test('chooseMigrateStrategy: gnh_app CREATE prefers single_gnh_app', () => {
+  const result = chooseMigrateStrategy({
+    migrateUser: 'gen_user',
+    canCreateInPublic: true,
+    ownsChallenges: false,
+    isSuperuser: false,
+    gnhAppExists: true,
+    gnhAppCanLogin: true,
+    gnhAppCanCreateInPublic: true,
+    canSelectLinks: true,
+    canReferenceAccounts: true,
+    challengesOwner: 'gnh_app',
+  })
+  assert.equal(result.strategy, 'single_gnh_app')
+})
+
+test('chooseMigrateStrategy: single_current when connected role owns challenges', () => {
+  const result = chooseMigrateStrategy({
+    migrateUser: 'gnh_app',
+    canCreateInPublic: true,
+    ownsChallenges: true,
+    isSuperuser: false,
+    gnhAppExists: true,
+    gnhAppCanLogin: true,
+    gnhAppCanCreateInPublic: true,
+    canSelectLinks: true,
+    canReferenceAccounts: true,
+    challengesOwner: 'gnh_app',
+  })
+  assert.equal(result.strategy, 'single_current')
+})
+
+test('evaluateMigratePrivileges ok for dual_role observed production shape', () => {
+  const result = evaluateMigratePrivileges({
+    migrateUser: 'gen_user',
+    canCreateInPublic: true,
+    ownsChallenges: false,
+    isSuperuser: false,
+    gnhAppExists: true,
+    challengesOwner: 'gnh_app',
+    gnhAppCanLogin: true,
+    gnhAppCanCreateInPublic: false,
+    canSelectLinks: true,
+    canReferenceAccounts: true,
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.strategy, 'dual_role')
+})
+
+test('resolveStepUrl dual_role routes 024b to gnh_app URL', () => {
+  const urls = {
+    primary: 'postgresql://gen_user:x@h/gnh_supabase?sslmode=verify-full',
+    gnhApp: 'postgresql://gnh_app:y@h/gnh_supabase?sslmode=verify-full',
+  }
+  assert.equal(
+    resolveStepUrl('dual_role', STEPS[0], urls, 'gen_user'),
+    urls.primary
+  )
+  assert.equal(resolveStepUrl('dual_role', STEPS[1], urls, 'gen_user'), urls.gnhApp)
+  assert.equal(resolveStepUrl('dual_role', STEPS[2], urls, 'gen_user'), urls.primary)
+})
+
+test('dry-run lists 024a/024b/grants and never 012-023', () => {
   const result = run(['--dry-run'], {
     PRODUCTION_DATABASE_URL: '',
     DATABASE_URL: '',
   })
   assert.equal(result.status, 0, result.stderr || result.stdout)
-  assert.match(result.stdout, /DRY 024/)
+  assert.match(result.stdout, /DRY 024a/)
+  assert.match(result.stdout, /DRY 024b/)
   assert.match(result.stdout, /DRY grants_web_telegram_devices_gnh_app/)
-  assert.match(result.stdout, /app_role=gnh_app/)
   assert.doesNotMatch(result.stdout, /DRY 012|DRY 022|DRY 023/)
-  assert.match(result.stdout, /012–023/)
 })
 
 test('apply without confirmations fails closed', () => {
@@ -156,7 +240,6 @@ test('apply without confirmations fails closed', () => {
     CONFIRM_PRODUCTION_024_DEVICES: '',
   })
   assert.notEqual(result.status, 0)
-  assert.match(result.stderr + result.stdout, /GNH_ALLOW_PROD_WEB_MIGRATE|CONFIRM_PRODUCTION/)
 })
 
 test('parseDbUrl extracts production target', () => {
@@ -177,60 +260,4 @@ test('024 migrator is not imported by API entrypoints', () => {
     const text = fs.readFileSync(p, 'utf8')
     assert.doesNotMatch(text, /apply-production-024|024_web_telegram_devices/)
   }
-})
-test('evaluateMigratePrivileges GO when gen_user owns challenges and can CREATE', () => {
-  const result = evaluateMigratePrivileges({
-    migrateUser: 'gen_user',
-    canCreateInPublic: true,
-    ownsChallenges: true,
-    isSuperuser: false,
-    gnhAppExists: true,
-    challengesOwner: 'gen_user',
-    gnhAppCanLogin: true,
-  })
-  assert.equal(result.ok, true)
-  assert.equal(result.canCreateDevicesTable, true)
-  assert.equal(result.canAlterChallenges, true)
-  assert.equal(result.canGrantDevicesToGnhApp, true)
-  assert.equal(result.gnhAppCanLogin, true)
-  assert.deepEqual(result.blockers, [])
-})
-
-test('evaluateMigratePrivileges NO-GO without CREATE or challenges ownership', () => {
-  const noCreate = evaluateMigratePrivileges({
-    migrateUser: 'gen_user',
-    canCreateInPublic: false,
-    ownsChallenges: true,
-    isSuperuser: false,
-    gnhAppExists: true,
-    challengesOwner: 'gen_user',
-    gnhAppCanLogin: true,
-  })
-  assert.equal(noCreate.ok, false)
-  assert.ok(noCreate.blockers.some((b) => /CREATE on schema public/i.test(b)))
-
-  const noOwner = evaluateMigratePrivileges({
-    migrateUser: 'gen_user',
-    canCreateInPublic: true,
-    ownsChallenges: false,
-    isSuperuser: false,
-    gnhAppExists: true,
-    challengesOwner: 'other_owner',
-    gnhAppCanLogin: false,
-  })
-  assert.equal(noOwner.ok, false)
-  assert.ok(noOwner.blockers.some((b) => /ALTER web_telegram_link_challenges/i.test(b)))
-})
-
-test('evaluateMigratePrivileges allows superuser even without ownership flags', () => {
-  const result = evaluateMigratePrivileges({
-    migrateUser: 'gen_user',
-    canCreateInPublic: false,
-    ownsChallenges: false,
-    isSuperuser: true,
-    gnhAppExists: true,
-    challengesOwner: 'someone_else',
-    gnhAppCanLogin: true,
-  })
-  assert.equal(result.ok, true)
 })

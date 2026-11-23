@@ -1,6 +1,10 @@
 -- WEB device slots for Telegram Premium (max 3 per telegram_id).
 -- Additive expand-and-contract. Do not apply to production without backup + approval.
 -- Feature flag GNH_WEB_DEVICE_LIMIT_ENABLED gates enforcement in application code.
+--
+-- Production note: if web_telegram_link_challenges is owned by gnh_app and CREATE on
+-- public is only available to gen_user, apply 024a then 024b via the production
+-- dual-role migrator (do not ALTER OWNER / do not broaden privileges casually).
 
 CREATE TABLE IF NOT EXISTS web_telegram_devices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,5 +1,5 @@
 -- Production grants for web_telegram_devices to app role gnh_app.
--- Apply on gnh_supabase after 024_web_telegram_devices.sql.
+-- Apply on gnh_supabase after 024a (table exists). Prefer devices table owner (gen_user).
 -- Safe to re-run. Does not alter plans/tariffs or migrations 012–023.
 
 DO $$

@@ -21,6 +21,7 @@ import {
   revokeAllDevicesForTelegram,
   revokeDeviceById,
   revokeDeviceByTokenHash,
+  updateDeviceLabelByTokenHash,
   getWebAccountEmailState,
   rebindWebSessionAccount,
   touchDeviceActivity,
@@ -1234,6 +1235,47 @@ router.get('/web/telegram-devices', requireWebSession(), async (req: AuthedReque
     const telegramId = Number(link.rows[0].telegram_id)
     const listed = await listDevicesForTelegram(telegramId, readDeviceTokenHash(req))
     res.status(200).json({ ok: true, linked: true, telegramId, ...listed })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * POST /api/web/telegram-devices/label-current — rename this install (CSRF). Does not create a slot.
+ */
+router.post('/web/telegram-devices/label-current', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const label =
+      typeof req.body?.displayLabel === 'string' ? req.body.displayLabel.trim().slice(0, 120) : ''
+    if (!label) {
+      res.status(400).json({ error: 'displayLabel required', code: 'invalid_label' })
+      return
+    }
+    const deviceHash = readDeviceTokenHash(req)
+    if (!deviceHash) {
+      res.status(404).json({ error: 'No device cookie', code: 'device_missing' })
+      return
+    }
+    const updated = await updateDeviceLabelByTokenHash({ tokenHash: deviceHash, displayLabel: label })
+    if (!updated) {
+      res.status(404).json({ error: 'Active device not found', code: 'device_missing' })
+      return
+    }
+    res.status(200).json({
+      ok: true,
+      device: {
+        id: updated.id,
+        label: updated.display_label?.trim() || 'WEB-устройство',
+        isLegacy: Boolean(updated.is_legacy),
+      },
+    })
   } catch (e) {
     const { status, body } = errorPayload(e)
     res.status(status).json(body)

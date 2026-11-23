@@ -63,7 +63,7 @@ SELECT
   l.telegram_id,
   l.web_account_id,
   md5('legacy-a:' || l.id::text) || md5('legacy-b:' || l.id::text),
-  'Current device',
+  'WEB-устройство',
   true,
   l.linked_at,
   now(),

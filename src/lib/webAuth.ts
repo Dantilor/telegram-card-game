@@ -79,7 +79,7 @@ export async function logoutWebSession(): Promise<void> {
   })
 }
 
-export async function startTelegramLinkRestore(): Promise<{
+export async function startTelegramLinkRestore(displayLabel?: string): Promise<{
   ok: boolean
   expiresAt?: string
   instruction?: string
@@ -92,8 +92,12 @@ export async function startTelegramLinkRestore(): Promise<{
     credentials: 'include',
     headers: {
       Accept: 'application/json',
+      'Content-Type': 'application/json',
       ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
+    body: JSON.stringify(
+      displayLabel?.trim() ? { displayLabel: displayLabel.trim().slice(0, 120) } : {}
+    ),
   })
   if (!res.ok) {
     const err = new Error('telegram_link_start_failed') as Error & { status?: number; code?: string }
@@ -185,6 +189,26 @@ export async function fetchTelegramDevices(): Promise<{
     devices: WebTelegramDevice[]
     devicesUsed: number
     devicesLimit: number
+  }
+}
+
+/** Persist a friendly label for this browser install (no new slot). */
+export async function labelCurrentWebDevice(displayLabel: string): Promise<void> {
+  const csrf = readCsrfToken()
+  const res = await fetch(`${apiBase()}/api/web/telegram-devices/label-current`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+    body: JSON.stringify({ displayLabel }),
+  })
+  if (!res.ok) {
+    const err = new Error('device_label_failed') as Error & { status?: number; code?: string }
+    err.status = res.status
+    throw err
   }
 }
 

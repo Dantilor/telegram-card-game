@@ -416,9 +416,27 @@ export async function registerOrReuseDevice(input: {
       Number(existing.telegram_id) === input.telegramId &&
       existing.web_account_id === input.webAccountId
     ) {
-      await touchDeviceActivity(existing.id, customDb)
+      const nextLabel = (input.displayLabel || '').trim().slice(0, 120) || null
+      let device = existing
+      if (nextLabel && nextLabel !== (existing.display_label || '').trim()) {
+        const updated = await db(customDb).query<WebTelegramDeviceRow>(
+          `UPDATE web_telegram_devices
+              SET display_label = $2,
+                  last_active_at = now(),
+                  idle_expires_at = $3
+            WHERE id = $1::uuid
+              AND revoked_at IS NULL
+            RETURNING id, telegram_id::text AS telegram_id, web_account_id::text AS web_account_id,
+                      device_token_hash, display_label, linked_at, last_active_at, idle_expires_at,
+                      revoked_at, revoke_reason, is_legacy`,
+          [existing.id, nextLabel, idleExpiresAt().toISOString()]
+        )
+        device = updated.rows[0] || existing
+      } else {
+        await touchDeviceActivity(existing.id, customDb)
+      }
       const used = await countActiveDevices(input.telegramId, customDb)
-      return { ok: true, device: existing, created: false, devicesUsed: used }
+      return { ok: true, device, created: false, devicesUsed: used }
     }
   }
 
@@ -516,7 +534,7 @@ export async function listDevicesForTelegram(
   )
   const devices = result.rows.map((row) => ({
     id: row.id,
-    label: row.display_label?.trim() || (row.is_legacy ? 'Current device' : 'WEB device'),
+    label: row.display_label?.trim() || 'WEB-устройство',
     linkedAt: new Date(row.linked_at).toISOString(),
     lastActiveAt: new Date(row.last_active_at).toISOString(),
     isCurrent: Boolean(currentTokenHash && row.device_token_hash === currentTokenHash),
@@ -527,6 +545,29 @@ export async function listDevicesForTelegram(
     devicesUsed: devices.length,
     devicesLimit: WEB_DEVICE_LIMIT,
   }
+}
+
+/** Rename the active device for this cookie hash (no new slot). */
+export async function updateDeviceLabelByTokenHash(input: {
+  tokenHash: string
+  displayLabel: string
+  db?: Queryable
+}): Promise<WebTelegramDeviceRow | null> {
+  const label = input.displayLabel.trim().slice(0, 120)
+  if (!label) return null
+  const result = await db(input.db).query<WebTelegramDeviceRow>(
+    `UPDATE web_telegram_devices
+        SET display_label = $2,
+            last_active_at = now(),
+            idle_expires_at = $3
+      WHERE device_token_hash = $1
+        AND revoked_at IS NULL
+      RETURNING id, telegram_id::text AS telegram_id, web_account_id::text AS web_account_id,
+                device_token_hash, display_label, linked_at, last_active_at, idle_expires_at,
+                revoked_at, revoke_reason, is_legacy`,
+    [input.tokenHash, label, idleExpiresAt().toISOString()]
+  )
+  return result.rows[0] || null
 }
 
 export async function revokeDeviceById(input: {

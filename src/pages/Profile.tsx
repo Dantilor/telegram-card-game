@@ -15,12 +15,18 @@ import { useWebSession } from '../shell/WebSessionContext'
 import {
   fetchTelegramDevices,
   fetchTelegramLinkStatus,
+  labelCurrentWebDevice,
   logoutCurrentWebDevice,
   startEmailBind,
   startTelegramLinkRestore,
   unlinkTelegramLink,
   type WebTelegramDevice,
 } from '../lib/webAuth'
+import {
+  formatDeviceLabelFromUa,
+  isPlaceholderDeviceLabel,
+  resolveDeviceDisplayLabel,
+} from '../lib/deviceDisplayLabel'
 import './Profile.css'
 import ProfileFaq from '../components/web/ProfileFaq'
 import { openWebInstallPrompt } from '../components/web/WebInstallBanner'
@@ -299,7 +305,7 @@ function Profile() {
         return
       }
 
-      const started = await startTelegramLinkRestore()
+      const started = await startTelegramLinkRestore(formatDeviceLabelFromUa())
       if (!started.deepLink || !started.expiresAt) {
         closeOpener()
         setTgRestore({
@@ -607,8 +613,28 @@ function Profile() {
     setDevicesBusy(true)
     try {
       const listed = await fetchTelegramDevices()
-      setDevices(listed.devices || [])
-      setDevicesUsed(listed.devicesUsed ?? listed.devices?.length ?? 0)
+      let next = listed.devices || []
+      const current = next.find((d) => d.isCurrent)
+      if (current && isPlaceholderDeviceLabel(current.label)) {
+        const friendly = formatDeviceLabelFromUa()
+        try {
+          await labelCurrentWebDevice(friendly)
+          next = next.map((d) => (d.id === current.id ? { ...d, label: friendly } : d))
+        } catch {
+          next = next.map((d) =>
+            d.id === current.id
+              ? { ...d, label: resolveDeviceDisplayLabel(d.label, { isCurrent: true }) }
+              : d
+          )
+        }
+      } else {
+        next = next.map((d) => ({
+          ...d,
+          label: resolveDeviceDisplayLabel(d.label, { isCurrent: d.isCurrent }),
+        }))
+      }
+      setDevices(next)
+      setDevicesUsed(listed.devicesUsed ?? next.length)
       setDevicesLimit(listed.devicesLimit ?? 3)
       setDevicesError(null)
     } catch {
@@ -1035,7 +1061,7 @@ function Profile() {
           <section className="profile-menu profile-devices" aria-label="Мои устройства" data-testid="profile-devices">
             <h2 className="profile-menu__title">Мои устройства</h2>
             <p className="profile-pass__desc">
-              Устройства с доступом к Premium · {devicesUsed} из {devicesLimit}
+              Подключено: {devicesUsed} из {devicesLimit}
             </p>
             {devicesError ? <p className="profile-pass__desc">{devicesError}</p> : null}
             <div className="profile-menu__panel">
@@ -1048,7 +1074,9 @@ function Profile() {
                     {device.isCurrent ? '●' : '○'}
                   </span>
                   <span className="profile-menu__label">
-                    <span className="profile-menu__label-main">{device.label}</span>
+                    <span className="profile-menu__label-main">
+                      {resolveDeviceDisplayLabel(device.label, { isCurrent: device.isCurrent })}
+                    </span>
                     <span className="profile-menu__label-sub">
                       {device.isCurrent
                         ? 'Это устройство'
@@ -1058,20 +1086,22 @@ function Profile() {
                   {device.isCurrent ? (
                     <button
                       type="button"
-                      className="profile-pass__secondary"
-                      disabled={logoutBusy}
+                      className="profile-devices__action"
+                      disabled={logoutBusy || devicesBusy}
                       onClick={() => void handleLogout()}
                     >
-                      Выйти на этом устройстве
+                      {logoutBusy ? 'Выход…' : 'Выйти на этом устройстве'}
                     </button>
                   ) : (
                     <button
                       type="button"
-                      className="profile-pass__secondary"
+                      className="profile-devices__action profile-devices__action--ghost"
+                      disabled={devicesBusy || logoutBusy}
                       onClick={() => {
                         haptic('light')
+                        const shown = resolveDeviceDisplayLabel(device.label, { isCurrent: false })
                         const ok = window.confirm(
-                          `Отключить «${device.label}»? Подтверждение откроется в Telegram.`
+                          `Отключить «${shown}»? Подтверждение откроется в Telegram.`
                         )
                         if (!ok) return
                         const tg = getTelegramWebApp()
@@ -1121,23 +1151,6 @@ function Profile() {
               </span>
               <span className="profile-menu__chev" aria-hidden>›</span>
             </button>
-            {web && (
-              <button
-                type="button"
-                className="profile-menu__row"
-                onClick={() => void handleLogout()}
-                disabled={logoutBusy}
-              >
-                <span className="profile-menu__icon" aria-hidden>⎋</span>
-                <span className="profile-menu__label">
-                  <span className="profile-menu__label-main">
-                    {logoutBusy ? 'Выход…' : 'Выйти на этом устройстве'}
-                  </span>
-                  <span className="profile-menu__label-sub">Освободить слот Premium</span>
-                </span>
-                <span className="profile-menu__chev" aria-hidden>›</span>
-              </button>
-            )}
           </div>
         </section>
         </div>

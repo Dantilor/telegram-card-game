@@ -13,7 +13,8 @@ async function assertNoHorizontalOverflow(page: Page) {
 }
 
 async function waitForHomeReady(page: Page) {
-  await expect(page.locator('.home-page')).toBeVisible({ timeout: 30_000 })
+  // WEB home is the marketing reference shell (gnh-home-*), not legacy .home-page.
+  await expect(page.locator('.gnh-home-ref, .home-page').first()).toBeVisible({ timeout: 30_000 })
   await expect(page.getByRole('link', { name: /Начать игру/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
@@ -22,7 +23,11 @@ async function assertWideDesktopShell(page: Page, width: number) {
   if (width < 1024) return
   const metrics = await page.evaluate(() => {
     const app = document.querySelector('.app.app--web') as HTMLElement | null
-    const home = document.querySelector('.home-page') as HTMLElement | null
+    // Content column is capped (~1440); outer .gnh-home-ref may be full-bleed.
+    const home =
+      (document.querySelector('.gnh-home-ref .wrap') as HTMLElement | null) ||
+      (document.querySelector('.gnh-home-ref') as HTMLElement | null) ||
+      (document.querySelector('.home-page') as HTMLElement | null)
     return {
       appWidth: app?.getBoundingClientRect().width ?? 0,
       homeWidth: home?.getBoundingClientRect().width ?? 0,
@@ -76,11 +81,15 @@ test.describe('WEB desktop / responsive layout', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     await waitForHomeReady(page)
-    await expect(page.getByRole('navigation', { name: /Основная навигация/i })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: /Главная навигация|Основная навигация/i })).toBeVisible()
     await expect(page.getByRole('heading', { name: /Попробуйте сегодня|Популярные/i })).toBeVisible()
-    const homeW = await page.evaluate(
-      () => (document.querySelector('.home-page') as HTMLElement | null)?.getBoundingClientRect().width ?? 0,
-    )
+    const homeW = await page.evaluate(() => {
+      const home =
+        (document.querySelector('.gnh-home-ref .wrap') as HTMLElement | null) ||
+        (document.querySelector('.gnh-home-ref') as HTMLElement | null) ||
+        (document.querySelector('.home-page') as HTMLElement | null)
+      return home?.getBoundingClientRect().width ?? 0
+    })
     expect(homeW).toBeGreaterThan(900)
   })
 })

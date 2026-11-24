@@ -78,8 +78,8 @@ export default function WebMetrikaConsentBanner() {
         <p className="web-metrika-banner__title">Аналитика сайта</p>
         <p className="web-metrika-banner__text">
           Чтобы понимать, как пользуются сайтом, мы можем подключить Яндекс Метрику (счётчик 114652319).
-          Загружаются cookie Яндекса. Вебвизор и запись форм выключены. Отказ не мешает играть и покупать Premium.
-          Подробности — в{' '}
+          Загружаются cookie Яндекса. Вебвизор, карта кликов и слежение за ссылками выключены. Отказ не мешает
+          играть и покупать Premium. Подробности — в{' '}
           <button
             type="button"
             className="web-metrika-banner__link"
@@ -90,7 +90,8 @@ export default function WebMetrikaConsentBanner() {
           >
             политике конфиденциальности
           </button>
-          . Выбор можно изменить в профиле.
+          . Выбор можно изменить в профиле: отзыв останавливает новую отправку, но не удаляет уже переданные Яндексу
+          данные.
         </p>
         <div className="web-metrika-banner__actions">
           <button type="button" className="web-metrika-banner__btn web-metrika-banner__btn--primary" onClick={accept}>

@@ -36,6 +36,7 @@ import {
 
 import { buildAllowedCorsOrigins, isOriginAllowed } from './corsOrigins.js'
 import { attachRequestTiming } from './middleware/requestTiming.js'
+import { loadWebSeoManifest, resolveWebHtml } from './web/seoStatic.js'
 
 const port = Number(process.env.PORT || 3001)
 const allowedOrigins = buildAllowedCorsOrigins({
@@ -226,8 +227,29 @@ if (serveWebStaticEnabled()) {
   if (!fs.existsSync(path.join(webRoot, 'index.html'))) {
     console.warn('[TCG] GNH_SERVE_WEB_STATIC set but index.html missing at', webRoot)
   } else {
-    console.log('[TCG] serving WEB static from', webRoot)
-    app.use(express.static(webRoot, { index: false, maxAge: '1h' }))
+    const seoManifest = loadWebSeoManifest(webRoot)
+    console.log('[TCG] serving WEB static from', webRoot, seoManifest ? '(seo manifest)' : '(no seo manifest)')
+    const sendWebHtml: express.RequestHandler = (req, res, next) => {
+      const queryIndex = req.originalUrl.indexOf('?')
+      const search = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : ''
+      const resolved = resolveWebHtml(seoManifest, req.path, search)
+      if (resolved.kind === 'redirect') {
+        res.redirect(301, resolved.location)
+        return
+      }
+      if (resolved.noindex) res.setHeader('X-Robots-Tag', 'noindex')
+      res.status(resolved.status).sendFile(path.join(webRoot, resolved.file), (err) => {
+        if (err) next(err)
+      })
+    }
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+      if (req.path === '/index.html' || req.path === '/_seo' || req.path.startsWith('/_seo/')) {
+        return sendWebHtml(req, res, next)
+      }
+      next()
+    })
+    app.use(express.static(webRoot, { index: false, redirect: false, maxAge: '1h' }))
     app.get('*', (req, res, next) => {
       if (req.method !== 'GET' && req.method !== 'HEAD') return next()
       if (
@@ -239,9 +261,7 @@ if (serveWebStaticEnabled()) {
       ) {
         return next()
       }
-      res.sendFile(path.join(webRoot, 'index.html'), (err) => {
-        if (err) next(err)
-      })
+      sendWebHtml(req, res, next)
     })
   }
 }

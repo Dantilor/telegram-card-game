@@ -1,8 +1,53 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
+import { SEO_PAGES } from './src/seo/seoContent'
+import { SEO_PAGE_CSS } from './src/seo/seoPageCss'
+import {
+  appShellHead,
+  buildRobotsTxt,
+  buildSeoManifest,
+  buildSitemapXml,
+  injectIntoShell,
+  notFoundHead,
+  pageHead,
+  prerenderFileForPath,
+  renderNotFoundBody,
+  renderSeoPageBody,
+  SEO_MANIFEST_FILE,
+} from './src/seo/seoRender'
 
 const apiProxy = 'http://127.0.0.1:3001'
+
+/**
+ * WEB-only static SEO output: prerendered public pages, noindex app shell, 404 page,
+ * robots.txt, sitemap.xml and the manifest Express uses to pick the right HTML per path.
+ */
+function webSeoPrerender(): Plugin {
+  return {
+    name: 'gnh-web-seo-prerender',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const entry = bundle['index.html']
+      if (!entry || entry.type !== 'asset') this.error('SEO prerender: index.html missing from bundle')
+      const shell = String(entry.source)
+      const emit = (fileName: string, source: string) => this.emitFile({ type: 'asset', fileName, source })
+      const manifest = buildSeoManifest()
+      emit(manifest.appShell, injectIntoShell(shell, { head: appShellHead() }))
+      emit(manifest.notFound, injectIntoShell(shell, { head: notFoundHead(), css: SEO_PAGE_CSS, body: renderNotFoundBody() }))
+      for (const page of SEO_PAGES) {
+        const html = injectIntoShell(shell, { head: pageHead(page), css: SEO_PAGE_CSS, body: renderSeoPageBody(page) })
+        const fileName = prerenderFileForPath(page.path)
+        if (fileName === 'index.html') entry.source = html
+        else emit(fileName, html)
+      }
+      emit('robots.txt', buildRobotsTxt())
+      emit('sitemap.xml', buildSitemapXml())
+      emit(SEO_MANIFEST_FILE, `${JSON.stringify(manifest, null, 2)}\n`)
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const isWeb = mode === 'web'
@@ -47,6 +92,7 @@ export default defineConfig(({ mode }) => {
             .replace('</head>', `${tags}\n  </head>`)
         },
       },
+      ...(isWeb ? [webSeoPrerender()] : []),
     ],
     build: {
       target: 'es2018',

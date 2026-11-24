@@ -1,4 +1,4 @@
-﻿/* Full-bleed portal with exact ASSET_MAP ratios — no cover/crop/zoom. */
+/* Full-bleed portal with exact ASSET_MAP ratios — no cover/crop/zoom. */
 .gnh-home-ref .hero.gnh-asset-hero {
   height: auto;
   min-height: 0;
@@ -92,7 +92,7 @@
     display: none !important;
   }
 
-  .gnh-home-ref .hero.gnh-asset-hero h1 {
+  .gnh-home-ref .hero.gnh-asset-hero .hero-logotype {
     order: 1;
     display: block;
     width: calc(100% - 32px);
@@ -108,13 +108,13 @@
     color: #f7f2ff;
   }
 
-  .gnh-home-ref .hero.gnh-asset-hero h1 span {
+  .gnh-home-ref .hero.gnh-asset-hero .hero-logotype span {
     display: inline;
     white-space: normal;
   }
 
-  .gnh-home-ref .hero.gnh-asset-hero h1 span:first-child,
-  .gnh-home-ref .hero.gnh-asset-hero h1 span:last-child {
+  .gnh-home-ref .hero.gnh-asset-hero .hero-logotype span:first-child,
+  .gnh-home-ref .hero.gnh-asset-hero .hero-logotype span:last-child {
     background: linear-gradient(100deg, #ffffff 0%, #f4eaff 42%, #e8d4ff 78%, #fff6ff 100%);
     background-clip: text;
     -webkit-background-clip: text;
@@ -263,7 +263,7 @@
     max-width: 520px;
   }
 
-  .gnh-home-ref .hero.gnh-asset-hero h1 {
+  .gnh-home-ref .hero.gnh-asset-hero .hero-logotype {
     font-size: clamp(48px, 3.8vw, 56px);
     font-weight: 800;
     line-height: 1.08;

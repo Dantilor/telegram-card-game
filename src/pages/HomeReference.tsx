@@ -408,11 +408,11 @@ function HomeReference({
             <div className="hero-shade" aria-hidden="true" />
             <div className="hero-inner wrap gnh-asset-hero__copy">
               <div className="hero-copy">
-                <h1>
+                <div className="hero-logotype">
                   <span>GameNight</span>
                   <span>Host</span>
-                </h1>
-                <p className="hero-subtitle">Твои игры. Твои правила.</p>
+                </div>
+                <h1 className="hero-subtitle">Игры для компании, друзей и незабываемых вечеров</h1>
                 <div className="hero-cta-row">
                   <Link
                     to="/games"

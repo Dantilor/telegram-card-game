@@ -38,14 +38,14 @@
 }
 
 @media (min-width: 761px) {
-  .gnh-home-ref .hero h1 span {
+  .gnh-home-ref .hero .hero-logotype span {
     background: linear-gradient(100deg, #cc9ff7 10%, #e5bcfa 55%, #f9ebca);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  .gnh-home-ref .hero h1 span + span::before {
+  .gnh-home-ref .hero .hero-logotype span + span::before {
     content: " ";
   }
 }
@@ -441,7 +441,7 @@
     max-width: none;
   }
 
-  .gnh-home-ref .hero h1,
+  .gnh-home-ref .hero .hero-logotype,
   .gnh-home-ref .hero-subtitle {
     max-width: 100%;
   }

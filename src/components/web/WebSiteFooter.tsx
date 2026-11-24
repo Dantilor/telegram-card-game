@@ -5,6 +5,15 @@ import { haptic } from '../../utils/telegram'
 import { GNH_OPERATOR } from '../../lib/gnhOperator'
 import './WebSiteFooter.css'
 
+/** Public SEO landings (src/seo/seoContent.ts); kept inline so the footer does not pull the SEO chunk. */
+const DISCOVER_LINKS = [
+  { to: '/discover/igry-dlya-kompanii', label: 'Игры для компании' },
+  { to: '/discover/mafiya-onlajn', label: 'Мафия онлайн' },
+  { to: '/discover/igry-dlya-dvoih', label: 'Игры для двоих' },
+  { to: '/discover/igry-dlya-vecherinki', label: 'Игры для вечеринки' },
+  { to: '/discover/associacii-alias', label: 'Ассоциации' },
+] as const
+
 export default function WebSiteFooter() {
   const legal = useLegal()
   if (!isWebShell()) return null
@@ -23,6 +32,13 @@ export default function WebSiteFooter() {
             <a href={GNH_OPERATOR.supportUrl} target="_blank" rel="noopener noreferrer" onClick={() => haptic('light')}>
               Связаться с поддержкой
             </a>
+          </nav>
+          <nav className="web-site-footer__help" aria-label="Подборки игр">
+            {DISCOVER_LINKS.map((link) => (
+              <Link key={link.to} to={link.to} onClick={() => haptic('light')}>
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
         <nav className="web-site-footer__nav" aria-label="Юридические ссылки">

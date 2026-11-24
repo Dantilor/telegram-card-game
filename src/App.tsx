@@ -86,6 +86,8 @@ const WebPurchaseRecover = lazy(() => import('./pages/WebPurchaseRecover'))
 const WebEmailConfirm = lazy(() => import('./pages/WebEmailConfirm'))
 const WebTelegramLink = lazy(() => import('./pages/WebTelegramLink'))
 const LegalDocumentPage = lazy(() => import('./pages/LegalDocumentPage'))
+const SeoLandingPage = lazy(() => import('./pages/SeoLandingPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 function DelayedFallback({ delayMs, children }: { delayMs: number; children: ReactNode }) {
   const [show, setShow] = useState(false)
@@ -116,6 +118,24 @@ function TelegramLinkStartRedirect() {
       cancelled = true
     }
   }, [navigate])
+  return null
+}
+
+/** WEB: title/description/canonical/robots/Open Graph follow client-side navigation. */
+function WebSeoHeadSync() {
+  const { pathname } = useLocation()
+  const [initialPathname] = useState(pathname)
+  useEffect(() => {
+    // The server already sent the right <head> for the landing URL; load the SEO chunk only on navigation.
+    if (pathname === initialPathname && document.head.querySelector('meta[data-gnh-seo="robots"]')) return
+    let cancelled = false
+    void import('./seo/seoHead').then(({ applyWebSeoHead }) => {
+      if (!cancelled) applyWebSeoHead(pathname)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [pathname, initialPathname])
   return null
 }
 
@@ -202,6 +222,7 @@ function App() {
   const routes = (
       <div className={`app${isReady ? ' is-ready' : ''}${isWebShell() ? ' app--web' : ''}`}>
         <TelegramLinkStartRedirect />
+        {isWebShell() ? <WebSeoHeadSync /> : null}
         <GameSessionLeaseHost />
         <Suspense
           fallback={
@@ -220,6 +241,8 @@ function App() {
         <Route path="/" element={<Home />} />
         {/* Mini App: keep /login as Home. WEB login is WebPurchaseRecover below. */}
         {!isWebShell() ? <Route path="/login" element={<Home />} /> : null}
+        {isWebShell() ? <Route path="/discover/:slug" element={<SeoLandingPage />} /> : null}
+        {isWebShell() ? <Route path="*" element={<NotFoundPage />} /> : null}
         <Route element={<WebInsideLayout />}>
         <Route path="/games" element={<Games />} />
         <Route path="/comics" element={<Comics />} />

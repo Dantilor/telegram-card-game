@@ -109,7 +109,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside {
   font-family: GNHInsideReference, "Segoe UI", Arial, sans-serif;
 }
 
-html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero h1 {
+html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero .hero-logotype {
   font-size: var(--web-hero-title);
   line-height: 1.12;
 }
@@ -383,7 +383,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content {
     max-width: min(520px, 48%);
   }
 
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero h1 {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero .hero-logotype {
     font-size: clamp(44px, 3.5vw, 52px);
   }
 
@@ -1354,7 +1354,7 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-asset-hero__visual {
     display: none !important;
   }
 
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-logotype {
     order: 1;
     width: calc(100% - 32px) !important;
     max-width: none !important;
@@ -1366,8 +1366,8 @@ html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .gnh-asset-hero__visual {
     color: #f7f2ff;
   }
 
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:first-child,
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:last-child {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-logotype span:first-child,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-logotype span:last-child {
     background: linear-gradient(100deg, #ffffff 0%, #f4eaff 42%, #e8d4ff 78%, #fff6ff 100%) !important;
     background-clip: text !important;
     -webkit-background-clip: text !important;
@@ -2621,7 +2621,7 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--restore
     text-align: left;
   }
 
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-logotype {
     font-size: clamp(48px, 3.8vw, 56px) !important;
     font-weight: 800;
     line-height: 1.08 !important;
@@ -2629,8 +2629,8 @@ html[data-gnh-shell="web"] .premium-overlay__dock .premium-overlay__btn--restore
     color: #f8f4ff;
   }
 
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:first-child,
-  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero h1 span:last-child {
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-logotype span:first-child,
+  html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .hero.gnh-asset-hero .hero-logotype span:last-child {
     background: linear-gradient(100deg, #ffffff 0%, #f3e8ff 40%, #e6d2ff 72%, #fff8ff 100%) !important;
     background-clip: text !important;
     -webkit-background-clip: text !important;

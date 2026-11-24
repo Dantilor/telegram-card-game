@@ -45,7 +45,7 @@
 .gnh-home-ref .hero-inner{height:100%;display:flex;align-items:center;padding-left:32px}
 .gnh-home-ref .hero-copy{padding-bottom:7px;position:relative;animation:gnh-home-rise-in .65s var(--ease) both}
 .gnh-home-ref .eyebrow{display:block;letter-spacing:7px;font-size:13px;font-weight:500;margin-bottom:9px;text-shadow:0 2px 8px #2d2141}
-.gnh-home-ref .hero h1{font-size:clamp(47px,4.65vw,70px);font-weight:700;line-height:1.12;letter-spacing:-2px;background:linear-gradient(100deg,#cc9ff7 10%,#e5bcfa 55%,#f9ebca);background-clip:text;-webkit-background-clip:text;color:transparent;width:max-content;max-width:100%}
+.gnh-home-ref .hero .hero-logotype{font-size:clamp(47px,4.65vw,70px);font-weight:700;line-height:1.12;letter-spacing:-2px;background:linear-gradient(100deg,#cc9ff7 10%,#e5bcfa 55%,#f9ebca);background-clip:text;-webkit-background-clip:text;color:transparent;width:max-content;max-width:100%}
 .gnh-home-ref .hero-subtitle{font-size:clamp(24px,2.5vw,36px);line-height:1.3;letter-spacing:-.5px;margin-top:7px;font-weight:400}
 .gnh-home-ref .hero-description{font-size:clamp(14px,1.32vw,19px);line-height:1.25;margin-top:12px;text-shadow:0 2px 12px #24123388}
 .gnh-home-ref .mobile-copy{display:none}
@@ -142,7 +142,7 @@
 .gnh-home-ref .hero{height:345px}
 .gnh-home-ref .hero-inner{padding-left:25px}
 .gnh-home-ref .hero-art,.gnh-home-ref .hero-shade{top:-67px}
-.gnh-home-ref .hero h1{font-size:54px;letter-spacing:-1.5px}
+.gnh-home-ref .hero .hero-logotype{font-size:54px;letter-spacing:-1.5px}
 .gnh-home-ref .hero-subtitle{font-size:29px}
 .gnh-home-ref .hero-description{font-size:16px}
 .gnh-home-ref .eyebrow{font-size:12px;letter-spacing:6px}
@@ -185,7 +185,7 @@
 .gnh-home-ref .profile-link{gap:6px}
 .gnh-home-ref .premium-button{padding:8px 15px}
 .gnh-home-ref .hero-inner{padding-left:15px}
-.gnh-home-ref .hero h1{font-size:49px}
+.gnh-home-ref .hero .hero-logotype{font-size:49px}
 .gnh-home-ref .hero-subtitle{font-size:27px}
 .gnh-home-ref .hero-description{font-size:15px}
 .gnh-home-ref .category-heading{flex-basis:190px}
@@ -227,9 +227,9 @@
 .gnh-home-ref .hero-inner{padding:21px 11px 0;align-items:flex-start}
 .gnh-home-ref .hero-copy{padding:0}
 .gnh-home-ref .eyebrow{display:none}
-.gnh-home-ref .hero h1{display:flex;flex-direction:column;font-size:36px;line-height:.99;letter-spacing:-1px;background:none;color:#fff5e4;max-width:220px}
-.gnh-home-ref .hero h1 span:first-child{color:#c39af1}
-.gnh-home-ref .hero h1 span:last-child{white-space:pre-line}
+.gnh-home-ref .hero .hero-logotype{display:flex;flex-direction:column;font-size:36px;line-height:.99;letter-spacing:-1px;background:none;color:#fff5e4;max-width:220px}
+.gnh-home-ref .hero .hero-logotype span:first-child{color:#c39af1}
+.gnh-home-ref .hero .hero-logotype span:last-child{white-space:pre-line}
 .gnh-home-ref .hero-subtitle{font-size:16px;line-height:1.3;letter-spacing:-.2px;margin-top:9px}
 .gnh-home-ref .desktop-copy{display:none}
 .gnh-home-ref .mobile-copy{display:inline}
@@ -294,7 +294,7 @@
 .gnh-home-ref .brand>span{font-size:18px}
 .gnh-home-ref .brand img{width:38px;height:38px}
 .gnh-home-ref .hero-inner{padding-left:8px}
-.gnh-home-ref .hero h1{font-size:34px}
+.gnh-home-ref .hero .hero-logotype{font-size:34px}
 .gnh-home-ref .hero-subtitle{font-size:15px}
 .gnh-home-ref .hero-description{font-size:12px}
 .gnh-home-ref .section-heading h2{font-size:20px}

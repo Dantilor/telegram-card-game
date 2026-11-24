@@ -23,9 +23,6 @@ import { WebAuthGate } from './shell/WebAuthGate'
 import WebInstallBanner from './components/web/WebInstallBanner'
 import './App.css'
 
-const WebMetrikaBoot = lazy(() => import('./analytics/WebMetrikaBoot'))
-const WebMetrikaConsentBanner = lazy(() => import('./components/web/WebMetrikaConsentBanner'))
-
 const Home = lazy(() => import('./pages/Home'))
 const WebInsideLayout = lazy(() => import('./shell/WebInsideLayout'))
 
@@ -336,18 +333,8 @@ function App() {
     <PremiumProvider>
       <LegalProvider>
         {isWebShell() ? <WebAuthGate>{routes}</WebAuthGate> : routes}
-        {isWebShell() ? (
-          <Suspense fallback={null}>
-            <WebMetrikaBoot />
-          </Suspense>
-        ) : null}
         {isWebShell() ? <WebInstallBanner /> : null}
         {isWebShell() ? <WebWelcomeSheet /> : null}
-        {isWebShell() ? (
-          <Suspense fallback={null}>
-            <WebMetrikaConsentBanner />
-          </Suspense>
-        ) : null}
         <FirstUseSheet />
       </LegalProvider>
     </PremiumProvider>

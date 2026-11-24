@@ -41,7 +41,6 @@ async function quietOverlays(page: Page) {
     try {
       sessionStorage.setItem('gnh_legal_sheet_closed', '1')
       localStorage.setItem('gnh_web_welcome_v1', '1')
-      localStorage.setItem('gnh_metrika_consent_v1', 'denied')
     } catch {
       /* storage unavailable */
     }

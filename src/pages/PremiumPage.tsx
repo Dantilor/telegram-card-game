@@ -10,10 +10,6 @@ import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import WebPremiumExperience from './WebPremiumExperience'
-import {
-  clearMetrikaPaymentPending,
-  reportMetrikaPremiumPurchaseConfirmed,
-} from '../analytics/metrikaGoals'
 import '../styles/GamePageShell.css'
 import './PremiumPage.css'
 
@@ -54,8 +50,6 @@ function PremiumPage() {
           } catch {
             /* ignore */
           }
-          // Only counts when checkout marked a pending payment — not bare return_url.
-          void reportMetrikaPremiumPurchaseConfirmed()
           setPaymentReturnStatus('Premium активирован')
           paymentPollRef.current = false
           return
@@ -78,7 +72,6 @@ function PremiumPage() {
     try {
       const result = await refreshPremium()
       if (result?.isPremium) {
-        clearMetrikaPaymentPending()
         setRestoreStatus('✅ Покупки восстановлены')
         return
       }

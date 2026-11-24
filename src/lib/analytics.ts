@@ -58,21 +58,6 @@ function allowedProps(name: string, props: Record<string, unknown> | undefined):
 export function trackEvent(name: string, props?: Record<string, unknown>): void {
   const eventName = typeof name === 'string' ? name.trim() : ''
   if (!eventName || !Object.prototype.hasOwnProperty.call(ALLOWED_PROPS, eventName)) return
-
-  const web = isWebShell()
-  const cleaned = sanitizeProps(props)
-
-  // WEB Metrika goals use a separate consent gate (see src/analytics).
-  if (web) {
-    void import('../analytics/metrikaGoals')
-      .then(({ mirrorTrackEventToMetrika }) => {
-        mirrorTrackEventToMetrika(eventName, cleaned)
-      })
-      .catch(() => {
-        /* ignore */
-      })
-  }
-
   if (!canSendAnalytics(eventName)) return
 
   let base = ''
@@ -82,9 +67,10 @@ export function trackEvent(name: string, props?: Record<string, unknown>): void 
     return
   }
 
-  const eventProps = allowedProps(eventName, cleaned)
+  const eventProps = allowedProps(eventName, sanitizeProps(props))
   const body = JSON.stringify(eventProps ? { name: eventName, props: eventProps } : { name: eventName })
   const initData = getInitData()
+  const web = isWebShell()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...csrfHeadersForMutation('POST'),

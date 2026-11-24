@@ -795,6 +795,7 @@ export default function PremiumOverlay({
   const cardContent = checkoutOnly ? (
     <div
       className="premium-overlay__card premium-overlay__card--checkout-only premium-checkout"
+      data-testid="premium-checkout"
       onClick={asPage ? undefined : (e: React.MouseEvent) => e.stopPropagation()}
     >
       <div className="premium-checkout__top">
@@ -818,7 +819,8 @@ export default function PremiumOverlay({
           </button>
         )}
       </div>
-      <div className="premium-checkout__scroll">
+      {/* Single scroll owner: plan + offer + email. CTAs stay in a fixed footer below. */}
+      <div className="premium-checkout__scroll" data-testid="premium-checkout-scroll">
         <header className="premium-checkout__head">
           <p className="premium-checkout__eyebrow">GAMENIGHT HOST</p>
           <h2 id="premium-overlay-title" className="premium-checkout__title">
@@ -856,9 +858,9 @@ export default function PremiumOverlay({
             <p className="premium-overlay__error">Тариф не выбран</p>
           )}
           {offerBlock}
-          {payDock}
         </div>
       </div>
+      {payDock}
     </div>
   ) : (
     <div

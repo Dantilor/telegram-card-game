@@ -9,6 +9,10 @@ import { classifyReceipt, LegalClientError, submitNewPremiumOrder, userFacingLoa
 import type { PublicDocument } from '../legal/types'
 import { invalidateDocument, loadDocument } from '../legal/documentCache'
 import { trackEvent } from '../lib/analytics'
+import {
+  clearMetrikaPaymentPending,
+  reportMetrikaPremiumPurchaseConfirmed,
+} from '../analytics/metrikaGoals'
 import { apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import { useWebSession } from '../shell/WebSessionContext'
@@ -329,6 +333,8 @@ export default function PremiumOverlay({
     try {
       const result = await refresh()
       if (result?.isPremium) {
+        // Restore is not a new payment — do not attribute Metrika premium_purchase.
+        clearMetrikaPaymentPending()
         setRestoreToast('✅ Покупки восстановлены')
         setSuccess(true)
         setError(null)
@@ -452,6 +458,7 @@ export default function PremiumOverlay({
       }
       pollAbortRef.current?.()
       pollAbortRef.current = pollPremiumStatus(refresh, () => {
+        void reportMetrikaPremiumPurchaseConfirmed()
         setSuccess(true)
         setError(null)
         onBecamePremium?.()

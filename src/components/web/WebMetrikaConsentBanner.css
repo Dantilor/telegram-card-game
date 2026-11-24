@@ -1,0 +1,89 @@
+.web-metrika-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 85;
+  padding: 0 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.web-metrika-banner__card {
+  pointer-events: auto;
+  display: grid;
+  gap: 10px;
+  width: min(560px, 100%);
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 228, 255, 0.28);
+  background: linear-gradient(145deg, rgba(56, 34, 78, 0.96), rgba(34, 22, 52, 0.98));
+  box-shadow: 0 16px 40px rgba(20, 8, 36, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #fff8ff;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.web-metrika-banner__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.web-metrika-banner__text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(255, 248, 255, 0.78);
+}
+
+.web-metrika-banner__link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ffd6ff;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.web-metrika-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.web-metrika-banner__btn {
+  min-height: 40px;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.web-metrika-banner__btn--primary {
+  border: 1px solid rgba(255, 232, 255, 0.55);
+  background: linear-gradient(180deg, #f4b8ff, #d889f0);
+  color: #3a1848;
+}
+
+.web-metrika-banner__btn--quiet {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  color: rgba(255, 248, 255, 0.9);
+}
+
+@media (max-width: 420px) {
+  .web-metrika-banner__actions {
+    flex-direction: column;
+  }
+  .web-metrika-banner__btn {
+    width: 100%;
+  }
+}

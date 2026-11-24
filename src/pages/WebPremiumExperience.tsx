@@ -150,6 +150,9 @@ export default function WebPremiumExperience({ initialView = 'premium' }: Props)
     })
     setCheckoutOnly(true)
     setCheckoutPlanId(plan.id)
+    void import('../analytics/metrikaGoals').then(({ reachMetrikaGoal }) =>
+      reachMetrikaGoal('premium_checkout', { planId: plan.id })
+    )
   }, [apiPlans])
 
   const onStartGame = useCallback(

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { buildAgreementBody, buildChannelActionBody, LegalClientError, userFacingLoadError } from '../legal/client'
 import { cachedDocument, invalidateDocument, loadDocument } from '../legal/documentCache'
@@ -6,7 +6,10 @@ import { blockAnalyticsTransport } from '../legal/analyticsGate'
 import { useLegal } from '../legal/LegalProvider'
 import { useTelegramBack } from '../legal/useTelegramBack'
 import type { PublicDocument } from '../legal/types'
+import { isWebShell } from '../config/shell'
 import './LegalDocumentView.css'
+
+const MetrikaConsentControls = lazy(() => import('./web/MetrikaConsentControls'))
 
 const SHEET_KEY = 'gnh_legal_sheet_closed'
 
@@ -126,7 +129,7 @@ const CONSENT_LABELS: Record<string, string> = {
   marketing_pd: 'Данные для рассылки в Telegram',
 }
 
-/** Keep existing grants readable and revocable, without promoting unused opt-ins. */
+/** Keep existing grants readable and revocable; WEB adds Metrika controls. */
 export function ConsentsPanel() {
   const legal = useLegal()
   const [busy, setBusy] = useState<string | null>(null)
@@ -134,7 +137,9 @@ export function ConsentsPanel() {
   const grants = legal.records?.consents.filter((record) =>
     CONSENT_LABELS[record.documentId] && (record.active || record.state === 'granted')
   ) ?? []
-  if (legal.status !== 'ready' || grants.length === 0) return null
+  const web = isWebShell()
+  if (legal.status !== 'ready') return null
+  if (!web && grants.length === 0) return null
 
   const withdraw = async (id: string, channel: string | null) => {
     if (busy) return
@@ -149,12 +154,17 @@ export function ConsentsPanel() {
   }
 
   return (
-    <details className="profile-menu profile-privacy">
+    <details className="profile-menu profile-privacy" open={web || undefined}>
       <summary className="profile-privacy__summary">
-        <span><strong>Настройки приватности</strong><small>Ранее выданные согласия</small></span>
+        <span><strong>Настройки приватности</strong><small>{web ? 'Аналитика и ранее выданные согласия' : 'Ранее выданные согласия'}</small></span>
         <span className="profile-privacy__chevron" aria-hidden="true">⌄</span>
       </summary>
       <div className="profile-consents">
+        {web ? (
+          <Suspense fallback={null}>
+            <MetrikaConsentControls />
+          </Suspense>
+        ) : null}
         {grants.map((record) => {
           const key = `${record.documentId}:${record.channel ?? ''}`
           return <div key={key} className="profile-consents__block">

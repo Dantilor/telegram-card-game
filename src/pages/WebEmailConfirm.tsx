@@ -37,6 +37,9 @@ export default function WebEmailConfirm() {
       const completed = await completeEmailMagicLink(token)
       await webSession.refreshSession()
       const premium = await refreshPremium()
+      void import('../analytics/metrikaGoals').then(({ reachMetrikaGoal }) =>
+        reachMetrikaGoal('account_login')
+      )
       setDone(true)
       const toast = premium?.isPremium
         ? 'Готово. Premium и профиль восстановлены.'

@@ -12,6 +12,7 @@ import {
 import { METRIKA_COUNTER_ID, METRIKA_SCRIPT_URL } from './metrikaConfig'
 import {
   markMetrikaPaymentPending,
+  PREMIUM_PURCHASE_METRIKA_ENABLED,
   reportMetrikaPremiumPurchaseConfirmed,
   resetMetrikaGoalsForTests,
   mirrorTrackEventToMetrika,
@@ -38,14 +39,13 @@ describe('yandexMetrika consent gate', () => {
     expect(isMetrikaInitialized()).toBe(false)
   })
 
-  it('loads official tag.js once after grant and inits with defer + no webvisor', async () => {
+  it('loads official tag.js once after grant and inits without webvisor/clickmap/trackLinks', async () => {
     setMetrikaConsent('granted')
     const calls: unknown[][] = []
     window.ym = ((...args: unknown[]) => {
       calls.push(args)
     }) as typeof window.ym
 
-    // Pretend script already present to avoid network
     const script = document.createElement('script')
     script.dataset.gnhMetrika = '1'
     document.head.appendChild(script)
@@ -57,12 +57,14 @@ describe('yandexMetrika consent gate', () => {
     const init = calls[0]?.[2] as Record<string, unknown>
     expect(init.defer).toBe(true)
     expect(init.webvisor).toBe(false)
+    expect(init.clickmap).toBe(false)
+    expect(init.trackLinks).toBe(false)
 
     await enableYandexMetrika()
     expect(calls.filter((c) => c[1] === 'init')).toHaveLength(1)
   })
 
-  it('sends a single SPA hit per path and reachGoal without secrets', async () => {
+  it('sends a single SPA hit per path and scrubbed reachGoal params', async () => {
     setMetrikaConsent('granted')
     const calls: unknown[][] = []
     window.ym = ((...args: unknown[]) => {
@@ -87,19 +89,31 @@ describe('yandexMetrika consent gate', () => {
     expect(goals[0]?.[3]).toEqual({ gameId: 'quiz' })
   })
 
-  it('stops after deny and removes script', async () => {
+  it('on revoke calls destruct, sets opt-out, removes script, and blocks further hits', async () => {
     setMetrikaConsent('granted')
+    const calls: unknown[][] = []
+    window.ym = ((...args: unknown[]) => {
+      calls.push(args)
+    }) as typeof window.ym
     const script = document.createElement('script')
     script.dataset.gnhMetrika = '1'
     script.src = METRIKA_SCRIPT_URL
     document.head.appendChild(script)
     await enableYandexMetrika()
+
+    setMetrikaConsent('denied')
     disableYandexMetrika()
     expect(document.querySelector('script[data-gnh-metrika="1"]')).toBeNull()
     expect(isMetrikaInitialized()).toBe(false)
+    expect(calls.some((c) => c[1] === 'destruct')).toBe(true)
+    expect((window as unknown as Record<string, unknown>)[`disableYaCounter${METRIKA_COUNTER_ID}`]).toBe(true)
+
+    hitYandexMetrika('/games')
+    expect(calls.filter((c) => c[1] === 'hit')).toHaveLength(0)
   })
 
-  it('does not count premium_purchase on return without pending checkout', async () => {
+  it('does not emit premium_purchase while the goal is disabled', async () => {
+    expect(PREMIUM_PURCHASE_METRIKA_ENABLED).toBe(false)
     setMetrikaConsent('granted')
     const calls: unknown[][] = []
     window.ym = ((...args: unknown[]) => {
@@ -110,14 +124,10 @@ describe('yandexMetrika consent gate', () => {
     document.head.appendChild(script)
     await enableYandexMetrika()
 
-    await reportMetrikaPremiumPurchaseConfirmed()
-    expect(calls.some((c) => c[1] === 'reachGoal' && c[2] === 'premium_purchase')).toBe(false)
-
     markMetrikaPaymentPending()
     await reportMetrikaPremiumPurchaseConfirmed()
     await reportMetrikaPremiumPurchaseConfirmed()
-    const purchases = calls.filter((c) => c[1] === 'reachGoal' && c[2] === 'premium_purchase')
-    expect(purchases).toHaveLength(1)
+    expect(calls.some((c) => c[1] === 'reachGoal' && c[2] === 'premium_purchase')).toBe(false)
   })
 
   it('mirrors start_game and yookassa_redirect without leaking props', async () => {

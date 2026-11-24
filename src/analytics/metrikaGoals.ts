@@ -1,6 +1,9 @@
 /**
- * Typed Metrika goals + purchase dedupe.
+ * Typed Metrika goals + purchase pending helpers.
  * Never pass email, telegram id, tokens, payment ids, or form contents.
+ *
+ * premium_purchase is intentionally disabled until the API can prove a NEW grant
+ * (see PREMIUM_PURCHASE_METRIKA_ENABLED and docs/legal-drafts/...).
  */
 
 import { isMetrikaGoal, METRIKA_SAFE_ID, type MetrikaGoal } from './metrikaConfig'
@@ -8,8 +11,15 @@ import { isMetrikaConsentGranted } from './metrikaConsent'
 import { enableYandexMetrika, reachYandexGoal } from './yandexMetrika'
 
 const PAY_PENDING_KEY = 'gnh_metrika_pay_pending'
-const PURCHASE_SENT_KEY = 'gnh_metrika_purchase_sent'
 const PAY_PENDING_MAX_MS = 6 * 60 * 60 * 1000
+
+/**
+ * Client today only sees boolean Premium + activeUntil.
+ * That cannot distinguish: already-premium before checkout, restore, failed payment
+ * with leftover pending, or a genuine new webhook grant.
+ * Re-enable only after a client-safe "new entitlement bump" (no paymentId/email).
+ */
+export const PREMIUM_PURCHASE_METRIKA_ENABLED = false
 
 const sentGoals = new Set<string>()
 
@@ -26,6 +36,7 @@ function safeParams(input?: Record<string, unknown>): Record<string, string> | u
 
 export async function reachMetrikaGoal(goal: MetrikaGoal, params?: Record<string, unknown>): Promise<void> {
   if (!isMetrikaConsentGranted()) return
+  if (goal === 'premium_purchase' && !PREMIUM_PURCHASE_METRIKA_ENABLED) return
   try {
     await enableYandexMetrika()
     reachYandexGoal(goal, safeParams(params))
@@ -78,32 +89,17 @@ function hasFreshPaymentPending(): boolean {
   }
 }
 
-function alreadySentPurchase(): boolean {
-  try {
-    return Boolean(sessionStorage.getItem(PURCHASE_SENT_KEY))
-  } catch {
-    return false
-  }
-}
-
-function markPurchaseSent(): void {
-  try {
-    sessionStorage.setItem(PURCHASE_SENT_KEY, String(Date.now()))
-    sessionStorage.removeItem(PAY_PENDING_KEY)
-  } catch {
-    /* ignore */
-  }
-}
-
 /**
- * Fire premium_purchase only after confirmed Premium AND a checkout we started.
- * Ignores restore-only refreshes and bare return_url reloads without pending intent.
+ * Intended for a confirmed NEW payment only.
+ * Currently a no-op (clears pending) while PREMIUM_PURCHASE_METRIKA_ENABLED is false.
  */
 export async function reportMetrikaPremiumPurchaseConfirmed(): Promise<void> {
+  const hadPending = hasFreshPaymentPending()
+  clearMetrikaPaymentPending()
+  if (!PREMIUM_PURCHASE_METRIKA_ENABLED) return
   if (!isMetrikaConsentGranted()) return
-  if (alreadySentPurchase()) return
-  if (!hasFreshPaymentPending()) return
-  markPurchaseSent()
+  if (!hadPending) return
+  // When re-enabled: require an API-proven new grant before this line.
   await reachMetrikaGoal('premium_purchase')
 }
 
@@ -127,11 +123,6 @@ export function mirrorTrackEventToMetrika(name: string, props?: Record<string, u
 export function resetMetrikaGoalsForTests(): void {
   sentGoals.clear()
   clearMetrikaPaymentPending()
-  try {
-    sessionStorage.removeItem(PURCHASE_SENT_KEY)
-  } catch {
-    /* ignore */
-  }
 }
 
 export function assertGoalName(name: string): MetrikaGoal {

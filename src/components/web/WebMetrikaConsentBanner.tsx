@@ -67,7 +67,7 @@ export default function WebMetrikaConsentBanner() {
     setMetrikaConsent('denied')
     setConsent('denied')
     setVisible(false)
-    disableYandexMetrika()
+    disableYandexMetrika({ reload: true })
   }, [])
 
   if (!isWebShell() || !visible || consent !== 'unknown') return null

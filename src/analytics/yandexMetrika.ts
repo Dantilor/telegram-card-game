@@ -1,6 +1,7 @@
 /**
  * Async Yandex Metrika loader for WEB.
- * Script and hits run only after consent. No Webvisor / form recording.
+ * Script and hits run only after consent. No Webvisor / form recording / clickmap / trackLinks
+ * until URL sensitivity audit is complete (tag.js otherwise may see location.href with secrets).
  * Failures (blocked network, adblock) never throw into the app.
  */
 
@@ -26,6 +27,18 @@ let initialized = false
 let stopped = false
 let lastHitKey: string | null = null
 let firstHitDone = false
+
+function disableCounterFlagKey(): string {
+  return `disableYaCounter${METRIKA_COUNTER_ID}`
+}
+
+function setOfficialOptOut(disabled: boolean): void {
+  try {
+    ;(window as unknown as Record<string, unknown>)[disableCounterFlagKey()] = disabled
+  } catch {
+    /* ignore */
+  }
+}
 
 function ensureYmStub(): YmStub {
   if (typeof window.ym === 'function') return window.ym
@@ -70,7 +83,6 @@ export function loadYandexMetrika(): Promise<void> {
       script.dataset.gnhMetrika = '1'
       script.onload = () => resolve()
       script.onerror = () => {
-        // Metrika unreachable — keep the app working; clear promise so a later grant can retry.
         scriptPromise = null
         resolve()
       }
@@ -88,13 +100,15 @@ export function loadYandexMetrika(): Promise<void> {
 export async function enableYandexMetrika(): Promise<void> {
   if (!isMetrikaConsentGranted()) return
   stopped = false
+  setOfficialOptOut(false)
   await loadYandexMetrika()
   if (stopped || !isMetrikaConsentGranted()) return
   if (!initialized) {
     callYm('init', {
       defer: true,
-      clickmap: true,
-      trackLinks: true,
+      // Off until URL/PII audit: built-in handlers can see raw location.href / link hrefs.
+      clickmap: false,
+      trackLinks: false,
       accurateTrackBounce: true,
       webvisor: false,
       ecommerce: false,
@@ -140,25 +154,66 @@ export function reachYandexGoal(goal: MetrikaGoal, params?: Record<string, strin
   else callYm('reachGoal', goal)
 }
 
-/** Stop sending. Does not claim to erase Yandex-side cookies (user must clear site data). */
-export function disableYandexMetrika(): void {
+export type DisableMetrikaOptions = {
+  /** After revoke, reload so in-memory tag handlers cannot keep sending. */
+  reload?: boolean
+}
+
+/**
+ * Hard stop: official opt-out flag, ym('destruct'), replace ym with no-op, remove script.
+ * Does not claim to erase Yandex-side cookies already set; reload recommended after revoke.
+ */
+export function disableYandexMetrika(options?: DisableMetrikaOptions): void {
   stopped = true
   initialized = false
   firstHitDone = false
   lastHitKey = null
   scriptPromise = null
+
+  setOfficialOptOut(true)
+
+  try {
+    const ym = window.ym
+    if (typeof ym === 'function') {
+      ym(METRIKA_COUNTER_ID, 'destruct')
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const silent: YmStub = function ym() {
+      /* swallow post-revoke calls */
+    }
+    silent.a = []
+    silent.l = Date.now()
+    window.ym = silent
+  } catch {
+    /* ignore */
+  }
+
   try {
     document.querySelectorAll('script[data-gnh-metrika="1"]').forEach((node) => node.remove())
   } catch {
     /* ignore */
   }
-  // Leave window.ym stub in place so late callbacks no-op safely via stopped flag.
+
+  if (options?.reload) {
+    try {
+      window.setTimeout(() => {
+        window.location.reload()
+      }, 0)
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 /** Test helper */
 export function resetYandexMetrikaForTests(): void {
   disableYandexMetrika()
   stopped = false
+  setOfficialOptOut(false)
   try {
     delete window.ym
   } catch {

@@ -19,12 +19,13 @@ export default function MetrikaConsentControls() {
   const deny = () => {
     setMetrikaConsent('denied')
     setState('denied')
-    disableYandexMetrika()
+    // Reload clears in-memory tag handlers after destruct + official opt-out.
+    disableYandexMetrika({ reload: true })
   }
 
   const statusText =
     state === 'granted'
-      ? 'Яндекс Метрика включена. Вебвизор выключен.'
+      ? 'Яндекс Метрика включена. Вебвизор, карта кликов и слежение за ссылками выключены.'
       : state === 'denied'
         ? 'Яндекс Метрика выключена.'
         : 'Решение ещё не выбрано.'

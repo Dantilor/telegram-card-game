@@ -8,6 +8,8 @@ import { legalApiBase } from '../legal/client'
 import { getInitData } from './telegram'
 import { isWebShell } from '../config/shell'
 import { csrfHeadersForMutation } from './csrf'
+import { isWebMetrikaFeatureEnabled } from '../analytics/metrikaFeature'
+import { mirrorTrackEventToMetrika } from '../analytics/metrikaGoals'
 
 const ALLOWED_PROPS: Record<string, string[]> = {
   app_open: [],
@@ -58,6 +60,9 @@ function allowedProps(name: string, props: Record<string, unknown> | undefined):
 export function trackEvent(name: string, props?: Record<string, unknown>): void {
   const eventName = typeof name === 'string' ? name.trim() : ''
   if (!eventName || !Object.prototype.hasOwnProperty.call(ALLOWED_PROPS, eventName)) return
+  // Third-party analytics has separate, explicit consent and is independent of
+  // the first-party Telegram /api/events consent. Neither can bypass the other.
+  if (isWebMetrikaFeatureEnabled()) mirrorTrackEventToMetrika(eventName, props)
   if (!canSendAnalytics(eventName)) return
 
   let base = ''

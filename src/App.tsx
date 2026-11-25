@@ -21,6 +21,9 @@ import {
 import GameSessionLimitModal from './components/GameSessionLimitModal'
 import { WebAuthGate } from './shell/WebAuthGate'
 import WebInstallBanner from './components/web/WebInstallBanner'
+import WebMetrikaBoot from './analytics/WebMetrikaBoot'
+import WebMetrikaConsentBanner from './components/web/WebMetrikaConsentBanner'
+import { isWebMetrikaFeatureEnabled } from './analytics/metrikaFeature'
 import './App.css'
 
 const Home = lazy(() => import('./pages/Home'))
@@ -223,6 +226,7 @@ function App() {
       <div className={`app${isReady ? ' is-ready' : ''}${isWebShell() ? ' app--web' : ''}`}>
         <TelegramLinkStartRedirect />
         {isWebShell() ? <WebSeoHeadSync /> : null}
+        {isWebMetrikaFeatureEnabled() ? <WebMetrikaBoot /> : null}
         <GameSessionLeaseHost />
         <Suspense
           fallback={
@@ -334,6 +338,7 @@ function App() {
       <LegalProvider>
         {isWebShell() ? <WebAuthGate>{routes}</WebAuthGate> : routes}
         {isWebShell() ? <WebInstallBanner /> : null}
+        {isWebMetrikaFeatureEnabled() ? <WebMetrikaConsentBanner /> : null}
         {isWebShell() ? <WebWelcomeSheet /> : null}
         <FirstUseSheet />
       </LegalProvider>

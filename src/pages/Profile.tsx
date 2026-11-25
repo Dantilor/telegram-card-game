@@ -5,6 +5,8 @@ import { usePremium } from '../contexts/PremiumContext'
 import { getTelegramWebApp } from '../lib/telegram'
 import { PROFILE_DOCUMENTS } from '../legal/catalog'
 import { ConsentsPanel } from '../components/LegalChoices'
+import { isWebMetrikaFeatureEnabled } from '../analytics/metrikaFeature'
+import MetrikaConsentControls from '../components/web/MetrikaConsentControls'
 import { useLegal } from '../legal/LegalProvider'
 import { haptic, getTgUser, getInitData } from '../utils/telegram'
 import HomeButton from '../components/HomeButton'
@@ -1106,6 +1108,7 @@ function Profile() {
         </section>
 
         <ConsentsPanel />
+        {web && isWebMetrikaFeatureEnabled() ? <MetrikaConsentControls /> : null}
 
         {web && (
           <section className="profile-menu" aria-label="Сеанс" data-testid="profile-signout">

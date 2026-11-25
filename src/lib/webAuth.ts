@@ -353,6 +353,55 @@ export async function saveProfileContactEmail(email: string): Promise<{ ok: bool
   return (await res.json()) as { ok: boolean; mode: 'saved' | 'verified' }
 }
 
+
+export type EmailCodeChallenge = {
+  ok: boolean
+  mode: 'code_sent'
+  challengeId: string
+  expiresAt: string
+  /** Development/test only. Never returned in production. */
+  code?: string
+}
+
+async function emailCodeApi(path: string, body: Record<string, string>): Promise<any> {
+  const csrf = readCsrfToken()
+  const res = await fetch(`${apiBase()}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = new Error('email_code_failed') as Error & { status?: number; code?: string }
+    err.status = res.status
+    try {
+      const payload = await res.json() as { code?: string }
+      if (payload && typeof payload.code === 'string') err.code = payload.code
+    } catch {
+      /* ignore */
+    }
+    throw err
+  }
+  return res.json()
+}
+
+/** One-time six-digit code for the same WEB session/browser/PWA. */
+export async function startEmailCode(email: string): Promise<EmailCodeChallenge> {
+  return emailCodeApi('/api/web/email/code/start', { email }) as Promise<EmailCodeChallenge>
+}
+
+export async function completeEmailCode(challengeId: string, code: string): Promise<{
+  ok: boolean; webAccountId: string; email: string
+}> {
+  return emailCodeApi('/api/web/email/code/complete', { challengeId, code }) as Promise<{
+    ok: boolean; webAccountId: string; email: string
+  }>
+}
+
 /** Mails a one-time link (or reports the address is already ours). Never switches the session itself. */
 export async function startEmailBind(email: string): Promise<{
   ok: boolean

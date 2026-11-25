@@ -40,6 +40,7 @@ import {
   countRecentAnonAccounts,
   createAnonymousWebAccountSession,
   getTelegramPremium,
+  getOwnReceiptEmailHint,
   getWebAccountContact,
   getWebAccountPremium,
   grantWebEntitlement,
@@ -336,6 +337,7 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
   let email: string | null = null
   let emailVerified = false
   let emailPending = false
+  let receiptEmail: string | null = null
   if (auth.webAccountId) {
     const status = await getWebAccountPremium(auth.webAccountId, undefined, {
       deviceTokenHash: readDeviceTokenHash(req),
@@ -349,6 +351,7 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
     email = contact.email
     emailVerified = contact.emailVerified
     emailPending = contact.emailPending
+    if (!emailVerified) receiptEmail = await getOwnReceiptEmailHint(auth.webAccountId)
   }
   res.status(200).json({
     ok: true,
@@ -362,6 +365,7 @@ router.get('/web/session/me', requireWebSession(), async (req: AuthedRequest, re
     email,
     emailVerified,
     emailPending,
+    receiptEmail,
     premium,
   })
 })

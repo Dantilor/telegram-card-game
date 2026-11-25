@@ -761,42 +761,111 @@ function cookieHeaders(setCookie: string[]) {
   return { Cookie: `${SESSION_COOKIE}=${sid}; ${CSRF_COOKIE}=${csrf}`, 'X-CSRF-Token': csrf }
 }
 
-test('Return from YooKassa in a new session: saving the receipt email in profile restores the paid account', async () => {
-  const buyer = await webBuyer('premium_web_1m')
+async function sessionMe(headers: Record<string, string>) {
+  const res = await realFetch(`${baseUrl}/api/web/session/me`, { headers })
+  return (await res.json()) as {
+    webAccountId: string
+    email: string | null
+    emailVerified: boolean
+    receiptEmail: string | null
+    premium?: { isPremium: boolean; activeUntil: string | null }
+  }
+}
+
+async function guestPurchase(planId: string, email: string) {
+  const buyer = await webBuyer(planId)
   const created = await post(
     '/api/payments/yookassa/create',
-    { planId: buyer.planId, offerAcceptanceId: buyer.evidenceId, email: 'returner@example.com' },
+    { planId, offerAcceptanceId: buyer.evidenceId, email },
     buyer.headers
   )
   assert.equal(created.status, 200, JSON.stringify(created.body))
   const paymentId = String(created.body.paymentId)
   markPaid(paymentId)
   assert.equal((await webhook('payment.succeeded', { id: paymentId, status: 'succeeded' })).status, 200)
-  const [ent] = await webEntitlements(buyer.webAccountId)
-  assert.equal(ent?.active, true)
+  const me = await sessionMe(buyer.headers)
+  assert.equal(me.premium?.isPremium, true, 'Premium works right away in the paying guest session')
+  return { buyer, paymentId, activeUntil: me.premium!.activeUntil! }
+}
+
+async function untilOf(paymentId: string) {
+  const r = await run(`SELECT active_until FROM web_entitlements WHERE payment_id = $1`, [paymentId])
+  return new Date(r.rows[0]!.active_until as Date).toISOString()
+}
+
+test('E2E: guest buys twice with a receipt email, new browser confirms it → every purchase in one account', async () => {
+  const email = 'returner@example.com'
+  const first = await guestPurchase('premium_web_1m', email)
+  const second = await guestPurchase('premium_web_3m', 'Returner@Example.com') // another browser, same mailbox
+  assert.notEqual(first.buyer.webAccountId, second.buyer.webAccountId)
+  assert.equal((await sessionMe(first.buyer.headers)).receiptEmail, email, 'profile can prefill the receipt email')
   const before = await counts()
 
-  const fresh = await webBuyer('premium_web_1m') // cookies lost on return: new anonymous account
-  const bound = await rawPost('/api/web/email/bind/start', { email: 'Returner@Example.com' }, fresh.headers)
+  const fresh = await webBuyer('premium_web_1m') // new browser: new anonymous account
+  assert.equal((await sessionMe(fresh.headers)).premium?.isPremium, false)
+  assert.equal((await sessionMe(fresh.headers)).receiptEmail, null)
+
+  const bound = await rawPost('/api/web/email/bind/start', { email }, fresh.headers)
   assert.equal(bound.status, 200, JSON.stringify(bound.body))
   assert.equal(bound.body.mode, 'verify_sent')
   assert.equal('webAccountId' in bound.body, false, 'no account id leaks')
   assert.equal(bound.setCookie.some((c) => c.startsWith(`${SESSION_COOKIE}=`)), false, 'no session from the address alone')
-
+  assert.equal((await sessionMe(fresh.headers)).premium?.isPremium, false, 'nothing before the mailbox is confirmed')
   const unknown = await rawPost('/api/web/email/bind/start', { email: 'someone-new@example.com' }, fresh.headers)
   assert.deepEqual(Object.keys(unknown.body).sort(), Object.keys(bound.body).sort(), 'same answer for unknown email')
 
   const confirmed = await rawPost('/api/web/email/confirm', { token: bound.body.token })
   assert.equal(confirmed.status, 200, JSON.stringify(confirmed.body))
-  assert.equal(confirmed.body.webAccountId, buyer.webAccountId)
-  const restored = cookieHeaders(confirmed.setCookie)
+  assert.equal(confirmed.body.webAccountId, fresh.webAccountId, 'the current guest became the account of this email')
+  const main = cookieHeaders(confirmed.setCookie)
+  let me = await sessionMe(main)
+  assert.equal(me.emailVerified, true)
+  assert.equal(me.premium?.isPremium, true)
+  assert.equal(me.premium?.activeUntil, second.activeUntil, 'longest of the two purchases, terms not summed')
 
-  // The auto-confirm flow under the restored session sees the purchase as already granted.
-  const again = await post('/api/yookassa/confirm', { paymentId }, restored)
-  assert.equal(again.status, 200, JSON.stringify(again.body))
-  assert.equal(again.body.alreadyDone, true)
+  // Another device signs into the same account; nothing is granted again.
+  const other = await webBuyer('premium_web_1m')
+  const otherBind = await rawPost('/api/web/email/bind/start', { email }, other.headers)
+  const otherDone = await rawPost('/api/web/email/confirm', { token: otherBind.body.token })
+  assert.equal(otherDone.body.webAccountId, fresh.webAccountId)
+  assert.deepEqual(await counts(), before, 'no new payments, entitlements or subscriptions')
 
-  const after = await counts()
-  assert.deepEqual(after, before, 'no new payments, entitlements or subscriptions')
-  assert.equal((await webEntitlements(fresh.webAccountId)).length, 0, 'Premium is not copied to the new account')
+  // Payment owner checks stay with the paying account.
+  const foreign = await post('/api/yookassa/confirm', { paymentId: first.paymentId }, main)
+  assert.equal(foreign.body.ok === true && !foreign.body.alreadyDone, false, 'no grant through another account')
+  assert.deepEqual(await counts(), before)
+
+  // Full refund of the longer purchase via the webhook: access falls back to the other one.
+  store.refunds.set('rf-e2e-1', {
+    shop: WEB_SHOP.id,
+    object: { id: 'rf-e2e-1', status: 'succeeded', payment_id: second.paymentId, amount: { value: '499.00', currency: 'RUB' } },
+  })
+  assert.equal((await webhook('refund.succeeded', { id: 'rf-e2e-1', payment_id: second.paymentId, status: 'succeeded' })).status, 200)
+  me = await sessionMe(main)
+  assert.equal(me.premium?.isPremium, true)
+  assert.equal(me.premium?.activeUntil, first.activeUntil)
+  assert.equal((await sessionMe(second.buyer.headers)).premium?.isPremium, false, 'refund applies in the paying session too')
+
+  // A new purchase in the main account starts after the Premium it already sees.
+  const p = await plan('premium_web_1m')
+  const doc = await activeOffer()
+  const ev = await run(
+    `INSERT INTO web_legal_evidence (subject_web_account_id, action, document_id, document_version, document_sha256,
+       context, request_id)
+     VALUES ($1::uuid, 'accept_offer', 'offer', $2, $3, $4::jsonb, $5) RETURNING id`,
+    [fresh.webAccountId, doc.version, doc.sha256, JSON.stringify({ ...p, currency: 'RUB' }), `web-${++seq}`]
+  )
+  const created = await post(
+    '/api/payments/yookassa/create',
+    { planId: p.planId, offerAcceptanceId: Number(ev.rows[0]!.id), email },
+    main
+  )
+  assert.equal(created.status, 200, JSON.stringify(created.body))
+  const thirdId = String(created.body.paymentId)
+  markPaid(thirdId)
+  await webhook('payment.succeeded', { id: thirdId, status: 'succeeded' })
+  const expected = new Date(first.activeUntil)
+  expected.setUTCDate(expected.getUTCDate() + p.durationDays)
+  assert.equal(await untilOf(thirdId), expected.toISOString())
+  assert.equal((await sessionMe(main)).premium?.activeUntil, expected.toISOString())
 })

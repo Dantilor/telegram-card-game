@@ -13,7 +13,13 @@ import {
   startEmailBind,
   startEmailRecover,
 } from './webEmailOtp.js'
-import { getWebAccountContact, getWebAccountPremium, grantWebEntitlement } from './webAccounts.js'
+import {
+  getOwnReceiptEmailHint,
+  getWebAccountContact,
+  getWebAccountPremium,
+  grantWebEntitlement,
+  revokeWebPurchaseEntitlements,
+} from './webAccounts.js'
 import { resetMailTransportCache } from '../services/mailTransport.js'
 import { sha256Hex } from './cryptoTokens.js'
 
@@ -97,13 +103,6 @@ async function paidPurchase(
   return { paymentId, activeUntil }
 }
 
-async function entitlementSnapshot(q: Queryable, accountId: string) {
-  const r = await q.query<{ n: string; until: string | null }>(
-    `SELECT count(*)::text AS n, max(active_until)::text AS until FROM web_entitlements WHERE web_account_id = $1::uuid`,
-    [accountId]
-  )
-  return r.rows[0]!
-}
 test('normalizeEmail rejects garbage', () => {
   assert.equal(normalizeEmail('  a@b.co  '), 'a@b.co')
   assert.equal(normalizeEmail('not-an-email'), null)
@@ -438,40 +437,326 @@ test('new account without Premium: email is confirmed by link, nothing else chan
   }
 })
 
-test('historical anonymous purchase (receipt email only): new device restores it after the link, same term', async () => {
+async function verifyEmail(q: Queryable, accountId: string, email: string): Promise<void> {
+  await q.query(
+    `UPDATE web_accounts SET email_normalized = $2, email_verified_at = now() WHERE id = $1::uuid`,
+    [accountId, email]
+  )
+}
+
+async function confirmViaProfile(q: Queryable, accountId: string, email: string) {
+  const started = await startEmailBind({ webAccountId: accountId, email, db: q })
+  assert.equal(started.mode, 'verify_sent')
+  return completeEmailMagicLink({ token: started.echoToken!, db: q })
+}
+
+async function allEntitlements(q: Queryable) {
+  const r = await q.query<{ id: string; web_account_id: string; payment_id: string | null; active_until: string }>(
+    `SELECT id::text, web_account_id::text, payment_id, active_until::text FROM web_entitlements ORDER BY id`
+  )
+  return r.rows
+}
+
+async function verifiedAccountsFor(q: Queryable, email: string): Promise<number> {
+  const r = await q.query<{ c: string }>(
+    `SELECT count(*)::text AS c FROM web_accounts WHERE email_normalized = $1 AND email_verified_at IS NOT NULL`,
+    [email]
+  )
+  return Number(r.rows[0]!.c)
+}
+
+test('real purchase 329907be: guest paid, cookies lost, new device confirms the receipt email → Premium, same term', async () => {
   const harness = await createHarness()
   try {
     const buyer = await newAccount(harness.query)
-    const { paymentId } = await paidPurchase(harness.query, buyer, 'payer@example.com', {
+    const { paymentId, activeUntil } = await paidPurchase(harness.query, buyer, 'payer@example.com', {
       id: '329907be-000f-5001-9000-1c462a858f03',
     })
-    const ent = await entitlementSnapshot(harness.query, buyer)
+    const before = await allEntitlements(harness.query)
     // Return from YooKassa without cookies created a second anonymous account.
     const second = await newAccount(harness.query)
-
-    const started = await startEmailBind({ webAccountId: second, email: 'payer@example.com', db: harness.query })
-    assert.equal(started.mode, 'verify_sent')
-    assert.equal(await otpAccount(harness.query, started.echoToken!), buyer, 'link signs into the paying account')
     assert.equal((await getWebAccountPremium(second, harness.query)).isPremium, false)
 
-    const done = await completeEmailMagicLink({ token: started.echoToken!, db: harness.query })
-    assert.equal(done.webAccountId, buyer)
-    assert.equal(done.purpose, 'recover')
-    const premium = await getWebAccountPremium(buyer, harness.query)
+    const done = await confirmViaProfile(harness.query, second, 'payer@example.com')
+    assert.equal(done.webAccountId, second, 'the current guest becomes the account of this email')
+    const premium = await getWebAccountPremium(second, harness.query)
     assert.equal(premium.isPremium, true)
-    assert.deepEqual(await entitlementSnapshot(harness.query, buyer), ent, 'no new grant, term unchanged')
-    assert.equal((await getWebAccountPremium(second, harness.query)).isPremium, false, 'Premium is not copied')
-    const contact = await getWebAccountContact(buyer, harness.query)
-    assert.equal(contact.emailVerified, true)
+    assert.equal(premium.activeUntil, activeUntil.toISOString(), 'original term, not extended')
+    assert.equal((await getWebAccountPremium(buyer, harness.query)).isPremium, true, 'paying device keeps it')
 
-    // Logging in again from a third device: no extension, no duplicate.
+    // A third device signs into the same account; nothing is granted or copied.
     const third = await newAccount(harness.query)
-    const again = await startEmailBind({ webAccountId: third, email: 'payer@example.com', db: harness.query })
-    assert.equal(await otpAccount(harness.query, again.echoToken!), buyer)
-    await completeEmailMagicLink({ token: again.echoToken!, db: harness.query })
-    assert.deepEqual(await entitlementSnapshot(harness.query, buyer), ent)
-    const pays = await harness.query.query<{ c: string }>(`SELECT count(*)::text AS c FROM web_payments WHERE id = $1`, [paymentId])
+    const again = await confirmViaProfile(harness.query, third, 'payer@example.com')
+    assert.equal(again.webAccountId, second)
+    assert.equal(again.purpose, 'recover')
+    assert.deepEqual(await allEntitlements(harness.query), before, 'no new or changed entitlements')
+    assert.equal(await verifiedAccountsFor(harness.query, 'payer@example.com'), 1)
+    const pays = await harness.query.query<{ c: string; acc: string }>(
+      `SELECT count(*)::text AS c, max(web_account_id::text) AS acc FROM web_payments WHERE id = $1`,
+      [paymentId]
+    )
     assert.equal(pays.rows[0]!.c, '1')
+    assert.equal(pays.rows[0]!.acc, buyer, 'payment keeps its original owner for audit and refunds')
+  } finally {
+    await harness.close()
+  }
+})
+
+test('real purchase 329907be with an existing verified account on that email: Premium shows there', async () => {
+  const harness = await createHarness()
+  try {
+    const main = await newAccount(harness.query)
+    await verifyEmail(harness.query, main, 'payer@example.com')
+    assert.equal((await getWebAccountPremium(main, harness.query)).isPremium, false)
+
+    const guest = await newAccount(harness.query)
+    const { activeUntil } = await paidPurchase(harness.query, guest, 'payer@example.com', {
+      id: '329907be-000f-5001-9000-1c462a858f03',
+    })
+
+    const premium = await getWebAccountPremium(main, harness.query)
+    assert.equal(premium.isPremium, true)
+    assert.equal(premium.activeUntil, activeUntil.toISOString())
+    assert.deepEqual(premium.sources, ['web_purchase'])
+
+    const device = await newAccount(harness.query)
+    const done = await confirmViaProfile(harness.query, device, 'payer@example.com')
+    assert.equal(done.webAccountId, main, 'existing account is reused, not a second one')
+    assert.equal(await verifiedAccountsFor(harness.query, 'payer@example.com'), 1)
+    assert.equal((await getWebAccountPremium(device, harness.query)).isPremium, false)
+  } finally {
+    await harness.close()
+  }
+})
+
+test('several guest purchases on one receipt email: all count, refunds recalc, nothing summed', async () => {
+  const harness = await createHarness()
+  try {
+    const main = await newAccount(harness.query)
+    await verifyEmail(harness.query, main, 'many@example.com')
+    const g1 = await newAccount(harness.query)
+    const g2 = await newAccount(harness.query)
+    const p1 = await paidPurchase(harness.query, g1, 'many@example.com', { activeDays: 30 })
+    const p2 = await paidPurchase(harness.query, g2, 'many@example.com', { activeDays: 60 })
+
+    let premium = await getWebAccountPremium(main, harness.query)
+    assert.equal(premium.activeUntil, p2.activeUntil.toISOString(), 'longest purchase, terms are not added up')
+
+    // Full refund of the longer purchase, exactly as the webhook does it.
+    await harness.query.query(`UPDATE web_payments SET status = 'refunded' WHERE id = $1`, [p2.paymentId])
+    await revokeWebPurchaseEntitlements({ paymentId: p2.paymentId, db: harness.query })
+    premium = await getWebAccountPremium(main, harness.query)
+    assert.equal(premium.isPremium, true)
+    assert.equal(premium.activeUntil, p1.activeUntil.toISOString(), 'the other purchase is still there')
+
+    await harness.query.query(`UPDATE web_payments SET status = 'canceled' WHERE id = $1`, [p1.paymentId])
+    await revokeWebPurchaseEntitlements({ paymentId: p1.paymentId, db: harness.query })
+    premium = await getWebAccountPremium(main, harness.query)
+    assert.equal(premium.isPremium, false)
+    assert.equal(premium.lastEndedAt, null, 'refunded purchases do not even show as ended Premium')
+  } finally {
+    await harness.close()
+  }
+})
+
+test('partial refund keeps access; Lifetime stays lifetime', async () => {
+  const harness = await createHarness()
+  try {
+    const main = await newAccount(harness.query)
+    await verifyEmail(harness.query, main, 'life@example.com')
+    const g1 = await newAccount(harness.query)
+    const part = await paidPurchase(harness.query, g1, 'life@example.com', { status: 'partially_refunded' })
+    assert.equal((await getWebAccountPremium(main, harness.query)).isPremium, true)
+    await revokeWebPurchaseEntitlements({ paymentId: part.paymentId, db: harness.query })
+
+    const g2 = await newAccount(harness.query)
+    const until = new Date('2126-01-01T00:00:00.000Z')
+    await harness.query.query(
+      `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status, paid_at, premium_granted_at, receipt_email_normalized)
+       VALUES ('pay_lifetime_1', $1::uuid, 'premium_web_lifetime', 1990, 'succeeded', now(), now(), 'life@example.com')`,
+      [g2]
+    )
+    await grantWebEntitlement({
+      webAccountId: g2,
+      planId: 'premium_web_lifetime',
+      activeUntil: until,
+      source: 'web_purchase',
+      paymentId: 'pay_lifetime_1',
+      db: harness.query,
+    })
+    const premium = await getWebAccountPremium(main, harness.query)
+    assert.equal(premium.isPremium, true)
+    assert.equal(premium.isLifetime, true)
+    assert.equal(premium.activeUntil, until.toISOString())
+  } finally {
+    await harness.close()
+  }
+})
+
+test('repeated and simultaneous confirmations end in one account without duplicates', async () => {
+  const harness = await createHarness()
+  try {
+    const buyer = await newAccount(harness.query)
+    await paidPurchase(harness.query, buyer, 'race@example.com')
+    const before = await allEntitlements(harness.query)
+    const c1 = await newAccount(harness.query)
+    const c2 = await newAccount(harness.query)
+    // Both links are sent while nobody has verified the address yet.
+    const s1 = await startEmailBind({ webAccountId: c1, email: 'race@example.com', db: harness.query })
+    const s2 = await startEmailBind({ webAccountId: c2, email: 'race@example.com', db: harness.query })
+    const [d1, d2] = await Promise.all([
+      completeEmailMagicLink({ token: s1.echoToken!, db: harness.query }),
+      completeEmailMagicLink({ token: s2.echoToken!, db: harness.query }),
+    ])
+    assert.equal(d1.webAccountId, d2.webAccountId)
+    assert.equal(await verifiedAccountsFor(harness.query, 'race@example.com'), 1)
+    assert.equal((await getWebAccountPremium(d1.webAccountId, harness.query)).isPremium, true)
+    assert.deepEqual(await allEntitlements(harness.query), before)
+  } finally {
+    await harness.close()
+  }
+})
+
+test('confirmation losing the unique-index race signs into the winner', async () => {
+  const harness = await createHarness()
+  try {
+    const winner = await newAccount(harness.query)
+    const loser = await newAccount(harness.query)
+    const s = await startEmailBind({ webAccountId: loser, email: 'tie@example.com', db: harness.query })
+    await verifyEmail(harness.query, winner, 'tie@example.com')
+    // Simulate the other transaction committing between the owner check and the UPDATE.
+    let hidden = false
+    const racing: Queryable = {
+      query: async (sql, params) => {
+        if (!hidden && /email_verified_at IS NOT NULL/.test(sql) && /LIMIT 1/.test(sql)) {
+          hidden = true
+          return { rows: [] }
+        }
+        return harness.query.query(sql, params)
+      },
+    }
+    const done = await completeEmailMagicLink({ token: s.echoToken!, db: racing })
+    assert.equal(done.webAccountId, winner)
+    assert.equal((await getWebAccountContact(loser, harness.query)).emailVerified, false)
+    assert.equal(await verifiedAccountsFor(harness.query, 'tie@example.com'), 1)
+  } finally {
+    await harness.close()
+  }
+})
+
+test('checkout opt-in ("save email") does not block restore on another device', async () => {
+  const harness = await createHarness()
+  try {
+    const buyer = await newAccount(harness.query)
+    const { paymentId } = await paidPurchase(harness.query, buyer, 'optin@example.com')
+    await afterWebPurchasePaid({ webAccountId: buyer, paymentId, bindAccountEmail: true, db: harness.query })
+    assert.equal((await getWebAccountContact(buyer, harness.query)).emailPending, true)
+
+    const device = await newAccount(harness.query)
+    const done = await confirmViaProfile(harness.query, device, 'optin@example.com')
+    assert.equal(done.webAccountId, device)
+    assert.equal((await getWebAccountPremium(device, harness.query)).isPremium, true)
+
+    // The paying browser later confirms its pending address: it joins the same account.
+    const fromBuyer = await startEmailBind({ webAccountId: buyer, email: 'optin@example.com', db: harness.query })
+    assert.equal(await otpAccount(harness.query, fromBuyer.echoToken!), device)
+    const joined = await completeEmailMagicLink({ token: fromBuyer.echoToken!, db: harness.query })
+    assert.equal(joined.webAccountId, device)
+    assert.equal(await verifiedAccountsFor(harness.query, 'optin@example.com'), 1)
+  } finally {
+    await harness.close()
+  }
+})
+
+test("receipt purchases are not shared without mailbox proof or from another person's account", async () => {
+  const harness = await createHarness()
+  try {
+    const guest = await newAccount(harness.query)
+    await paidPurchase(harness.query, guest, 'shared@example.com')
+
+    const pendingOnly = await newAccount(harness.query)
+    await harness.query.query(
+      `UPDATE web_accounts SET pending_email_normalized = 'shared@example.com' WHERE id = $1::uuid`,
+      [pendingOnly]
+    )
+    assert.equal((await getWebAccountPremium(pendingOnly, harness.query)).isPremium, false, 'unverified contact')
+    const legacyUnverified = await newAccount(harness.query)
+    await harness.query.query(
+      `UPDATE web_accounts SET email_normalized = 'shared@example.com' WHERE id = $1::uuid`,
+      [legacyUnverified]
+    )
+    assert.equal(
+      (await getWebAccountPremium(legacyUnverified, harness.query)).isPremium,
+      false,
+      'address stored without verification'
+    )
+    const typed = await newAccount(harness.query)
+    await startEmailBind({ webAccountId: typed, email: 'shared@example.com', db: harness.query })
+    assert.equal((await getWebAccountPremium(typed, harness.query)).isPremium, false, 'typed, not confirmed')
+
+    const main = await newAccount(harness.query)
+    await verifyEmail(harness.query, main, 'other@example.com')
+    const someoneElse = await newAccount(harness.query)
+    await verifyEmail(harness.query, someoneElse, 'someone@example.com')
+    await paidPurchase(harness.query, someoneElse, 'other@example.com')
+    assert.equal(
+      (await getWebAccountPremium(main, harness.query)).isPremium,
+      false,
+      'a purchase made from an account with its own verified email stays there'
+    )
+
+    const unpaid = await newAccount(harness.query)
+    await harness.query.query(
+      `INSERT INTO web_payments (id, web_account_id, plan_id, amount_rub, status, receipt_email_normalized)
+       VALUES ('pay_unpaid_1', $1::uuid, 'premium_web_1m', 259, 'pending', 'other@example.com')`,
+      [unpaid]
+    )
+    assert.equal((await getWebAccountPremium(main, harness.query)).isPremium, false, 'pending payment')
+
+    const expired = await newAccount(harness.query)
+    await paidPurchase(harness.query, expired, 'other@example.com', { activeDays: -1 })
+    const status = await getWebAccountPremium(main, harness.query)
+    assert.equal(status.isPremium, false, 'expired purchase')
+    assert.ok(status.lastEndedAt, 'but shows as ended Premium')
+  } finally {
+    await harness.close()
+  }
+})
+
+test('purchase from a Telegram-linked guest is visible by email; the Telegram link itself is not moved', async () => {
+  const harness = await createHarness()
+  try {
+    const tgGuest = await newAccount(harness.query)
+    await paidPurchase(harness.query, tgGuest, 'tg@example.com')
+    await harness.query.query(
+      `INSERT INTO web_telegram_links (web_account_id, telegram_id) VALUES ($1::uuid, 4242)`,
+      [tgGuest]
+    )
+    const device = await newAccount(harness.query)
+    const done = await confirmViaProfile(harness.query, device, 'tg@example.com')
+    assert.equal(done.webAccountId, device, 'the Telegram-linked account is not taken over')
+    const premium = await getWebAccountPremium(device, harness.query)
+    assert.deepEqual(premium.sources, ['web_purchase'])
+    const links = await harness.query.query<{ c: string }>(
+      `SELECT count(*)::text AS c FROM web_telegram_links WHERE web_account_id = $1::uuid`,
+      [device]
+    )
+    assert.equal(links.rows[0]!.c, '0')
+  } finally {
+    await harness.close()
+  }
+})
+
+test('receipt email is offered as a prefill only to the paying guest account', async () => {
+  const harness = await createHarness()
+  try {
+    const buyer = await newAccount(harness.query)
+    await paidPurchase(harness.query, buyer, 'hint@example.com')
+    const stranger = await newAccount(harness.query)
+    assert.equal(await getOwnReceiptEmailHint(buyer, harness.query), 'hint@example.com')
+    assert.equal(await getOwnReceiptEmailHint(stranger, harness.query), null)
+    await confirmViaProfile(harness.query, buyer, 'hint@example.com')
+    assert.equal(await getOwnReceiptEmailHint(buyer, harness.query), null)
   } finally {
     await harness.close()
   }
@@ -532,7 +817,7 @@ test("someone else's purchase cannot be taken by typing the email: only the mail
   }
 })
 
-test('receipt recovery is limited to paid, active, unclaimed anonymous purchases', async () => {
+test('profile save never moves the session into another guest account', async () => {
   const harness = await createHarness()
   try {
     const expectBind = async (email: string, why: string) => {

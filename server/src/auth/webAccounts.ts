@@ -135,8 +135,70 @@ export async function getWebAccountContact(
 }
 
 /**
+ * Receipt email this account itself typed at a paid checkout — only a prefill hint
+ * for "confirm email" while the account has no verified address. Grants nothing.
+ */
+export async function getOwnReceiptEmailHint(
+  webAccountId: string,
+  customDb?: Queryable
+): Promise<string | null> {
+  const result = await db(customDb).query<{ receipt_email_normalized: string }>(
+    `SELECT p.receipt_email_normalized
+       FROM web_payments p
+       JOIN web_accounts a ON a.id = p.web_account_id
+      WHERE p.web_account_id = $1::uuid
+        AND p.receipt_email_normalized IS NOT NULL
+        AND p.premium_granted_at IS NOT NULL
+        AND a.revoked_at IS NULL
+        AND a.email_verified_at IS NULL
+      ORDER BY p.paid_at DESC NULLS LAST, p.created_at DESC
+      LIMIT 1`,
+    [webAccountId]
+  )
+  return result.rows[0]?.receipt_email_normalized ?? null
+}
+
+/**
+ * WEB purchase entitlements ($1 = account id) that belong to the account's verified
+ * email but were bought from a guest account: the YooKassa receipt went to that
+ * address. Rows stay on the paying account and payment, so webhook, confirm and
+ * refunds keep acting on the original records; a refund/cancel revokes access here
+ * too. Accounts with their own verified email are someone else's identity and are
+ * never pulled in. Read-only: nothing is copied, extended or re-granted.
+ */
+export const EMAIL_CLAIMED_WEB_ENTITLEMENTS_SQL = `
+  SELECT e.active_until, e.source, e.plan_id
+    FROM web_accounts a
+    JOIN web_payments p
+      ON p.receipt_email_normalized = a.email_normalized
+     AND p.premium_granted_at IS NOT NULL
+     AND p.status IN ('succeeded', 'partially_refunded')
+     AND p.web_account_id <> a.id
+    JOIN web_accounts o ON o.id = p.web_account_id
+    JOIN web_entitlements e
+      ON e.payment_id = p.id
+     AND e.web_account_id = p.web_account_id
+     AND e.source = 'web_purchase'
+   WHERE a.id = $1::uuid
+     AND a.revoked_at IS NULL
+     AND a.email_verified_at IS NOT NULL
+     AND a.email_normalized IS NOT NULL
+     AND o.revoked_at IS NULL
+     AND (o.email_verified_at IS NULL OR o.email_normalized IS NULL)`
+
+const VISIBLE_WEB_ENTITLEMENTS_SQL = `
+  SELECT e.active_until, e.source, e.plan_id
+    FROM web_entitlements e
+   WHERE e.web_account_id = $1::uuid
+     AND e.source IN ('web_purchase', 'manual_staging')
+  UNION ALL
+  ${EMAIL_CLAIMED_WEB_ENTITLEMENTS_SQL}`
+
+/**
  * Effective Premium for a WEB account.
- * Own WEB purchases stay local; Telegram Premium is visible only while an active verified link exists.
+ * Own WEB purchases plus purchases claimed by the verified email (see
+ * EMAIL_CLAIMED_WEB_ENTITLEMENTS_SQL); Telegram Premium is visible only while an
+ * active verified link exists.
  * Copied telegram_link entitlement rows are audit-only — live subscriptions table is the source of truth.
  */
 export type GetWebAccountPremiumOpts = {
@@ -161,12 +223,10 @@ export async function getWebAccountPremium(
     source: string
     plan_id: string | null
   }>(
-    `SELECT e.active_until, e.source, e.plan_id
-       FROM web_entitlements e
-      WHERE e.web_account_id = $1::uuid
-        AND e.active_until > now()
-        AND e.source IN ('web_purchase', 'manual_staging')
-      ORDER BY e.active_until DESC`,
+    `SELECT v.active_until, v.source, v.plan_id
+       FROM (${VISIBLE_WEB_ENTITLEMENTS_SQL}) v
+      WHERE v.active_until > now()
+      ORDER BY v.active_until DESC`,
     [webAccountId]
   )
 
@@ -242,12 +302,10 @@ async function fetchLastEndedAtForWeb(
   customDb?: Queryable
 ): Promise<string | null> {
   const ended = await db(customDb).query<{ active_until: Date }>(
-    `SELECT e.active_until
-       FROM web_entitlements e
-      WHERE e.web_account_id = $1::uuid
-        AND e.active_until <= now()
-        AND e.source IN ('web_purchase', 'manual_staging')
-      ORDER BY e.active_until DESC
+    `SELECT v.active_until
+       FROM (${VISIBLE_WEB_ENTITLEMENTS_SQL}) v
+      WHERE v.active_until <= now()
+      ORDER BY v.active_until DESC
       LIMIT 1`,
     [webAccountId]
   )

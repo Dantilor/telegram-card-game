@@ -41,7 +41,11 @@ import {
   evaluateYookassaWebhookAuth,
   evaluateYookassaWebhookIp,
 } from '../payments/yookassaWebhookSecurity.js'
-import { grantWebEntitlement, revokeWebPurchaseEntitlements } from '../auth/webAccounts.js'
+import {
+  EMAIL_CLAIMED_WEB_ENTITLEMENTS_SQL,
+  grantWebEntitlement,
+  revokeWebPurchaseEntitlements,
+} from '../auth/webAccounts.js'
 import { afterWebPurchasePaid, normalizeEmail } from '../auth/webEmailOtp.js'
 
 const mockPayments = new Map<
@@ -147,9 +151,13 @@ async function grantWebAccountPremiumFromPayment(input: {
     }
 
     const existingUntil = await tx.query<{ active_until: Date }>(
-      `SELECT active_until FROM web_entitlements
-        WHERE web_account_id = $1::uuid AND active_until > now()
-        ORDER BY active_until DESC LIMIT 1`,
+      `SELECT v.active_until FROM (
+          SELECT active_until FROM web_entitlements WHERE web_account_id = $1::uuid
+          UNION ALL
+          SELECT c.active_until FROM (${EMAIL_CLAIMED_WEB_ENTITLEMENTS_SQL}) c
+        ) v
+        WHERE v.active_until > now()
+        ORDER BY v.active_until DESC LIMIT 1`,
       [input.webAccountId]
     )
     const base = existingUntil.rows[0]?.active_until

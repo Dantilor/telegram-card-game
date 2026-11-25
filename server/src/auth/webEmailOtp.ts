@@ -271,49 +271,39 @@ export async function afterWebPurchasePaid(input: {
 }
 
 /**
- * Account that a confirmed mailbox may sign into, never the caller's own account.
- * Order: verified login email, then an opt-in pending contact, then a paid WEB
- * purchase whose YooKassa receipt went to this address (historical anonymous
- * purchases). The magic link sent to the mailbox is the ownership proof; this
- * lookup alone never grants a session.
+ * Login-page target for a mailbox. Order: verified login email, then an opt-in
+ * pending contact, then a guest account with a paid WEB purchase whose YooKassa
+ * receipt went to this address. The magic link sent to the mailbox is the
+ * ownership proof; this lookup alone never grants a session.
  */
-async function findRecoverableAccount(input: {
-  emailNormalized: string
-  excludeAccountId: string | null
-  /** Pending contacts were never verified; only worth recovering when they hold Premium. */
-  pendingRequiresPremium: boolean
-  db?: Queryable
-}): Promise<string | null> {
-  const q = db(input.db)
-  const verified = await q.query<{ id: string }>(
+async function findVerifiedAccount(emailNormalized: string, customDb?: Queryable): Promise<string | null> {
+  const verified = await db(customDb).query<{ id: string }>(
     `SELECT id::text AS id FROM web_accounts
       WHERE email_normalized = $1
         AND email_verified_at IS NOT NULL
         AND revoked_at IS NULL
       LIMIT 1`,
-    [input.emailNormalized]
+    [emailNormalized]
   )
-  if (verified.rows[0]) {
-    const id = String(verified.rows[0].id)
-    return id === input.excludeAccountId ? null : id
-  }
+  return verified.rows[0] ? String(verified.rows[0].id) : null
+}
+
+async function findRecoverableAccount(input: {
+  emailNormalized: string
+  db?: Queryable
+}): Promise<string | null> {
+  const q = db(input.db)
+  const verified = await findVerifiedAccount(input.emailNormalized, input.db)
+  if (verified) return verified
 
   const pending = await q.query<{ id: string }>(
     `SELECT a.id::text AS id
        FROM web_accounts a
       WHERE a.revoked_at IS NULL
         AND a.pending_email_normalized = $1
-        AND a.id IS DISTINCT FROM $2::uuid
-        AND (
-          NOT $3::boolean
-          OR EXISTS (
-            SELECT 1 FROM web_entitlements e
-             WHERE e.web_account_id = a.id AND e.active_until > now()
-          )
-        )
       ORDER BY a.created_at ASC
       LIMIT 1`,
-    [input.emailNormalized, input.excludeAccountId, input.pendingRequiresPremium]
+    [input.emailNormalized]
   )
   if (pending.rows[0]) return String(pending.rows[0].id)
 
@@ -328,7 +318,6 @@ async function findRecoverableAccount(input: {
         AND p.premium_granted_at IS NOT NULL
         AND a.revoked_at IS NULL
         AND a.email_normalized IS NULL
-        AND a.id IS DISTINCT FROM $2::uuid
         AND EXISTS (
           SELECT 1 FROM web_entitlements e
            WHERE e.web_account_id = a.id
@@ -341,7 +330,7 @@ async function findRecoverableAccount(input: {
         )
       ORDER BY p.paid_at DESC NULLS LAST, p.created_at DESC
       LIMIT 1`,
-    [input.emailNormalized, input.excludeAccountId]
+    [input.emailNormalized]
   )
   return paid.rows[0] ? String(paid.rows[0].id) : null
 }
@@ -355,9 +344,10 @@ export type EmailBindResult = {
 
 /**
  * Profile "save email". Never switches sessions by address alone: a one-time link
- * goes to the mailbox — sign-in to the existing account that owns the address or
- * its paid purchase, otherwise confirmation for the current account. The answer is
- * the same either way, so it does not reveal whether the address is registered.
+ * goes to the mailbox — sign-in to the account that already verified the address,
+ * otherwise confirmation that makes the current account its owner. Purchases whose
+ * receipt went to the address then show up in that one account. The answer is the
+ * same either way, so it does not reveal whether the address is registered.
  */
 export async function startEmailBind(input: {
   webAccountId: string
@@ -401,12 +391,8 @@ export async function startEmailBind(input: {
     throw err
   }
 
-  const owner = await findRecoverableAccount({
-    emailNormalized,
-    excludeAccountId: input.webAccountId,
-    pendingRequiresPremium: true,
-    db: input.db,
-  })
+  const verifiedOwner = await findVerifiedAccount(emailNormalized, input.db)
+  const owner = verifiedOwner === input.webAccountId ? null : verifiedOwner
   const started = await insertAndSendMagicLink({
     webAccountId: owner ?? input.webAccountId,
     emailNormalized,
@@ -440,12 +426,7 @@ export async function startEmailRecover(input: {
     return { ok: true }
   }
 
-  const accountId = await findRecoverableAccount({
-    emailNormalized,
-    excludeAccountId: null,
-    pendingRequiresPremium: false,
-    db: input.db,
-  })
+  const accountId = await findRecoverableAccount({ emailNormalized, db: input.db })
   if (!accountId) {
     return { ok: true }
   }
@@ -526,26 +507,16 @@ export async function completeEmailMagicLink(input: {
 
   await db(input.db).query(`UPDATE web_email_otps SET attempts = attempts + 1 WHERE id = $1`, [row.id])
 
-  const taken = await db(input.db).query<{ id: string }>(
-    `SELECT id FROM web_accounts
-      WHERE email_normalized = $1
-        AND email_verified_at IS NOT NULL
-        AND revoked_at IS NULL
-        AND id <> $2::uuid
-      LIMIT 1`,
-    [row.email_normalized, row.web_account_id]
-  )
-  if (taken.rows[0]) {
-    const err = new Error('Email already linked') as Error & { status?: number; code?: string }
-    err.status = 409
-    err.code = 'email_taken'
-    throw err
-  }
+  // The link proves the mailbox; when that address already has its own verified
+  // account (verified after the link was sent), sign into it — one email, one account.
+  const verifiedOwner = await findVerifiedAccount(row.email_normalized, input.db)
+  const existingOwner =
+    verifiedOwner && verifiedOwner !== row.web_account_id ? verifiedOwner : null
 
   // Defense: do not replace a verified login email unless the account explicitly
   // started a rebind (pending_email_normalized matches this token). Recover links
   // can target an account found by its paid receipt, so they are checked too.
-  {
+  if (!existingOwner) {
     const current = await db(input.db).query<{
       email_normalized: string | null
       email_verified_at: Date | null
@@ -585,15 +556,26 @@ export async function completeEmailMagicLink(input: {
     throw err
   }
 
-  await db(input.db).query(
-    `UPDATE web_accounts
-        SET email_normalized = $2,
-            email_verified_at = now(),
-            pending_email_normalized = NULL,
-            last_seen_at = now()
-      WHERE id = $1::uuid AND revoked_at IS NULL`,
-    [row.web_account_id, row.email_normalized]
-  )
+  let accountId = existingOwner ?? row.web_account_id
+  if (!existingOwner) {
+    try {
+      await db(input.db).query(
+        `UPDATE web_accounts
+            SET email_normalized = $2,
+                email_verified_at = now(),
+                pending_email_normalized = NULL,
+                last_seen_at = now()
+          WHERE id = $1::uuid AND revoked_at IS NULL`,
+        [row.web_account_id, row.email_normalized]
+      )
+    } catch (e) {
+      // A concurrent confirmation of the same address won the unique index.
+      if ((e as { code?: string }).code !== '23505') throw e
+      const winner = await findVerifiedAccount(row.email_normalized, input.db)
+      if (!winner) throw e
+      accountId = winner
+    }
+  }
 
   const sessionToken = randomToken(32)
   const csrfToken = randomToken(32)
@@ -603,11 +585,11 @@ export async function completeEmailMagicLink(input: {
   await db(input.db).query(
     `INSERT INTO web_sessions (token_hash, csrf_hash, web_account_id, expires_at, user_agent_hash)
      VALUES ($1, $2, $3::uuid, $4, $5)`,
-    [sha256Hex(sessionToken), sha256Hex(csrfToken), row.web_account_id, expiresAt.toISOString(), uaHash]
+    [sha256Hex(sessionToken), sha256Hex(csrfToken), accountId, expiresAt.toISOString(), uaHash]
   )
 
   return {
-    webAccountId: row.web_account_id,
+    webAccountId: accountId,
     emailNormalized: row.email_normalized,
     purpose: row.purpose,
     sessionToken,

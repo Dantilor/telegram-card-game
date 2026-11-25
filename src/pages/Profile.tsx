@@ -556,6 +556,14 @@ function Profile() {
 
   const savedEmail = webSession.session?.email?.trim() || ''
   const emailVerified = Boolean(webSession.session?.emailVerified)
+  const receiptEmail = web ? webSession.session?.receiptEmail?.trim() || '' : ''
+  const receiptPrefilledRef = useRef(false)
+
+  useEffect(() => {
+    if (!receiptEmail || receiptPrefilledRef.current) return
+    receiptPrefilledRef.current = true
+    setEmailDraft((draft) => draft || receiptEmail)
+  }, [receiptEmail])
 
   useEffect(() => {
     if (!web) return
@@ -1014,6 +1022,11 @@ function Profile() {
                     autoComplete="email"
                   />
                 </label>
+                {receiptEmail && emailDraft.trim().toLowerCase() === receiptEmail.toLowerCase() && (
+                  <p className="profile-pass__desc" data-testid="email-receipt-hint">
+                    Это почта из чека вашей покупки. Подтвердите её — и Premium откроется на любом устройстве.
+                  </p>
+                )}
                 <button
                   type="button"
                   className="profile-pass__cta"

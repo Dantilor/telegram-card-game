@@ -15,6 +15,8 @@ export type WebSessionMe = {
   email?: string | null
   emailVerified?: boolean
   emailPending?: boolean
+  /** Receipt email from this account's own paid checkout, while no email is verified (prefill only). */
+  receiptEmail?: string | null
   premium?: {
     isPremium: boolean
     activeUntil: string | null

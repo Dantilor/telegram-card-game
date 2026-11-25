@@ -363,7 +363,7 @@ export type EmailCodeChallenge = {
   code?: string
 }
 
-async function emailCodeApi(path: string, body: Record<string, string>): Promise<any> {
+async function emailCodeApi<T>(path: string, body: Record<string, string>): Promise<T> {
   const csrf = readCsrfToken()
   const res = await fetch(`${apiBase()}${path}`, {
     method: 'POST',
@@ -386,20 +386,20 @@ async function emailCodeApi(path: string, body: Record<string, string>): Promise
     }
     throw err
   }
-  return res.json()
+  return (await res.json()) as T
 }
 
 /** One-time six-digit code for the same WEB session/browser/PWA. */
 export async function startEmailCode(email: string): Promise<EmailCodeChallenge> {
-  return emailCodeApi('/api/web/email/code/start', { email }) as Promise<EmailCodeChallenge>
+  return emailCodeApi<EmailCodeChallenge>('/api/web/email/code/start', { email })
 }
 
 export async function completeEmailCode(challengeId: string, code: string): Promise<{
   ok: boolean; webAccountId: string; email: string
 }> {
-  return emailCodeApi('/api/web/email/code/complete', { challengeId, code }) as Promise<{
-    ok: boolean; webAccountId: string; email: string
-  }>
+  return emailCodeApi<{ ok: boolean; webAccountId: string; email: string }>(
+    '/api/web/email/code/complete', { challengeId, code }
+  )
 }
 
 /** Mails a one-time link (or reports the address is already ours). Never switches the session itself. */

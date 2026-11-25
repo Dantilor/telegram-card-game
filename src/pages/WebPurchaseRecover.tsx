@@ -34,13 +34,15 @@ export default function WebPurchaseRecover() {
   })
 
   const start = useCallback(async () => {
-    if (!email.trim() || busy) return
+    if (!email.trim() || busy || !webSession.ready) return
     setBusy(true)
     setStatus(null)
     try {
       // /login can be opened in a fresh browser without a WEB session.
       // Create or reuse the local guest session before requesting a code.
-      const current = await ensureWebSession()
+      const current = webSession.session?.webAccountId
+        ? webSession.session
+        : await ensureWebSession()
       if (!current?.webAccountId) throw new Error('web_session_missing')
       const sent = await startEmailCode(email.trim())
       setChallengeId(sent.challengeId)
@@ -56,7 +58,7 @@ export default function WebPurchaseRecover() {
     } finally {
       setBusy(false)
     }
-  }, [busy, email])
+  }, [busy, email, webSession])
 
   const finish = useCallback(async () => {
     if (!challengeId || !/^[0-9]{6}$/.test(code) || busy) return
@@ -113,7 +115,7 @@ export default function WebPurchaseRecover() {
             />
           </label>
           {!challengeId && (
-            <button type="submit" className="profile-pass__cta" disabled={busy || !email.trim()}>
+            <button type="submit" className="profile-pass__cta" disabled={busy || !webSession.ready || !email.trim()}>
               {busy ? 'Отправка…' : 'Получить код'}
             </button>
           )}

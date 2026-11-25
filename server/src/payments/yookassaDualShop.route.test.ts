@@ -809,6 +809,16 @@ test('E2E: guest buys twice with a receipt email, new browser confirms it → ev
   assert.equal((await sessionMe(fresh.headers)).premium?.isPremium, false)
   assert.equal((await sessionMe(fresh.headers)).receiptEmail, null)
 
+  // Profile flow: save the address (no entitlement), then request proof
+  // automatically from the same Save/Check Premium user action.
+  const saved = await rawPost('/api/web/email/profile/save', { email }, fresh.headers)
+  assert.equal(saved.status, 200, JSON.stringify(saved.body))
+  assert.equal(saved.body.mode, 'saved')
+  const beforeProof = await sessionMe(fresh.headers)
+  assert.equal(beforeProof.email, email)
+  assert.equal(beforeProof.emailVerified, false)
+  assert.equal(beforeProof.premium?.isPremium, false, 'typed address cannot grant another guest account Premium')
+
   const bound = await rawPost('/api/web/email/bind/start', { email }, fresh.headers)
   assert.equal(bound.status, 200, JSON.stringify(bound.body))
   assert.equal(bound.body.mode, 'verify_sent')

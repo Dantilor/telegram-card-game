@@ -932,3 +932,55 @@ test('/login with a receipt email typed by mistake: the mailbox owner gets the P
   const withCsrfDone = await rawPost('/api/web/email/confirm', { token: withCsrf.body.token })
   assert.equal(withCsrfDone.body.webAccountId, c.webAccountId)
 })
+test('HTTP: in-place email code login restores a purchase without browser redirects', async () => {
+  const email = 'browser-otp-restoration@example.com'
+  const payment = await guestPurchase('premium_web_1m', email)
+  const otherBrowser = await webBuyer('premium_web_1m')
+  assert.equal((await sessionMe(otherBrowser.headers)).premium?.isPremium, false)
+  const before = await counts()
+
+  const start = await rawPost('/api/web/email/code/start', { email }, otherBrowser.headers)
+  assert.equal(start.status, 200, JSON.stringify(start.body))
+  assert.equal(start.body.mode, 'code_sent')
+  assert.match(String(start.body.code || ''), /^[0-9]{6}$/)
+  const challengeId = String(start.body.challengeId)
+  assert.equal((await sessionMe(otherBrowser.headers)).premium?.isPremium, false,
+    'code request does not itself authorize historical payment')
+
+  const otherAccount = await webBuyer('premium_web_1m')
+  const crossDevice = await rawPost('/api/web/email/code/complete', {
+    challengeId, code: start.body.code,
+  }, otherAccount.headers)
+  assert.equal(crossDevice.status, 400, 'code cannot be entered from another session')
+
+  const withoutCsrf = await rawPost('/api/web/email/code/complete', {
+    challengeId, code: start.body.code,
+  }, { Cookie: otherBrowser.headers.Cookie })
+  assert.equal(withoutCsrf.status, 403)
+
+  const confirmed = await rawPost('/api/web/email/code/complete', {
+    challengeId, code: start.body.code,
+  }, otherBrowser.headers)
+  assert.equal(confirmed.status, 200, JSON.stringify(confirmed.body))
+  assert.notEqual(confirmed.body.webAccountId, payment.buyer.webAccountId,
+    'email proof never takes the original paying guest session')
+
+  const browserAfter = cookieHeaders(confirmed.setCookie)
+  const status = await sessionMe(browserAfter)
+  assert.equal(status.email, email)
+  assert.equal(status.emailVerified, true)
+  assert.equal(status.premium?.isPremium, true)
+  assert.equal(status.premium?.activeUntil, payment.activeUntil)
+  assert.deepEqual(await counts(), before, 'no duplicate entitlements or payments')
+
+  const replay = await rawPost('/api/web/email/code/complete', {
+    challengeId, code: start.body.code,
+  }, otherBrowser.headers)
+  assert.equal(replay.status, 400, 'one-time code cannot be replayed')
+
+  const payer = await sessionMe(payment.buyer.headers)
+  assert.equal(payer.premium?.isPremium, true, 'paying browser remains Premium')
+  const foreignPayment = await post('/api/yookassa/confirm',
+    { paymentId: payment.paymentId }, browserAfter)
+  assert.equal(foreignPayment.status, 403, 'receipt-owner cannot operate the payer payment')
+})

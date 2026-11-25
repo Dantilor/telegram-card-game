@@ -271,8 +271,11 @@ export default function PremiumOverlay({
   const offerLoading = offerResource.status === 'loading' || offerResource.status === 'recovering'
   const offerError = offerResource.status === 'failed' ? userFacingLoadError(offerResource.error) : null
 
-  const savedReceipt =
-    webSession.session?.emailVerified && webSession.session.email ? webSession.session.email : ''
+  // Reuse the email already entered at checkout (or saved in Profile).
+  // A receipt email is a convenience prefill, never proof of login ownership.
+  const savedReceipt = isWebShell()
+    ? webSession.session?.email || webSession.session?.receiptEmail || ''
+    : ''
 
   // Prefill the receipt from the account email. A typed value is kept across retries.
   useEffect(() => {

@@ -71,7 +71,7 @@ export async function fetchWebSessionMe(): Promise<WebSessionMe | null> {
 
 export async function logoutWebSession(): Promise<void> {
   const csrf = readCsrfToken()
-  await fetch(`${apiBase()}/api/web/auth/logout`, {
+  const res = await fetch(`${apiBase()}/api/web/auth/logout`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -79,6 +79,9 @@ export async function logoutWebSession(): Promise<void> {
       ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
   })
+  if (!res.ok) {
+    throw new Error(`web_logout_failed_${res.status}`)
+  }
 }
 
 export async function startTelegramLinkRestore(displayLabel?: string): Promise<{

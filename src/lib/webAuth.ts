@@ -321,13 +321,12 @@ export async function unlinkTelegramLink(): Promise<{
   }
 }
 
+/** Mails a one-time link (or reports the address is already ours). Never switches the session itself. */
 export async function startEmailBind(email: string): Promise<{
   ok: boolean
-  mode?: 'created' | 'restored' | 'updated'
-  webAccountId?: string
+  mode?: 'verify_sent' | 'verified'
   expiresAt?: string
   token?: string
-  infoMailSent?: boolean
 }> {
   const csrf = readCsrfToken()
   const res = await fetch(`${apiBase()}/api/web/email/bind/start`, {
@@ -353,11 +352,9 @@ export async function startEmailBind(email: string): Promise<{
   }
   return (await res.json()) as {
     ok: boolean
-    mode?: 'created' | 'restored' | 'updated'
-    webAccountId?: string
+    mode?: 'verify_sent' | 'verified'
     expiresAt?: string
     token?: string
-    infoMailSent?: boolean
   }
 }
 

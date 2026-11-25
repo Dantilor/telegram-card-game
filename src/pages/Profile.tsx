@@ -17,7 +17,6 @@ import {
   fetchTelegramLinkStatus,
   labelCurrentWebDevice,
   logoutCurrentWebDevice,
-  startEmailBind,
   startTelegramLinkRestore,
   unlinkTelegramLink,
   type WebTelegramDevice,
@@ -28,6 +27,9 @@ import {
   resolveDeviceDisplayLabel,
 } from '../lib/deviceDisplayLabel'
 import './Profile.css'
+import EmailSyncStatus from '../components/EmailSyncStatus'
+import { useEmailAccountSync } from '../hooks/useEmailAccountSync'
+import type { EmailSyncPhase } from '../lib/emailAccountSync'
 import ProfileFaq from '../components/web/ProfileFaq'
 import { openWebInstallPrompt } from '../components/web/WebInstallBanner'
 import { readWebDisplayName, writeWebDisplayName } from '../lib/webDisplayName'
@@ -176,8 +178,16 @@ function Profile() {
   const [devicesBusy, setDevicesBusy] = useState(false)
   const [devicesError, setDevicesError] = useState<string | null>(null)
   const [emailDraft, setEmailDraft] = useState('')
-  const [emailBusy, setEmailBusy] = useState(false)
   const [emailStatus, setEmailStatus] = useState<string | null>(null)
+  const emailSync = useEmailAccountSync({
+    session: webSession.session,
+    refreshSession: webSession.refreshSession,
+    refreshPremium,
+    startEmailPendingWatch: webSession.startEmailPendingWatch,
+    stopEmailPendingWatch: webSession.stopEmailPendingWatch,
+  })
+  const emailBusy = emailSync.busy
+  const { announce: announceEmailSync, save: saveEmailSync } = emailSync
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tgPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -530,11 +540,12 @@ function Profile() {
   }, [web])
 
   useEffect(() => {
-    const toast = (location.state as { emailAuthToast?: string } | null)?.emailAuthToast
-    if (!toast) return
-    setEmailStatus(toast)
+    const state = location.state as { emailAuthToast?: string; emailSyncPhase?: EmailSyncPhase } | null
+    if (!state?.emailAuthToast && !state?.emailSyncPhase) return
+    if (state.emailSyncPhase) announceEmailSync(state.emailSyncPhase)
+    else if (state.emailAuthToast) setEmailStatus(state.emailAuthToast)
     navigate(location.pathname, { replace: true, state: null })
-  }, [location.state, location.pathname, navigate])
+  }, [location.state, location.pathname, navigate, announceEmailSync])
 
   useEffect(() => {
     return () => {
@@ -564,36 +575,9 @@ function Profile() {
     const target = (savedEmail || emailDraft).trim()
     if (!target) return
     haptic('medium')
-    setEmailBusy(true)
     setEmailStatus(null)
-    try {
-      const result = await startEmailBind(target)
-      await webSession.refreshSession()
-      try {
-        window.dispatchEvent(new Event('tcg_premium_sync'))
-      } catch {
-        /* ignore */
-      }
-      if (result.mode === 'restored') {
-        setEmailStatus('Аккаунт восстановлен')
-      } else {
-        setEmailStatus('Аккаунт создан')
-      }
-    } catch (e) {
-      const status = (e as Error & { status?: number }).status
-      const code = (e as Error & { code?: string }).code
-      if (status === 409 || code === 'email_already_verified') {
-        setEmailStatus('Не удалось сохранить этот email. Попробуйте другой адрес.')
-      } else if (status === 429) {
-        setEmailStatus('Слишком много попыток. Подождите минуту и попробуйте снова.')
-      } else {
-        setEmailStatus('Не удалось сохранить email. Попробуйте позже.')
-      }
-    } finally {
-      setEmailBusy(false)
-    }
-  }, [web, savedEmail, emailDraft, webSession])
-
+    await saveEmailSync(target)
+  }, [web, savedEmail, emailDraft, saveEmailSync])
   const handleSupport = useCallback(() => {
     haptic('light')
     const tg = getTelegramWebApp()
@@ -999,13 +983,25 @@ function Profile() {
                 <p className="profile-pass__desc">
                   {savedEmail}
                   <br />
-                  Статус: {emailVerified ? 'Авторизован' : 'Аккаунт создан'}
+                  Статус: {emailVerified ? 'Авторизован' : 'Почта не подтверждена'}
                 </p>
+                {!emailVerified && (
+                  <button
+                    type="button"
+                    className="profile-pass__cta"
+                    onClick={() => void handleEmailConfirm()}
+                    disabled={emailBusy}
+                  >
+                    <span className="profile-pass__cta-shine" aria-hidden />
+                    {emailBusy ? 'Отправляем…' : emailSync.phase === 'confirm' ? 'Отправить ещё раз' : 'Подтвердить почту'}
+                  </button>
+                )}
               </>
             ) : (
               <>
                 <p className="profile-pass__desc">
-                  Статус: Гость. Введите email и нажмите «Сохранить» — аккаунт сразу готов к работе.
+                  Статус: Гость. Играть можно без регистрации. Сохраните email — и Premium будет открываться на любом
+                  вашем устройстве.
                 </p>
                 <label className="profile-pass__email-label">
                   Ваш email
@@ -1025,11 +1021,12 @@ function Profile() {
                   disabled={emailBusy || !emailDraft.trim()}
                 >
                   <span className="profile-pass__cta-shine" aria-hidden />
-                  {emailBusy ? 'Сохранение…' : 'Сохранить'}
+                  {emailBusy ? 'Сохранение…' : emailSync.phase === 'confirm' ? 'Отправить ещё раз' : 'Сохранить'}
                 </button>
               </>
             )}
-            {emailStatus && <span className="profile-pass__toast">{emailStatus}</span>}
+            <EmailSyncStatus phase={emailSync.phase} error={emailSync.error} email={emailSync.pendingEmail} />
+            {emailStatus && emailSync.phase === 'idle' && <span className="profile-pass__toast">{emailStatus}</span>}
           </section>
         )}
 

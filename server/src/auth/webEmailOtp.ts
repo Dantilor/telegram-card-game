@@ -72,35 +72,6 @@ function mailShell(title: string, bodyHtml: string, textBody: string): {
   return { subject, text, html }
 }
 
-/** Informational only — does not verify ownership and has no login CTA. */
-function buildWelcomeInfoMail(): { subject: string; text: string; html: string } {
-  const subject = 'Добро пожаловать в GameNight Host!'
-  const text = [
-    'Ваш email добавлен в GameNight Host. Можно продолжать играть и пользоваться приложением.',
-    '',
-    'Если вы не указывали этот адрес, просто проигнорируйте сообщение.',
-  ].join('\n')
-  const html = `<!DOCTYPE html>
-<html lang="ru">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
-<body style="margin:0;padding:0;background:#ece7df;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#1c1917;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ece7df;padding:36px 16px;">
-    <tr><td align="center">
-      <table role="presentation" width="100%" style="max-width:520px;background:#faf8f4;border:1px solid #d6d0c6;border-radius:12px;padding:28px 26px;">
-        <tr><td>
-          <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#6b645c;">GameNight Host</p>
-          <h1 style="margin:0 0 12px;font-size:24px;font-weight:600;line-height:1.25;color:#1c1917;">Добро пожаловать!</h1>
-          <p style="margin:0 0 14px;font-size:16px;line-height:1.55;color:#44403c;">Ваш email добавлен в GameNight Host. Можно продолжать играть и пользоваться приложением.</p>
-          <p style="margin:0;font-size:15px;line-height:1.55;color:#44403c;">Если вы не указывали этот адрес, просто проигнорируйте сообщение.</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`
-  return { subject, text, html }
-}
-
 function buildMagicMail(input: {
   purpose: 'bind' | 'recover'
   link: string
@@ -108,7 +79,7 @@ function buildMagicMail(input: {
   const isRecover = input.purpose === 'recover'
   const title = isRecover ? 'Ссылка для входа' : 'Ссылка для подтверждения почты'
   const lead = isRecover
-    ? 'Вы запросили вход в GameNight Host. Откройте ссылку на устройстве, где хотите продолжить.'
+    ? 'Вы запросили вход в GameNight Host. Откройте ссылку на устройстве, где хотите продолжить — оплаченный Premium откроется автоматически.'
     : 'Вы запросили подтверждение почты. Откройте ссылку, чтобы завершить вход.'
   const cta = isRecover ? 'Войти' : 'Подтвердить и войти'
   return mailShell(
@@ -299,54 +270,100 @@ export async function afterWebPurchasePaid(input: {
   return { pendingEmail: receipt, linkSent: false }
 }
 
-export type EmailBindResult = {
-  /** created = new contact on current account; restored = switched to existing account; updated = same email again */
-  mode: 'created' | 'restored' | 'updated'
-  webAccountId: string
-  infoMailSent: boolean
-  expiresAt: Date
-  echoToken?: string
-  sessionToken?: string
-  csrfToken?: string
-  sessionExpiresAt?: Date
+/**
+ * Account that a confirmed mailbox may sign into, never the caller's own account.
+ * Order: verified login email, then an opt-in pending contact, then a paid WEB
+ * purchase whose YooKassa receipt went to this address (historical anonymous
+ * purchases). The magic link sent to the mailbox is the ownership proof; this
+ * lookup alone never grants a session.
+ */
+async function findRecoverableAccount(input: {
+  emailNormalized: string
+  excludeAccountId: string | null
+  /** Pending contacts were never verified; only worth recovering when they hold Premium. */
+  pendingRequiresPremium: boolean
+  db?: Queryable
+}): Promise<string | null> {
+  const q = db(input.db)
+  const verified = await q.query<{ id: string }>(
+    `SELECT id::text AS id FROM web_accounts
+      WHERE email_normalized = $1
+        AND email_verified_at IS NOT NULL
+        AND revoked_at IS NULL
+      LIMIT 1`,
+    [input.emailNormalized]
+  )
+  if (verified.rows[0]) {
+    const id = String(verified.rows[0].id)
+    return id === input.excludeAccountId ? null : id
+  }
+
+  const pending = await q.query<{ id: string }>(
+    `SELECT a.id::text AS id
+       FROM web_accounts a
+      WHERE a.revoked_at IS NULL
+        AND a.pending_email_normalized = $1
+        AND a.id IS DISTINCT FROM $2::uuid
+        AND (
+          NOT $3::boolean
+          OR EXISTS (
+            SELECT 1 FROM web_entitlements e
+             WHERE e.web_account_id = a.id AND e.active_until > now()
+          )
+        )
+      ORDER BY a.created_at ASC
+      LIMIT 1`,
+    [input.emailNormalized, input.excludeAccountId, input.pendingRequiresPremium]
+  )
+  if (pending.rows[0]) return String(pending.rows[0].id)
+
+  // Paid purchase with an active entitlement from that very payment. Accounts with
+  // their own login email or a Telegram link recover through those channels instead.
+  const paid = await q.query<{ id: string }>(
+    `SELECT a.id::text AS id
+       FROM web_payments p
+       JOIN web_accounts a ON a.id = p.web_account_id
+      WHERE p.receipt_email_normalized = $1
+        AND p.status IN ('succeeded', 'partially_refunded')
+        AND p.premium_granted_at IS NOT NULL
+        AND a.revoked_at IS NULL
+        AND a.email_normalized IS NULL
+        AND a.id IS DISTINCT FROM $2::uuid
+        AND EXISTS (
+          SELECT 1 FROM web_entitlements e
+           WHERE e.web_account_id = a.id
+             AND e.payment_id = p.id
+             AND e.active_until > now()
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM web_telegram_links l
+           WHERE l.web_account_id = a.id AND l.revoked_at IS NULL
+        )
+      ORDER BY p.paid_at DESC NULLS LAST, p.created_at DESC
+      LIMIT 1`,
+    [input.emailNormalized, input.excludeAccountId]
+  )
+  return paid.rows[0] ? String(paid.rows[0].id) : null
 }
 
-async function issueSessionForWebAccount(input: {
-  webAccountId: string
-  userAgent?: string | null
-  db?: Queryable
-}): Promise<{ sessionToken: string; csrfToken: string; expiresAt: Date }> {
-  const sessionToken = randomToken(32)
-  const csrfToken = randomToken(32)
-  const expiresAt = new Date(Date.now() + sessionTtlMs())
-  const uaHash = input.userAgent ? sha256Hex(input.userAgent.slice(0, 512)) : null
-  await db(input.db).query(
-    `INSERT INTO web_sessions (token_hash, csrf_hash, web_account_id, expires_at, user_agent_hash)
-     VALUES ($1, $2, $3::uuid, $4, $5)`,
-    [
-      sha256Hex(sessionToken),
-      sha256Hex(csrfToken),
-      input.webAccountId,
-      expiresAt.toISOString(),
-      uaHash,
-    ]
-  )
-  return { sessionToken, csrfToken, expiresAt }
+export type EmailBindResult = {
+  /** verify_sent = a one-time link was mailed; verified = this account already owns the address. */
+  mode: 'verify_sent' | 'verified'
+  expiresAt?: Date
+  echoToken?: string
 }
 
 /**
- * Save contact email on the current WEB account, or restore an existing account
- * that already has this email (pending or verified) — including its Premium.
- * No magic link / ownership proof beyond knowing the address (product choice).
+ * Profile "save email". Never switches sessions by address alone: a one-time link
+ * goes to the mailbox — sign-in to the existing account that owns the address or
+ * its paid purchase, otherwise confirmation for the current account. The answer is
+ * the same either way, so it does not reveal whether the address is registered.
  */
 export async function startEmailBind(input: {
   webAccountId: string
   email: string
   ip?: string | null
-  userAgent?: string | null
   db?: Queryable
-  /** When false, skip welcome mail (e.g. checkout opt-in already paid). Default true. */
-  sendWelcomeMail?: boolean
 }): Promise<EmailBindResult> {
   const emailNormalized = normalizeEmail(input.email)
   if (!emailNormalized) {
@@ -356,144 +373,53 @@ export async function startEmailBind(input: {
     throw err
   }
 
-  // Existing account with this email → restore that session (Premium stays on that webAccountId).
-  const existing = await db(input.db).query<{ id: string }>(
-    `SELECT id FROM web_accounts
-      WHERE revoked_at IS NULL
-        AND id <> $2::uuid
-        AND (
-          (email_normalized = $1 AND email_verified_at IS NOT NULL)
-          OR pending_email_normalized = $1
-        )
-      ORDER BY
-        CASE WHEN email_verified_at IS NOT NULL THEN 0 ELSE 1 END,
-        created_at ASC
-      LIMIT 1`,
-    [emailNormalized, input.webAccountId]
-  )
-  if (existing.rows[0]) {
-    const ipKey = (input.ip || 'unknown').slice(0, 64)
-    const limited = await consumeSharedRateLimit(
-      `email_restore_ip:${ipKey}`,
-      20,
-      60 * 60_000,
-      input.db
-    )
-    if (!limited.ok) {
-      const err = new Error('Too many attempts') as Error & { status?: number; code?: string }
-      err.status = 429
-      err.code = 'rate_limited'
-      throw err
-    }
-    const targetId = String(existing.rows[0].id)
-    const session = await issueSessionForWebAccount({
-      webAccountId: targetId,
-      userAgent: input.userAgent,
-      db: input.db,
-    })
-    await db(input.db).query(
-      `UPDATE web_accounts SET last_seen_at = now() WHERE id = $1::uuid`,
-      [targetId]
-    )
-    return {
-      mode: 'restored',
-      webAccountId: targetId,
-      infoMailSent: false,
-      expiresAt: session.expiresAt,
-      sessionToken: session.sessionToken,
-      csrfToken: session.csrfToken,
-      sessionExpiresAt: session.expiresAt,
-    }
-  }
-
-  const before = await db(input.db).query<{
-    pending_email_normalized: string | null
+  const current = await db(input.db).query<{
     email_normalized: string | null
     email_verified_at: Date | null
   }>(
-    `SELECT pending_email_normalized, email_normalized, email_verified_at
+    `SELECT email_normalized, email_verified_at
        FROM web_accounts
       WHERE id = $1::uuid AND revoked_at IS NULL
       LIMIT 1`,
     [input.webAccountId]
   )
-  const prev = before.rows[0]
+  const cur = current.rows[0]
+  if (!cur) {
+    const err = new Error('WEB account required') as Error & { status?: number; code?: string }
+    err.status = 401
+    err.code = 'web_account_required'
+    throw err
+  }
+  if (cur.email_verified_at && cur.email_normalized === emailNormalized) {
+    return { mode: 'verified' }
+  }
   // Never replace a different already-verified login email with another contact.
-  if (
-    prev?.email_verified_at &&
-    prev.email_normalized &&
-    prev.email_normalized !== emailNormalized
-  ) {
+  if (cur.email_verified_at && cur.email_normalized) {
     const err = new Error('Verified email already set') as Error & { status?: number; code?: string }
     err.status = 409
     err.code = 'email_already_verified'
     throw err
   }
 
-  const alreadySame =
-    (Boolean(prev?.email_verified_at) && prev?.email_normalized === emailNormalized) ||
-    prev?.pending_email_normalized === emailNormalized
-
-  await db(input.db).query(
-    `UPDATE web_accounts
-        SET pending_email_normalized = $2,
-            last_seen_at = now()
-      WHERE id = $1::uuid AND revoked_at IS NULL
-        AND (email_verified_at IS NULL OR email_normalized IS NOT DISTINCT FROM $2)`,
-    [input.webAccountId, emailNormalized]
-  )
-
-  let infoMailSent = false
-  const wantMail = input.sendWelcomeMail !== false
-  if (wantMail && !alreadySame) {
-    const ipKey = (input.ip || 'unknown').slice(0, 64)
-    for (const key of [
-      `email_welcome_ip:${ipKey}`,
-      `email_welcome_addr:${emailNormalized}`,
-      `email_welcome_acct:${input.webAccountId}`,
-    ]) {
-      const limited = await consumeSharedRateLimit(
-        key,
-        key.startsWith('email_welcome_ip:') ? 8 : 2,
-        60 * 60_000,
-        input.db
-      )
-      if (!limited.ok) {
-        return {
-          mode: 'created',
-          webAccountId: input.webAccountId,
-          expiresAt: new Date(Date.now() + LINK_TTL_MS),
-          infoMailSent: false,
-        }
-      }
-    }
-    try {
-      const mail = buildWelcomeInfoMail()
-      await getMailTransport().send({
-        to: emailNormalized,
-        subject: mail.subject,
-        text: mail.text,
-        html: mail.html,
-      })
-      infoMailSent = true
-    } catch (e) {
-      const err = e as Error
-      console.error('[webEmail] startEmailBind welcome mail failed', err.message)
-    }
-  }
-
-  return {
-    mode: alreadySame ? 'updated' : 'created',
-    webAccountId: input.webAccountId,
-    expiresAt: new Date(Date.now() + LINK_TTL_MS),
-    infoMailSent,
-  }
+  const owner = await findRecoverableAccount({
+    emailNormalized,
+    excludeAccountId: input.webAccountId,
+    pendingRequiresPremium: true,
+    db: input.db,
+  })
+  const started = await insertAndSendMagicLink({
+    webAccountId: owner ?? input.webAccountId,
+    emailNormalized,
+    purpose: owner ? 'recover' : 'bind',
+    ip: input.ip,
+    db: input.db,
+  })
+  return { mode: 'verify_sent', expiresAt: started.expiresAt, echoToken: started.echoToken }
 }
-
 /**
  * Start recover / login magic link. Always returns generic ok (anti-enumeration).
- * Sends only for verified email OR pending email saved via opt-in bind / checkout checkbox.
- * A paid receipt alone (without pending opt-in) is not enough to bind an account.
+ * Sends only to a mailbox tied to an account by a verified email, an opt-in pending
+ * contact, or the YooKassa receipt of a paid purchase (see findRecoverableAccount).
  */
 export async function startEmailRecover(input: {
   email: string
@@ -514,41 +440,18 @@ export async function startEmailRecover(input: {
     return { ok: true }
   }
 
-  let account = await db(input.db).query<{ id: string }>(
-    `SELECT id FROM web_accounts
-      WHERE email_normalized = $1
-        AND email_verified_at IS NOT NULL
-        AND revoked_at IS NULL
-      LIMIT 1`,
-    [emailNormalized]
-  )
-
-  if (!account.rows[0]) {
-    account = await db(input.db).query<{ id: string }>(
-      `SELECT a.id
-         FROM web_accounts a
-        WHERE a.revoked_at IS NULL
-          AND a.pending_email_normalized = $1
-          AND NOT EXISTS (
-            SELECT 1 FROM web_accounts o
-             WHERE o.email_normalized = $1
-               AND o.email_verified_at IS NOT NULL
-               AND o.revoked_at IS NULL
-               AND o.id <> a.id
-          )
-        ORDER BY a.created_at ASC
-        LIMIT 1`,
-      [emailNormalized]
-    )
-  }
-
-  if (!account.rows[0]) {
+  const accountId = await findRecoverableAccount({
+    emailNormalized,
+    excludeAccountId: null,
+    pendingRequiresPremium: false,
+    db: input.db,
+  })
+  if (!accountId) {
     return { ok: true }
   }
-
   try {
     const started = await insertAndSendMagicLink({
-      webAccountId: account.rows[0].id,
+      webAccountId: accountId,
       emailNormalized,
       purpose: 'recover',
       ip: input.ip,
@@ -640,8 +543,9 @@ export async function completeEmailMagicLink(input: {
   }
 
   // Defense: do not replace a verified login email unless the account explicitly
-  // started a rebind (pending_email_normalized matches this token).
-  if (row.purpose === 'bind') {
+  // started a rebind (pending_email_normalized matches this token). Recover links
+  // can target an account found by its paid receipt, so they are checked too.
+  {
     const current = await db(input.db).query<{
       email_normalized: string | null
       email_verified_at: Date | null

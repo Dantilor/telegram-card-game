@@ -11,6 +11,7 @@ import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
 import PaymentReturnBanner from '../components/PaymentReturnBanner'
 import { usePaymentReturn } from '../hooks/usePaymentReturn'
+import { useWebSession } from '../shell/WebSessionContext'
 import WebPremiumExperience from './WebPremiumExperience'
 import '../styles/GamePageShell.css'
 import './PremiumPage.css'
@@ -19,6 +20,7 @@ function PremiumPage() {
   const handleBack = useBack('/')
   const navigate = useNavigate()
   const { isPremium, activeUntil, refreshPremium } = usePremium()
+  const webSession = useWebSession()
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -31,6 +33,7 @@ function PremiumPage() {
       onRetry={retryPaymentCheck}
       onLogin={() => navigate('/login')}
       onGames={() => navigate('/games')}
+      onBindEmail={isWebShell() && !webSession.session?.emailVerified ? () => navigate('/profile') : undefined}
     />
   )
   const handleRestorePurchase = useCallback(async () => {

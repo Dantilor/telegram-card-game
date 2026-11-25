@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { isWebShell } from '../config/shell'
 import { completeEmailMagicLink } from '../lib/webAuth'
+import { premiumPhase } from '../lib/emailAccountSync'
 import { useWebSession } from '../shell/WebSessionContext'
 import { usePremium } from '../contexts/PremiumContext'
 import HomeButton from '../components/HomeButton'
@@ -34,15 +35,12 @@ export default function WebEmailConfirm() {
     setBusy(true)
     setStatus(null)
     try {
-      const completed = await completeEmailMagicLink(token)
+      await completeEmailMagicLink(token)
+      setStatus('Проверяем подписку…')
       await webSession.refreshSession()
-      const premium = await refreshPremium()
+      const syncPhase = await premiumPhase(refreshPremium)
       setDone(true)
-      const toast = premium?.isPremium
-        ? 'Готово. Premium и профиль восстановлены.'
-        : completed.purpose === 'recover'
-          ? 'Готово. Вход выполнен.'
-          : 'Готово. Почта подтверждена.'
+      const toast = syncPhase === 'restored' ? 'Premium восстановлен!' : 'Аккаунт готов к игре'
       setStatus(toast)
       const next =
         typeof window !== 'undefined'
@@ -50,7 +48,7 @@ export default function WebEmailConfirm() {
           : null
       const target =
         next && next.startsWith('/') && !next.startsWith('//') ? next : '/profile'
-      navigate(target, { replace: true, state: { emailAuthToast: toast } })
+      navigate(target, { replace: true, state: { emailAuthToast: toast, emailSyncPhase: syncPhase } })
     } catch {
       setStatus('Ссылка недействительна или уже использована. Запросите новую на странице входа.')
       setShowFallback(true)

@@ -36,6 +36,9 @@ function baseEnv(): void {
   process.env.YOOKASSA_WEBHOOK_IP_CHECK = '0'
   process.env.YOOKASSA_WEBHOOK_REQUIRE_SECRET = '0'
   delete process.env.YOOKASSA_WEBHOOK_SECRET
+  process.env.GNH_WEB_ENABLED = '1'
+  process.env.WEB_EMAIL_OTP_ECHO = '1'
+  delete process.env.SMTP_ENABLED
 }
 baseEnv()
 
@@ -53,6 +56,7 @@ for (const file of [
   'db/migrations/013_web_session_profile.sql',
   'db/migrations/014_legal_confirmation_source_web.sql',
   'db/migrations/017_web_anonymous_accounts.sql',
+  'db/migrations/018_web_rate_buckets.sql',
   'db/migrations/019_web_legal_subjects.sql',
   'db/migrations/020_web_email_magic_links.sql',
   'db/migrations/022_web_plans_audience.sql',
@@ -163,6 +167,7 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 }) as typeof fetch
 
 const { default: router } = await import('../routes/yookassa.js')
+const { default: webAuthRouter } = await import('../routes/webAuth.js')
 const { importDocuments, activateDocuments, readActiveDocument } = await import('../legal/documents.js')
 const { DOCUMENT_CATALOG, CONFIRMATION_SOURCE } = await import('../legal/constants.js')
 const { sha256Utf8 } = await import('../legal/hash.js')
@@ -194,6 +199,7 @@ before(async () => {
   const app = express()
   app.use(express.json())
   app.use('/api', router)
+  app.use('/api', webAuthRouter)
   server = http.createServer(app)
   server.listen(0, '127.0.0.1')
   await once(server, 'listening')
@@ -731,4 +737,66 @@ test('Telegram Mini App confirm is unchanged and cannot claim a WEB payment', as
   assert.equal(after.subscriptions, before.subscriptions)
   assert.equal(after.webEntitlements, before.webEntitlements)
   assert.equal((await webEntitlements(buyer.webAccountId)).length, 0)
+})
+
+// ---------- email in profile restores a paid account after a session change ----------
+async function rawPost(pathname: string, body: unknown, headers: Record<string, string> = {}) {
+  const res = await realFetch(`${baseUrl}${pathname}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  })
+  const text = await res.text()
+  return {
+    status: res.status,
+    setCookie: res.headers.getSetCookie?.() ?? [],
+    body: (text ? JSON.parse(text) : {}) as Record<string, unknown>,
+  }
+}
+
+function cookieHeaders(setCookie: string[]) {
+  const pick = (name: string) => setCookie.find((c) => c.startsWith(`${name}=`))?.split(';')[0]?.split('=')[1] ?? ''
+  const sid = pick(SESSION_COOKIE)
+  const csrf = pick(CSRF_COOKIE)
+  return { Cookie: `${SESSION_COOKIE}=${sid}; ${CSRF_COOKIE}=${csrf}`, 'X-CSRF-Token': csrf }
+}
+
+test('Return from YooKassa in a new session: saving the receipt email in profile restores the paid account', async () => {
+  const buyer = await webBuyer('premium_web_1m')
+  const created = await post(
+    '/api/payments/yookassa/create',
+    { planId: buyer.planId, offerAcceptanceId: buyer.evidenceId, email: 'returner@example.com' },
+    buyer.headers
+  )
+  assert.equal(created.status, 200, JSON.stringify(created.body))
+  const paymentId = String(created.body.paymentId)
+  markPaid(paymentId)
+  assert.equal((await webhook('payment.succeeded', { id: paymentId, status: 'succeeded' })).status, 200)
+  const [ent] = await webEntitlements(buyer.webAccountId)
+  assert.equal(ent?.active, true)
+  const before = await counts()
+
+  const fresh = await webBuyer('premium_web_1m') // cookies lost on return: new anonymous account
+  const bound = await rawPost('/api/web/email/bind/start', { email: 'Returner@Example.com' }, fresh.headers)
+  assert.equal(bound.status, 200, JSON.stringify(bound.body))
+  assert.equal(bound.body.mode, 'verify_sent')
+  assert.equal('webAccountId' in bound.body, false, 'no account id leaks')
+  assert.equal(bound.setCookie.some((c) => c.startsWith(`${SESSION_COOKIE}=`)), false, 'no session from the address alone')
+
+  const unknown = await rawPost('/api/web/email/bind/start', { email: 'someone-new@example.com' }, fresh.headers)
+  assert.deepEqual(Object.keys(unknown.body).sort(), Object.keys(bound.body).sort(), 'same answer for unknown email')
+
+  const confirmed = await rawPost('/api/web/email/confirm', { token: bound.body.token })
+  assert.equal(confirmed.status, 200, JSON.stringify(confirmed.body))
+  assert.equal(confirmed.body.webAccountId, buyer.webAccountId)
+  const restored = cookieHeaders(confirmed.setCookie)
+
+  // The auto-confirm flow under the restored session sees the purchase as already granted.
+  const again = await post('/api/yookassa/confirm', { paymentId }, restored)
+  assert.equal(again.status, 200, JSON.stringify(again.body))
+  assert.equal(again.body.alreadyDone, true)
+
+  const after = await counts()
+  assert.deepEqual(after, before, 'no new payments, entitlements or subscriptions')
+  assert.equal((await webEntitlements(fresh.webAccountId)).length, 0, 'Premium is not copied to the new account')
 })

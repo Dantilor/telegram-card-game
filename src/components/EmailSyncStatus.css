@@ -1,0 +1,101 @@
+.email-sync {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--game-shell-border, rgba(196, 167, 255, 0.28));
+  background: var(--game-shell-surface, rgba(36, 22, 66, 0.72));
+  color: var(--game-shell-text, #f5efff);
+  box-shadow: 0 10px 30px rgba(17, 8, 38, 0.28);
+}
+
+.email-sync__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 700;
+  background: rgba(176, 140, 255, 0.22);
+  color: #e9dcff;
+}
+
+.email-sync--restored .email-sync__icon,
+.email-sync--ready .email-sync__icon {
+  background: rgba(98, 214, 160, 0.22);
+  color: #9cf0c8;
+}
+
+.email-sync--confirm .email-sync__icon {
+  background: rgba(255, 205, 120, 0.2);
+  color: #ffd98f;
+}
+
+.email-sync--error .email-sync__icon {
+  background: rgba(255, 120, 140, 0.2);
+  color: #ffb3c0;
+}
+
+.email-sync--restored {
+  border-color: rgba(98, 214, 160, 0.45);
+}
+
+.email-sync__icon--pulse {
+  animation: email-sync-pulse 1.4s ease-in-out infinite;
+}
+
+.email-sync__body {
+  min-width: 0;
+}
+
+.email-sync__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.email-sync__text {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  opacity: 0.86;
+  overflow-wrap: anywhere;
+}
+
+@keyframes email-sync-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.88);
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .email-sync__icon--pulse {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .email-sync {
+    padding: 12px 13px;
+    gap: 10px;
+  }
+  .email-sync__icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .email-sync__title {
+    font-size: 15px;
+  }
+}

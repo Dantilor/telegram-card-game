@@ -192,4 +192,13 @@ describe('PremiumPage automatic payment confirmation', () => {
     expect(screen.getByText('plans')).toBeTruthy()
     expect(readPendingWebPayment()).toBeNull()
   })
+  it('after a successful payment without a confirmed email offers to link the receipt email', async () => {
+    savePendingWebPayment(PAYMENT, ACCOUNT)
+    confirmWebPayment.mockResolvedValue(confirmed)
+    await renderAt('/premium?payment=return')
+    await flush(10)
+    expect(screen.getByText(/подтвердите почту из чека в профиле/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Привязать почту' }))
+    expect(navigateSpy).toHaveBeenCalledWith('/profile')
+  })
 })

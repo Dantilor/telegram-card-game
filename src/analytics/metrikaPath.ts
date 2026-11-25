@@ -26,11 +26,9 @@ const GAME_OPEN_PREFIXES = [
   '/infected',
   '/play',
   '/card',
-  '/comics',
   '/game',
   '/decks',
   '/mode',
-  '/favorites',
 ] as const
 
 /** Collapse dynamic segments that may hold user content. */
@@ -89,7 +87,7 @@ export function gameIdFromPath(pathname: string): string | undefined {
   const path = normalizeMetrikaPath(pathname)
   const first = path.split('/').filter(Boolean)[0]
   if (!first) return undefined
-  if (first === 'play' || first === 'card' || first === 'decks' || first === 'mode' || first === 'favorites') {
+  if (first === 'play' || first === 'card' || first === 'decks' || first === 'mode') {
     return 'card'
   }
   if (first === 'comics' || first === 'game') return first

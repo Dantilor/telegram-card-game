@@ -24,6 +24,8 @@ export default function WebMetrikaConsentBanner() {
     isWebMetrikaFeatureEnabled() ? getMetrikaConsent() : 'denied'
   )
   const [visible, setVisible] = useState(false)
+  // The first-use sheet records "Later" in sessionStorage without any event; poll while it is open.
+  const [sheetTick, setSheetTick] = useState(0)
 
   useEffect(() => {
     if (!isWebMetrikaFeatureEnabled()) return
@@ -46,10 +48,19 @@ export default function WebMetrikaConsentBanner() {
     }
     const agreementBlocking =
       legal.status === 'ready' && legal.records?.agreement?.active !== true && !sheetClosed
-    if (agreementBlocking) return
+    if (agreementBlocking) {
+      const poll = window.setInterval(() => {
+        try {
+          if (sessionStorage.getItem('gnh_legal_sheet_closed') === '1') setSheetTick((n) => n + 1)
+        } catch {
+          /* ignore */
+        }
+      }, 500)
+      return () => window.clearInterval(poll)
+    }
     const t = window.setTimeout(() => setVisible(true), 600)
     return () => window.clearTimeout(t)
-  }, [consent, legal.status, legal.records?.agreement?.active, location.pathname])
+  }, [consent, legal.status, legal.records?.agreement?.active, location.pathname, sheetTick])
 
   const accept = useCallback(() => {
     haptic('light')

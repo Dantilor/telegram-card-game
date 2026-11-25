@@ -79,11 +79,41 @@
   color: rgba(255, 248, 255, 0.9);
 }
 
+/* Phones / tablets: sit above the bottom navigation instead of covering it. */
+@media (max-width: 899px) {
+  html:has(.gnh-inside:not(.gnh-inside--kit-experience) > .bottom-nav) .web-metrika-banner {
+    bottom: calc(var(--web-bottom-nav-clear, 56px) + 10px);
+    padding-bottom: 0;
+  }
+
+  .web-metrika-banner__card {
+    max-height: min(62vh, 420px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 @media (max-width: 420px) {
+  .web-metrika-banner {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .web-metrika-banner__card {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  .web-metrika-banner__text {
+    font-size: 0.76rem;
+    line-height: 1.4;
+  }
   .web-metrika-banner__actions {
-    flex-direction: column;
+    flex-wrap: nowrap;
   }
   .web-metrika-banner__btn {
-    width: 100%;
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    font-size: 0.8rem;
   }
 }

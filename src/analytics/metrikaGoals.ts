@@ -34,14 +34,15 @@ function safeParams(input?: Record<string, unknown>): Record<string, string> | u
   return Object.keys(out).length ? out : undefined
 }
 
-export async function reachMetrikaGoal(goal: MetrikaGoal, params?: Record<string, unknown>): Promise<void> {
-  if (!isMetrikaConsentGranted()) return
-  if (goal === 'premium_purchase' && !PREMIUM_PURCHASE_METRIKA_ENABLED) return
+/** Resolves true only when the goal was actually handed to the tag. */
+export async function reachMetrikaGoal(goal: MetrikaGoal, params?: Record<string, unknown>): Promise<boolean> {
+  if (!isMetrikaConsentGranted()) return false
+  if (goal === 'premium_purchase' && !PREMIUM_PURCHASE_METRIKA_ENABLED) return false
   try {
     await enableYandexMetrika()
-    reachYandexGoal(goal, safeParams(params))
+    return reachYandexGoal(goal, safeParams(params))
   } catch {
-    /* ignore */
+    return false
   }
 }
 
@@ -53,8 +54,10 @@ export async function reachMetrikaGoalOnce(
 ): Promise<void> {
   const key = `${goal}:${dedupeKey}`
   if (sentGoals.has(key)) return
+  // Mark as sent only after delivery, so a goal skipped on a private URL can still count later.
   sentGoals.add(key)
-  await reachMetrikaGoal(goal, params)
+  const delivered = await reachMetrikaGoal(goal, params)
+  if (!delivered) sentGoals.delete(key)
 }
 
 export function markMetrikaPaymentPending(): void {
@@ -111,7 +114,8 @@ export function mirrorTrackEventToMetrika(name: string, props?: Record<string, u
     return
   }
   if (name === 'click_premium') {
-    void reachMetrikaGoalOnce('premium_view', 'click')
+    // Same key as the /premium route view: one premium_view per tab, not one per entry point.
+    void reachMetrikaGoalOnce('premium_view', 'view')
     return
   }
   if (name === 'yookassa_redirect') {

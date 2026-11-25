@@ -19,6 +19,8 @@ describe('normalizeMetrikaPath', () => {
   it('detects game_open paths and game ids', () => {
     expect(isGameOpenPath('/quiz')).toBe(true)
     expect(isGameOpenPath('/games')).toBe(false)
+    expect(isGameOpenPath('/favorites')).toBe(false)
+    expect(isGameOpenPath('/comics')).toBe(false)
     expect(gameIdFromPath('/mafia-shadows')).toBe('mafia-shadows')
     expect(gameIdFromPath('/play')).toBe('card')
   })

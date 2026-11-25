@@ -3,19 +3,26 @@ import { useLocation } from 'react-router-dom'
 import { isWebMetrikaFeatureEnabled } from './metrikaFeature'
 import { getMetrikaConsent, subscribeMetrikaConsent } from './metrikaConsent'
 import { gameIdFromPath, isGameOpenPath, normalizeMetrikaPath } from './metrikaPath'
-import { reachMetrikaGoalOnce } from './metrikaGoals'
-import { disableYandexMetrika, enableYandexMetrika, hitYandexMetrika } from './yandexMetrika'
+import { reachMetrikaGoal, reachMetrikaGoalOnce } from './metrikaGoals'
+import { disableYandexMetrika, enableYandexMetrika, hitYandexMetrika, purgeMetrikaStorage } from './yandexMetrika'
+
+/** Game currently "open"; game_open fires on entering a game, not on every screen inside it. */
+let currentGameId: string | undefined
 
 async function trackPath(pathname: string, referer: string | null): Promise<string> {
   const path = normalizeMetrikaPath(pathname)
+  const gameId = isGameOpenPath(path) ? gameIdFromPath(path) : undefined
+  const enteringGame = gameId !== undefined && gameId !== currentGameId
+  currentGameId = gameId
   await enableYandexMetrika()
   hitYandexMetrika(path, document.title, referer ?? undefined)
-  if (isGameOpenPath(path)) {
-    const gameId = gameIdFromPath(path)
-    await reachMetrikaGoalOnce('game_open', path, gameId ? { gameId } : undefined)
+  if (enteringGame && gameId) {
+    const delivered = await reachMetrikaGoal('game_open', { gameId })
+    // Skipped on a private URL: let the next screen of the same game count it.
+    if (!delivered && currentGameId === gameId) currentGameId = undefined
   }
   if (path === '/premium' || path.startsWith('/premium/')) {
-    await reachMetrikaGoalOnce('premium_view', 'route:/premium')
+    await reachMetrikaGoalOnce('premium_view', 'view')
   }
   return path
 }
@@ -38,7 +45,10 @@ export default function WebMetrikaBoot() {
     const applyConsent = () => {
       const state = getMetrikaConsent()
       if (state !== 'granted') {
+        currentGameId = undefined
         disableYandexMetrika()
+        // Explicit refusal: also clear any leftover Metrika cookies/storage from earlier sessions.
+        if (state === 'denied') purgeMetrikaStorage()
         return
       }
       void (async () => {
@@ -61,6 +71,7 @@ export default function WebMetrikaBoot() {
   useEffect(() => {
     if (!isWebMetrikaFeatureEnabled()) return
     if (getMetrikaConsent() !== 'granted') {
+      currentGameId = undefined
       prevPathRef.current = normalizeMetrikaPath(location.pathname)
       return
     }
@@ -72,7 +83,9 @@ export default function WebMetrikaBoot() {
     return () => {
       cancelled = true
     }
-  }, [location.pathname])
+    // search/hash are deps only so the tag can start once a private URL (room code, token,
+    // payment return) has been replaced by a clean one; they are never sent anywhere.
+  }, [location.pathname, location.search, location.hash])
 
   return null
 }

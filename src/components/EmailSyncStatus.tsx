@@ -24,7 +24,7 @@ function detail(phase: EmailSyncPhase, email?: string | null): string | null {
     case 'restored':
       return 'Все игры открыты. Повторно платить не нужно.'
     case 'ready':
-      return 'Аккаунт готов. Активного Premium не найдено. Если покупка была в другом аккаунте, войдите по ссылке из письма.'
+      return 'Аккаунт готов. Активного Premium не найдено. Для входа на другом устройстве используйте шестизначный код из почты.'
     default:
       return null
   }

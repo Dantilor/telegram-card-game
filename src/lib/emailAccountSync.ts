@@ -81,7 +81,7 @@ export async function saveEmailAndSync(
   if (answer.mode === 'verified') return { phase: 'ready' }
 
   // Email contact is saved, but cannot unlock purchases from other accounts.
-  // Send a proof link immediately as part of the same explicit user action.
+  // Send a verification code immediately as part of the same explicit user action.
   try {
     const started = await deps.requestConfirmation(email)
     if (started.mode === 'code_sent' && started.challengeId) {
@@ -99,7 +99,7 @@ export async function saveEmailAndSync(
   }
 }
 
-/** The link was opened (here or in another tab): this browser now holds the confirmed account. */
+/** Legacy helper for still-valid emailed links. The new UI verifies codes in place. */
 export function isEmailConfirmationDone(
   session: WebSessionMe | null,
   started: { accountId: string | null; email: string }

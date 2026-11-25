@@ -2,13 +2,14 @@ import type { WebSessionMe } from './webAuth'
 
 export type EmailSyncPhase = 'idle' | 'saving' | 'checking' | 'confirm' | 'restored' | 'ready' | 'error'
 
-export type EmailBindAnswer = { mode?: 'saved' | 'verified' | 'verify_sent' }
+export type EmailBindAnswer = { mode?: 'saved' | 'verified' }
+export type EmailCodeAnswer = { mode?: 'code_sent'; challengeId?: string }
 
 type PremiumSnapshot = { isPremium: boolean } | null | undefined
 
 export type EmailSaveDeps = {
   saveContact: (email: string) => Promise<EmailBindAnswer>
-  requestConfirmation: (email: string) => Promise<EmailBindAnswer>
+  requestConfirmation: (email: string) => Promise<EmailCodeAnswer>
   refreshSession: () => Promise<unknown>
   refreshPremium: () => Promise<PremiumSnapshot>
   onPhase: (phase: EmailSyncPhase) => void
@@ -49,7 +50,7 @@ export async function premiumPhase(refreshPremium: () => Promise<PremiumSnapshot
 export async function saveEmailAndSync(
   email: string,
   deps: EmailSaveDeps
-): Promise<{ phase: EmailSyncPhase; error?: string }> {
+): Promise<{ phase: EmailSyncPhase; error?: string; challengeId?: string }> {
   deps.onPhase('saving')
   let answer: EmailBindAnswer
   try {
@@ -83,15 +84,16 @@ export async function saveEmailAndSync(
   // Send a proof link immediately as part of the same explicit user action.
   try {
     const started = await deps.requestConfirmation(email)
-    if (started.mode === 'verify_sent') return { phase: 'confirm' }
-    if (started.mode === 'verified') return { phase: await premiumPhase(deps.refreshPremium) }
-    return { phase: 'error', error: 'Не удалось отправить письмо. Попробуйте ещё раз.' }
+    if (started.mode === 'code_sent' && started.challengeId) {
+      return { phase: 'confirm', challengeId: started.challengeId }
+    }
+    return { phase: 'error', error: 'Не удалось отправить код. Попробуйте ещё раз.' }
   } catch (error) {
     const message = emailBindErrorMessage(error)
     return {
       phase: 'error',
       error: message === 'Не удалось сохранить email. Попробуйте позже.'
-        ? 'Email сохранён, но не удалось отправить ссылку. Повторите попытку.'
+        ? 'Email сохранён, но не удалось отправить код. Повторите попытку.'
         : message,
     }
   }

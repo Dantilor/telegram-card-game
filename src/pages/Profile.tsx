@@ -178,6 +178,7 @@ function Profile() {
   const [devicesBusy, setDevicesBusy] = useState(false)
   const [devicesError, setDevicesError] = useState<string | null>(null)
   const [emailDraft, setEmailDraft] = useState('')
+  const [emailCode, setEmailCode] = useState('')
   const [emailStatus, setEmailStatus] = useState<string | null>(null)
   const emailSync = useEmailAccountSync({
     session: webSession.session,
@@ -996,7 +997,7 @@ function Profile() {
                     <p className="profile-pass__desc">
                       {isPremium
                         ? 'Premium активен в этом аккаунте. Дополнительно подтверждать почту для игры не нужно.'
-                        : 'Если Premium куплен на эту почту в другом браузере, нажмите ниже. Мы отправим ссылку для безопасного восстановления.'}
+                        : 'Если Premium куплен на эту почту в другом браузере, нажмите ниже. Мы пришлём шестизначный код для восстановления здесь же.'}
                     </p>
                     <label className="profile-pass__email-label">
                       Email для аккаунта
@@ -1016,7 +1017,7 @@ function Profile() {
                       disabled={emailBusy || !emailDraft.trim()}
                     >
                       <span className="profile-pass__cta-shine" aria-hidden />
-                      {emailBusy ? 'Проверяем…' : emailSync.phase === 'confirm' ? 'Отправить ссылку ещё раз' : isPremium ? 'Сохранить email' : 'Проверить Premium'}
+                      {emailBusy ? 'Проверяем…' : emailSync.phase === 'confirm' ? 'Отправить новый код' : isPremium ? 'Сохранить email' : 'Проверить Premium'}
                     </button>
                   </>
                 )}
@@ -1025,7 +1026,7 @@ function Profile() {
               <>
                 <p className="profile-pass__desc">
                   Статус: Гость. Введите email. Если Premium уже куплен здесь, он останется
-                  активным без письма. Если покупка была на другом устройстве, пришлём ссылку автоматически.
+                  активным без письма. Если покупка была на другом устройстве, пришлём код автоматически.
                 </p>
                 <label className="profile-pass__email-label">
                   Ваш email
@@ -1045,11 +1046,39 @@ function Profile() {
                   disabled={emailBusy || !emailDraft.trim()}
                 >
                   <span className="profile-pass__cta-shine" aria-hidden />
-                  {emailBusy ? 'Проверяем…' : emailSync.phase === 'confirm' ? 'Отправить ссылку ещё раз' : 'Сохранить и проверить Premium'}
+                  {emailBusy ? 'Проверяем…' : emailSync.phase === 'confirm' ? 'Отправить новый код' : 'Сохранить и проверить Premium'}
                 </button>
               </>
             )}
             <EmailSyncStatus phase={emailSync.phase} error={emailSync.error} email={emailSync.pendingEmail} />
+            {emailSync.phase === 'confirm' && emailSync.challengeId && (
+              <form className="profile-pass__email-form" onSubmit={(e) => {
+                e.preventDefault()
+                void emailSync.verifyCode(emailCode).then((ok) => { if (ok) setEmailCode('') })
+              }}>
+                <label className="profile-pass__email-label">
+                  Код из письма
+                  <input
+                    type="text"
+                    className="profile-pass__email-input"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    value={emailCode}
+                    onChange={(e) => setEmailCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    required
+                    data-testid="profile-email-code"
+                  />
+                </label>
+                {emailSync.codeError && <p className="profile-pass__desc" role="alert">{emailSync.codeError}</p>}
+                <button type="submit" className="profile-pass__cta"
+                  disabled={emailSync.verifying || emailCode.length !== 6}>
+                  {emailSync.verifying ? 'Проверяем код…' : 'Подтвердить и открыть Premium'}
+                </button>
+              </form>
+            )}
             {emailStatus && emailSync.phase === 'idle' && <span className="profile-pass__toast">{emailStatus}</span>}
           </section>
         )}

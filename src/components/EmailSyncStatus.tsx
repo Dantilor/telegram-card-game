@@ -10,7 +10,7 @@ type Props = {
 const TITLES: Record<Exclude<EmailSyncPhase, 'idle' | 'error'>, string> = {
   saving: 'Сохраняем почту…',
   checking: 'Проверяем подписку…',
-  confirm: 'Подтвердите почту по ссылке из письма',
+  confirm: 'Введите 6-значный код из письма',
   restored: 'Premium активен!',
   ready: 'Аккаунт готов к игре',
 }
@@ -20,7 +20,7 @@ function detail(phase: EmailSyncPhase, email?: string | null): string | null {
     case 'checking':
       return 'Проверяем Premium в этом аккаунте. Если покупка была на другом устройстве, отправим ссылку для входа.'
     case 'confirm':
-      return `Письмо отправлено${email ? ` на ${email}` : ''}. Откройте ссылку в том же браузере, чтобы безопасно получить покупки с других устройств. Повторно платить не нужно.`
+      return `Код отправлен${email ? ` на ${email}` : ''}. Перепишите его сюда, в это же окно. Никаких переходов в другой браузер. Код действует 10 минут.`
     case 'restored':
       return 'Все игры открыты. Повторно платить не нужно.'
     case 'ready':

@@ -1,92 +1,76 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { useState } from 'react'
 import EmailSyncStatus from '../components/EmailSyncStatus'
 import { useEmailAccountSync } from './useEmailAccountSync'
 import type { WebSessionMe } from '../lib/webAuth'
 
-const saveProfileContactEmail = vi.fn()
-const startEmailBind = vi.fn()
+const saveContact = vi.fn()
+const sendCode = vi.fn()
+const confirmCode = vi.fn()
 vi.mock('../lib/webAuth', () => ({
-  saveProfileContactEmail: (email: string) => saveProfileContactEmail(email),
-  startEmailBind: (email: string) => startEmailBind(email),
+  saveProfileContactEmail: (email: string) => saveContact(email),
+  startEmailCode: (email: string) => sendCode(email),
+  completeEmailCode: (challenge: string, code: string) => confirmCode(challenge, code),
 }))
-
 const refreshPremium = vi.fn()
-const startWatch = vi.fn()
-let updateSession: (s: WebSessionMe | null) => void = () => undefined
-const guest: WebSessionMe = { ok: true, source: 'web_account', webAccountId: 'acc-guest' }
+const guest: WebSessionMe = { ok: true, source: 'web_account', webAccountId: 'guest' }
 
 function Harness() {
-  const [session, setSession] = useState<WebSessionMe | null>(guest)
-  updateSession = setSession
-  const sync = useEmailAccountSync({
-    session,
-    refreshSession: async () => session,
+  const flow = useEmailAccountSync({
+    session: guest,
+    refreshSession: async () => guest,
     refreshPremium,
-    startEmailPendingWatch: startWatch,
+    startEmailPendingWatch: () => undefined,
     stopEmailPendingWatch: () => undefined,
   })
   return (
     <div>
-      <button type="button" onClick={() => void sync.save('payer@example.com')}>Сохранить</button>
-      <EmailSyncStatus phase={sync.phase} error={sync.error} email={sync.pendingEmail} />
+      <button onClick={() => void flow.save('buyer@example.com')}>Сохранить</button>
+      {flow.phase === 'confirm' && (
+        <button onClick={() => void flow.verifyCode('123456')}>Ввести код</button>
+      )}
+      <EmailSyncStatus phase={flow.phase} error={flow.error} email={flow.pendingEmail} />
+      {flow.codeError && <p role="alert">{flow.codeError}</p>}
     </div>
   )
 }
-async function save() {
+const start = async () => {
   render(<Harness />)
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Сохранить' })) })
+  await act(async () => fireEvent.click(screen.getByText('Сохранить')))
 }
-
-describe('Profile: save email and restore Premium without extra recovery button', () => {
+describe('in-place profile email verification', () => {
   beforeEach(() => {
-    saveProfileContactEmail.mockReset()
-    startEmailBind.mockReset()
+    saveContact.mockReset().mockResolvedValue({ mode: 'saved' })
+    sendCode.mockReset().mockResolvedValue({ mode: 'code_sent', challengeId: '99' })
+    confirmCode.mockReset().mockResolvedValue({ ok: true })
     refreshPremium.mockReset()
-    startWatch.mockReset()
-    saveProfileContactEmail.mockResolvedValue({ mode: 'saved' })
-    startEmailBind.mockResolvedValue({ mode: 'verify_sent' })
   })
   afterEach(() => cleanup())
 
-  it('current browser already Premium: saved immediately without email link', async () => {
+  it('Premium already in current guest session: no email sent', async () => {
     refreshPremium.mockResolvedValue({ isPremium: true })
-    await save()
+    await start()
     expect(screen.getByText('Premium активен!')).toBeTruthy()
-    expect(startEmailBind).not.toHaveBeenCalled()
-    expect(startWatch).not.toHaveBeenCalled()
+    expect(sendCode).not.toHaveBeenCalled()
   })
 
-  it('Premium bought elsewhere: same Save click triggers email link', async () => {
-    refreshPremium.mockResolvedValueOnce({ isPremium: false }).mockResolvedValue({ isPremium: true })
-    await save()
-    expect(saveProfileContactEmail).toHaveBeenCalledWith('payer@example.com')
-    expect(startEmailBind).toHaveBeenCalledWith('payer@example.com')
-    expect(screen.getByText('Подтвердите почту по ссылке из письма')).toBeTruthy()
-    expect(startWatch).toHaveBeenCalled()
-    await act(async () => {
-      updateSession({ ...guest, email: 'payer@example.com', emailVerified: true })
-    })
-    expect(refreshPremium).toHaveBeenCalledTimes(2)
+  it('Purchase on another browser: code appears in same profile and unlocks after verification', async () => {
+    refreshPremium.mockResolvedValueOnce({ isPremium: false }).mockResolvedValueOnce({ isPremium: true })
+    await start()
+    expect(screen.getByText('Введите 6-значный код из письма')).toBeTruthy()
+    expect(sendCode).toHaveBeenCalledWith('buyer@example.com')
+    await act(async () => fireEvent.click(screen.getByText('Ввести код')))
+    expect(confirmCode).toHaveBeenCalledWith('99', '123456')
     expect(screen.getByText('Premium активен!')).toBeTruthy()
   })
 
-  it('no purchase: link confirms email, then shows free account', async () => {
+  it('Wrong code stays in same screen for a retry', async () => {
     refreshPremium.mockResolvedValue({ isPremium: false })
-    await save()
-    expect(screen.getByText('Подтвердите почту по ссылке из письма')).toBeTruthy()
-    await act(async () => {
-      updateSession({ ...guest, email: 'payer@example.com', emailVerified: true })
-    })
-    expect(screen.getByText('Аккаунт готов к игре')).toBeTruthy()
-  })
-
-  it('SMTP error after saving email: visible error, no fake Premium', async () => {
-    refreshPremium.mockResolvedValue({ isPremium: false })
-    startEmailBind.mockRejectedValueOnce(new Error('smtp'))
-    await save()
-    expect(screen.getByRole('alert').textContent).toMatch(/отправить ссылку/)
+    confirmCode.mockRejectedValueOnce(Object.assign(new Error('wrong'), { code: 'invalid_code', status: 400 }))
+    await start()
+    await act(async () => fireEvent.click(screen.getByText('Ввести код')))
+    expect(screen.getByText('Введите 6-значный код из письма')).toBeTruthy()
+    expect(screen.getByRole('alert').textContent).toMatch(/Неверный/)
   })
 })

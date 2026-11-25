@@ -13,7 +13,7 @@ function deps(premium: boolean | null, contactMode: 'saved' | 'verified' = 'save
     phases,
     d: {
       saveContact: vi.fn(async () => ({ mode: contactMode })),
-      requestConfirmation: vi.fn(async () => ({ mode: 'verify_sent' as const })),
+      requestConfirmation: vi.fn(async () => ({ mode: 'code_sent' as const, challengeId: '42' })),
       refreshSession: vi.fn(async () => null),
       refreshPremium: vi.fn(async () => premium === null ? null : ({ isPremium: premium })),
       onPhase: (p: EmailSyncPhase) => phases.push(p),
@@ -32,7 +32,7 @@ describe('saveEmailAndSync', () => {
 
   it('free current browser: automatically emails link to restore older purchase', async () => {
     const { d, phases } = deps(false)
-    expect(await saveEmailAndSync('a@b.co', d)).toEqual({ phase: 'confirm' })
+    expect(await saveEmailAndSync('a@b.co', d)).toEqual({ phase: 'confirm', challengeId: '42' })
     expect(phases).toEqual(['saving', 'checking'])
     expect(d.requestConfirmation).toHaveBeenCalledWith('a@b.co')
   })
@@ -54,7 +54,7 @@ describe('saveEmailAndSync', () => {
     d.requestConfirmation.mockRejectedValueOnce(new Error('smtp'))
     const result = await saveEmailAndSync('a@b.co', d)
     expect(result.phase).toBe('error')
-    expect(result.error).toMatch(/отправить ссылку/)
+    expect(result.error).toMatch(/отправить код/)
   })
 
   it('errors before save do not look like a success', async () => {

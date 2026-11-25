@@ -14,6 +14,8 @@ import '../styles/GamePageShell.css'
 import './PremiumPage.css'
 
 const EXPECTING_PAYMENT_FLAG = 'tcg_expecting_payment'
+const PAYMENT_RETURN_POLL_ATTEMPTS = 30
+const PAYMENT_RETURN_POLL_INTERVAL_MS = 2000
 
 function PremiumPage() {
   const handleBack = useBack('/')
@@ -25,11 +27,20 @@ function PremiumPage() {
   const [paymentReturnStatus, setPaymentReturnStatus] = useState<string | null>(null)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const paymentPollRef = useRef(false)
+  const mountedRef = useRef(true)
+  const isPaymentReturn = searchParams.get('payment') === 'return'
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   // WEB return_url from YooKassa — refresh status; never treat return alone as paid.
+  // Removing ?payment=return re-renders this page; the poll must survive that and stop only on unmount.
   useEffect(() => {
-    const payment = searchParams.get('payment')
-    if (payment !== 'return') return
+    if (!isPaymentReturn) return
     try {
       sessionStorage.setItem(EXPECTING_PAYMENT_FLAG, String(Date.now()))
     } catch {
@@ -39,11 +50,11 @@ function PremiumPage() {
     if (paymentPollRef.current) return
     paymentPollRef.current = true
     setPaymentReturnStatus('Проверяем оплату…')
-    let cancelled = false
     ;(async () => {
-      for (let i = 0; i < 15; i += 1) {
-        if (cancelled) return
+      for (let i = 0; i < PAYMENT_RETURN_POLL_ATTEMPTS; i += 1) {
+        if (!mountedRef.current) break
         const result = await refreshPremium()
+        if (!mountedRef.current) break
         if (result?.isPremium) {
           try {
             sessionStorage.removeItem(EXPECTING_PAYMENT_FLAG)
@@ -54,15 +65,18 @@ function PremiumPage() {
           paymentPollRef.current = false
           return
         }
-        await new Promise((r) => setTimeout(r, 2000))
+        if (i < PAYMENT_RETURN_POLL_ATTEMPTS - 1) {
+          await new Promise((r) => setTimeout(r, PAYMENT_RETURN_POLL_INTERVAL_MS))
+        }
       }
-      setPaymentReturnStatus('Оплата ещё не подтверждена. Если вы оплатили — подождите или нажмите «Восстановить покупки».')
+      if (mountedRef.current) {
+        setPaymentReturnStatus(
+          'Оплата ещё не подтверждена. Если вы оплатили — подождите или нажмите «Восстановить покупки».'
+        )
+      }
       paymentPollRef.current = false
     })()
-    return () => {
-      cancelled = true
-    }
-  }, [searchParams, setSearchParams, refreshPremium])
+  }, [isPaymentReturn, setSearchParams, refreshPremium])
 
   const handleRestorePurchase = useCallback(async () => {
     haptic('medium')

@@ -13,7 +13,26 @@ const PREMIUM_POLL_INTERVAL_MS = 2000
 const PREMIUM_POLL_MAX_ATTEMPTS = 15
 const EXPECTING_PAYMENT_FLAG = 'tcg_expecting_payment'
 const EXPECTING_PAYMENT_MAX_AGE_MS = 120000 // 2 min
+/** After a checkout redirect the cached "not Premium" snapshot predates the payment. */
+const EXPECTING_PAYMENT_SKIP_CACHE_MS = 30 * 60 * 1000
 const ACCOUNT_KEY = 'tcg_premium_account'
+
+function expectingPaymentRecently(): boolean {
+  try {
+    const ts = Number(sessionStorage.getItem(EXPECTING_PAYMENT_FLAG))
+    return Number.isFinite(ts) && ts > 0 && Date.now() - ts <= EXPECTING_PAYMENT_SKIP_CACHE_MS
+  } catch {
+    return false
+  }
+}
+
+function clearExpectingPayment(): void {
+  try {
+    sessionStorage.removeItem(EXPECTING_PAYMENT_FLAG)
+  } catch {
+    // ignore
+  }
+}
 
 function cacheKeyFor(accountId: string | null | undefined): string {
   return `${CACHE_KEY_PREFIX}:${accountId || 'anon'}`
@@ -152,7 +171,7 @@ export function usePremiumStatus(): {
     authError401: boolean
     serverError503: boolean
   }>(() => {
-    const cached = readCache()
+    const cached = expectingPaymentRecently() ? null : readCache()
     if (cached) {
       return {
         ...cached,
@@ -216,7 +235,7 @@ export function usePremiumStatus(): {
         return null
       }
 
-      if (!bypassCache) {
+      if (!bypassCache && !expectingPaymentRecently()) {
         const cached = readCache(accountRef.current)
         if (cached) {
           updateTcgState(cached.isPremium)
@@ -243,6 +262,7 @@ export function usePremiumStatus(): {
           lastEndedAt: me.lastEndedAt ?? null,
         })
         writeCache(data, accountId)
+        if (data.isPremium) clearExpectingPayment()
         updateTcgState(data.isPremium)
         devLog('[TCG] Premium:', data.isPremium ? 'active' : 'inactive')
         doneLoading({ ...data, authError: false, authError401: false, serverError503: false })

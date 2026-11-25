@@ -30,7 +30,7 @@ describe('saveEmailAndSync', () => {
     expect(d.requestConfirmation).not.toHaveBeenCalled()
   })
 
-  it('free current browser: automatically emails link to restore older purchase', async () => {
+  it('free current browser: automatically emails a code to restore older purchase', async () => {
     const { d, phases } = deps(false)
     expect(await saveEmailAndSync('a@b.co', d)).toEqual({ phase: 'confirm', challengeId: '42' })
     expect(phases).toEqual(['saving', 'checking'])

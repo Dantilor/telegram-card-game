@@ -18,7 +18,7 @@ const TITLES: Record<Exclude<EmailSyncPhase, 'idle' | 'error'>, string> = {
 function detail(phase: EmailSyncPhase, email?: string | null): string | null {
   switch (phase) {
     case 'checking':
-      return 'Проверяем Premium в этом аккаунте. Если покупка была на другом устройстве, отправим ссылку для входа.'
+      return 'Проверяем Premium в этом аккаунте. Если покупка была на другом устройстве, отправим одноразовый код.'
     case 'confirm':
       return `Код отправлен${email ? ` на ${email}` : ''}. Перепишите его сюда, в это же окно. Никаких переходов в другой браузер. Код действует 10 минут.`
     case 'restored':

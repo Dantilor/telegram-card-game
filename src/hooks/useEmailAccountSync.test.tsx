@@ -37,7 +37,7 @@ function Harness() {
 }
 const start = async () => {
   render(<Harness />)
-  await act(async () => fireEvent.click(screen.getByText('Сохранить')))
+  await act(async () => { fireEvent.click(screen.getByText('Сохранить')) })
 }
 describe('in-place profile email verification', () => {
   beforeEach(() => {
@@ -60,7 +60,7 @@ describe('in-place profile email verification', () => {
     await start()
     expect(screen.getByText('Введите 6-значный код из письма')).toBeTruthy()
     expect(sendCode).toHaveBeenCalledWith('buyer@example.com')
-    await act(async () => fireEvent.click(screen.getByText('Ввести код')))
+    await act(async () => { fireEvent.click(screen.getByText('Ввести код')) })
     expect(confirmCode).toHaveBeenCalledWith('99', '123456')
     expect(screen.getByText('Premium активен!')).toBeTruthy()
   })
@@ -69,7 +69,7 @@ describe('in-place profile email verification', () => {
     refreshPremium.mockResolvedValue({ isPremium: false })
     confirmCode.mockRejectedValueOnce(Object.assign(new Error('wrong'), { code: 'invalid_code', status: 400 }))
     await start()
-    await act(async () => fireEvent.click(screen.getByText('Ввести код')))
+    await act(async () => { fireEvent.click(screen.getByText('Ввести код')) })
     expect(screen.getByText('Введите 6-значный код из письма')).toBeTruthy()
     expect(screen.getByRole('alert').textContent).toMatch(/Неверный/)
   })

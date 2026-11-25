@@ -1096,7 +1096,7 @@ test('six-digit code: same WEB session claims historical purchases after proof, 
     await assert.rejects(() => completeEmailCode({
       webAccountId: newBrowser, challengeId: sent.challengeId,
       code: '999999' === sent.echoCode ? '000000' : '999999', db: harness.query,
-    }), (err: any) => err.code === 'invalid_code')
+    }), (err: unknown) => (err as { code?: string }).code === 'invalid_code')
 
     const completed = await completeEmailCode({
       webAccountId: newBrowser, challengeId: sent.challengeId,
@@ -1122,7 +1122,7 @@ test('six-digit code: same WEB session claims historical purchases after proof, 
     await assert.rejects(() => completeEmailCode({
       webAccountId: third, challengeId: onThird.challengeId,
       code: onThird.echoCode!, db: harness.query,
-    }), (err: any) => err.code === 'invalid_code')
+    }), (err: unknown) => (err as { code?: string }).code === 'invalid_code')
   } finally { await harness.close() }
 })
 
@@ -1137,18 +1137,18 @@ test('six-digit code is bound to originating WEB account and max five attempts',
     await assert.rejects(() => completeEmailCode({
       webAccountId: other, challengeId: sent.challengeId,
       code: sent.echoCode!, db: harness.query,
-    }), (err: any) => err.code === 'invalid_code')
+    }), (err: unknown) => (err as { code?: string }).code === 'invalid_code')
     assert.equal((await getWebAccountContact(other, harness.query)).emailVerified, false)
     for (let i = 0; i < 5; i++) {
       await assert.rejects(() => completeEmailCode({
         webAccountId: first, challengeId: sent.challengeId,
         code: sent.echoCode === '000000' ? '999999' : '000000', db: harness.query,
-      }), (err: any) => err.code === 'invalid_code')
+      }), (err: unknown) => (err as { code?: string }).code === 'invalid_code')
     }
     await assert.rejects(() => completeEmailCode({
       webAccountId: first, challengeId: sent.challengeId,
       code: sent.echoCode!, db: harness.query,
-    }), (err: any) => err.code === 'invalid_code')
+    }), (err: unknown) => (err as { code?: string }).code === 'invalid_code')
     assert.equal((await getWebAccountPremium(first, harness.query)).isPremium, false)
   } finally { await harness.close() }
 })
@@ -1163,7 +1163,7 @@ test('expired code never authorizes and a link token cannot be entered as a code
     await assert.rejects(() => completeEmailCode({
       webAccountId: account, challengeId: sent.challengeId,
       code: '123456789abcdefghijklmnop', db: harness.query,
-    }), (err: any) => err.code === 'invalid_code')
+    }), (err: unknown) => (err as { code?: string }).code === 'invalid_code')
     await harness.query.query(
       "UPDATE web_email_otps SET expires_at = now() - interval '1 second' WHERE id = $1",
       [sent.challengeId]
@@ -1171,7 +1171,7 @@ test('expired code never authorizes and a link token cannot be entered as a code
     await assert.rejects(() => completeEmailCode({
       webAccountId: account, challengeId: sent.challengeId,
       code: sent.echoCode!, db: harness.query,
-    }), (err: any) => err.code === 'invalid_code')
+    }), (err: unknown) => (err as { code?: string }).code === 'invalid_code')
     assert.equal((await getWebAccountContact(account, harness.query)).emailVerified, false)
   } finally { await harness.close() }
 })

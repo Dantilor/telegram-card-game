@@ -644,28 +644,25 @@ function Profile() {
   const handleLogout = useCallback(async () => {
     if (!web) return
     haptic('light')
-    const verified = Boolean(webSession.session?.emailVerified)
-    if (!verified) {
-      const ok = window.confirm(
-        'Почта ещё не подтверждена. После выхода Premium на этом устройстве может быть недоступен, пока вы не войдёте по email. Выйти на этом устройстве?'
-      )
-      if (!ok) return
-    } else {
-      const ok = window.confirm(
-        'Выйти на этом устройстве? Слот Premium освободится для другого устройства.'
-      )
-      if (!ok) return
-    }
+    const canSignInAgain = Boolean(webSession.session?.emailVerified || tgLinked)
+    const message = !canSignInAgain
+      ? 'Выйти из гостевого сеанса? Если у вас есть Premium, сначала сохраните доступ к аккаунту: после выхода его может быть сложно вернуть.'
+      : tgLinked
+        ? 'Выйти на этом устройстве? Слот Telegram Premium освободится.'
+        : 'Выйти из аккаунта на этом устройстве?'
+    if (!window.confirm(message)) return
     setLogoutBusy(true)
+    setDevicesError(null)
     try {
-      await logoutCurrentWebDevice()
+      if (tgLinked) await logoutCurrentWebDevice()
+      else await webSession.logout()
       window.location.assign('/')
     } catch {
-      setDevicesError('Не удалось выйти на этом устройстве. Слот не освобождён — попробуйте ещё раз.')
+      setDevicesError('Не удалось выйти на этом устройстве. Попробуйте ещё раз.')
     } finally {
       setLogoutBusy(false)
     }
-  }, [web, webSession])
+  }, [web, tgLinked, webSession])
 
   const getErrorMessage = () => {
     if (web) {
@@ -1067,6 +1064,27 @@ function Profile() {
 
         <ConsentsPanel />
 
+        {web && (
+          <section className="profile-menu" aria-label="Сеанс" data-testid="profile-signout">
+            <h2 className="profile-menu__title">Сеанс на этом устройстве</h2>
+            <div className="profile-menu__panel">
+              <button
+                type="button"
+                className="profile-menu__row"
+                disabled={logoutBusy}
+                onClick={() => void handleLogout()}
+              >
+                <span className="profile-menu__icon" aria-hidden>🚪</span>
+                <span className="profile-menu__label">
+                  <span className="profile-menu__label-main">{logoutBusy ? 'Выходим…' : 'Выйти из аккаунта'}</span>
+                </span>
+                <span className="profile-menu__chev" aria-hidden>›</span>
+              </button>
+            </div>
+            {devicesError && <p className="profile-pass__desc" role="alert">{devicesError}</p>}
+          </section>
+        )}
+
         {web && tgLinked ? (
           <section className="profile-menu profile-devices" aria-label="Мои устройства" data-testid="profile-devices">
             <h2 className="profile-menu__title">Мои устройства</h2>
@@ -1093,16 +1111,7 @@ function Profile() {
                         : `Активность: ${new Date(device.lastActiveAt).toLocaleDateString('ru-RU')}`}
                     </span>
                   </span>
-                  {device.isCurrent ? (
-                    <button
-                      type="button"
-                      className="profile-devices__action"
-                      disabled={logoutBusy || devicesBusy}
-                      onClick={() => void handleLogout()}
-                    >
-                      {logoutBusy ? 'Выход…' : 'Выйти на этом устройстве'}
-                    </button>
-                  ) : (
+                  {!device.isCurrent && (
                     <button
                       type="button"
                       className="profile-devices__action profile-devices__action--ghost"

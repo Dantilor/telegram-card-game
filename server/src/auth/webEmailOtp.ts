@@ -693,8 +693,7 @@ export async function startEmailCode(input: {
     const err = new Error('Account missing') as Error & { status?: number; code?: string }
     err.status = 401; err.code = 'web_account_required'; throw err
   }
-  if (current.rows[0].email_verified_at && current.rows[0].email_normalized !== email &&
-      !(await findVerifiedAccount(email, input.db))) {
+  if (current.rows[0].email_verified_at && current.rows[0].email_normalized !== email) {
     const err = new Error('Sign out before changing a verified email') as Error & { status?: number; code?: string }
     err.status = 409; err.code = 'email_already_verified'; throw err
   }

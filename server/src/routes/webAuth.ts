@@ -48,6 +48,8 @@ import {
 } from '../auth/webAccounts.js'
 import {
   completeEmailMagicLink,
+  completeEmailCode,
+  startEmailCode,
   saveProfileContactEmail,
   startEmailBind,
   startEmailRecover,
@@ -1064,6 +1066,71 @@ router.post('/web/email/profile/save', requireWebSession(), async (req: AuthedRe
     const email = typeof req.body?.email === 'string' ? req.body.email : ''
     const saved = await saveProfileContactEmail({ webAccountId, email })
     res.status(200).json({ ok: true, mode: saved.mode })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+
+/**
+ * Six-digit in-place email verification. Both requests require the SAME WEB
+ * session and CSRF; Safari/Chrome/PWA never need to open each other's links.
+ */
+router.post('/web/email/code/start', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const webAccountId = req.auth?.webAccountId
+    if (!webAccountId) {
+      res.status(401).json({ error: 'WEB account required', code: 'web_account_required' })
+      return
+    }
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const email = typeof req.body?.email === 'string' ? req.body.email : ''
+    const started = await startEmailCode({ webAccountId, email, ip: clientIpFromRequest(req) })
+    res.status(200).json({
+      ok: true, mode: 'code_sent', challengeId: started.challengeId,
+      expiresAt: started.expiresAt.toISOString(),
+      ...(started.echoCode ? { code: started.echoCode } : {}),
+    })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+router.post('/web/email/code/complete', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const webAccountId = req.auth?.webAccountId
+    if (!webAccountId) {
+      res.status(401).json({ error: 'WEB account required', code: 'web_account_required' })
+      return
+    }
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId : ''
+    const code = typeof req.body?.code === 'string' ? req.body.code : ''
+    const completed = await completeEmailCode({
+      webAccountId, challengeId, code, ip: clientIpFromRequest(req),
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    })
+    setSessionCookies(res, {
+      sessionToken: completed.sessionToken,
+      csrfToken: completed.csrfToken,
+      maxAgeSec: Math.floor(sessionTtlMs() / 1000),
+    })
+    res.status(200).json({
+      ok: true, webAccountId: completed.webAccountId,
+      email: completed.emailNormalized,
+    })
   } catch (e) {
     const { status, body } = errorPayload(e)
     res.status(status).json(body)

@@ -91,6 +91,7 @@ Production-контейнер **не трогать**.
 - `WEB_PUBLIC_ORIGIN=https://STAGING-DOMAIN`  
 - `CORS_ORIGIN=https://STAGING-DOMAIN` (не `*`)  
 - `YOOKASSA_SHOP_ID` / `YOOKASSA_SECRET_KEY` → **тестовый** магазин  
+- `YOOKASSA_SHOP_ID_WEB` / `YOOKASSA_SECRET_KEY_WEB` → тестовый магазин для WEB (можно те же тестовые ключи; без них WEB-оплата отвечает 503)  
 - `YOOKASSA_RETURN_URL_WEB=https://STAGING-DOMAIN/premium?payment=return`  
 - `YOOKASSA_WEBHOOK_REQUIRE_SECRET=0`  
 - `WEB_DEV_LOGIN_ENABLED=0`  

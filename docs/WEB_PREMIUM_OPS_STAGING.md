@@ -15,6 +15,9 @@ Staging TEST shop (not LIVE):
 ```env
 YOOKASSA_SHOP_ID=<test_shop_id>
 YOOKASSA_SECRET_KEY=<test_secret>
+# WEB checkout uses only these (no fallback to the keys above). May be the same TEST shop.
+YOOKASSA_SHOP_ID_WEB=<test_shop_id>
+YOOKASSA_SECRET_KEY_WEB=<test_secret>
 YOOKASSA_RETURN_URL_WEB=https://<staging-web-host>/premium?payment=return
 YOOKASSA_RETURN_URL=https://<staging-web-host>/premium?payment=return
 YOOKASSA_MOCK=0
@@ -85,7 +88,7 @@ See `docs/WEB_STAGING_MIGRATIONS.md` section Migration 019 only.
 ## 5. Connect TEST shop (Timeweb + YooKassa) - checklist
 
 1. In YooKassa create/open a **TEST** shop; copy shopId + secret key (test keys only).
-2. Timeweb GNH-WEB-Test env: set `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `YOOKASSA_RETURN_URL_WEB`, `YOOKASSA_MOCK=0`, `YOOKASSA_WEBHOOK_REQUIRE_SECRET=0`, empty `YOOKASSA_WEBHOOK_SECRET`, `TRUST_PROXY=1`, optional `YOOKASSA_WEBHOOK_IP_CHECK=1`.
+2. Timeweb GNH-WEB-Test env: set `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `YOOKASSA_SHOP_ID_WEB`, `YOOKASSA_SECRET_KEY_WEB`, `YOOKASSA_RETURN_URL_WEB`, `YOOKASSA_MOCK=0`, `YOOKASSA_WEBHOOK_REQUIRE_SECRET=0`, empty `YOOKASSA_WEBHOOK_SECRET`, `TRUST_PROXY=1`, optional `YOOKASSA_WEBHOOK_IP_CHECK=1`.
 3. Cabinet webhook URL: `https://dantilor-telegram-card-game-stand-f704.twc1.net/api/yookassa/webhook` (or current staging host).
 4. Redeploy/restart the Timeweb app so env is loaded (operator action - not from this agent).
 5. Smoke: create WEB order -> pay with YooKassa test card -> webhook -> Premium for that `web_account_id` only.

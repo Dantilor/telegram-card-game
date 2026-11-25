@@ -24,7 +24,7 @@ Enable HTTPS certificate in Timeweb for `play` (and apex if used).
 WEB_PUBLIC_ORIGIN=https://play.gamenighthost.ru
 WEB_COOKIE_SECURE=true
 TRUST_PROXY=1
-YOOKASSA_RETURN_URL_WEB=https://play.gamenighthost.ru/premium/return
+YOOKASSA_RETURN_URL_WEB=https://play.gamenighthost.ru/premium?payment=return
 ```
 
 CORS / cookie notes:

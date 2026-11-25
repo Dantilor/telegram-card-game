@@ -12,7 +12,8 @@
 | `YOOKASSA_WEBHOOK_SECRET` | Optional custom Bearer (leave empty for standard YooKassa HTTP notifications) |
 | `YOOKASSA_WEBHOOK_REQUIRE_SECRET` | Keep `0` for official cabinet webhooks |
 | `YOOKASSA_WEBHOOK_IP_CHECK` | Optional official IP allowlist (`1` on staging with `TRUST_PROXY`) |
-| `YOOKASSA_RETURN_URL_WEB` | WEB payment return URL |
+| `YOOKASSA_SHOP_ID_WEB` / `YOOKASSA_SECRET_KEY_WEB` | WEB shop (production: `1539987`). Required for WEB checkout; no fallback to the Telegram shop |
+| `YOOKASSA_RETURN_URL_WEB` | WEB payment return URL (`https://<host>/premium?payment=return`) |
 
 ## Anonymous session
 

@@ -20,7 +20,7 @@ test.describe('Anonymous WEB Premium', () => {
     const createBlocked = await api.post('/api/payments/yookassa/create', {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
-        planId: 'premium_1m',
+        planId: 'premium_web_1m',
         email: 'anon.buyer@example.test',
       },
     })
@@ -33,7 +33,7 @@ test.describe('Anonymous WEB Premium', () => {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
         requestId: `e2e-anon-offer-${Date.now()}`,
-        planId: 'premium_1m',
+        planId: 'premium_web_1m',
         priceRub: 259,
         durationDays: 30,
         currency: 'RUB',
@@ -49,7 +49,7 @@ test.describe('Anonymous WEB Premium', () => {
     const create = await api.post('/api/payments/yookassa/create', {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
-        planId: 'premium_1m',
+        planId: 'premium_web_1m',
         email: 'anon.buyer@example.test',
         offerAcceptanceId: evidenceId,
       },
@@ -76,7 +76,7 @@ test.describe('Anonymous WEB Premium', () => {
           amount: { value: '259.00', currency: 'RUB' },
           metadata: {
             web_account_id: ensured.webAccountId,
-            plan_id: 'premium_1m',
+            plan_id: 'premium_web_1m',
           },
         },
       },
@@ -111,7 +111,7 @@ test.describe('Anonymous WEB Premium', () => {
           amount: { value: '259.00', currency: 'RUB' },
           metadata: {
             web_account_id: ensured.webAccountId,
-            plan_id: 'premium_1m',
+            plan_id: 'premium_web_1m',
           },
         },
       },
@@ -138,7 +138,7 @@ test.describe('Anonymous WEB Premium', () => {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
         requestId: `e2e-anon-cancel-${Date.now()}`,
-        planId: 'premium_1m',
+        planId: 'premium_web_1m',
         priceRub: 259,
         durationDays: 30,
         currency: 'RUB',
@@ -153,7 +153,7 @@ test.describe('Anonymous WEB Premium', () => {
     const createCanceled = await api.post('/api/payments/yookassa/create', {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
-        planId: 'premium_1m',
+        planId: 'premium_web_1m',
         email: 'anon.cancel@example.test',
         offerAcceptanceId: evidenceId,
       },
@@ -170,7 +170,7 @@ test.describe('Anonymous WEB Premium', () => {
           status: 'canceled',
           metadata: {
             web_account_id: ensured.webAccountId,
-            plan_id: 'premium_1m',
+            plan_id: 'premium_web_1m',
           },
         },
       },
@@ -182,7 +182,7 @@ test.describe('Anonymous WEB Premium', () => {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
         requestId: `e2e-anon-refund-${Date.now()}`,
-        planId: 'premium_1m',
+        planId: 'premium_web_1m',
         priceRub: 259,
         durationDays: 30,
         currency: 'RUB',
@@ -197,7 +197,7 @@ test.describe('Anonymous WEB Premium', () => {
     const createOk = await api.post('/api/payments/yookassa/create', {
       headers: { 'X-CSRF-Token': csrf! },
       data: {
-        planId: 'premium_1m',
+        planId: 'premium_web_1m',
         email: 'anon.refund@example.test',
         offerAcceptanceId: evidence2,
       },
@@ -214,7 +214,7 @@ test.describe('Anonymous WEB Premium', () => {
           amount: { value: '259.00', currency: 'RUB' },
           metadata: {
             web_account_id: ensured.webAccountId,
-            plan_id: 'premium_1m',
+            plan_id: 'premium_web_1m',
           },
         },
       },

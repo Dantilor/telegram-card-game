@@ -7,6 +7,7 @@ export type YookassaPaymentSnapshot = {
   id: string
   status: string
   amount?: { value?: string; currency?: string }
+  recipient?: { account_id?: string }
   metadata?: {
     telegram_id?: string
     plan_id?: string
@@ -88,6 +89,54 @@ export async function fetchYookassaRefund(
   const json = (await res.json()) as YookassaRefundSnapshot
   if (!json?.id || typeof json.status !== 'string' || typeof json.payment_id !== 'string') return null
   return json
+}
+
+export type YookassaLookup<T> =
+  | { status: 'found'; object: T }
+  | { status: 'not_found' }
+  | { status: 'rejected'; httpStatus: number }
+
+/**
+ * Lookup that distinguishes "this shop does not know the object" (404) from
+ * credential problems. 401/403 and 5xx throw so webhooks return 5xx and retry.
+ */
+async function lookupYookassaObject<T extends { id?: unknown }>(
+  kind: 'payments' | 'refunds',
+  objectId: string,
+  deps: { shopId: string; secretKey: string; fetchImpl?: typeof fetch }
+): Promise<YookassaLookup<T>> {
+  const id = objectId.trim()
+  if (!deps.shopId || !deps.secretKey) throw new Error(`yookassa_${kind}_lookup_not_configured`)
+  if (!id) return { status: 'rejected', httpStatus: 400 }
+  const fetchImpl = deps.fetchImpl ?? fetch
+  const res = await fetchImpl(`https://api.yookassa.ru/v3/${kind}/${encodeURIComponent(id)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: 'Basic ' + Buffer.from(`${deps.shopId}:${deps.secretKey}`).toString('base64'),
+      Accept: 'application/json',
+    },
+  })
+  if (res.status >= 500) throw new Error(`yookassa_${kind}_lookup_${res.status}`)
+  if (res.status === 401 || res.status === 403) throw new Error(`yookassa_${kind}_lookup_auth_${res.status}`)
+  if (res.status === 404) return { status: 'not_found' }
+  if (!res.ok) return { status: 'rejected', httpStatus: res.status }
+  const json = (await res.json()) as T
+  if (!json || json.id !== id) return { status: 'rejected', httpStatus: res.status }
+  return { status: 'found', object: json }
+}
+
+export function lookupYookassaPayment(
+  paymentId: string,
+  deps: { shopId: string; secretKey: string; fetchImpl?: typeof fetch }
+): Promise<YookassaLookup<YookassaPaymentSnapshot>> {
+  return lookupYookassaObject<YookassaPaymentSnapshot>('payments', paymentId, deps)
+}
+
+export function lookupYookassaRefund(
+  refundId: string,
+  deps: { shopId: string; secretKey: string; fetchImpl?: typeof fetch }
+): Promise<YookassaLookup<YookassaRefundSnapshot>> {
+  return lookupYookassaObject<YookassaRefundSnapshot>('refunds', refundId, deps)
 }
 
 /** Amount in kopecks/rubles as integer rubles from "259.00". */

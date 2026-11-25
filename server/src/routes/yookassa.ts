@@ -31,6 +31,13 @@ import {
 } from '../payments/yookassaClient.js'
 import { yookassaMockEnabled } from '../payments/yookassaMock.js'
 import {
+  YookassaShopNotConfiguredError,
+  verifyWebPayment,
+  verifyWebRefund,
+  yookassaBasicAuth,
+  yookassaShopCredentials,
+} from '../payments/yookassaShops.js'
+import {
   evaluateYookassaWebhookAuth,
   evaluateYookassaWebhookIp,
 } from '../payments/yookassaWebhookSecurity.js'
@@ -213,12 +220,17 @@ async function handleCreatePayment(req: Request, res: Response) {
     return
   }
 
-  const shopId = process.env.YOOKASSA_SHOP_ID
-  const secretKey = process.env.YOOKASSA_SECRET_KEY
+  // WEB accounts pay only through the WEB shop; Telegram keeps its original shop.
+  const shop = webAccountId ? 'web' : 'telegram'
+  const shopCredentials = yookassaShopCredentials(shop)
   const returnUrl = resolvePaymentReturnUrl(source)
-  if (!shopId || !secretKey || !returnUrl) {
-    console.error('[YooKassa] Missing YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY or return URL')
-    res.status(503).json({ ok: false, error: 'Payment not configured' })
+  if (!shopCredentials || !returnUrl) {
+    console.error(
+      shop === 'web'
+        ? '[YooKassa] WEB checkout not configured: YOOKASSA_SHOP_ID_WEB, YOOKASSA_SECRET_KEY_WEB or return URL missing'
+        : '[YooKassa] Missing YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY or return URL'
+    )
+    res.status(503).json({ ok: false, error: 'Payment not configured', code: 'payment_not_configured' })
     return
   }
 
@@ -312,7 +324,7 @@ async function handleCreatePayment(req: Request, res: Response) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Basic ' + Buffer.from(`${shopId}:${secretKey}`).toString('base64'),
+          Authorization: yookassaBasicAuth(shopCredentials),
           'Idempotence-Key': idempotenceKey,
         },
         body: JSON.stringify({
@@ -439,7 +451,7 @@ async function handleCreatePayment(req: Request, res: Response) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Basic ' + Buffer.from(`${shopId}:${secretKey}`).toString('base64'),
+        Authorization: yookassaBasicAuth(shopCredentials),
         'Idempotence-Key': idempotenceKey,
       },
       body: JSON.stringify(body),
@@ -655,6 +667,18 @@ export async function grantPremiumByPaymentId(
   }
 }
 
+/** Telegram Mini App shop credentials for API verification (same env as before the split). */
+function telegramShopDeps(): { shopId?: string; secretKey?: string } {
+  const credentials = yookassaShopCredentials('telegram')
+  return credentials ? { shopId: credentials.shopId, secretKey: credentials.secretKey } : {}
+}
+
+/** Shop routing source: our own web_payments row (written only after a WEB create). */
+async function hasWebPaymentRow(paymentId: string): Promise<boolean> {
+  const row = await query(`SELECT 1 FROM web_payments WHERE id = $1 LIMIT 1`, [paymentId])
+  return row.rows.length > 0
+}
+
 async function handleWebhook(req: Request, res: Response) {
   console.log('[YooKassa] webhook received', {
     event: req.body?.event,
@@ -724,8 +748,9 @@ async function handleWebhook(req: Request, res: Response) {
           ).catch(() => {})
         }
 
-        // WEB cancel/failed: verify payment status via API before touching entitlements.
-        if (newStatus === 'canceled' || newStatus === 'failed') {
+        // WEB cancel/failed: verify payment status via the WEB shop API before touching entitlements.
+        // Payments without a web_payments row are Telegram (or unknown) and have no WEB rights to revoke.
+        if ((newStatus === 'canceled' || newStatus === 'failed') && (await hasWebPaymentRow(pid))) {
           let verifiedCancel: { status?: string } | null = null
           if (yookassaMockEnabled() && pid.startsWith('mock_')) {
             const mock = mockPayments.get(pid)
@@ -737,7 +762,7 @@ async function handleWebhook(req: Request, res: Response) {
               verifiedCancel = { status: newStatus }
             }
           } else {
-            verifiedCancel = await fetchYookassaPayment(pid)
+            verifiedCancel = (await verifyWebPayment(pid))?.payment ?? null
           }
           const apiStatus = verifiedCancel?.status ?? null
           if (apiStatus !== 'canceled' && apiStatus !== 'failed') {
@@ -767,17 +792,20 @@ async function handleWebhook(req: Request, res: Response) {
             amount?: { value?: string; currency?: string }
           } | null = null
 
+          // Body payment_id only picks which shop to ask; the refund itself is always API-verified.
+          const paymentIdFromBody =
+            typeof obj.payment_id === 'string' ? obj.payment_id.trim() : ''
           if (yookassaMockEnabled() && refundId.startsWith('mock_refund_')) {
-            const paymentIdFromBody =
-              typeof obj.payment_id === 'string' ? obj.payment_id.trim() : ''
             verifiedRefund = {
               id: refundId,
               status: 'succeeded',
               payment_id: paymentIdFromBody,
               amount: (obj as { amount?: { value?: string; currency?: string } }).amount,
             }
+          } else if (paymentIdFromBody && (await hasWebPaymentRow(paymentIdFromBody))) {
+            verifiedRefund = (await verifyWebRefund(refundId))?.refund ?? null
           } else {
-            verifiedRefund = await fetchYookassaRefund(refundId)
+            verifiedRefund = await fetchYookassaRefund(refundId, telegramShopDeps())
           }
 
           if (!verifiedRefund || verifiedRefund.status !== 'succeeded') {
@@ -857,6 +885,7 @@ async function handleWebhook(req: Request, res: Response) {
         amount?: { value?: string; currency?: string }
         metadata?: Record<string, string>
       } | null = null
+      const isWebPayment = await hasWebPaymentRow(pid)
 
       if (yookassaMockEnabled() && pid.startsWith('mock_')) {
         const mock = mockPayments.get(pid)
@@ -872,8 +901,12 @@ async function handleWebhook(req: Request, res: Response) {
             metadata: (obj.metadata as Record<string, string> | undefined) ?? {},
           }
         }
+      } else if (isWebPayment) {
+        const web = await verifyWebPayment(pid)
+        verified = web?.payment ?? null
+        if (web) console.log('[YooKassa] webhook: WEB payment verified', { paymentId: pid, shop: web.verifiedBy })
       } else {
-        verified = await fetchYookassaPayment(pid)
+        verified = await fetchYookassaPayment(pid, telegramShopDeps())
       }
 
       if (!verified || verified.status !== 'succeeded') {
@@ -881,6 +914,12 @@ async function handleWebhook(req: Request, res: Response) {
           paymentId: pid,
           apiStatus: verified?.status ?? null,
         })
+        return
+      }
+
+      if (isWebPayment && !(verified.metadata?.web_account_id || '').trim()) {
+        // A WEB order must never fall through to the Telegram subscription grant.
+        console.error('[YooKassa] webhook: WEB payment without web_account_id metadata', { paymentId: pid })
         return
       }
 
@@ -1022,21 +1061,6 @@ async function handleConfirm(req: Request, res: Response) {
       amount?: { value?: string; currency?: string }
       metadata?: Record<string, string>
     } | null = null
-    if (yookassaMockEnabled() && paymentId.startsWith('mock_')) {
-      payment = mockPayments.get(paymentId) ?? { status: 'pending', metadata: {} }
-    } else {
-      payment = await fetchYookassaPayment(paymentId)
-    }
-    if (!payment) {
-      res.status(502).json({ ok: false, error: 'Payment provider error' })
-      return
-    }
-
-    const status = payment.status ?? null
-    if (status !== 'succeeded') {
-      res.status(200).json({ ok: false, status, paymentId })
-      return
-    }
 
     // ——— WEB account confirm ———
     if (auth.webAccountId) {
@@ -1058,6 +1082,21 @@ async function handleConfirm(req: Request, res: Response) {
       }
       if (row.web_account_id !== auth.webAccountId) {
         res.status(403).json({ ok: false, error: 'payment_owner_mismatch' })
+        return
+      }
+
+      if (yookassaMockEnabled() && paymentId.startsWith('mock_')) {
+        payment = mockPayments.get(paymentId) ?? { status: 'pending', metadata: {} }
+      } else {
+        payment = (await verifyWebPayment(paymentId))?.payment ?? null
+      }
+      if (!payment) {
+        res.status(502).json({ ok: false, error: 'Payment provider error' })
+        return
+      }
+      const status = payment.status ?? null
+      if (status !== 'succeeded') {
+        res.status(200).json({ ok: false, status, paymentId })
         return
       }
 
@@ -1147,6 +1186,21 @@ async function handleConfirm(req: Request, res: Response) {
       return
     }
 
+    if (yookassaMockEnabled() && paymentId.startsWith('mock_')) {
+      payment = mockPayments.get(paymentId) ?? { status: 'pending', metadata: {} }
+    } else {
+      payment = await fetchYookassaPayment(paymentId, telegramShopDeps())
+    }
+    if (!payment) {
+      res.status(502).json({ ok: false, error: 'Payment provider error' })
+      return
+    }
+    const status = payment.status ?? null
+    if (status !== 'succeeded') {
+      res.status(200).json({ ok: false, status, paymentId })
+      return
+    }
+
     const existing = await findPaymentGrantRow(paymentId)
     const rowTelegram =
       existing?.telegram_id != null ? String(existing.telegram_id) : null
@@ -1185,6 +1239,11 @@ async function handleConfirm(req: Request, res: Response) {
 
     res.status(400).json({ ok: false, error: 'Cannot resolve telegramId or planId' })
   } catch (e) {
+    if (e instanceof YookassaShopNotConfiguredError) {
+      console.error('[YooKassa] confirm: WEB shop not configured')
+      res.status(503).json({ ok: false, error: 'Payment not configured', code: 'payment_not_configured' })
+      return
+    }
     logPgError('[YooKassa] confirm error', e)
     res.status(500).json({ ok: false, error: e instanceof Error ? e.message : String(e) })
   }

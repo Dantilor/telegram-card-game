@@ -869,3 +869,52 @@ test('E2E: guest buys twice with a receipt email, new browser confirms it → ev
   assert.equal(await untilOf(thirdId), expected.toISOString())
   assert.equal((await sessionMe(main)).premium?.activeUntil, expected.toISOString())
 })
+
+test('/login with a receipt email typed by mistake: the mailbox owner gets the Premium, never the payer session', async () => {
+  const email = 'mistaken-b@example.com'
+  const a = await guestPurchase('premium_web_1m', email)
+  const meA = await sessionMe(a.buyer.headers)
+  const before = await counts()
+
+  // B opens /login in a browser without cookies.
+  const start = await rawPost('/api/web/email/recover/start', { email })
+  assert.equal(start.status, 200, JSON.stringify(start.body))
+  const unknown = await rawPost('/api/web/email/recover/start', { email: 'nobody-b@example.com' })
+  assert.deepEqual(Object.keys(unknown.body).sort(), Object.keys(start.body).sort(), 'same answer for unknown email')
+  assert.equal(start.setCookie.some((c) => c.startsWith(`${SESSION_COOKIE}=`)), false)
+
+  const done = await rawPost('/api/web/email/confirm', { token: start.body.token })
+  assert.equal(done.status, 200, JSON.stringify(done.body))
+  assert.notEqual(done.body.webAccountId, a.buyer.webAccountId, "B never receives A's guest session")
+  const b = cookieHeaders(done.setCookie)
+  const meB = await sessionMe(b)
+  assert.notEqual(meB.webAccountId, a.buyer.webAccountId)
+  assert.equal(meB.emailVerified, true)
+  assert.equal(meB.premium?.isPremium, true, 'Premium paid with the confirmed email')
+  assert.equal(meB.premium?.activeUntil, a.activeUntil)
+  assert.equal(meB.receiptEmail ?? null, null)
+
+  // A is untouched; B cannot act on A's payment.
+  const meAAfter = await sessionMe(a.buyer.headers)
+  assert.equal(meAAfter.webAccountId, meA.webAccountId)
+  assert.equal(meAAfter.emailVerified, meA.emailVerified)
+  assert.equal(meAAfter.email, meA.email)
+  assert.deepEqual(meAAfter.premium, meA.premium)
+  assert.deepEqual(await counts(), before, 'no payments or entitlements created or moved')
+  const foreign = await post('/api/yookassa/confirm', { paymentId: a.paymentId }, b)
+  assert.equal(foreign.status, 403)
+
+  // B signs in again later: the same confirmed account.
+  const again = await rawPost('/api/web/email/recover/start', { email })
+  const doneAgain = await rawPost('/api/web/email/confirm', { token: again.body.token })
+  assert.equal(doneAgain.body.webAccountId, meB.webAccountId)
+
+  // A session cookie without its CSRF header is ignored; with it, the caller's own guest is confirmed.
+  const c = await webBuyer('premium_web_1m')
+  const noCsrf = await rawPost('/api/web/email/recover/start', { email: 'c-own@example.com' }, { Cookie: c.headers.Cookie })
+  const noCsrfDone = await rawPost('/api/web/email/confirm', { token: noCsrf.body.token })
+  assert.notEqual(noCsrfDone.body.webAccountId, c.webAccountId)
+  const withCsrf = await rawPost('/api/web/email/recover/start', { email: 'c-own2@example.com' }, c.headers)
+  const withCsrfDone = await rawPost('/api/web/email/confirm', { token: withCsrf.body.token })
+  assert.equal(withCsrfDone.body.webAccountId, c.webAccountId)
+})

@@ -1127,7 +1127,11 @@ router.post('/web/email/recover/start', async (req: Request, res: Response) => {
       return
     }
     const email = typeof req.body?.email === 'string' ? req.body.email : ''
-    const started = await startEmailRecover({ email, ip: clientIpFromRequest(req) })
+    const sessionToken = readCookies(req)[SESSION_COOKIE] || ''
+    const session = sessionToken ? await findActiveSessionByToken(sessionToken) : null
+    const csrf = typeof req.headers['x-csrf-token'] === 'string' ? req.headers['x-csrf-token'] : undefined
+    const callerAccountId = session && verifyCsrf(session, csrf) ? (session.web_account_id ?? null) : null
+    const started = await startEmailRecover({ email, ip: clientIpFromRequest(req), callerAccountId })
     res.status(200).json({
       ok: true,
       expiresAt: started.expiresAt,

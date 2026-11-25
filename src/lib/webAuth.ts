@@ -365,12 +365,14 @@ export async function startEmailRecover(email: string): Promise<{
   expiresAt?: string
   token?: string
 }> {
+  const csrf = readCsrfToken()
   const res = await fetch(`${apiBase()}/api/web/email/recover/start`, {
     method: 'POST',
     credentials: 'include',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
     body: JSON.stringify({ email }),
   })

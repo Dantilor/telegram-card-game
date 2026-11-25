@@ -35,7 +35,7 @@ export default function WebPurchaseRecover() {
       await startEmailRecover(email.trim())
       setSent(true)
       setStatus(
-        'Если этот адрес связан с аккаунтом, мы отправили одноразовую ссылку для входа. Откройте её на этом устройстве.'
+        'Мы отправили одноразовую ссылку на этот адрес. Откройте её на этом устройстве — вход завершится, а Premium, оплаченный с этой почтой, откроется сам.'
       )
     } catch (e) {
       const statusCode = (e as Error & { status?: number }).status
@@ -75,8 +75,8 @@ export default function WebPurchaseRecover() {
         <p className="profile-pass__eyebrow">Вход</p>
         <p className="profile-pass__title">Войти по email</p>
         <p className="profile-pass__desc">
-          Введите почту аккаунта и запросите ссылку сами. После перехода по письму вход завершится
-          без лишних окон. Premium вернётся на этом устройстве. Telegram не обязателен.
+          Введите почту и запросите ссылку. После перехода по письму вы войдёте в аккаунт с этой почтой,
+          а Premium, оплаченный с ней, откроется на этом устройстве. Telegram не обязателен.
         </p>
         {!sent && (
           <form className="profile-pass__email-form" onSubmit={onSubmit}>
@@ -107,9 +107,7 @@ export default function WebPurchaseRecover() {
         )}
         {!sent && (
           <p className="profile-pass__desc">
-            Ещё нет почты на этом устройстве? Откройте{' '}
-            <Link to="/profile">Профиль</Link> и нажмите «Привязать почту» — это и есть регистрация.
-            Telegram можно связать позже, по желанию.
+            Первый раз? Ссылка из письма и есть регистрация. Telegram можно связать позже, по желанию.
           </p>
         )}
       </section>

@@ -66,6 +66,11 @@
   color: var(--game-shell-readable-muted, inherit);
 }
 
+/* Outranks the theme-wide `html[data-theme] .app … p { color: var(--text) }` on the dark WEB Premium page. */
+.app.app--web .payment-return p.payment-return__text {
+  color: var(--game-shell-readable-muted, inherit);
+}
+
 .payment-return__actions {
   display: flex;
   flex-wrap: wrap;

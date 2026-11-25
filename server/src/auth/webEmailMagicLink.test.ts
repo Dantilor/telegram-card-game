@@ -157,26 +157,22 @@ test('receipt email saved on paid purchase; pending until magic confirm; no auto
     )
     assert.equal(otpAfterPay.rows[0]!.c, '0', 'no magic link sent on payment')
 
-    // User later requests login link explicitly.
-    const started = await startEmailRecover({
-      email: 'buyer@example.com',
-      db: harness.query,
-    })
+    // Later the buyer signs in on /login without that guest session: the confirmed
+    // mailbox gets its own account with the purchase; the guest account stays as it was.
+    const started = await startEmailRecover({ email: 'buyer@example.com', db: harness.query })
     assert.ok(started.echoToken)
+    assert.equal(await otpPurpose(harness.query, started.echoToken!), 'bind')
+    assert.notEqual(await otpAccount(harness.query, started.echoToken!), webAccountId)
 
-    const completed = await completeEmailMagicLink({
-      token: started.echoToken!,
-      db: harness.query,
-    })
-    assert.equal(completed.webAccountId, webAccountId)
+    const completed = await completeEmailMagicLink({ token: started.echoToken!, db: harness.query })
+    assert.notEqual(completed.webAccountId, webAccountId)
     assert.equal(completed.emailNormalized, 'buyer@example.com')
+    assert.equal((await getWebAccountContact(completed.webAccountId, harness.query)).emailVerified, true)
+    assert.equal((await getWebAccountPremium(completed.webAccountId, harness.query)).isPremium, true)
 
-    const verified = await getWebAccountContact(webAccountId, harness.query)
-    assert.equal(verified.emailVerified, true)
-    assert.equal(verified.emailPending, false)
-
-    const premium = await getWebAccountPremium(webAccountId, harness.query)
-    assert.equal(premium.isPremium, true)
+    assert.deepEqual(await getWebAccountContact(webAccountId, harness.query), contact)
+    assert.equal(await countSessions(harness.query, webAccountId), 0)
+    assert.equal((await getWebAccountPremium(webAccountId, harness.query)).isPremium, true)
   } finally {
     await harness.close()
   }
@@ -291,8 +287,9 @@ test('paid receipt and checkout opt-in both lead to the same account; no duplica
     })
     assert.equal(skipped.pendingEmail, null)
     const bare = await startEmailRecover({ email: 'late@example.com', db: harness.query })
-    assert.ok(bare.echoToken, 'paid receipt with an active entitlement is recoverable via the mailbox')
-    assert.equal(await otpAccount(harness.query, bare.echoToken!), webAccountId)
+    assert.ok(bare.echoToken, 'a login link always goes to the mailbox')
+    const loginAccount = await otpAccount(harness.query, bare.echoToken!)
+    assert.notEqual(loginAccount, webAccountId, 'the receipt never targets the paying guest account')
 
     await afterWebPurchasePaid({ webAccountId, paymentId, bindAccountEmail: true, db: harness.query })
     await afterWebPurchasePaid({ webAccountId, paymentId, bindAccountEmail: true, db: harness.query })
@@ -308,14 +305,14 @@ test('paid receipt and checkout opt-in both lead to the same account; no duplica
       db: harness.query,
     })
     assert.ok(recover.echoToken)
-    const completed = await completeEmailMagicLink({
-      token: recover.echoToken!,
-      db: harness.query,
-    })
-    assert.equal(completed.webAccountId, webAccountId)
+    assert.equal(await otpAccount(harness.query, recover.echoToken!), loginAccount, 'no second empty account')
+    const completed = await completeEmailMagicLink({ token: recover.echoToken!, db: harness.query })
+    assert.equal(completed.webAccountId, loginAccount)
+    assert.equal((await getWebAccountPremium(loginAccount, harness.query)).isPremium, true)
 
-    const premium = await getWebAccountPremium(webAccountId, harness.query)
-    assert.equal(premium.isPremium, true)
+    const again = await startEmailRecover({ email: 'late@example.com', db: harness.query })
+    assert.equal(await otpPurpose(harness.query, again.echoToken!), 'recover')
+    assert.equal(await otpAccount(harness.query, again.echoToken!), loginAccount)
 
     const entsAfter = await harness.query.query<{ c: string }>(
       `SELECT count(*)::text AS c FROM web_entitlements WHERE web_account_id = $1::uuid`,
@@ -770,8 +767,9 @@ test('login page on another device finds the historical purchase too', async () 
     const started = await startEmailRecover({ email: 'device2@example.com', db: harness.query })
     assert.ok(started.echoToken)
     const done = await completeEmailMagicLink({ token: started.echoToken!, db: harness.query })
-    assert.equal(done.webAccountId, buyer)
-    assert.equal((await getWebAccountPremium(buyer, harness.query)).isPremium, true)
+    assert.notEqual(done.webAccountId, buyer)
+    assert.equal((await getWebAccountPremium(done.webAccountId, harness.query)).isPremium, true)
+    assert.equal(await countSessions(harness.query, buyer), 0)
   } finally {
     await harness.close()
   }
@@ -865,22 +863,140 @@ test('profile save never moves the session into another guest account', async ()
   }
 })
 
-test('a recover link cannot overwrite a login email confirmed after it was sent', async () => {
+test('a sign-in link cannot overwrite a login email changed after it was sent', async () => {
+  const harness = await createHarness()
+  try {
+    const owner = await newAccount(harness.query)
+    await verifyEmail(harness.query, owner, 'late-claim@example.com')
+    const started = await startEmailRecover({ email: 'late-claim@example.com', db: harness.query })
+    assert.equal(await otpPurpose(harness.query, started.echoToken!), 'recover')
+    await verifyEmail(harness.query, owner, 'real-owner@example.com')
+    await assert.rejects(
+      () => completeEmailMagicLink({ token: started.echoToken!, db: harness.query }),
+      (err: Error & { code?: string }) => err.code === 'token_invalid'
+    )
+    assert.equal((await getWebAccountContact(owner, harness.query)).email, 'real-owner@example.com')
+    assert.equal(await countSessions(harness.query, owner), 0)
+  } finally {
+    await harness.close()
+  }
+})
+
+test('a sign-in link issued to a guest account by its receipt email (before this fix) no longer opens it', async () => {
   const harness = await createHarness()
   try {
     const buyer = await newAccount(harness.query)
-    await paidPurchase(harness.query, buyer, 'late-claim@example.com')
-    const started = await startEmailRecover({ email: 'late-claim@example.com', db: harness.query })
-    assert.ok(started.echoToken)
+    await paidPurchase(harness.query, buyer, 'stale@example.com')
+    const contactBefore = await getWebAccountContact(buyer, harness.query)
+    const token = `stale_recover_${'x'.repeat(32)}`
     await harness.query.query(
-      `UPDATE web_accounts SET email_normalized = 'real-owner@example.com', email_verified_at = now() WHERE id = $1::uuid`,
-      [buyer]
+      `INSERT INTO web_email_otps (web_account_id, email_normalized, code_hash, purpose, expires_at)
+       VALUES ($1::uuid, 'stale@example.com', $2, 'recover', now() + interval '30 minutes')`,
+      [buyer, sha256Hex(token)]
     )
     await assert.rejects(
-      () => completeEmailMagicLink({ token: started.echoToken!, db: harness.query }),
-      (err: Error & { code?: string }) => err.code === 'email_already_verified'
+      () => completeEmailMagicLink({ token, db: harness.query }),
+      (err: Error & { code?: string }) => err.code === 'token_invalid'
     )
-    assert.equal((await getWebAccountContact(buyer, harness.query)).email, 'real-owner@example.com')
+    assert.equal(await countSessions(harness.query, buyer), 0)
+    assert.deepEqual(await getWebAccountContact(buyer, harness.query), contactBefore)
+  } finally {
+    await harness.close()
+  }
+})
+
+test("receipt email typed by mistake: B gets the Premium of that email, never guest account A's session", async () => {
+  const harness = await createHarness()
+  try {
+    // A pays as a guest and types B's address for the receipt.
+    const guestA = await newAccount(harness.query)
+    const { paymentId, activeUntil } = await paidPurchase(harness.query, guestA, 'b-owner@example.com')
+    const snapshotA = async () => ({
+      account: (
+        await harness.query.query(
+          `SELECT email_normalized, email_verified_at, pending_email_normalized, revoked_at
+             FROM web_accounts WHERE id = $1::uuid`,
+          [guestA]
+        )
+      ).rows,
+      payment: (
+        await harness.query.query(
+          `SELECT web_account_id::text AS acc, status, receipt_email_normalized, premium_granted_at
+             FROM web_payments WHERE id = $1`,
+          [paymentId]
+        )
+      ).rows,
+      entitlements: (await allEntitlements(harness.query)).filter((e) => e.web_account_id === guestA),
+      sessions: await countSessions(harness.query, guestA),
+      contact: await getWebAccountContact(guestA, harness.query),
+      premium: await getWebAccountPremium(guestA, harness.query),
+    })
+    const before = await snapshotA()
+    const entitlementsBefore = await allEntitlements(harness.query)
+
+    // B opens /login on their own device (no session) and confirms the mailbox.
+    const started = await startEmailRecover({ email: 'b-owner@example.com', db: harness.query })
+    assert.notEqual(await otpAccount(harness.query, started.echoToken!), guestA)
+    const signedIn = await completeEmailMagicLink({ token: started.echoToken!, db: harness.query })
+    const accountB = signedIn.webAccountId
+    assert.notEqual(accountB, guestA, "B never receives a session of A's guest account")
+    assert.equal(await countSessions(harness.query, accountB), 1)
+
+    const premiumB = await getWebAccountPremium(accountB, harness.query)
+    assert.equal(premiumB.isPremium, true, 'B sees the Premium paid with the confirmed email')
+    assert.equal(premiumB.activeUntil, activeUntil.toISOString(), 'same term, not extended')
+
+    // Account A and its purchase stay exactly as they were.
+    assert.deepEqual(await snapshotA(), before)
+    assert.deepEqual(await allEntitlements(harness.query), entitlementsBefore, 'nothing granted, moved or copied')
+
+    // B signs in again later (another device, and with a stray guest session): same confirmed account.
+    const again = await startEmailRecover({ email: 'b-owner@example.com', db: harness.query })
+    assert.equal(await otpPurpose(harness.query, again.echoToken!), 'recover')
+    const second = await completeEmailMagicLink({ token: again.echoToken!, db: harness.query })
+    assert.equal(second.webAccountId, accountB)
+    const strayGuest = await newAccount(harness.query)
+    const third = await startEmailRecover({
+      email: 'b-owner@example.com',
+      callerAccountId: strayGuest,
+      db: harness.query,
+    })
+    assert.equal(await otpAccount(harness.query, third.echoToken!), accountB)
+    assert.equal(await verifiedAccountsFor(harness.query, 'b-owner@example.com'), 1)
+    assert.deepEqual(await snapshotA(), before)
+  } finally {
+    await harness.close()
+  }
+})
+
+test("/login from B's own guest session confirms the email for B's guest account, not for the payer", async () => {
+  const harness = await createHarness()
+  try {
+    const guestA = await newAccount(harness.query)
+    await paidPurchase(harness.query, guestA, 'c-owner@example.com')
+    const guestB = await newAccount(harness.query)
+    const started = await startEmailRecover({
+      email: 'c-owner@example.com',
+      callerAccountId: guestB,
+      db: harness.query,
+    })
+    assert.equal(await otpPurpose(harness.query, started.echoToken!), 'bind')
+    assert.equal(await otpAccount(harness.query, started.echoToken!), guestB)
+    const done = await completeEmailMagicLink({ token: started.echoToken!, db: harness.query })
+    assert.equal(done.webAccountId, guestB)
+    assert.equal((await getWebAccountPremium(guestB, harness.query)).isPremium, true)
+    assert.equal(await countSessions(harness.query, guestA), 0)
+
+    // A caller already signed in with another verified email is not rebound from /login.
+    const other = await newAccount(harness.query)
+    await verifyEmail(harness.query, other, 'other@example.com')
+    const fromOther = await startEmailRecover({
+      email: 'fresh-login@example.com',
+      callerAccountId: other,
+      db: harness.query,
+    })
+    assert.notEqual(await otpAccount(harness.query, fromOther.echoToken!), other)
+    assert.equal((await getWebAccountContact(other, harness.query)).email, 'other@example.com')
   } finally {
     await harness.close()
   }

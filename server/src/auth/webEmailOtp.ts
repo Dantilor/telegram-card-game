@@ -270,12 +270,7 @@ export async function afterWebPurchasePaid(input: {
   return { pendingEmail: receipt, linkSent: false }
 }
 
-/**
- * Login-page target for a mailbox. Order: verified login email, then an opt-in
- * pending contact, then a guest account with a paid WEB purchase whose YooKassa
- * receipt went to this address. The magic link sent to the mailbox is the
- * ownership proof; this lookup alone never grants a session.
- */
+/** The account whose login email is this verified address — the only account a mailbox can sign into. */
 async function findVerifiedAccount(emailNormalized: string, customDb?: Queryable): Promise<string | null> {
   const verified = await db(customDb).query<{ id: string }>(
     `SELECT id::text AS id FROM web_accounts
@@ -288,51 +283,15 @@ async function findVerifiedAccount(emailNormalized: string, customDb?: Queryable
   return verified.rows[0] ? String(verified.rows[0].id) : null
 }
 
-async function findRecoverableAccount(input: {
-  emailNormalized: string
-  db?: Queryable
-}): Promise<string | null> {
-  const q = db(input.db)
-  const verified = await findVerifiedAccount(input.emailNormalized, input.db)
-  if (verified) return verified
-
-  const pending = await q.query<{ id: string }>(
-    `SELECT a.id::text AS id
-       FROM web_accounts a
-      WHERE a.revoked_at IS NULL
-        AND a.pending_email_normalized = $1
-      ORDER BY a.created_at ASC
+async function unverifiedGuestAccount(accountId: string | null | undefined, customDb?: Queryable): Promise<string | null> {
+  if (!accountId) return null
+  const r = await db(customDb).query<{ id: string }>(
+    `SELECT id::text AS id FROM web_accounts
+      WHERE id = $1::uuid AND revoked_at IS NULL AND email_verified_at IS NULL
       LIMIT 1`,
-    [input.emailNormalized]
+    [accountId]
   )
-  if (pending.rows[0]) return String(pending.rows[0].id)
-
-  // Paid purchase with an active entitlement from that very payment. Accounts with
-  // their own login email or a Telegram link recover through those channels instead.
-  const paid = await q.query<{ id: string }>(
-    `SELECT a.id::text AS id
-       FROM web_payments p
-       JOIN web_accounts a ON a.id = p.web_account_id
-      WHERE p.receipt_email_normalized = $1
-        AND p.status IN ('succeeded', 'partially_refunded')
-        AND p.premium_granted_at IS NOT NULL
-        AND a.revoked_at IS NULL
-        AND a.email_normalized IS NULL
-        AND EXISTS (
-          SELECT 1 FROM web_entitlements e
-           WHERE e.web_account_id = a.id
-             AND e.payment_id = p.id
-             AND e.active_until > now()
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM web_telegram_links l
-           WHERE l.web_account_id = a.id AND l.revoked_at IS NULL
-        )
-      ORDER BY p.paid_at DESC NULLS LAST, p.created_at DESC
-      LIMIT 1`,
-    [input.emailNormalized]
-  )
-  return paid.rows[0] ? String(paid.rows[0].id) : null
+  return r.rows[0] ? String(r.rows[0].id) : null
 }
 
 export type EmailBindResult = {
@@ -402,14 +361,38 @@ export async function startEmailBind(input: {
   })
   return { mode: 'verify_sent', expiresAt: started.expiresAt, echoToken: started.echoToken }
 }
+/** Empty account an earlier login-page request created for this address (never had a session). */
+async function loginOnlyAccountFor(emailNormalized: string, customDb?: Queryable): Promise<string | null> {
+  const r = await db(customDb).query<{ id: string }>(
+    `SELECT a.id::text AS id
+       FROM web_email_otps o
+       JOIN web_accounts a ON a.id = o.web_account_id
+      WHERE o.email_normalized = $1
+        AND o.purpose = 'bind'
+        AND a.revoked_at IS NULL
+        AND a.email_verified_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM web_sessions s WHERE s.web_account_id = a.id)
+        AND NOT EXISTS (SELECT 1 FROM web_payments p WHERE p.web_account_id = a.id)
+      ORDER BY o.created_at DESC
+      LIMIT 1`,
+    [emailNormalized]
+  )
+  return r.rows[0] ? String(r.rows[0].id) : null
+}
+
 /**
- * Start recover / login magic link. Always returns generic ok (anti-enumeration).
- * Sends only to a mailbox tied to an account by a verified email, an opt-in pending
- * contact, or the YooKassa receipt of a paid purchase (see findRecoverableAccount).
+ * Login-page magic link. Always returns generic ok (anti-enumeration).
+ * Signs into the account that verified this address. Otherwise the link confirms the
+ * address for the caller's own guest account (session + CSRF verified by the route)
+ * or for a new empty account. A YooKassa receipt or an unconfirmed contact address
+ * never opens the guest account that paid: those purchases appear in the confirmed
+ * account instead (EMAIL_CLAIMED_WEB_ENTITLEMENTS_SQL).
  */
 export async function startEmailRecover(input: {
   email: string
   ip?: string | null
+  /** Caller's WEB account; only pass it after the session and CSRF token were verified. */
+  callerAccountId?: string | null
   db?: Queryable
 }): Promise<{ ok: true; expiresAt?: string; echoToken?: string }> {
   const emailNormalized = normalizeEmail(input.email)
@@ -426,15 +409,25 @@ export async function startEmailRecover(input: {
     return { ok: true }
   }
 
-  const accountId = await findRecoverableAccount({ emailNormalized, db: input.db })
-  if (!accountId) {
-    return { ok: true }
+  const owner = await findVerifiedAccount(emailNormalized, input.db)
+  let target = owner
+  if (!target) {
+    if ((await countRecentEmailOtps(emailNormalized, 60_000, input.db)) >= 3) return { ok: true }
+    target =
+      (await unverifiedGuestAccount(input.callerAccountId, input.db)) ??
+      (await loginOnlyAccountFor(emailNormalized, input.db))
+    if (!target) {
+      const created = await db(input.db).query<{ id: string }>(
+        `INSERT INTO web_accounts DEFAULT VALUES RETURNING id::text AS id`
+      )
+      target = String(created.rows[0]!.id)
+    }
   }
   try {
     const started = await insertAndSendMagicLink({
-      webAccountId: accountId,
+      webAccountId: target,
       emailNormalized,
-      purpose: 'recover',
+      purpose: owner ? 'recover' : 'bind',
       ip: input.ip,
       db: input.db,
     })
@@ -514,8 +507,7 @@ export async function completeEmailMagicLink(input: {
     verifiedOwner && verifiedOwner !== row.web_account_id ? verifiedOwner : null
 
   // Defense: do not replace a verified login email unless the account explicitly
-  // started a rebind (pending_email_normalized matches this token). Recover links
-  // can target an account found by its paid receipt, so they are checked too.
+  // started a rebind (pending_email_normalized matches this token).
   if (!existingOwner) {
     const current = await db(input.db).query<{
       email_normalized: string | null
@@ -529,6 +521,16 @@ export async function completeEmailMagicLink(input: {
       [row.web_account_id]
     )
     const cur = current.rows[0]
+    // Sign-in links open only an account whose login email is this very address.
+    if (
+      row.purpose === 'recover' &&
+      !(cur?.email_verified_at && cur.email_normalized === row.email_normalized)
+    ) {
+      const err = new Error('Link no longer valid') as Error & { status?: number; code?: string }
+      err.status = 400
+      err.code = 'token_invalid'
+      throw err
+    }
     if (
       cur?.email_verified_at &&
       cur.email_normalized &&

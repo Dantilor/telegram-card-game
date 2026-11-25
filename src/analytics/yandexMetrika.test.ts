@@ -154,7 +154,7 @@ describe('yandexMetrika consent gate', () => {
       expect(calls.some((c) => c[1] === 'reachGoal' && c[2] === 'premium_payment_start')).toBe(true)
     })
   })
-  it('never starts the tag on a URL with query or hash, then starts on the next clean URL', async () => {
+  it('never starts the tag on a dangerous URL, then starts on the next safe URL', async () => {
     setMetrikaConsent('granted')
     const calls: unknown[][] = []
     window.ym = ((...args: unknown[]) => {
@@ -180,6 +180,66 @@ describe('yandexMetrika consent gate', () => {
     window.history.pushState({}, '', '/games')
     await enableYandexMetrika()
     expect(isMetrikaInitialized()).toBe(true)
+  })
+
+  it('starts on a Direct landing with UTM/yclid and keeps markers on the first hit', async () => {
+    setMetrikaConsent('granted')
+    const calls: unknown[][] = []
+    window.ym = ((...args: unknown[]) => {
+      calls.push(args)
+    }) as typeof window.ym
+    const tag = document.createElement('script')
+    tag.dataset.gnhMetrika = '1'
+    document.head.appendChild(tag)
+
+    const landing =
+      '/?utm_source=yandex&utm_medium=cpc&utm_campaign=direct_nov&yclid=9876543210'
+    window.history.pushState({}, '', landing)
+    await enableYandexMetrika()
+    expect(isMetrikaInitialized()).toBe(true)
+
+    hitYandexMetrika('/')
+    const hit = calls.find((c) => c[1] === 'hit')
+    expect(String(hit?.[2])).toContain('utm_source=yandex')
+    expect(String(hit?.[2])).toContain('yclid=9876543210')
+    expect(String(hit?.[2])).not.toContain('token=')
+
+    // Ads markers stay in the browser address (attribution); later SPA hits are path-only.
+    expect(window.location.search).toContain('yclid=9876543210')
+    hitYandexMetrika('/games')
+    const second = calls.filter((c) => c[1] === 'hit').at(-1)
+    expect(String(second?.[2])).toMatch(/\/games$/)
+    expect(String(second?.[2])).not.toContain('yclid=')
+  })
+
+  it('does not load the tag before consent even on a Direct landing, and refusal keeps it offline', async () => {
+    const landing = '/?utm_source=yandex&yclid=1'
+    window.history.pushState({}, '', landing)
+    await enableYandexMetrika()
+    expect(isMetrikaInitialized()).toBe(false)
+    expect(document.querySelector('script[data-gnh-metrika="1"]')).toBeNull()
+
+    setMetrikaConsent('denied')
+    await enableYandexMetrika()
+    expect(isMetrikaInitialized()).toBe(false)
+    expect(document.querySelector('script[data-gnh-metrika="1"]')).toBeNull()
+  })
+
+  it('blocks mixed ads + secret query and UTM with an email-shaped value', async () => {
+    setMetrikaConsent('granted')
+    window.ym = ((...args: unknown[]) => args) as typeof window.ym
+
+    window.history.pushState({}, '', '/?utm_source=yandex&token=SECRET')
+    await enableYandexMetrika()
+    expect(isMetrikaInitialized()).toBe(false)
+
+    window.history.pushState({}, '', '/?utm_source=user@mail.test')
+    await enableYandexMetrika()
+    expect(isMetrikaInitialized()).toBe(false)
+
+    window.history.pushState({}, '', '/premium?payment=return&utm_source=yandex')
+    await enableYandexMetrika()
+    expect(isMetrikaInitialized()).toBe(false)
   })
 
   it('sends a scrubbed hit before the first goal so goals never fall back to the real URL', async () => {

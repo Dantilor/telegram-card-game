@@ -8,6 +8,7 @@
 import { METRIKA_COUNTER_ID, METRIKA_SAFE_ID, METRIKA_SCRIPT_URL, type MetrikaGoal } from './metrikaConfig'
 import { isMetrikaConsentGranted } from './metrikaConsent'
 import { metrikaAbsoluteUrl, normalizeMetrikaPath } from './metrikaPath'
+import { isMetrikaUrlSafe, safeMetrikaAdsSearch } from './metrikaUrl'
 
 type YmFunction = (counterId: number, method: string, ...args: unknown[]) => void
 
@@ -110,12 +111,14 @@ export function loadYandexMetrika(): Promise<void> {
 
 /**
  * The tag's init request carries location.href as page-url (nohit=1) before any manual hit can
- * override it, so it must never start on a URL with a query/hash (online room codes, tokens,
- * email-confirm links, payment return). It starts on the next clean URL instead.
+ * override it. Start only when the address is empty or contains solely allowlisted ads markers
+ * (UTM / yclid) with safe values. Room codes, tokens, email links, payment returns and any
+ * unknown query/hash keep the tag offline until the next safe URL. Ads markers are not stripped
+ * from the browser address by this gate — attribution needs them on the first visit.
  */
 export function isMetrikaUrlClean(): boolean {
   try {
-    return !window.location.search && !window.location.hash
+    return isMetrikaUrlSafe(window.location.search, window.location.hash)
   } catch {
     return false
   }
@@ -160,9 +163,19 @@ export async function enableYandexMetrika(): Promise<void> {
 export function hitYandexMetrika(pathname: string, title?: string, refererPath?: string): void {
   if (!initialized || stopped || !isMetrikaConsentGranted()) return
   const path = normalizeMetrikaPath(pathname)
-  const key = path
+  // First hit keeps validated ads markers so Direct attribution survives defer:true + SPA hit.
+  // Later hits stay path-only; the browser URL is never rewritten here.
+  let adsSearch = ''
+  if (!firstHitDone) {
+    try {
+      adsSearch = safeMetrikaAdsSearch(window.location.search, window.location.hash)
+    } catch {
+      adsSearch = ''
+    }
+  }
+  const key = `${path}${adsSearch}`
   if (lastHitKey === key && firstHitDone) return
-  const url = metrikaAbsoluteUrl(path)
+  const url = metrikaAbsoluteUrl(path) + adsSearch
   const options: Record<string, unknown> = {}
   if (title && title.trim()) options.title = title.trim().slice(0, 200)
   if (refererPath) options.referer = metrikaAbsoluteUrl(refererPath)

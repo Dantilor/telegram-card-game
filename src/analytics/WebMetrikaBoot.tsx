@@ -83,8 +83,9 @@ export default function WebMetrikaBoot() {
     return () => {
       cancelled = true
     }
-    // search/hash are deps only so the tag can start once a private URL (room code, token,
-    // payment return) has been replaced by a clean one; they are never sent anywhere.
+    // search/hash are deps so the tag can start once a private URL becomes safe, and so a
+    // Direct landing (UTM/yclid only) is tracked after consent without waiting for navigation.
+    // Unsafe query/hash values are never forwarded into hits or goals.
   }, [location.pathname, location.search, location.hash])
 
   return null

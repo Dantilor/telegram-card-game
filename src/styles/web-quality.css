@@ -599,10 +599,10 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
 html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
   .alias-home__howto,
   .alias-home__panel,
-  .alias-page__panel,
+  .alias-page__panel:not(.is-active),
   .mafia-page__howto,
   .mafia-page__panel,
-  .game-page__panel,
+  .game-page__panel:not(.is-active),
   .activity-home__howto,
   .sabotage-home__howto,
   .truth-dare-home__howto,
@@ -967,4 +967,512 @@ html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .gnh-header
   html[data-gnh-shell="web"] .app.app--web .gnh-home-ref .mobile-nav {
     transition: none !important;
   }
+}
+/* ========== 2026-11-25 WEB readability + layout polish ========== */
+
+/* Light-theme input tokens stay white; WEB shell ink is white → force dark glass controls */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page,
+  .alias-page,
+  .game-page,
+  .activity-page,
+  .sabotage-page,
+  .truth-dare-page,
+  .quiz-page,
+  .who-is-who-page,
+  .phrase-page,
+  .freebie-page,
+  .russia-travel-page,
+  .rt-page,
+  .rt-play,
+  .favorites-page,
+  .wiw-game
+) {
+  --mafia-input-bg: rgba(18, 12, 36, 0.9);
+  --mafia-input-border: rgba(196, 160, 255, 0.38);
+  --mafia-input-focus-border: rgba(220, 180, 255, 0.7);
+  --mafia-chip-active-bg: rgba(142, 99, 255, 0.32);
+  --mafia-chip-active-border: rgba(240, 198, 255, 0.92);
+  --mafia-chip-active-glow: 0 0 18px rgba(196, 160, 255, 0.45);
+  --alias-input-bg: rgba(18, 12, 36, 0.9);
+  --alias-input-border: rgba(196, 160, 255, 0.38);
+  --alias-input-focus-border: rgba(220, 180, 255, 0.7);
+  --alias-chip-bg: rgba(255, 248, 255, 0.12);
+  --alias-chip-border: rgba(240, 198, 255, 0.45);
+  --alias-chip-active-bg: rgba(142, 99, 255, 0.34);
+  --alias-chip-active-border: rgba(240, 198, 255, 0.95);
+  --alias-chip-active-glow: 0 0 18px rgba(196, 160, 255, 0.48);
+  --game-shell-input-bg: rgba(18, 12, 36, 0.9);
+  --game-shell-input-border: rgba(196, 160, 255, 0.38);
+  --game-shell-input-focus-border: rgba(220, 180, 255, 0.7);
+  --game-shell-chip-active-bg: rgba(142, 99, 255, 0.34);
+  --game-shell-chip-active-border: rgba(240, 198, 255, 0.95);
+  --game-shell-chip-active-glow: 0 0 18px rgba(196, 160, 255, 0.48);
+  --fav-search-bg: rgba(18, 12, 36, 0.88);
+  --fav-search-border: rgba(196, 160, 255, 0.4);
+  --fav-text: #fff8ff;
+  --fav-muted: rgba(255, 248, 255, 0.72);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page__target,
+  .game-page__target,
+  .sabotage-vote__target,
+  .quiz-question__answer,
+  .wiw-select,
+  .mafia-voting__target .mafia-page__target
+) {
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+  background: rgba(18, 12, 36, 0.92) !important;
+  border: 1.5px solid rgba(196, 160, 255, 0.42) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page__target.is-selected,
+  .game-page__target.is-selected,
+  .sabotage-vote__target.is-selected,
+  .quiz-question__answer.is-selected,
+  .quiz-question__answer[aria-pressed="true"]
+) {
+  background: rgba(142, 99, 255, 0.38) !important;
+  border-color: rgba(240, 198, 255, 0.95) !important;
+  box-shadow: 0 0 18px rgba(196, 160, 255, 0.42) !important;
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+}
+
+/* Primary CTAs: light gradient + white ink was unreadable */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .mafia-page__cta,
+  .game-page__cta,
+  .alias-page__cta,
+  .alias-home__start,
+  .button.button-primary,
+  .rt-page__deck-cta,
+  .payment-return__btn--primary
+),
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .premium-page .button.button-primary {
+  color: #1a1028 !important;
+  -webkit-text-fill-color: #1a1028 !important;
+  text-shadow: none !important;
+  font-weight: 800 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .alias-page__btn--secondary {
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+  background: rgba(255, 248, 255, 0.18) !important;
+  border: 2px solid rgba(240, 198, 255, 0.9) !important;
+  box-shadow: 0 0 20px rgba(196, 160, 255, 0.38) !important;
+  font-weight: 800 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .alias-page__btn--secondary:hover,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .alias-page__btn--secondary:active {
+  background: rgba(196, 160, 255, 0.28) !important;
+  border-color: #fff0ff !important;
+}
+
+/* Selected category / pack — must beat WEB glass panel overrides */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .alias-home__category-card.alias-page__panel.is-active,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .quiz-home__category-card.game-page__panel.is-active,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .game-page__category-card.is-active {
+  border: 2px solid rgba(240, 198, 255, 0.95) !important;
+  background:
+    linear-gradient(165deg, rgba(92, 48, 140, 0.98), rgba(36, 18, 64, 0.98)) padding-box,
+    linear-gradient(135deg, #f0c6ff, #8b4dff 55%, #ff8fd8) border-box !important;
+  box-shadow:
+    0 0 0 2px rgba(240, 198, 255, 0.55),
+    0 0 28px rgba(196, 160, 255, 0.6),
+    0 10px 28px rgba(0, 0, 0, 0.32) !important;
+  outline: 2px solid rgba(255, 248, 255, 0.35);
+  outline-offset: 2px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+  .alias-home__category-card.is-active .alias-home__category-title,
+  .quiz-home__category-card.is-active .quiz-home__category-title
+) {
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .wiw-pack-card--active {
+  border-color: rgba(240, 198, 255, 0.98) !important;
+  box-shadow:
+    0 0 0 3px rgba(240, 198, 255, 0.55),
+    0 0 28px rgba(196, 160, 255, 0.55),
+    var(--games-card-shadow, 0 10px 28px rgba(0, 0, 0, 0.28)) !important;
+  transform: translateY(-2px);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .wiw-pack-card--active .wiw-pack-card__cover {
+  opacity: 0.55 !important;
+}
+
+/* Favorites search — never white-on-white */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .favorites-page__search-wrap {
+  background: rgba(18, 12, 36, 0.9) !important;
+  border: 1.5px solid rgba(196, 160, 255, 0.42) !important;
+  color: #fff8ff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 22px rgba(20, 8, 40, 0.22) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .favorites-page__search,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .favorites-page__search-icon {
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .favorites-page__search::placeholder {
+  color: rgba(255, 248, 255, 0.58) !important;
+  -webkit-text-fill-color: rgba(255, 248, 255, 0.58) !important;
+}
+
+/* Russia trip play / postcard — keep ink readable on paper cards */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-play :is(
+  .rt-play__question,
+  .rt-play__hint,
+  .rt-play__card-tags,
+  .rt-postcard__inner,
+  .rt-postcard__inner :is(p, h2, h3, span, label)
+) {
+  color: var(--rt-ink, #2a2620) !important;
+  -webkit-text-fill-color: var(--rt-ink, #2a2620) !important;
+  text-shadow: none !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-play .rt-play__hint {
+  color: #5c4210 !important;
+  -webkit-text-fill-color: #5c4210 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-play .rt-play__secondary {
+  color: #1a1410 !important;
+  -webkit-text-fill-color: #1a1410 !important;
+  background: #fff !important;
+  border: 2px solid color-mix(in srgb, var(--rt-gold, #b8862e) 70%, #1a1410) !important;
+  font-weight: 800 !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .rt-page__deck-cta {
+  text-shadow: none !important;
+}
+
+/* Payment return — center primary action */
+html[data-gnh-shell="web"] .app.app--web .payment-return {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+html[data-gnh-shell="web"] .app.app--web .payment-return__body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+html[data-gnh-shell="web"] .app.app--web .payment-return__actions {
+  justify-content: center;
+  width: 100%;
+}
+
+html[data-gnh-shell="web"] .app.app--web .payment-return__btn {
+  min-width: min(100%, 220px);
+}
+
+html[data-gnh-shell="web"] .app.app--web .payment-return__btn--primary {
+  margin-inline: auto;
+}
+
+/* Active Premium status page — crystal + back must not clip */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience {
+  overflow-x: hidden !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience > .content {
+  overflow: visible !important;
+  padding:
+    max(12px, env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    max(24px, env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px)) !important;
+  box-sizing: border-box !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .premium-page {
+  width: min(100%, 720px);
+  margin-inline: auto;
+  padding-inline: 4px;
+  box-sizing: border-box;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .premium-heading {
+  gap: 14px !important;
+  align-items: center !important;
+  margin-bottom: 20px !important;
+  padding-inline: 4px;
+  overflow: visible !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .premium-heading .crystal,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .crystal {
+  display: block !important;
+  margin-left: 0 !important;
+  margin-right: 4px !important;
+  width: min(112px, 28vw) !important;
+  height: min(112px, 28vw) !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .page-top {
+  position: relative;
+  z-index: 6;
+  margin-bottom: 12px !important;
+  padding-top: 4px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .ghost-link {
+  position: relative;
+  z-index: 7;
+  background: rgba(30, 18, 48, 0.72) !important;
+  border-color: rgba(239, 217, 250, 0.55) !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .benefit-card {
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside--kit-experience .premium-page__actions .button {
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+/* PC: stop full-bleed stretch on play/vote screens; keep setup readable */
+@media (min-width: 761px) {
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > :is(
+    .mafia-page.mafia-night,
+    .mafia-page.mafia-voting,
+    .mafia-page.mafia-day,
+    .mafia-page.mafia-roles,
+    .mafia-page.mafia-result,
+    .game-page.sabotage-vote,
+    .game-page.sabotage-task,
+    .game-page.sabotage-role,
+    .game-page.sabotage-result,
+    .game-page.quiz-question,
+    .game-page.quiz-result,
+    .game-page.quiz-mini-summary,
+    .game-page.quiz-final,
+    .game-page.activity-play,
+    .game-page.activity-result,
+    .alias-page.alias-play,
+    .alias-page.alias-result,
+    .rt-play,
+    .wiw-game
+  ) {
+    width: min(100%, 640px) !important;
+    max-width: 640px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > :is(
+    .game-page.quiz-home,
+    .game-page.activity-home,
+    .game-page.sabotage-home,
+    .game-page.truth-dare-home,
+    .game-page.phrase-page,
+    .favorites-page,
+    .rt-page
+  ) {
+    width: min(100%, 820px) !important;
+    max-width: 820px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content > :is(
+    .alias-page.alias-home,
+    .mafia-page.mafia-setup
+  ) {
+    width: min(100%, 1080px) !important;
+    max-width: 1080px !important;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+    .sabotage-vote__targets,
+    .mafia-voting__targets,
+    .quiz-question__answers,
+    .game-page__actions,
+    .sabotage-task__timer-wrap
+  ) {
+    width: 100%;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  html[data-gnh-shell="web"] .app.app--web .gnh-inside .content :is(
+    .game-page__screen-title,
+    .game-page__screen-subtitle,
+    .alias-play__turn-title
+  ) {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ========== Mafia Lite: spacing, centering, voter emphasis (WEB) ========== */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-page :is(
+  .mafia-page__screen-title,
+  .mafia-page__screen-subtitle,
+  .mafia-voting__subtitle,
+  .mafia-voting__hint
+) {
+  width: 100%;
+  max-width: 448px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+  box-sizing: border-box;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-page .mafia-voting__voter {
+  width: fit-content;
+  max-width: 100%;
+  margin: 6px auto 20px !important;
+  padding: 12px 22px;
+  text-align: center !important;
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+  background: linear-gradient(135deg, rgba(142, 99, 255, 0.34), rgba(255, 111, 216, 0.2));
+  border: 1.5px solid rgba(240, 198, 255, 0.75);
+  border-radius: 999px;
+  box-shadow: 0 0 22px rgba(196, 160, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  box-sizing: border-box;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-page .mafia-voting__targets {
+  width: 100%;
+  max-width: 448px;
+  margin: 4px auto 18px;
+  padding: 0;
+  box-sizing: border-box;
+  gap: 14px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-page .mafia-voting__hint {
+  margin-top: 4px !important;
+  padding-bottom: 6px;
+}
+
+/* Night steps: wider card, real inner padding, breathing room around buttons */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step {
+  width: 100%;
+  max-width: min(30rem, 100%);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__label {
+  margin: 14px 0 14px;
+  text-align: center;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__card {
+  max-width: 100%;
+  padding: 28px 24px 24px !important;
+  gap: 4px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__card--list {
+  justify-content: flex-start;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__role {
+  margin: 0 0 22px;
+  padding: 0 6px;
+  font-size: clamp(1.3rem, 4vw, 1.6rem);
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__description {
+  margin: 0 0 20px;
+  padding: 0 8px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__content {
+  margin: 0 !important;
+  padding: 2px 4px 6px !important;
+  gap: 14px !important;
+  overflow: visible;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__footer {
+  padding: 24px 4px 4px;
+  gap: 14px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__card--centered {
+  min-height: 260px;
+  padding: 36px 28px 28px !important;
+  justify-content: space-between;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__card--centered .mafia-night-step__description {
+  padding: 4px 10px;
+  margin-bottom: 24px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__card--status-only {
+  min-height: 240px;
+  padding: 32px 26px 26px !important;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__status-center {
+  padding-top: 8px;
+  gap: 14px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night .mafia-night-step__status {
+  gap: 12px;
+}
+
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-night__intro,
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-voting__summary {
+  padding: 32px 28px !important;
+  gap: 18px;
+}
+
+/* Other Mafia Lite panels (day / result / roles) — same inner rhythm */
+html[data-gnh-shell="web"] .app.app--web .gnh-inside .content .mafia-page:is(.mafia-day, .mafia-result) .mafia-page__panel {
+  padding: 24px 22px;
+}
+
+/* Profile: sections are not cards themselves — consistent rhythm, no double padding */
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .profile-page section.profile-menu {
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .profile-page .profile-aside,
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .profile-page .profile-shell {
+  gap: 20px !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .profile-page section.profile-menu > .profile-menu__title {
+  margin: 0 0 10px !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .content .mafia-page .mafia-page__screen-title {
+  margin-top: 14px !important;
+  margin-bottom: 6px !important;
+}
+
+html[data-gnh-shell="web"] #root .app.app--web .gnh-inside .content .mafia-page .mafia-page__screen-subtitle {
+  margin-bottom: 16px !important;
 }

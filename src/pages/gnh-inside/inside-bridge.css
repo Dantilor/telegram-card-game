@@ -506,6 +506,33 @@ html:has(.gnh-inside .rt-play)::before {
   -webkit-backdrop-filter: blur(18px);
 }
 
+/* Selected category / pack cards — must follow the glass panel rule above */
+.app.app--web .gnh-inside .alias-home__category-card.is-active,
+.app.app--web .gnh-inside .quiz-home__category-card.is-active,
+.app.app--web .gnh-inside .game-page__category-card.is-active {
+  border: 2px solid #f0c6ff !important;
+  background:
+    linear-gradient(165deg, rgba(92, 48, 140, 0.98), rgba(36, 18, 64, 0.98)) !important;
+  box-shadow:
+    0 0 0 2px rgba(240, 198, 255, 0.45),
+    0 0 28px rgba(196, 160, 255, 0.55),
+    inset 0 1px 1px #fff3 !important;
+}
+
+.app.app--web .gnh-inside .wiw-pack-card.wiw-pack-card--active {
+  border: 2px solid #f0c6ff !important;
+  box-shadow:
+    0 0 0 3px rgba(240, 198, 255, 0.5),
+    0 0 28px rgba(196, 160, 255, 0.55) !important;
+}
+
+.app.app--web .gnh-inside .button.button-primary {
+  color: #1a1028 !important;
+  -webkit-text-fill-color: #1a1028 !important;
+  text-shadow: none !important;
+  font-weight: 800 !important;
+}
+
 .app.app--web .gnh-inside .profile-identity {
   text-align: center;
   padding: 22px 18px;
@@ -605,15 +632,22 @@ html:has(.gnh-inside .rt-play)::before {
 .app.app--web .gnh-inside .play-page__cta,
 .app.app--web .gnh-inside .game-page__btn:not(.game-page__btn--secondary),
 .app.app--web .gnh-inside .game-page__cta,
+.app.app--web .gnh-inside .mafia-page__cta,
+.app.app--web .gnh-inside .alias-page__cta,
 .app.app--web .gnh-inside .premium-overlay__btn--buy,
 .app.app--web .gnh-inside .alias-home__start,
-.app.app--web .gnh-inside .btn--primary {
-  color: white !important;
+.app.app--web .gnh-inside .btn--primary,
+.app.app--web .gnh-inside .button.button-primary,
+.app.app--web .gnh-inside .rt-page__deck-cta {
+  color: #1a1028 !important;
+  -webkit-text-fill-color: #1a1028 !important;
+  text-shadow: none !important;
   border: 1px solid #ffe8ffad !important;
   border-radius: 50px !important;
   background: linear-gradient(110deg, #f0aef5, #c18aef 56%, #a98be9) !important;
   box-shadow: inset 0 2px 4px #fff7, 0 4px 22px #e39ced5b !important;
   min-height: 47px;
+  font-weight: 800 !important;
 }
 
 .app.app--web .gnh-inside .profile-pass__email-input,

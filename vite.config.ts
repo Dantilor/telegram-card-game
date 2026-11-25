@@ -34,10 +34,14 @@ function webSeoPrerender(): Plugin {
       const shell = String(entry.source)
       const emit = (fileName: string, source: string) => this.emitFile({ type: 'asset', fileName, source })
       const manifest = buildSeoManifest()
+      // Home SPA replaces prerendered SEO captions immediately — hide them to avoid a one-frame flash.
+      const homeSeoHide =
+        '#root>.gnh-seo{opacity:0!important;pointer-events:none!important;position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important}'
       emit(manifest.appShell, injectIntoShell(shell, { head: appShellHead() }))
       emit(manifest.notFound, injectIntoShell(shell, { head: notFoundHead(), css: SEO_PAGE_CSS, body: renderNotFoundBody() }))
       for (const page of SEO_PAGES) {
-        const html = injectIntoShell(shell, { head: pageHead(page), css: SEO_PAGE_CSS, body: renderSeoPageBody(page) })
+        const css = page.kind === 'home' ? `${SEO_PAGE_CSS}${homeSeoHide}` : SEO_PAGE_CSS
+        const html = injectIntoShell(shell, { head: pageHead(page), css, body: renderSeoPageBody(page) })
         const fileName = prerenderFileForPath(page.path)
         if (fileName === 'index.html') entry.source = html
         else emit(fileName, html)

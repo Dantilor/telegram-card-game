@@ -16,7 +16,7 @@ FROM node:20-bookworm-slim AS frontend-build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY index.html vite.config.js vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json ./
+COPY index.html vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json ./
 COPY public ./public
 COPY src ./src
 COPY .env.web ./.env.web

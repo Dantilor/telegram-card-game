@@ -77,8 +77,14 @@ describe('emailBindErrorMessage', () => {
 
 describe('isEmailConfirmationDone', () => {
   const started = { accountId: 'acc-guest', email: 'Payer@Example.com' }
-  it('switched to the paying account after the link', () => {
-    expect(isEmailConfirmationDone({ ok: true, source: 'web_account', webAccountId: 'acc-paid' }, started)).toBe(true)
+  it('unrelated account switch never counts as proof of mailbox ownership', () => {
+    expect(isEmailConfirmationDone({ ok: true, source: 'web_account', webAccountId: 'acc-paid' }, started)).toBe(false)
+  })
+  it('confirmed email on another account completes recovery', () => {
+    expect(isEmailConfirmationDone({
+      ok: true, source: 'web_account', webAccountId: 'acc-paid',
+      email: 'payer@example.com', emailVerified: true,
+    }, started)).toBe(true)
   })
   it('same account, email confirmed', () => {
     expect(

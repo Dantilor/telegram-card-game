@@ -1016,7 +1016,7 @@ function Profile() {
                       disabled={emailBusy || !emailDraft.trim()}
                     >
                       <span className="profile-pass__cta-shine" aria-hidden />
-                      {emailBusy ? 'Проверяем…' : isPremium ? 'Сохранить email' : 'Проверить Premium'}
+                      {emailBusy ? 'Проверяем…' : emailSync.phase === 'confirm' ? 'Отправить ссылку ещё раз' : isPremium ? 'Сохранить email' : 'Проверить Premium'}
                     </button>
                   </>
                 )}
@@ -1045,7 +1045,7 @@ function Profile() {
                   disabled={emailBusy || !emailDraft.trim()}
                 >
                   <span className="profile-pass__cta-shine" aria-hidden />
-                  {emailBusy ? 'Проверяем…' : 'Сохранить и проверить Premium'}
+                  {emailBusy ? 'Проверяем…' : emailSync.phase === 'confirm' ? 'Отправить ссылку ещё раз' : 'Сохранить и проверить Premium'}
                 </button>
               </>
             )}

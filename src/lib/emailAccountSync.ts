@@ -103,7 +103,8 @@ export function isEmailConfirmationDone(
   started: { accountId: string | null; email: string }
 ): boolean {
   if (!session) return false
-  if (started.accountId && session.webAccountId && session.webAccountId !== started.accountId) return true
+  // Session changes can happen for unrelated reasons (logout, Telegram link).
+  // Only a verified matching mailbox is proof that Premium may be claimed.
   const email = session.email?.trim().toLowerCase()
   return Boolean(session.emailVerified && email && email === started.email.trim().toLowerCase())
 }

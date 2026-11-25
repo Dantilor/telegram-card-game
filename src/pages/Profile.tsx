@@ -557,6 +557,9 @@ function Profile() {
   const savedEmail = webSession.session?.email?.trim() || ''
   const emailVerified = Boolean(webSession.session?.emailVerified)
   const receiptEmail = web ? webSession.session?.receiptEmail?.trim() || '' : ''
+  // A completed WEB checkout already saved this email on the payment.
+  // It is visible in Profile without making the payer type or save it twice.
+  const profileEmail = savedEmail || receiptEmail
   const receiptPrefilledRef = useRef(false)
 
   useEffect(() => {
@@ -983,17 +986,19 @@ function Profile() {
         {web && (
           <section className="profile-pass profile-pass--email">
             <p className="profile-pass__eyebrow">Аккаунт</p>
-            {savedEmail ? (
+            {profileEmail ? (
               <>
                 <p className="profile-pass__desc">
-                  {savedEmail}
+                  {profileEmail}
                   <br />
-                  Статус: {emailVerified ? 'Авторизован' : 'Email сохранён'}
+                  Статус: {emailVerified ? 'Авторизован' : 'Аккаунт создан — email сохранён'}
                 </p>
                 {!emailVerified && (
                   <p className="profile-pass__desc">
-                    Premium этого аккаунта доступен сразу. Для входа на другом устройстве
-                    используйте вход по email с подтверждением владения почтой.
+                    {receiptEmail && !savedEmail
+                      ? 'Email сохранён из чека вашей покупки. Premium доступен в этом аккаунте без дополнительных действий.'
+                      : 'Premium этого аккаунта доступен сразу, без подтверждения почты.'}
+                    {' '}Для входа на другом устройстве потребуется подтверждение владения email.
                   </p>
                 )}
               </>
@@ -1014,11 +1019,6 @@ function Profile() {
                     autoComplete="email"
                   />
                 </label>
-                {receiptEmail && emailDraft.trim().toLowerCase() === receiptEmail.toLowerCase() && (
-                  <p className="profile-pass__desc" data-testid="email-receipt-hint">
-                    Это почта из чека вашей покупки. Premium уже доступен в текущем сеансе.
-                  </p>
-                )}
                 <button
                   type="button"
                   className="profile-pass__cta"

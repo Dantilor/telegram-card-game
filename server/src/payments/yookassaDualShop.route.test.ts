@@ -798,7 +798,11 @@ test('E2E: guest buys twice with a receipt email, new browser confirms it → ev
   const first = await guestPurchase('premium_web_1m', email)
   const second = await guestPurchase('premium_web_3m', 'Returner@Example.com') // another browser, same mailbox
   assert.notEqual(first.buyer.webAccountId, second.buyer.webAccountId)
-  assert.equal((await sessionMe(first.buyer.headers)).receiptEmail, email, 'profile can prefill the receipt email')
+  const paidProfile = await sessionMe(first.buyer.headers)
+  assert.equal(paidProfile.email, email, 'paid checkout automatically saves the email in Profile')
+  assert.equal(paidProfile.emailVerified, false, 'receipt is not login verification')
+  assert.equal(paidProfile.premium?.isPremium, true, 'paid guest Premium is immediately active')
+  assert.equal(paidProfile.receiptEmail, email, 'receipt remains available as a contact hint')
   const before = await counts()
 
   const fresh = await webBuyer('premium_web_1m') // new browser: new anonymous account

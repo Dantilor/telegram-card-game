@@ -194,16 +194,18 @@ export async function savePaymentReceiptEmail(input: {
 }
 
 /**
- * After successful Premium grant: optionally remember receipt email as pending
- * recovery address (not verified). Never sends SMTP mail — YooKassa receipt is enough.
- * Never auto-merges accounts. Recover magic link is sent only on explicit user request.
+ * After a successful WEB payment, automatically save the receipt email as an
+ * unverified contact on the paying account. The payer is already signed in
+ * through the current WEB session and their Premium works immediately.
+ * The receipt address is NOT proof of identity or a passwordless login.
+ * Recovery on another device still requires a magic link.
  */
 export async function afterWebPurchasePaid(input: {
   webAccountId: string
   paymentId: string
   ip?: string | null
   db?: Queryable
-  /** Explicit checkout opt-in to use receipt email for later Premium recovery. */
+  /** Legacy metadata for older checkout requests; no longer gates saving receipt email. */
   bindAccountEmail?: boolean
 }): Promise<{ pendingEmail: string | null; linkSent: boolean }> {
   const pay = await db(input.db).query<{ receipt_email_normalized: string | null }>(
@@ -214,11 +216,6 @@ export async function afterWebPurchasePaid(input: {
     ? normalizeEmail(pay.rows[0].receipt_email_normalized)
     : null
   if (!receipt) return { pendingEmail: null, linkSent: false }
-
-  // Without opt-in, receipt stays on the payment only — not usable as account bind.
-  if (!input.bindAccountEmail) {
-    return { pendingEmail: null, linkSent: false }
-  }
 
   const account = await db(input.db).query<{
     email_normalized: string | null

@@ -243,7 +243,6 @@ export default function PremiumOverlay({
   const [theme] = useTheme()
   const gem = isWebShell() ? gemNeon : GEMS_BY_THEME[theme]
   const [offerChecked, setOfferChecked] = useState(false)
-  const [bindAccountEmail, setBindAccountEmail] = useState(false)
   const [receipt, setReceipt] = useState('')
   const [selectedPlanId, setSelectedPlanId] = useState<string>(preferredPlanId || DEFAULT_PLAN_ID)
   const [loading, setLoading] = useState(false)
@@ -284,7 +283,6 @@ export default function PremiumOverlay({
   // Each document (re)load requires the user to review and accept its version.
   useEffect(() => {
     setOfferChecked(false)
-    setBindAccountEmail(false)
   }, [isOpen, offerDocument])
 
   const accountVerified = Boolean(webSession.session?.emailVerified && webSession.session?.email)
@@ -428,11 +426,6 @@ export default function PremiumOverlay({
           durationDays: plan.durationDays,
         },
         receiptRaw: receiptEmail,
-        bindAccountEmail:
-          isWebShell() &&
-          bindAccountEmail &&
-          !receiptMatchesVerified &&
-          !(accountVerified && receipt.trim().toLowerCase() !== accountEmail.toLowerCase()),
         post: (path, body) => legal.postLegal(path, body),
       })
       const url = res.confirmationUrl
@@ -720,20 +713,10 @@ export default function PremiumOverlay({
         </p>
       ) : null}
       {isWebShell() && !accountVerified ? (
-        <>
-          <label className={`legal-choice__check${checkoutOnly ? ' legal-choice__check--gnh' : ''}`}>
-            <input
-              type="checkbox"
-              checked={bindAccountEmail}
-              onChange={(event) => setBindAccountEmail(event.target.checked)}
-            />
-            <span>Сохранить email для аккаунта и покупок</span>
-          </label>
-          <p className="premium-offer__hint">
-            Ваши покупки сохранятся в аккаунте. Этот email поможет найти их при восстановлении
-            доступа.
-          </p>
-        </>
+        <p className="premium-offer__hint">
+          После оплаты этот email автоматически сохранится в вашем профиле вместе с покупкой.
+          Premium откроется сразу, без регистрации.
+        </p>
       ) : null}
       {isWebShell() && accountVerified && !receiptMatchesVerified ? (
         <p className="premium-offer__hint">

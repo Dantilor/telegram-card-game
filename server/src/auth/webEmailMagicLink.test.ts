@@ -286,7 +286,8 @@ test('paid receipt and checkout opt-in both lead to the same account; no duplica
       bindAccountEmail: false,
       db: harness.query,
     })
-    assert.equal(skipped.pendingEmail, null)
+    assert.equal(skipped.pendingEmail, 'late@example.com', 'receipt email is saved automatically, even without opt-in')
+    assert.equal((await getWebAccountContact(webAccountId, harness.query)).emailVerified, false)
     const bare = await startEmailRecover({ email: 'late@example.com', db: harness.query })
     assert.ok(bare.echoToken, 'a login link always goes to the mailbox')
     const loginAccount = await otpAccount(harness.query, bare.echoToken!)
@@ -1042,6 +1043,33 @@ test('profile contact on a paid guest keeps existing Premium without confirmatio
     const saved = await getWebAccountContact(payer, harness.query)
     assert.equal(saved.emailVerified, false)
     assert.equal(saved.email, 'payer@example.com')
+  } finally {
+    await harness.close()
+  }
+})
+
+
+// Checkout without the legacy opt-in saves the receipt email automatically,
+// but must not issue OTPs or authorize that mailbox as the paying account.
+test('successful WEB checkout automatically saves email without a profile save step', async () => {
+  const harness = await createHarness()
+  try {
+    const account = await newAccount(harness.query)
+    const { paymentId } = await paidPurchase(harness.query, account, 'automatic@example.com')
+    const saved = await afterWebPurchasePaid({
+      webAccountId: account, paymentId, bindAccountEmail: false, db: harness.query,
+    })
+    assert.equal(saved.pendingEmail, 'automatic@example.com')
+    assert.equal(saved.linkSent, false)
+    const contact = await getWebAccountContact(account, harness.query)
+    assert.equal(contact.email, 'automatic@example.com')
+    assert.equal(contact.emailVerified, false, 'receipt email is not verified login identity')
+    assert.equal((await getWebAccountPremium(account, harness.query)).isPremium, true)
+    const tokenCount = await harness.query.query<{ c: string }>(
+      'SELECT count(*)::text AS c FROM web_email_otps WHERE web_account_id = $1::uuid',
+      [account]
+    )
+    assert.equal(tokenCount.rows[0]?.c, '0', 'checkout must not send login links')
   } finally {
     await harness.close()
   }

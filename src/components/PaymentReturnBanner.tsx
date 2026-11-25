@@ -7,7 +7,6 @@ type Props = {
   onLogin: () => void
   onGames: () => void
   /** Shown after success when the account has no confirmed email yet. */
-  onBindEmail?: () => void
 }
 
 const COPY: Record<
@@ -51,7 +50,7 @@ const COPY: Record<
   },
 }
 
-export default function PaymentReturnBanner({ phase, onRetry, onLogin, onGames, onBindEmail }: Props) {
+export default function PaymentReturnBanner({ phase, onRetry, onLogin, onGames }: Props) {
   if (phase === 'idle') return null
   const copy = COPY[phase]
   const canRetry = phase === 'pending' || phase === 'error' || phase === 'failed' || phase === 'session_lost'
@@ -69,9 +68,9 @@ export default function PaymentReturnBanner({ phase, onRetry, onLogin, onGames, 
       <div className="payment-return__body">
         <h2 className="payment-return__title">{copy.title}</h2>
         <p className="payment-return__text">{copy.text}</p>
-        {phase === 'success' && onBindEmail && (
+        {phase === 'success' && (
           <p className="payment-return__text">
-            Чтобы Premium открывался на других устройствах, подтвердите почту из чека в профиле.
+            Email из чека сохранён вместе с покупкой. Premium доступен без повторной регистрации.
           </p>
         )}
         {(phase === 'success' || canRetry) && (
@@ -79,11 +78,6 @@ export default function PaymentReturnBanner({ phase, onRetry, onLogin, onGames, 
             {phase === 'success' && (
               <button type="button" className="payment-return__btn payment-return__btn--primary" onClick={onGames}>
                 К играм
-              </button>
-            )}
-            {phase === 'success' && onBindEmail && (
-              <button type="button" className="payment-return__btn" onClick={onBindEmail}>
-                Привязать почту
               </button>
             )}
             {phase === 'session_lost' && (

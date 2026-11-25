@@ -1,3 +1,4 @@
+import { randomBytes, randomInt, scryptSync, timingSafeEqual } from 'node:crypto'
 import type { Queryable } from '../legal/types.js'
 import { query as defaultQuery } from '../db.js'
 import { randomToken, sha256Hex } from './cryptoTokens.js'
@@ -546,16 +547,30 @@ export async function completeEmailMagicLink(input: {
 
   await db(input.db).query(`UPDATE web_email_otps SET attempts = attempts + 1 WHERE id = $1`, [row.id])
 
+  return finishVerifiedEmailChallenge(row, input.userAgent, input.db)
+
+}
+
+
+/** Shared account binding and session rotation after valid link OR code. */
+async function finishVerifiedEmailChallenge(
+  row: { id: number; web_account_id: string; email_normalized: string; purpose: 'bind' | 'recover' },
+  userAgent: string | null | undefined,
+  customDb?: Queryable
+): Promise<{
+  webAccountId: string; emailNormalized: string; purpose: 'bind' | 'recover'
+  sessionToken: string; csrfToken: string; expiresAt: Date
+}> {
   // The link proves the mailbox; when that address already has its own verified
   // account (verified after the link was sent), sign into it — one email, one account.
-  const verifiedOwner = await findVerifiedAccount(row.email_normalized, input.db)
+  const verifiedOwner = await findVerifiedAccount(row.email_normalized, customDb)
   const existingOwner =
     verifiedOwner && verifiedOwner !== row.web_account_id ? verifiedOwner : null
 
   // Defense: do not replace a verified login email unless the account explicitly
   // started a rebind (pending_email_normalized matches this token).
   if (!existingOwner) {
-    const current = await db(input.db).query<{
+    const current = await db(customDb).query<{
       email_normalized: string | null
       email_verified_at: Date | null
       pending_email_normalized: string | null
@@ -590,7 +605,7 @@ export async function completeEmailMagicLink(input: {
     }
   }
 
-  const claimed = await db(input.db).query<{ id: number }>(
+  const claimed = await db(customDb).query<{ id: number }>(
     `UPDATE web_email_otps
         SET consumed_at = now()
       WHERE id = $1 AND consumed_at IS NULL
@@ -607,7 +622,7 @@ export async function completeEmailMagicLink(input: {
   let accountId = existingOwner ?? row.web_account_id
   if (!existingOwner) {
     try {
-      await db(input.db).query(
+      await db(customDb).query(
         `UPDATE web_accounts
             SET email_normalized = $2,
                 email_verified_at = now(),
@@ -619,7 +634,7 @@ export async function completeEmailMagicLink(input: {
     } catch (e) {
       // A concurrent confirmation of the same address won the unique index.
       if ((e as { code?: string }).code !== '23505') throw e
-      const winner = await findVerifiedAccount(row.email_normalized, input.db)
+      const winner = await findVerifiedAccount(row.email_normalized, customDb)
       if (!winner) throw e
       accountId = winner
     }
@@ -628,9 +643,9 @@ export async function completeEmailMagicLink(input: {
   const sessionToken = randomToken(32)
   const csrfToken = randomToken(32)
   const expiresAt = new Date(Date.now() + sessionTtlMs())
-  const uaHash = input.userAgent ? sha256Hex(input.userAgent.slice(0, 512)) : null
+  const uaHash = userAgent ? sha256Hex(userAgent.slice(0, 512)) : null
 
-  await db(input.db).query(
+  await db(customDb).query(
     `INSERT INTO web_sessions (token_hash, csrf_hash, web_account_id, expires_at, user_agent_hash)
      VALUES ($1, $2, $3::uuid, $4, $5)`,
     [sha256Hex(sessionToken), sha256Hex(csrfToken), accountId, expiresAt.toISOString(), uaHash]
@@ -644,6 +659,126 @@ export async function completeEmailMagicLink(input: {
     csrfToken,
     expiresAt,
   }
+}
+
+/** Six-digit email code: enter in the same browser/PWA, no links or navigation. */
+const EMAIL_CODE_TTL_MS = 10 * 60_000
+const EMAIL_CODE_REGEX = /^[0-9]{6}$/
+
+/** Store a salted scrypt hash in the existing CHAR(64) challenge column. */
+function emailCodeHash(code: string): string {
+  const salt = randomBytes(8)
+  return salt.toString('hex') + scryptSync(code, salt, 24).toString('hex')
+}
+function emailCodeMatches(code: string, stored: string): boolean {
+  if (!/^[0-9a-f]{64}$/.test(stored)) return false
+  const salt = Buffer.from(stored.slice(0, 16), 'hex')
+  const actual = Buffer.from(stored.slice(16), 'hex')
+  return timingSafeEqual(actual, scryptSync(code, salt, 24))
+}
+
+export async function startEmailCode(input: {
+  webAccountId: string; email: string; ip?: string | null; db?: Queryable
+}): Promise<{ mode: 'code_sent'; challengeId: string; expiresAt: Date; echoCode?: string }> {
+  const email = normalizeEmail(input.email)
+  if (!email) {
+    const err = new Error('Invalid email') as Error & { status?: number; code?: string }
+    err.status = 400; err.code = 'invalid_email'; throw err
+  }
+  const current = await db(input.db).query<{ email_normalized: string | null; email_verified_at: Date | null }>(
+    `SELECT email_normalized, email_verified_at FROM web_accounts
+     WHERE id = $1::uuid AND revoked_at IS NULL LIMIT 1`, [input.webAccountId]
+  )
+  if (!current.rows[0]) {
+    const err = new Error('Account missing') as Error & { status?: number; code?: string }
+    err.status = 401; err.code = 'web_account_required'; throw err
+  }
+  if (current.rows[0].email_verified_at && current.rows[0].email_normalized !== email &&
+      !(await findVerifiedAccount(email, input.db))) {
+    const err = new Error('Sign out before changing a verified email') as Error & { status?: number; code?: string }
+    err.status = 409; err.code = 'email_already_verified'; throw err
+  }
+  const ip = (input.ip || 'unknown').slice(0, 64)
+  for (const key of [`email_otp_ip:${ip}`, `email_otp_email:${email}`, `email_otp_account:${input.webAccountId}`]) {
+    const limit = await consumeSharedRateLimit(key, key.startsWith('email_otp_ip:') ? 10 : 3, 60_000, input.db)
+    if (!limit.ok) {
+      const err = new Error('Too many codes') as Error & { status?: number; code?: string }
+      err.status = 429; err.code = 'rate_limited'; throw err
+    }
+  }
+  if (await countRecentEmailOtps(email, 60_000, input.db) >= 3) {
+    const err = new Error('Too many codes') as Error & { status?: number; code?: string }
+    err.status = 429; err.code = 'rate_limited'; throw err
+  }
+  const code = randomInt(0, 1_000_000).toString().padStart(6, '0')
+  const expiresAt = new Date(Date.now() + EMAIL_CODE_TTL_MS)
+  const rows = await db(input.db).query<{ id: string }>(
+    `INSERT INTO web_email_otps (web_account_id, email_normalized, code_hash, purpose, expires_at)
+     VALUES ($1::uuid, $2, $3, 'bind', $4) RETURNING id::text AS id`,
+    [input.webAccountId, email, emailCodeHash(code), expiresAt.toISOString()]
+  )
+  const challengeId = rows.rows[0]!.id
+  const mail = mailShell(
+    'Ваш код подтверждения',
+    `<p>Введите этот код в открытом браузере GameNight Host:</p>
+      <p style="font-size:32px;font-weight:700;letter-spacing:0.15em;">${code}</p>
+      <p>Код действует 10 минут. Никому его не сообщайте.</p>`,
+    `Ваш код: ${code}\nВведите его в профиле или на странице входа. Срок действия: 10 минут.`
+  )
+  try {
+    await getMailTransport().send({ to: email, subject: mail.subject, text: mail.text, html: mail.html })
+  } catch (e) {
+    await db(input.db).query('UPDATE web_email_otps SET consumed_at = now() WHERE id = $1', [challengeId])
+    const err = e as Error & { status?: number; code?: string }
+    if (!err.status) err.status = 502
+    if (!err.code) err.code = 'mail_send_failed'
+    throw err
+  }
+  return {
+    mode: 'code_sent', challengeId, expiresAt,
+    ...(process.env.WEB_EMAIL_OTP_ECHO === '1' && process.env.NODE_ENV !== 'production'
+      ? { echoCode: code } : {}),
+  }
+}
+
+export async function completeEmailCode(input: {
+  webAccountId: string; challengeId: string; code: string
+  userAgent?: string | null; ip?: string | null; db?: Queryable
+}): Promise<{
+  webAccountId: string; emailNormalized: string; purpose: 'bind' | 'recover'
+  sessionToken: string; csrfToken: string; expiresAt: Date
+}> {
+  if (!/^[1-9][0-9]{0,18}$/.test(input.challengeId) || !EMAIL_CODE_REGEX.test(input.code)) {
+    const err = new Error('Invalid code') as Error & { status?: number; code?: string }
+    err.status = 400; err.code = 'invalid_code'; throw err
+  }
+  for (const key of [
+    `email_code_verify_ip:${(input.ip || 'unknown').slice(0, 64)}`,
+    `email_code_verify_account:${input.webAccountId}`,
+  ]) {
+    const limit = await consumeSharedRateLimit(key, 12, 60_000, input.db)
+    if (!limit.ok) {
+      const err = new Error('Too many attempts') as Error & { status?: number; code?: string }
+      err.status = 429; err.code = 'rate_limited'; throw err
+    }
+  }
+  const rows = await db(input.db).query<{
+    id: number; web_account_id: string; email_normalized: string
+    purpose: 'bind' | 'recover'; code_hash: string
+  }>(
+    `UPDATE web_email_otps SET attempts = attempts + 1
+     WHERE id = $1::bigint AND web_account_id = $2::uuid
+       AND purpose = 'bind' AND consumed_at IS NULL
+       AND expires_at > now() AND attempts < $3
+     RETURNING id, web_account_id::text, email_normalized, purpose, code_hash`,
+    [input.challengeId, input.webAccountId, MAX_ATTEMPTS]
+  )
+  const row = rows.rows[0]
+  if (!row || !emailCodeMatches(input.code, row.code_hash.trim())) {
+    const err = new Error('Incorrect or expired code') as Error & { status?: number; code?: string }
+    err.status = 400; err.code = 'invalid_code'; throw err
+  }
+  return finishVerifiedEmailChallenge(row, input.userAgent, input.db)
 }
 
 /** Staging helper: grant manual premium for E2E without payment. */

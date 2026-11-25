@@ -2,12 +2,13 @@ import type { WebSessionMe } from './webAuth'
 
 export type EmailSyncPhase = 'idle' | 'saving' | 'checking' | 'confirm' | 'restored' | 'ready' | 'error'
 
-export type EmailBindAnswer = { mode?: 'saved' | 'verified' }
+export type EmailBindAnswer = { mode?: 'saved' | 'verified' | 'verify_sent' }
 
 type PremiumSnapshot = { isPremium: boolean } | null | undefined
 
 export type EmailSaveDeps = {
-  bind: (email: string) => Promise<EmailBindAnswer>
+  saveContact: (email: string) => Promise<EmailBindAnswer>
+  requestConfirmation: (email: string) => Promise<EmailBindAnswer>
   refreshSession: () => Promise<unknown>
   refreshPremium: () => Promise<PremiumSnapshot>
   onPhase: (phase: EmailSyncPhase) => void
@@ -39,9 +40,11 @@ export async function premiumPhase(refreshPremium: () => Promise<PremiumSnapshot
 }
 
 /**
- * Save an email as a contact in the current WEB session, without sending a link.
- * Premium refresh checks THIS account only; recovery on another device still
- * requires proof of mailbox ownership.
+ * One Profile action with two safe outcomes:
+ * - Premium in the present WEB account: save contact, show Premium now; no mail.
+ * - No Premium in this session: request ownership proof automatically so the
+ *   mailbox can show purchases from other paid guest accounts.
+ * Merely typing an address NEVER grants another account's purchases.
  */
 export async function saveEmailAndSync(
   email: string,
@@ -50,20 +53,48 @@ export async function saveEmailAndSync(
   deps.onPhase('saving')
   let answer: EmailBindAnswer
   try {
-    answer = await deps.bind(email)
+    answer = await deps.saveContact(email)
   } catch (error) {
     return { phase: 'error', error: emailBindErrorMessage(error) }
   }
+  if (answer.mode !== 'saved' && answer.mode !== 'verified') {
+    return { phase: 'error', error: 'Не удалось сохранить email. Попробуйте ещё раз.' }
+  }
+
   deps.onPhase('checking')
   try {
     await deps.refreshSession()
   } catch {
-    /* the link flow below does not depend on it */
+    /* The Premium endpoint independently validates the current session. */
   }
-  if (answer.mode === 'verified' || answer.mode === 'saved') {
-    return { phase: await premiumPhase(deps.refreshPremium) }
+  let snapshot: PremiumSnapshot
+  try {
+    snapshot = await deps.refreshPremium()
+  } catch {
+    snapshot = null
   }
-  return { phase: 'error', error: 'Не удалось сохранить email. Попробуйте позже.' }
+  if (!snapshot) {
+    return { phase: 'error', error: 'Не удалось проверить Premium. Повторите попытку.' }
+  }
+  if (snapshot.isPremium) return { phase: 'restored' }
+  if (answer.mode === 'verified') return { phase: 'ready' }
+
+  // Email contact is saved, but cannot unlock purchases from other accounts.
+  // Send a proof link immediately as part of the same explicit user action.
+  try {
+    const started = await deps.requestConfirmation(email)
+    if (started.mode === 'verify_sent') return { phase: 'confirm' }
+    if (started.mode === 'verified') return { phase: await premiumPhase(deps.refreshPremium) }
+    return { phase: 'error', error: 'Не удалось отправить письмо. Попробуйте ещё раз.' }
+  } catch (error) {
+    const message = emailBindErrorMessage(error)
+    return {
+      phase: 'error',
+      error: message === 'Не удалось сохранить email. Попробуйте позже.'
+        ? 'Email сохранён, но не удалось отправить ссылку. Повторите попытку.'
+        : message,
+    }
+  }
 }
 
 /** The link was opened (here or in another tab): this browser now holds the confirmed account. */

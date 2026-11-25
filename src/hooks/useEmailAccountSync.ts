@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { saveProfileContactEmail, type WebSessionMe } from '../lib/webAuth'
+import { saveProfileContactEmail, startEmailBind, type WebSessionMe } from '../lib/webAuth'
 import {
   isEmailConfirmationDone,
   premiumPhase,
@@ -42,7 +42,8 @@ export function useEmailAccountSync(deps: Deps) {
     setError(null)
     const startedOn = depsRef.current.session?.webAccountId ?? null
     const result = await saveEmailAndSync(email, {
-      bind: saveProfileContactEmail,
+      saveContact: saveProfileContactEmail,
+      requestConfirmation: startEmailBind,
       refreshSession: () => depsRef.current.refreshSession(),
       refreshPremium: () => depsRef.current.refreshPremium(),
       onPhase: (next) => {

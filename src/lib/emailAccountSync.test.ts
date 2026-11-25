@@ -7,47 +7,63 @@ import {
   type EmailSyncPhase,
 } from './emailAccountSync'
 
-function deps(answer: { mode?: 'saved' | 'verified' } | Error, premium = false) {
+function deps(premium: boolean | null, contactMode: 'saved' | 'verified' = 'saved') {
   const phases: EmailSyncPhase[] = []
   return {
     phases,
     d: {
-      bind: vi.fn(async () => {
-        if (answer instanceof Error) throw answer
-        return answer
-      }),
+      saveContact: vi.fn(async () => ({ mode: contactMode })),
+      requestConfirmation: vi.fn(async () => ({ mode: 'verify_sent' as const })),
       refreshSession: vi.fn(async () => null),
-      refreshPremium: vi.fn(async () => ({ isPremium: premium })),
+      refreshPremium: vi.fn(async () => premium === null ? null : ({ isPremium: premium })),
       onPhase: (p: EmailSyncPhase) => phases.push(p),
     },
   }
 }
 
 describe('saveEmailAndSync', () => {
-  it('save on the current account checks existing Premium immediately without sending mail', async () => {
-    const { d, phases } = deps({ mode: 'saved' }, true)
+  it('paid current browser: save contact + Premium visible, no mail', async () => {
+    const { d, phases } = deps(true)
     expect(await saveEmailAndSync('a@b.co', d)).toEqual({ phase: 'restored' })
     expect(phases).toEqual(['saving', 'checking'])
-    expect(d.refreshPremium).toHaveBeenCalledTimes(1)
+    expect(d.saveContact).toHaveBeenCalledWith('a@b.co')
+    expect(d.requestConfirmation).not.toHaveBeenCalled()
   })
 
-  it('saving contact on an unpaid current account does not claim another account Premium', async () => {
-    expect((await saveEmailAndSync('a@b.co', deps({ mode: 'saved' }, false).d)).phase).toBe('ready')
+  it('free current browser: automatically emails link to restore older purchase', async () => {
+    const { d, phases } = deps(false)
+    expect(await saveEmailAndSync('a@b.co', d)).toEqual({ phase: 'confirm' })
+    expect(phases).toEqual(['saving', 'checking'])
+    expect(d.requestConfirmation).toHaveBeenCalledWith('a@b.co')
   })
 
-  it('address already confirmed on this account: shows Premium or a ready account', async () => {
-    expect((await saveEmailAndSync('a@b.co', deps({ mode: 'verified' }, true).d)).phase).toBe('restored')
-    expect((await saveEmailAndSync('a@b.co', deps({ mode: 'verified' }, false).d)).phase).toBe('ready')
+  it('already verified email: no new mail, shows current account state', async () => {
+    const { d } = deps(false, 'verified')
+    expect((await saveEmailAndSync('a@b.co', d)).phase).toBe('ready')
+    expect(d.requestConfirmation).not.toHaveBeenCalled()
   })
 
-  it('errors become a readable message and never a success state', async () => {
-    const err = Object.assign(new Error('x'), { status: 429 })
-    const { d } = deps(err)
+  it('failed Premium status: do not claim no purchase or send arbitrary mail', async () => {
+    const { d } = deps(null)
+    expect((await saveEmailAndSync('a@b.co', d)).phase).toBe('error')
+    expect(d.requestConfirmation).not.toHaveBeenCalled()
+  })
+
+  it('mail failure reports failure but contact remains saved', async () => {
+    const { d } = deps(false)
+    d.requestConfirmation.mockRejectedValueOnce(new Error('smtp'))
+    const result = await saveEmailAndSync('a@b.co', d)
+    expect(result.phase).toBe('error')
+    expect(result.error).toMatch(/отправить ссылку/)
+  })
+
+  it('errors before save do not look like a success', async () => {
+    const { d } = deps(false)
+    d.saveContact.mockRejectedValueOnce(Object.assign(new Error('x'), { status: 429 }))
     expect(await saveEmailAndSync('a@b.co', d)).toEqual({
-      phase: 'error',
-      error: 'Слишком много попыток. Подождите минуту и попробуйте снова.',
+      phase: 'error', error: 'Слишком много попыток. Подождите минуту и попробуйте снова.',
     })
-    expect(d.refreshSession).not.toHaveBeenCalled()
+    expect(d.requestConfirmation).not.toHaveBeenCalled()
   })
 })
 

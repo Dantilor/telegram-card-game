@@ -560,13 +560,11 @@ function Profile() {
   // A completed WEB checkout already saved this email on the payment.
   // It is visible in Profile without making the payer type or save it twice.
   const profileEmail = savedEmail || receiptEmail
-  const receiptPrefilledRef = useRef(false)
-
+  // Prefill from the saved checkout email so no second typing is required.
   useEffect(() => {
-    if (!receiptEmail || receiptPrefilledRef.current) return
-    receiptPrefilledRef.current = true
-    setEmailDraft((draft) => draft || receiptEmail)
-  }, [receiptEmail])
+    if (!profileEmail) return
+    setEmailDraft((draft) => draft || profileEmail)
+  }, [profileEmail])
 
   useEffect(() => {
     if (!web) return
@@ -583,12 +581,12 @@ function Profile() {
 
   const handleEmailConfirm = useCallback(async () => {
     if (!web) return
-    const target = (savedEmail || emailDraft).trim()
+    const target = (emailDraft || profileEmail).trim()
     if (!target) return
     haptic('medium')
     setEmailStatus(null)
     await saveEmailSync(target)
-  }, [web, savedEmail, emailDraft, saveEmailSync])
+  }, [web, profileEmail, emailDraft, saveEmailSync])
   const handleSupport = useCallback(() => {
     haptic('light')
     const tg = getTelegramWebApp()
@@ -991,22 +989,43 @@ function Profile() {
                 <p className="profile-pass__desc">
                   {profileEmail}
                   <br />
-                  Статус: {emailVerified ? 'Авторизован' : 'Аккаунт создан — email сохранён'}
+                  Статус: {emailVerified ? 'Авторизован' : 'Email сохранён'}
                 </p>
                 {!emailVerified && (
-                  <p className="profile-pass__desc">
-                    {receiptEmail && !savedEmail
-                      ? 'Email сохранён из чека вашей покупки. Premium доступен в этом аккаунте без дополнительных действий.'
-                      : 'Premium этого аккаунта доступен сразу, без подтверждения почты.'}
-                    {' '}Для входа на другом устройстве потребуется подтверждение владения email.
-                  </p>
+                  <>
+                    <p className="profile-pass__desc">
+                      {isPremium
+                        ? 'Premium активен в этом аккаунте. Дополнительно подтверждать почту для игры не нужно.'
+                        : 'Если Premium куплен на эту почту в другом браузере, нажмите ниже. Мы отправим ссылку для безопасного восстановления.'}
+                    </p>
+                    <label className="profile-pass__email-label">
+                      Email для аккаунта
+                      <input
+                        type="email"
+                        className="profile-pass__email-input"
+                        value={emailDraft}
+                        onChange={(e) => setEmailDraft(e.target.value)}
+                        placeholder="name@example.com"
+                        autoComplete="email"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="profile-pass__cta"
+                      onClick={() => void handleEmailConfirm()}
+                      disabled={emailBusy || !emailDraft.trim()}
+                    >
+                      <span className="profile-pass__cta-shine" aria-hidden />
+                      {emailBusy ? 'Проверяем…' : isPremium ? 'Сохранить email' : 'Проверить Premium'}
+                    </button>
+                  </>
                 )}
               </>
             ) : (
               <>
                 <p className="profile-pass__desc">
-                  Статус: Гость. Сохраните email без письма. Premium, уже купленный на этом устройстве,
-                  доступен сразу.
+                  Статус: Гость. Введите email. Если Premium уже куплен здесь, он останется
+                  активным без письма. Если покупка была на другом устройстве, пришлём ссылку автоматически.
                 </p>
                 <label className="profile-pass__email-label">
                   Ваш email
@@ -1026,7 +1045,7 @@ function Profile() {
                   disabled={emailBusy || !emailDraft.trim()}
                 >
                   <span className="profile-pass__cta-shine" aria-hidden />
-                  {emailBusy ? 'Сохранение…' : 'Сохранить'}
+                  {emailBusy ? 'Проверяем…' : 'Сохранить и проверить Premium'}
                 </button>
               </>
             )}

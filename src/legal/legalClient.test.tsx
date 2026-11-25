@@ -208,7 +208,7 @@ describe('premium purchase', () => {
   it('links a new order to the accepted offer and leaves restore independent', async () => {
     const post = vi.fn(async (path: string) => {
       if (path === '/api/legal/offer-acceptances') return { evidenceId: 15 }
-      return { confirmationUrl: 'https://yookassa.example/pay' }
+      return { confirmationUrl: 'https://yookassa.example/pay', paymentId: ' 2c9a1b3d-000f-5000 ' }
     })
     const result = await submitNewPremiumOrder({
       document,
@@ -217,6 +217,7 @@ describe('premium purchase', () => {
       post,
     })
     expect(result.confirmationUrl).toMatch(/^https:\/\//)
+    expect(result.paymentId).toBe('2c9a1b3d-000f-5000')
     const payment = buildPaymentBody('premium_3m', 15, { email: 'buyer@example.com' })
     expect(payment).toEqual({
       planId: 'premium_3m',

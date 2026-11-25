@@ -108,6 +108,7 @@ const store = {
 }
 const apiCalls: Array<{ shop: string; method: string; path: string }> = []
 let seq = 0
+let providerDown = false
 const realFetch = globalThis.fetch
 
 function json(body: unknown, status = 200): Response {
@@ -149,6 +150,7 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   }
   const pay = apiPath.match(/^\/payments\/([^/]+)$/)
   if (method === 'GET' && pay) {
+    if (providerDown) return json({ type: 'error', code: 'internal_server_error' }, 500)
     const found = store.payments.get(decodeURIComponent(pay[1]!))
     return found && found.shop === shop ? json(found.object) : json({ type: 'error', code: 'not_found' }, 404)
   }
@@ -593,4 +595,140 @@ test('Secrets never appear in API responses', async () => {
   const text = JSON.stringify(res.body)
   assert.equal(text.includes(WEB_SHOP.secret), false)
   assert.equal(text.includes(TG_SHOP.secret), false)
+})
+
+// ---------- automatic confirm after return (client calls /api/yookassa/confirm) ----------
+const confirmWeb = (id: string, headers: Record<string, string>) => post('/api/yookassa/confirm', { paymentId: id }, headers)
+const grantedAt = async (id: string) =>
+  String((await run(`SELECT premium_granted_at FROM web_payments WHERE id = $1`, [id])).rows[0]?.premium_granted_at)
+
+test('Return confirm before the webhook grants once; the late webhook does not grant again', async () => {
+  const buyer = await webBuyer('premium_web_1m')
+  const id = String((await createWeb(buyer)).body.paymentId)
+  markPaid(id)
+  const before = await counts()
+
+  const first = await confirmWeb(id, buyer.headers)
+  assert.equal(first.status, 200, JSON.stringify(first.body))
+  assert.equal(first.body.ok, true)
+  assert.equal(first.body.alreadyDone, false)
+  assert.ok(first.body.activeUntil, 'confirm returns the new expiry')
+  const stamp = await grantedAt(id)
+
+  assert.equal((await webhook('payment.succeeded', { id, status: 'succeeded' })).status, 200)
+  const ent = await webEntitlements(buyer.webAccountId)
+  assert.equal(ent.length, 1, 'webhook after confirm does not grant again')
+  assert.equal(await grantedAt(id), stamp)
+
+  const after = await counts()
+  assert.equal(after.subscriptions, before.subscriptions)
+  assert.equal(after.payments, before.payments)
+  assert.equal(after.webEntitlements, before.webEntitlements + 1)
+})
+
+test('Webhook before the return: confirm reports alreadyDone and keeps a single entitlement', async () => {
+  const buyer = await webBuyer('premium_web_1m')
+  const id = String((await createWeb(buyer)).body.paymentId)
+  markPaid(id)
+  assert.equal((await webhook('payment.succeeded', { id, status: 'succeeded' })).status, 200)
+  const stamp = await grantedAt(id)
+  const until = String((await webEntitlements(buyer.webAccountId))[0]?.active)
+
+  for (let i = 0; i < 3; i += 1) {
+    const res = await confirmWeb(id, buyer.headers)
+    assert.equal(res.status, 200)
+    assert.equal(res.body.ok, true)
+    assert.equal(res.body.alreadyDone, true)
+    assert.ok(res.body.activeUntil)
+  }
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 1)
+  assert.equal(await grantedAt(id), stamp)
+  assert.equal(until, 'true')
+})
+
+test('Pending then succeeded; canceled never grants', async () => {
+  const buyer = await webBuyer('premium_web_1m')
+  const id = String((await createWeb(buyer)).body.paymentId)
+  for (let i = 0; i < 2; i += 1) {
+    const res = await confirmWeb(id, buyer.headers)
+    assert.equal(res.status, 200)
+    assert.equal(res.body.ok, false)
+    assert.equal(res.body.status, 'pending')
+  }
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 0)
+  markPaid(id)
+  assert.equal((await confirmWeb(id, buyer.headers)).body.ok, true)
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 1)
+
+  const other = await webBuyer('premium_web_1m')
+  const canceledId = String((await createWeb(other)).body.paymentId)
+  store.payments.get(canceledId)!.object.status = 'canceled'
+  const res = await confirmWeb(canceledId, other.headers)
+  assert.equal(res.body.ok, false)
+  assert.equal(res.body.status, 'canceled')
+  assert.equal((await webEntitlements(other.webAccountId)).length, 0)
+})
+
+test('YooKassa API error on confirm: 502, no grant, a later confirm succeeds once', async () => {
+  const buyer = await webBuyer('premium_web_1m')
+  const id = String((await createWeb(buyer)).body.paymentId)
+  markPaid(id)
+  providerDown = true
+  try {
+    const res = await confirmWeb(id, buyer.headers)
+    assert.ok(res.status >= 500, `expected a 5xx, got ${res.status}`)
+    assert.equal((await webEntitlements(buyer.webAccountId)).length, 0)
+  } finally {
+    providerDown = false
+  }
+  assert.equal((await confirmWeb(id, buyer.headers)).body.ok, true)
+  assert.equal((await confirmWeb(id, buyer.headers)).body.alreadyDone, true)
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 1)
+})
+
+test('Lost session: no cookies or bad CSRF is 401 without a grant; the buyer can still confirm later', async () => {
+  const buyer = await webBuyer('premium_web_1m')
+  const id = String((await createWeb(buyer)).body.paymentId)
+  markPaid(id)
+  const anonymous = await confirmWeb(id, {})
+  assert.equal(anonymous.status, 401)
+  const badCsrf = await confirmWeb(id, { Cookie: buyer.headers.Cookie, 'X-CSRF-Token': 'wrong' })
+  assert.equal(badCsrf.status, 401)
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 0)
+
+  const fresh = await webBuyer('premium_web_1m') // new anonymous account after losing the cookie
+  const stolen = await confirmWeb(id, fresh.headers)
+  assert.equal(stolen.status, 403, 'a different WEB account cannot claim the payment')
+  assert.equal((await webEntitlements(fresh.webAccountId)).length, 0)
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 0)
+
+  assert.equal((await confirmWeb(id, buyer.headers)).body.ok, true)
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 1)
+})
+
+test('Telegram Mini App confirm is unchanged and cannot claim a WEB payment', async () => {
+  const tg = await telegramBuyer(910077)
+  const tgId = String((await createTelegram(tg)).body.paymentId)
+  markPaid(tgId)
+  const tgHeaders = { 'X-Telegram-Init-Data': tg.initData }
+  const ok = await confirmWeb(tgId, tgHeaders)
+  assert.equal(ok.status, 200, JSON.stringify(ok.body))
+  assert.equal(ok.body.ok, true)
+  assert.ok(callsFor(tgId).filter((c) => c.method === 'GET').every((c) => c.shop === TG_SHOP.id))
+  assert.equal((await confirmWeb(tgId, tgHeaders)).body.alreadyDone, true)
+  assert.equal(
+    Number((await run(`SELECT count(*)::int AS c FROM subscriptions WHERE telegram_id = 910077`)).rows[0]!.c),
+    1
+  )
+
+  const buyer = await webBuyer('premium_web_1m')
+  const webId = String((await createWeb(buyer)).body.paymentId)
+  markPaid(webId)
+  const before = await counts()
+  const claim = await confirmWeb(webId, tgHeaders)
+  assert.equal(claim.body.ok === true, false, 'Telegram caller cannot grant a WEB order')
+  const after = await counts()
+  assert.equal(after.subscriptions, before.subscriptions)
+  assert.equal(after.webEntitlements, before.webEntitlements)
+  assert.equal((await webEntitlements(buyer.webAccountId)).length, 0)
 })

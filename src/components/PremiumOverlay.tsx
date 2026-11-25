@@ -9,6 +9,7 @@ import { classifyReceipt, LegalClientError, submitNewPremiumOrder, userFacingLoa
 import type { PublicDocument } from '../legal/types'
 import { invalidateDocument, loadDocument } from '../legal/documentCache'
 import { trackEvent } from '../lib/analytics'
+import { savePendingWebPayment } from '../lib/pendingWebPayment'
 import { apiGet } from '../lib/api'
 import { usePremium } from '../contexts/PremiumContext'
 import { useWebSession } from '../shell/WebSessionContext'
@@ -443,6 +444,10 @@ export default function PremiumOverlay({
       try {
         sessionStorage.setItem('tcg_expecting_payment', String(Date.now()))
       } catch { /* ignore */ }
+      // WEB only: remember the order so /premium?payment=return can confirm it on the server.
+      if (isWebShell() && res.paymentId) {
+        savePendingWebPayment(res.paymentId, webSession.session?.webAccountId ?? null)
+      }
 
       const tg = getTelegramWebApp()
       if (!isWebShell() && tg?.openLink) {

@@ -260,7 +260,7 @@ export async function submitNewPremiumOrder(input: {
   receiptRaw: string
   bindAccountEmail?: boolean
   post: (path: string, body: Record<string, unknown>) => Promise<unknown>
-}): Promise<{ confirmationUrl: string }> {
+}): Promise<{ confirmationUrl: string; paymentId: string | null }> {
   const receipt = classifyReceipt(input.receiptRaw)
   if ('error' in receipt) {
     throw new LegalClientError('receipt_contact_invalid', 400, receipt.error)
@@ -283,12 +283,12 @@ export async function submitNewPremiumOrder(input: {
     const message = error instanceof LegalClientError ? error.message : 'Принятие оферты не сохранено.'
     throw new LegalClientError('offer_not_stored', error instanceof LegalClientError ? error.status : 0, `${message} Платёж не создан.`)
   }
-  let payment: { confirmationUrl?: unknown }
+  let payment: { confirmationUrl?: unknown; paymentId?: unknown }
   try {
     payment = (await input.post(
       '/api/payments/yookassa/create',
       buildPaymentBody(input.plan.id, evidenceId, receipt, Boolean(input.bindAccountEmail))
-    )) as { confirmationUrl?: unknown }
+    )) as { confirmationUrl?: unknown; paymentId?: unknown }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Платёж не создан.'
     throw new LegalClientError('payment_not_created', 0, message)
@@ -296,7 +296,9 @@ export async function submitNewPremiumOrder(input: {
   if (typeof payment.confirmationUrl !== 'string' || !payment.confirmationUrl.startsWith('https://')) {
     throw new LegalClientError('payment_not_created', 0, 'Платёж не создан.')
   }
-  return { confirmationUrl: payment.confirmationUrl }
+  const paymentId =
+    typeof payment.paymentId === 'string' && payment.paymentId.trim() ? payment.paymentId.trim() : null
+  return { confirmationUrl: payment.confirmationUrl, paymentId }
 }
 
 export function analyticsActiveFromRecords(records: OwnLegalRecords | null): boolean {

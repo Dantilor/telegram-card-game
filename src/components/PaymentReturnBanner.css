@@ -1,0 +1,99 @@
+.payment-return {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  margin: 0 0 1rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--game-shell-chip-border, rgba(255, 255, 255, 0.18));
+  background: var(--game-shell-chip-bg, rgba(255, 255, 255, 0.08));
+  color: var(--game-shell-readable-text, inherit);
+  box-shadow: var(--games-card-shadow, 0 10px 30px rgba(0, 0, 0, 0.18));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.payment-return--success {
+  border-color: var(--game-shell-chip-active-border, rgba(255, 214, 102, 0.7));
+  background: var(--game-shell-chip-active-bg, rgba(255, 214, 102, 0.14));
+  box-shadow: var(--game-shell-chip-active-glow, 0 0 24px rgba(255, 214, 102, 0.3)), var(--games-card-shadow, none);
+}
+
+.payment-return__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--game-shell-badge-text, #1c1400);
+  background: var(--game-shell-badge-bg, linear-gradient(135deg, #ffd666, #ff9f43));
+}
+
+.payment-return__icon--spin {
+  animation: payment-return-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes payment-return-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.9); opacity: 0.65; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .payment-return__icon--spin { animation: none; }
+}
+
+.payment-return__body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.payment-return__title {
+  margin: 0 0 0.25rem;
+  font-family: "Unbounded", "Manrope", system-ui, sans-serif;
+  font-size: clamp(1rem, 3.8vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.payment-return__text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--game-shell-readable-muted, inherit);
+}
+
+.payment-return__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.payment-return__btn {
+  min-height: 2.6rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--game-shell-chip-border, rgba(255, 255, 255, 0.25));
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payment-return__btn--primary {
+  border-color: transparent;
+  color: var(--game-shell-badge-text, #1c1400);
+  background: var(--game-shell-cta-bg, linear-gradient(135deg, #ffd666, #ff9f43));
+  box-shadow: var(--game-shell-cta-shadow, none);
+}
+
+@media (max-width: 480px) {
+  .payment-return { padding: 0.9rem; gap: 0.7rem; }
+  .payment-return__actions { flex-direction: column; }
+  .payment-return__btn { width: 100%; }
+}

@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useState, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBack } from '../hooks/useBack'
 import { usePremium } from '../contexts/PremiumContext'
 import { haptic } from '../utils/telegram'
@@ -9,75 +9,30 @@ import crystalUrl from './gnh-inside/assets/reference-crystal.webp'
 import HomeButton from '../components/HomeButton'
 import BackButton from '../components/BackButton'
 import PremiumOverlay from '../components/PremiumOverlay'
+import PaymentReturnBanner from '../components/PaymentReturnBanner'
+import { usePaymentReturn } from '../hooks/usePaymentReturn'
 import WebPremiumExperience from './WebPremiumExperience'
 import '../styles/GamePageShell.css'
 import './PremiumPage.css'
-
-const EXPECTING_PAYMENT_FLAG = 'tcg_expecting_payment'
-const PAYMENT_RETURN_POLL_ATTEMPTS = 30
-const PAYMENT_RETURN_POLL_INTERVAL_MS = 2000
 
 function PremiumPage() {
   const handleBack = useBack('/')
   const navigate = useNavigate()
   const { isPremium, activeUntil, refreshPremium } = usePremium()
-  const [searchParams, setSearchParams] = useSearchParams()
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreLoading, setRestoreLoading] = useState(false)
-  const [paymentReturnStatus, setPaymentReturnStatus] = useState<string | null>(null)
   const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const paymentPollRef = useRef(false)
-  const mountedRef = useRef(true)
-  const isPaymentReturn = searchParams.get('payment') === 'return'
-
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-    }
-  }, [])
-
-  // WEB return_url from YooKassa — refresh status; never treat return alone as paid.
-  // Removing ?payment=return re-renders this page; the poll must survive that and stop only on unmount.
-  useEffect(() => {
-    if (!isPaymentReturn) return
-    try {
-      sessionStorage.setItem(EXPECTING_PAYMENT_FLAG, String(Date.now()))
-    } catch {
-      /* ignore */
-    }
-    setSearchParams({}, { replace: true })
-    if (paymentPollRef.current) return
-    paymentPollRef.current = true
-    setPaymentReturnStatus('Проверяем оплату…')
-    ;(async () => {
-      for (let i = 0; i < PAYMENT_RETURN_POLL_ATTEMPTS; i += 1) {
-        if (!mountedRef.current) break
-        const result = await refreshPremium()
-        if (!mountedRef.current) break
-        if (result?.isPremium) {
-          try {
-            sessionStorage.removeItem(EXPECTING_PAYMENT_FLAG)
-          } catch {
-            /* ignore */
-          }
-          setPaymentReturnStatus('Premium активирован')
-          paymentPollRef.current = false
-          return
-        }
-        if (i < PAYMENT_RETURN_POLL_ATTEMPTS - 1) {
-          await new Promise((r) => setTimeout(r, PAYMENT_RETURN_POLL_INTERVAL_MS))
-        }
-      }
-      if (mountedRef.current) {
-        setPaymentReturnStatus(
-          'Оплата ещё не подтверждена. Если вы оплатили — подождите или нажмите «Восстановить покупки».'
-        )
-      }
-      paymentPollRef.current = false
-    })()
-  }, [isPaymentReturn, setSearchParams, refreshPremium])
-
+  // WEB return_url from YooKassa: confirm the stored order on the server, then force /api/me.
+  // Never treats the return alone as paid; see usePaymentReturn / paymentReturnFlow.
+  const { phase: paymentPhase, retry: retryPaymentCheck } = usePaymentReturn(refreshPremium)
+  const paymentBanner = (
+    <PaymentReturnBanner
+      phase={paymentPhase}
+      onRetry={retryPaymentCheck}
+      onLogin={() => navigate('/login')}
+      onGames={() => navigate('/games')}
+    />
+  )
   const handleRestorePurchase = useCallback(async () => {
     haptic('medium')
     if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current)
@@ -122,7 +77,7 @@ function PremiumPage() {
             <p className="lead">{formatPremiumUntilLabel(activeUntil)}</p>
           </div>
         </div>
-        {paymentReturnStatus && <p className="premium-page__status">{paymentReturnStatus}</p>}
+        {paymentBanner}
         <section className="glass benefit-card">
           <div className="premium-page__actions">
             <button
@@ -143,8 +98,8 @@ function PremiumPage() {
   if (isWebShell()) {
     return (
       <div className="premium-page premium-page--web-experience">
-        {paymentReturnStatus && <p className="premium-page__status">{paymentReturnStatus}</p>}
-        <WebPremiumExperience initialView="premium" />
+        {paymentBanner}
+        {paymentPhase === 'checking' ? null : <WebPremiumExperience initialView="premium" />}
       </div>
     )
   }
@@ -160,7 +115,7 @@ function PremiumPage() {
           <h1 className="premium-page__title">Premium-доступ</h1>
         </header>
         <section className="premium-page__card premium-page__card--active game-page__panel game-page__panel--glow-b">
-          {paymentReturnStatus && <p className="premium-page__status">{paymentReturnStatus}</p>}
+          {paymentBanner}
           <p className="premium-page__status">
             Premium активен до {activeUntil ? new Date(activeUntil).toLocaleDateString('ru-RU') : '—'}
           </p>
@@ -189,9 +144,7 @@ function PremiumPage() {
         <BackButton onClick={handleBack} className="game-page__nav-btn game-page__back" />
       </div>
       <div className="premium-page__content">
-        {paymentReturnStatus && (
-          <p className="premium-page__status" style={{ marginBottom: 12 }}>{paymentReturnStatus}</p>
-        )}
+        {paymentBanner}
         <PremiumOverlay
           isOpen={true}
           onClose={handleBack}

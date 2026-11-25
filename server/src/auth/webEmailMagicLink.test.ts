@@ -10,6 +10,7 @@ import {
   completeEmailMagicLink,
   normalizeEmail,
   savePaymentReceiptEmail,
+  saveProfileContactEmail,
   startEmailBind,
   startEmailRecover,
 } from './webEmailOtp.js'
@@ -997,6 +998,50 @@ test("/login from B's own guest session confirms the email for B's guest account
     })
     assert.notEqual(await otpAccount(harness.query, fromOther.echoToken!), other)
     assert.equal((await getWebAccountContact(other, harness.query)).email, 'other@example.com')
+  } finally {
+    await harness.close()
+  }
+})
+
+// Saving a profile contact is NOT a login and cannot grant purchases made on another account.
+test('profile contact saves without OTP and preserves current Premium only', async () => {
+  const harness = await createHarness()
+  try {
+    const payer = await newAccount(harness.query)
+    await paidPurchase(harness.query, payer, 'shared@example.com')
+    const guest = await newAccount(harness.query)
+    const answer = await saveProfileContactEmail({
+      webAccountId: guest, email: 'SHARED@example.com', db: harness.query,
+    })
+    assert.equal(answer.mode, 'saved')
+    const contact = await getWebAccountContact(guest, harness.query)
+    assert.equal(contact.email, 'shared@example.com')
+    assert.equal(contact.emailVerified, false)
+    assert.equal((await getWebAccountPremium(guest, harness.query)).isPremium, false)
+    const otps = await harness.query.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM web_email_otps WHERE web_account_id = $1::uuid',
+      [guest]
+    )
+    assert.equal(otps.rows[0]!.count, '0')
+    assert.equal((await getWebAccountPremium(payer, harness.query)).isPremium, true)
+  } finally {
+    await harness.close()
+  }
+})
+
+test('profile contact on a paid guest keeps existing Premium without confirmation', async () => {
+  const harness = await createHarness()
+  try {
+    const payer = await newAccount(harness.query)
+    await paidPurchase(harness.query, payer, 'payer@example.com')
+    const result = await saveProfileContactEmail({
+      webAccountId: payer, email: 'payer@example.com', db: harness.query,
+    })
+    assert.equal(result.mode, 'saved')
+    assert.equal((await getWebAccountPremium(payer, harness.query)).isPremium, true)
+    const saved = await getWebAccountContact(payer, harness.query)
+    assert.equal(saved.emailVerified, false)
+    assert.equal(saved.email, 'payer@example.com')
   } finally {
     await harness.close()
   }

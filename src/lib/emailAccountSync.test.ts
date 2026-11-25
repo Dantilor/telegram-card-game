@@ -7,7 +7,7 @@ import {
   type EmailSyncPhase,
 } from './emailAccountSync'
 
-function deps(answer: { mode?: 'verify_sent' | 'verified' } | Error, premium = false) {
+function deps(answer: { mode?: 'saved' | 'verified' } | Error, premium = false) {
   const phases: EmailSyncPhase[] = []
   return {
     phases,
@@ -24,11 +24,15 @@ function deps(answer: { mode?: 'verify_sent' | 'verified' } | Error, premium = f
 }
 
 describe('saveEmailAndSync', () => {
-  it('mailed link: saving → checking → confirm; Premium is not looked up by the address alone', async () => {
-    const { d, phases } = deps({ mode: 'verify_sent' }, true)
-    expect(await saveEmailAndSync('a@b.co', d)).toEqual({ phase: 'confirm' })
+  it('save on the current account checks existing Premium immediately without sending mail', async () => {
+    const { d, phases } = deps({ mode: 'saved' }, true)
+    expect(await saveEmailAndSync('a@b.co', d)).toEqual({ phase: 'restored' })
     expect(phases).toEqual(['saving', 'checking'])
-    expect(d.refreshPremium).not.toHaveBeenCalled()
+    expect(d.refreshPremium).toHaveBeenCalledTimes(1)
+  })
+
+  it('saving contact on an unpaid current account does not claim another account Premium', async () => {
+    expect((await saveEmailAndSync('a@b.co', deps({ mode: 'saved' }, false).d)).phase).toBe('ready')
   })
 
   it('address already confirmed on this account: shows Premium or a ready account', async () => {
@@ -51,7 +55,7 @@ describe('emailBindErrorMessage', () => {
   it('maps server answers', () => {
     expect(emailBindErrorMessage({ status: 409, code: 'email_already_verified' })).toMatch(/другая почта/)
     expect(emailBindErrorMessage({ status: 400 })).toMatch(/опечатка/)
-    expect(emailBindErrorMessage({ status: 502 })).toMatch(/Не удалось отправить письмо/)
+    expect(emailBindErrorMessage({ status: 502 })).toMatch(/Не удалось сохранить email/)
   })
 })
 

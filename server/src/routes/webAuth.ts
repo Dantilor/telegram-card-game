@@ -48,6 +48,7 @@ import {
 } from '../auth/webAccounts.js'
 import {
   completeEmailMagicLink,
+  saveProfileContactEmail,
   startEmailBind,
   startEmailRecover,
 } from '../auth/webEmailOtp.js'
@@ -1036,6 +1037,33 @@ router.post('/web/telegram-link/complete-mock', async (req: Request, res: Respon
       webPremium,
       telegramPremium: tgPremium,
     })
+  } catch (e) {
+    const { status, body } = errorPayload(e)
+    res.status(status).json(body)
+  }
+})
+
+/**
+ * Save a contact email on the CURRENT WEB account, without sending a message.
+ * This is not identity verification, session switching or subscription recovery.
+ * POST /api/web/email/profile/save { email }  CSRF
+ */
+router.post('/web/email/profile/save', requireWebSession(), async (req: AuthedRequest, res: Response) => {
+  try {
+    const webAccountId = req.auth?.webAccountId
+    if (!webAccountId) {
+      res.status(400).json({ error: 'WEB account required', code: 'web_account_required' })
+      return
+    }
+    const cookies = readCookies(req)
+    const session = await findActiveSessionByToken(cookies[SESSION_COOKIE] || '')
+    if (!session || !verifyCsrf(session, req.headers['x-csrf-token'] as string | undefined)) {
+      res.status(403).json({ error: 'CSRF required', code: 'csrf_failed' })
+      return
+    }
+    const email = typeof req.body?.email === 'string' ? req.body.email : ''
+    const saved = await saveProfileContactEmail({ webAccountId, email })
+    res.status(200).json({ ok: true, mode: saved.mode })
   } catch (e) {
     const { status, body } = errorPayload(e)
     res.status(status).json(body)

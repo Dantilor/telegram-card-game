@@ -11,20 +11,20 @@ const TITLES: Record<Exclude<EmailSyncPhase, 'idle' | 'error'>, string> = {
   saving: 'Сохраняем почту…',
   checking: 'Проверяем подписку…',
   confirm: 'Подтвердите почту по ссылке из письма',
-  restored: 'Premium восстановлен!',
+  restored: 'Premium активен!',
   ready: 'Аккаунт готов к игре',
 }
 
 function detail(phase: EmailSyncPhase, email?: string | null): string | null {
   switch (phase) {
     case 'checking':
-      return 'Смотрим, есть ли оплаченный Premium на этой почте.'
+      return 'Обновляем Premium текущего аккаунта.'
     case 'confirm':
       return `Письмо отправлено${email ? ` на ${email}` : ''}. Откройте ссылку на любом устройстве — если на эту почту оформлен Premium, он появится здесь сам. Играть можно уже сейчас.`
     case 'restored':
       return 'Все игры открыты. Повторно платить не нужно.'
     case 'ready':
-      return 'Почта подтверждена. Активного Premium на ней нет — играйте бесплатно или оформите подписку.'
+      return 'Email сохранён. Играть можно сразу. Для восстановления на другом устройстве потребуется подтвердить владение почтой.'
     default:
       return null
   }

@@ -2,7 +2,7 @@ import type { WebSessionMe } from './webAuth'
 
 export type EmailSyncPhase = 'idle' | 'saving' | 'checking' | 'confirm' | 'restored' | 'ready' | 'error'
 
-export type EmailBindAnswer = { mode?: 'verify_sent' | 'verified' }
+export type EmailBindAnswer = { mode?: 'saved' | 'verified' }
 
 type PremiumSnapshot = { isPremium: boolean } | null | undefined
 
@@ -22,7 +22,7 @@ export function emailBindErrorMessage(error: unknown): string {
   }
   if (status === 429) return 'Слишком много попыток. Подождите минуту и попробуйте снова.'
   if (status === 401 || status === 403) return 'Сессия устарела. Обновите страницу и попробуйте снова.'
-  return 'Не удалось отправить письмо. Попробуйте позже.'
+  return 'Не удалось сохранить email. Попробуйте позже.'
 }
 
 /** Premium after a forced /api/me refresh; one retry so a network blip does not read as "no Premium". */
@@ -39,8 +39,9 @@ export async function premiumPhase(refreshPremium: () => Promise<PremiumSnapshot
 }
 
 /**
- * Profile "save email": the server either confirms the address is already ours
- * or mails a one-time link (same answer for any address).
+ * Save an email as a contact in the current WEB session, without sending a link.
+ * Premium refresh checks THIS account only; recovery on another device still
+ * requires proof of mailbox ownership.
  */
 export async function saveEmailAndSync(
   email: string,
@@ -59,8 +60,10 @@ export async function saveEmailAndSync(
   } catch {
     /* the link flow below does not depend on it */
   }
-  if (answer.mode === 'verified') return { phase: await premiumPhase(deps.refreshPremium) }
-  return { phase: 'confirm' }
+  if (answer.mode === 'verified' || answer.mode === 'saved') {
+    return { phase: await premiumPhase(deps.refreshPremium) }
+  }
+  return { phase: 'error', error: 'Не удалось сохранить email. Попробуйте позже.' }
 }
 
 /** The link was opened (here or in another tab): this browser now holds the confirmed account. */

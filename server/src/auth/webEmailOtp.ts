@@ -294,6 +294,55 @@ async function unverifiedGuestAccount(accountId: string | null | undefined, cust
   return r.rows[0] ? String(r.rows[0].id) : null
 }
 
+/**
+ * Save the email typed in Profile as an unverified contact for THIS session only.
+ * Never switches WEB accounts, never grants Premium from another account, and
+ * never emails the user. Recovery on another device stays magic-link protected.
+ */
+export async function saveProfileContactEmail(input: {
+  webAccountId: string
+  email: string
+  db?: Queryable
+}): Promise<{ mode: 'saved' | 'verified' }> {
+  const emailNormalized = normalizeEmail(input.email)
+  if (!emailNormalized) {
+    const err = new Error('Invalid email') as Error & { status?: number; code?: string }
+    err.status = 400
+    err.code = 'invalid_email'
+    throw err
+  }
+  const q = db(input.db)
+  const account = await q.query<{
+    email_normalized: string | null
+    email_verified_at: Date | null
+  }>(
+    `SELECT email_normalized, email_verified_at
+       FROM web_accounts WHERE id = $1::uuid AND revoked_at IS NULL LIMIT 1`,
+    [input.webAccountId]
+  )
+  const current = account.rows[0]
+  if (!current) {
+    const err = new Error('WEB account required') as Error & { status?: number; code?: string }
+    err.status = 401
+    err.code = 'web_account_required'
+    throw err
+  }
+  if (current.email_verified_at) {
+    if (current.email_normalized === emailNormalized) return { mode: 'verified' }
+    const err = new Error('Verified email already set') as Error & { status?: number; code?: string }
+    err.status = 409
+    err.code = 'email_already_verified'
+    throw err
+  }
+  await q.query(
+    `UPDATE web_accounts
+        SET pending_email_normalized = $2, last_seen_at = now()
+      WHERE id = $1::uuid AND revoked_at IS NULL`,
+    [input.webAccountId, emailNormalized]
+  )
+  return { mode: 'saved' }
+}
+
 export type EmailBindResult = {
   /** verify_sent = a one-time link was mailed; verified = this account already owns the address. */
   mode: 'verify_sent' | 'verified'

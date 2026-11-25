@@ -326,6 +326,33 @@ export async function unlinkTelegramLink(): Promise<{
   }
 }
 
+/** Save the typed email for THIS WEB session. No email message and no account switching. */
+export async function saveProfileContactEmail(email: string): Promise<{ ok: boolean; mode: 'saved' | 'verified' }> {
+  const csrf = readCsrfToken()
+  const res = await fetch(`${apiBase()}/api/web/email/profile/save`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
+    body: JSON.stringify({ email }),
+  })
+  if (!res.ok) {
+    const err = new Error('email_profile_save_failed') as Error & { status?: number; code?: string }
+    err.status = res.status
+    try {
+      const body = (await res.json()) as { code?: string }
+      if (typeof body.code === 'string') err.code = body.code
+    } catch {
+      /* ignore */
+    }
+    throw err
+  }
+  return (await res.json()) as { ok: boolean; mode: 'saved' | 'verified' }
+}
+
 /** Mails a one-time link (or reports the address is already ours). Never switches the session itself. */
 export async function startEmailBind(email: string): Promise<{
   ok: boolean

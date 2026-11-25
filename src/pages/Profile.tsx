@@ -988,25 +988,20 @@ function Profile() {
                 <p className="profile-pass__desc">
                   {savedEmail}
                   <br />
-                  Статус: {emailVerified ? 'Авторизован' : 'Почта не подтверждена'}
+                  Статус: {emailVerified ? 'Авторизован' : 'Email сохранён'}
                 </p>
                 {!emailVerified && (
-                  <button
-                    type="button"
-                    className="profile-pass__cta"
-                    onClick={() => void handleEmailConfirm()}
-                    disabled={emailBusy}
-                  >
-                    <span className="profile-pass__cta-shine" aria-hidden />
-                    {emailBusy ? 'Отправляем…' : emailSync.phase === 'confirm' ? 'Отправить ещё раз' : 'Подтвердить почту'}
-                  </button>
+                  <p className="profile-pass__desc">
+                    Premium этого аккаунта доступен сразу. Для входа на другом устройстве
+                    используйте вход по email с подтверждением владения почтой.
+                  </p>
                 )}
               </>
             ) : (
               <>
                 <p className="profile-pass__desc">
-                  Статус: Гость. Играть можно без регистрации. Сохраните email — и Premium будет открываться на любом
-                  вашем устройстве.
+                  Статус: Гость. Сохраните email без письма. Premium, уже купленный на этом устройстве,
+                  доступен сразу.
                 </p>
                 <label className="profile-pass__email-label">
                   Ваш email
@@ -1021,7 +1016,7 @@ function Profile() {
                 </label>
                 {receiptEmail && emailDraft.trim().toLowerCase() === receiptEmail.toLowerCase() && (
                   <p className="profile-pass__desc" data-testid="email-receipt-hint">
-                    Это почта из чека вашей покупки. Подтвердите её — и Premium откроется на любом устройстве.
+                    Это почта из чека вашей покупки. Premium уже доступен в текущем сеансе.
                   </p>
                 )}
                 <button
@@ -1031,7 +1026,7 @@ function Profile() {
                   disabled={emailBusy || !emailDraft.trim()}
                 >
                   <span className="profile-pass__cta-shine" aria-hidden />
-                  {emailBusy ? 'Сохранение…' : emailSync.phase === 'confirm' ? 'Отправить ещё раз' : 'Сохранить'}
+                  {emailBusy ? 'Сохранение…' : 'Сохранить'}
                 </button>
               </>
             )}

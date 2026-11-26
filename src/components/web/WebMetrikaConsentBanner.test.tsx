@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 const openDocument = vi.fn()
@@ -24,6 +24,8 @@ vi.mock('../../analytics/persistMetrikaConsent', () => ({
   persistMetrikaConsentEvidence: vi.fn(async () => true),
 }))
 
+import { persistMetrikaConsentEvidence } from '../../analytics/persistMetrikaConsent'
+import { enableYandexMetrika } from '../../analytics/yandexMetrika'
 import WebMetrikaConsentBanner from './WebMetrikaConsentBanner'
 import MetrikaConsentControls from './MetrikaConsentControls'
 import { METRIKA_CONSENT_PARAGRAPHS } from './metrikaConsentText'
@@ -108,4 +110,16 @@ describe('Metrika consent UI', () => {
     expect(text).toContain(METRIKA_CONSENT_PARAGRAPHS[3])
     expect(screen.getByRole('button', { name: 'Разрешить Метрику' })).toBeTruthy()
   })
-})
+
+  it('fails closed: if the server refuses the consent (privacy not active / API down) Metrika is not loaded', async () => {
+    cleanup()
+    vi.mocked(persistMetrikaConsentEvidence).mockResolvedValueOnce(false)
+    vi.mocked(enableYandexMetrika).mockClear()
+    renderBanner()
+    await screen.findByRole('dialog')
+    fireEvent.click(screen.getByRole('button', { name: 'Разрешить Метрику' }))
+    await waitFor(() => expect(persistMetrikaConsentEvidence).toHaveBeenCalled())
+    await new Promise((r) => setTimeout(r, 50))
+    expect(getMetrikaConsent()).toBe('unknown')
+    expect(enableYandexMetrika).not.toHaveBeenCalled()
+  })})

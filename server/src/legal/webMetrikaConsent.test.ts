@@ -38,7 +38,7 @@ function privacyDoc(version = '2026-11-26.2'): ParsedDocument {
   }
 }
 
-async function createHarness() {
+async function createHarness(privacyVersion = '2026-11-26.2') {
   const pg = new PGlite()
   await pg.exec(readSql('db/schema.sql'))
   await pg.exec(readSql('db/migrations/005_legal_documents.sql'))
@@ -55,7 +55,7 @@ async function createHarness() {
   })
   const query = wrap(pg)
   const withTransaction: TransactionRunner = (fn) => pg.transaction(async (tx) => fn(wrap(tx)))
-  const privacy = privacyDoc()
+  const privacy = privacyDoc(privacyVersion)
   await importDocuments(withTransaction, [privacy])
   await activateDocuments(withTransaction, [privacy])
   return { query, withTransaction, close: () => pg.close() }
@@ -109,6 +109,36 @@ test('web metrika grant rejects wrong statement and does not enable preference',
       [webAccountId]
     )
     assert.equal(prefs.rows[0]?.n, '0')
+  } finally {
+    await h.close()
+  }
+})
+
+test('web metrika grant is rejected while the old privacy edition is still active', async () => {
+  const h = await createHarness('2026-10-20.1')
+  try {
+    const account = await h.query.query<{ id: string }>(`INSERT INTO web_accounts DEFAULT VALUES RETURNING id`)
+    const webAccountId = String(account.rows[0]!.id)
+    await assert.rejects(
+      () =>
+        recordWebMetrikaConsent(h.withTransaction, webAccountId, {
+          action: 'grant',
+          requestId: 'gnhmetrika_old_priv',
+          consentUiVersion: METRIKA_CONSENT_UI_VERSION,
+          statement: METRIKA_CONSENT_STATEMENT,
+        }),
+      (err: unknown) => (err as { code?: string }).code === 'privacy_not_active'
+    )
+    const prefs = await h.query.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM web_legal_preferences WHERE subject_web_account_id = $1::uuid`,
+      [webAccountId]
+    )
+    assert.equal(prefs.rows[0]?.n, '0')
+    const ev = await h.query.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM web_legal_evidence WHERE subject_web_account_id = $1::uuid`,
+      [webAccountId]
+    )
+    assert.equal(ev.rows[0]?.n, '0')
   } finally {
     await h.close()
   }

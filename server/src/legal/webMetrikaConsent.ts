@@ -14,6 +14,8 @@ export const METRIKA_CONSENT_CHANNEL = 'yandex_metrika'
 export const METRIKA_CONSENT_STATEMENT =
   'Разрешаю использование Яндекс Метрики на сайте GameNight Host'
 export const METRIKA_CONSENT_UI_VERSION = '2026-11-26.2'
+/** Grant is accepted only while this privacy edition is the active one. */
+export const METRIKA_REQUIRED_PRIVACY_VERSION = '2026-11-26.2'
 
 const REQUEST_ID = /^[A-Za-z0-9_-]{8,80}$/
 const UI_VERSION = /^\d{4}-\d{2}-\d{2}\.\d+$/
@@ -258,6 +260,14 @@ async function recordMetrikaConsentIn(
     }
     if (preference?.state === 'withdrawn') {
       // Explicit re-grant after withdraw is allowed with a new requestId (this path).
+    }
+    // Fail closed: consent to Metrika is valid only against the privacy edition that describes it.
+    if (activePrivacy.version !== METRIKA_REQUIRED_PRIVACY_VERSION) {
+      throw new LegalError(
+        'privacy_not_active',
+        409,
+        'Обновлённая политика конфиденциальности ещё не опубликована. Согласие не сохранено.'
+      )
     }
     context.statement = METRIKA_CONSENT_STATEMENT
     const evidence = await insertEvidence(queryable, {

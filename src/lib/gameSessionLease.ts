@@ -118,10 +118,11 @@ export async function releaseGameSessionLease(opts?: { keepalive?: boolean }): P
   try {
     if (opts?.keepalive && typeof fetch === 'function') {
       const { resolveApiBase } = await import('./apiBase')
+      const { viteApiEnv } = await import('./vitePublicEnv')
       const { csrfHeadersForMutation } = await import('./csrf')
       const { getInitData } = await import('./telegram')
       const { isWebShell } = await import('../config/shell')
-      const base = resolveApiBase(import.meta.env)
+      const base = resolveApiBase(viteApiEnv())
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...csrfHeadersForMutation('POST'),

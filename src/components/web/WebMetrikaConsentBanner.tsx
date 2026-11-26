@@ -8,6 +8,7 @@ import {
   type MetrikaConsentState,
 } from '../../analytics/metrikaConsent'
 import { disableYandexMetrika, enableYandexMetrika, hitYandexMetrika } from '../../analytics/yandexMetrika'
+import { persistMetrikaConsentEvidence } from '../../analytics/persistMetrikaConsent'
 import { normalizeMetrikaPath } from '../../analytics/metrikaPath'
 import { useLegal } from '../../legal/LegalProvider'
 import { haptic } from '../../utils/telegram'
@@ -25,6 +26,8 @@ export default function WebMetrikaConsentBanner() {
     isWebMetrikaFeatureEnabled() ? getMetrikaConsent() : 'denied'
   )
   const [visible, setVisible] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   // The first-use sheet records "Later" in sessionStorage without any event; poll while it is open.
   const [sheetTick, setSheetTick] = useState(0)
 
@@ -64,23 +67,45 @@ export default function WebMetrikaConsentBanner() {
   }, [consent, legal.status, legal.records?.agreement?.active, location.pathname, sheetTick])
 
   const accept = useCallback(() => {
+    if (busy) return
     haptic('light')
-    setMetrikaConsent('granted')
-    setConsent('granted')
-    setVisible(false)
+    setBusy(true)
+    setError(null)
     void (async () => {
+      const saved = await persistMetrikaConsentEvidence('grant')
+      if (!saved) {
+        setBusy(false)
+        setError('Не удалось сохранить согласие. Метрика не включена. Повторите позже.')
+        return
+      }
+      setMetrikaConsent('granted')
+      setConsent('granted')
+      setVisible(false)
+      setBusy(false)
       await enableYandexMetrika()
       hitYandexMetrika(normalizeMetrikaPath(location.pathname), document.title)
     })()
-  }, [location.pathname])
+  }, [busy, location.pathname])
 
   const decline = useCallback(() => {
+    if (busy) return
     haptic('light')
-    setMetrikaConsent('denied')
-    setConsent('denied')
-    setVisible(false)
-    disableYandexMetrika({ reload: true })
-  }, [])
+    setBusy(true)
+    setError(null)
+    void (async () => {
+      const saved = await persistMetrikaConsentEvidence('decline')
+      if (!saved) {
+        setBusy(false)
+        setError('Не удалось сохранить отказ. Повторите позже.')
+        return
+      }
+      setMetrikaConsent('denied')
+      setConsent('denied')
+      setVisible(false)
+      setBusy(false)
+      disableYandexMetrika({ reload: true })
+    })()
+  }, [busy])
 
   if (!isWebMetrikaFeatureEnabled() || !visible || consent !== 'unknown') return null
 
@@ -106,11 +131,22 @@ export default function WebMetrikaConsentBanner() {
           .
         </p>
         <MetrikaConsentFullText defaultOpen />
+        {error ? <p className="web-metrika-banner__text">{error}</p> : null}
         <div className="web-metrika-banner__actions">
-          <button type="button" className="web-metrika-banner__btn web-metrika-banner__btn--primary" onClick={accept}>
+          <button
+            type="button"
+            className="web-metrika-banner__btn web-metrika-banner__btn--primary"
+            onClick={accept}
+            disabled={busy}
+          >
             Разрешить Метрику
           </button>
-          <button type="button" className="web-metrika-banner__btn web-metrika-banner__btn--quiet" onClick={decline}>
+          <button
+            type="button"
+            className="web-metrika-banner__btn web-metrika-banner__btn--quiet"
+            onClick={decline}
+            disabled={busy}
+          >
             Отказаться
           </button>
         </div>

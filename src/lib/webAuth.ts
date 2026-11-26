@@ -1,6 +1,7 @@
 import { resolveApiBase } from './apiBase'
 import { isWebShell } from '../config/shell'
 import { readCsrfToken } from './csrf'
+import { viteApiEnv } from './vitePublicEnv'
 
 export type WebSessionMe = {
   ok: boolean
@@ -30,7 +31,7 @@ function apiBase(): string {
     const base = (import.meta.env.VITE_API_BASE as string | undefined)?.trim()
     if (!url && !base) return ''
   }
-  return resolveApiBase(import.meta.env)
+  return resolveApiBase(viteApiEnv())
 }
 
 export function buildTelegramLoginUrl(returnTo = '/'): string {

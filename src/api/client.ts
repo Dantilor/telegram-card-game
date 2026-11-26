@@ -2,6 +2,7 @@ import { resolveApiBase } from '../lib/apiBase'
 import { getInitData } from '../lib/telegram'
 import { isWebShell } from '../config/shell'
 import { csrfHeadersForMutation } from '../lib/csrf'
+import { viteApiEnv } from '../lib/vitePublicEnv'
 
 export async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method ?? 'GET').toUpperCase()
@@ -14,7 +15,7 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
   const csrf = csrfHeadersForMutation(method)
   for (const [k, v] of Object.entries(csrf)) headers.set(k, v)
 
-  const url = path.startsWith('http') ? path : `${resolveApiBase(import.meta.env)}${path}`
+  const url = path.startsWith('http') ? path : `${resolveApiBase(viteApiEnv())}${path}`
   const res = await fetch(url, {
     ...options,
     method,
@@ -32,5 +33,5 @@ export async function apiFetch<T = unknown>(path: string, options: RequestInit =
 }
 
 export function getApiBaseUrl(): string {
-  return resolveApiBase(import.meta.env)
+  return resolveApiBase(viteApiEnv())
 }

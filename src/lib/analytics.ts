@@ -10,6 +10,7 @@ import { isWebShell } from '../config/shell'
 import { csrfHeadersForMutation } from './csrf'
 import { isWebMetrikaFeatureEnabled } from '../analytics/metrikaFeature'
 import { mirrorTrackEventToMetrika } from '../analytics/metrikaGoals'
+import { viteApiEnv } from './vitePublicEnv'
 
 const ALLOWED_PROPS: Record<string, string[]> = {
   app_open: [],
@@ -67,7 +68,7 @@ export function trackEvent(name: string, props?: Record<string, unknown>): void 
 
   let base = ''
   try {
-    base = legalApiBase(import.meta.env)
+    base = legalApiBase(viteApiEnv())
   } catch {
     return
   }

@@ -7,6 +7,7 @@ import { PROFILE_DOCUMENTS } from './catalog'
 import { getInitData } from '../lib/telegram'
 import { isWebShell } from '../config/shell'
 import { csrfHeadersForMutation } from '../lib/csrf'
+import { viteApiEnv } from '../lib/vitePublicEnv'
 import { afterCriticalImages, scheduleWhenIdle } from '../utils/scheduleWhenIdle'
 import type { OwnLegalRecords } from './types'
 
@@ -33,7 +34,7 @@ async function requestLegal(
   method: 'GET' | 'POST',
   body?: Record<string, unknown>
 ): Promise<unknown> {
-  const base = legalApiBase(import.meta.env)
+  const base = legalApiBase(viteApiEnv())
   const initData = getInitData()
   const web = isWebShell()
   if (!web && !initData) {

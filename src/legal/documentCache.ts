@@ -1,4 +1,5 @@
 import { fetchPublicDocument, legalApiBase } from './client'
+import { viteApiEnv } from '../lib/vitePublicEnv'
 import type { PublicDocument } from './types'
 
 const ACTIVE_TTL_MS = 5 * 60_000
@@ -7,7 +8,7 @@ const pending = new Map<string, Promise<PublicDocument>>()
 const generations = new Map<string, number>()
 
 function keyFor(id: string, version?: string): string {
-  return `${legalApiBase(import.meta.env)}|${id}|${version ?? 'active'}`
+  return `${legalApiBase(viteApiEnv())}|${id}|${version ?? 'active'}`
 }
 
 function bumpGeneration(key: string): number {
@@ -59,7 +60,7 @@ export function loadDocument(id: string, version?: string): Promise<PublicDocume
   const existing = pending.get(key)
   if (existing) return existing
   const generation = generations.get(key) ?? 0
-  const request = fetchPublicDocument(id, version, import.meta.env).then((document) => {
+  const request = fetchPublicDocument(id, version, viteApiEnv()).then((document) => {
     // A retry may have invalidated this in-flight read; do not revive stale text.
     if ((generations.get(key) ?? 0) !== generation) return document
     documents.set(key, { document, expiresAt: version ? Infinity : Date.now() + ACTIVE_TTL_MS })

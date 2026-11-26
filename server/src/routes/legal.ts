@@ -11,6 +11,11 @@ import {
   withdrawConsent,
 } from '../legal/consents.js'
 import { acceptWebAgreement, acceptWebOffer, readOwnWebRecords } from '../legal/webConsents.js'
+import {
+  METRIKA_CONSENT_STATEMENT,
+  METRIKA_CONSENT_UI_VERSION,
+  recordWebMetrikaConsent,
+} from '../legal/webMetrikaConsent.js'
 import { confirmationSourceForAuth } from '../legal/constants.js'
 import {
   listActiveDocuments,
@@ -87,6 +92,15 @@ const ChannelActionSchema = z
     documentId: z.string().regex(/^[a-z0-9_]+$/),
     requestId: RequestIdSchema,
     channel: z.string().optional(),
+  })
+  .strict()
+
+const MetrikaConsentSchema = z
+  .object({
+    action: z.enum(['grant', 'decline', 'withdraw']),
+    requestId: RequestIdSchema,
+    consentUiVersion: VersionSchema.optional(),
+    statement: z.string().optional(),
   })
   .strict()
 
@@ -412,6 +426,39 @@ export function createLegalRouter(deps: LegalRouterDeps): Router {
       }
       const records = await readOwnRecords(deps.query, subject.telegramId)
       res.json({ telegramId: subject.telegramId, ...records })
+    } catch (error) {
+      sendFailure(res, error)
+    }
+  })
+
+  /**
+   * WEB-only Yandex Metrika consent evidence (privacy + channel yandex_metrika).
+   * Fail-closed for the client: tag.js must not load until this returns 201.
+   * Does not touch Telegram subjects or the optional first-party analytics document.
+   */
+  router.post('/metrika-consent', async (req, res) => {
+    const subject = await subjectFromRequest(req, deps, res)
+    if (subject == null) return
+    if (subject.kind !== 'web') {
+      res.status(400).json({
+        error: 'web_only',
+        message: 'Согласие на Метрику записывается только для веб-аккаунта.',
+      })
+      return
+    }
+    const parsed = MetrikaConsentSchema.safeParse(actionBody(req.body))
+    if (!parsed.success) {
+      invalidBody(res)
+      return
+    }
+    try {
+      const result = await recordWebMetrikaConsent(deps.withTransaction, subject.webAccountId, {
+        action: parsed.data.action,
+        requestId: parsed.data.requestId,
+        consentUiVersion: parsed.data.consentUiVersion ?? METRIKA_CONSENT_UI_VERSION,
+        statement: parsed.data.statement ?? METRIKA_CONSENT_STATEMENT,
+      })
+      res.status(201).json({ ok: true, ...result })
     } catch (error) {
       sendFailure(res, error)
     }

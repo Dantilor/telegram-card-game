@@ -4,6 +4,7 @@ import { isWebShell } from '../config/shell'
 import { csrfHeadersForMutation } from './csrf'
 import { fetchGetWithRetry, parseRetryAfterMs } from './fetchWithRetry'
 import { waitForInitData } from './waitForInitData'
+import { viteApiEnv } from './vitePublicEnv'
 
 const API_TIMEOUT_MS = 7000
 const isDev = import.meta.env.DEV
@@ -14,7 +15,7 @@ const PUBLIC_GET_PATHS = new Set(['/api/plans', '/api/public-stats'])
 export type ApiError = Error & { status?: number; retryAfterMs?: number }
 
 export function getBaseUrl(): string {
-  return resolveApiBase(import.meta.env)
+  return resolveApiBase(viteApiEnv())
 }
 
 async function request<T>(path: string, options: RequestInit & { method?: string; body?: string } = {}): Promise<T> {

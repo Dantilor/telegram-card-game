@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 const openDocument = vi.fn()
@@ -18,6 +18,10 @@ vi.mock('../../analytics/yandexMetrika', () => ({
   disableYandexMetrika: vi.fn(),
   hitYandexMetrika: vi.fn(),
   purgeMetrikaStorage: vi.fn(),
+}))
+
+vi.mock('../../analytics/persistMetrikaConsent', () => ({
+  persistMetrikaConsentEvidence: vi.fn(async () => true),
 }))
 
 import WebMetrikaConsentBanner from './WebMetrikaConsentBanner'
@@ -78,7 +82,7 @@ describe('Metrika consent UI', () => {
     renderBanner()
     await screen.findByRole('dialog')
     fireEvent.click(screen.getByRole('button', { name: 'Разрешить Метрику' }))
-    expect(getMetrikaConsent()).toBe('granted')
+    await waitFor(() => expect(getMetrikaConsent()).toBe('granted'))
     // Granting Metrika must not open the first-party analytics gate or write its keys.
     expect(canSendAnalytics('app_open')).toBe(false)
     expect(Object.keys(localStorage).filter((key) => key !== 'gnh_metrika_consent_v2')).toEqual([])
@@ -88,7 +92,7 @@ describe('Metrika consent UI', () => {
     renderBanner()
     await screen.findByRole('dialog')
     fireEvent.click(screen.getByRole('button', { name: 'Отказаться' }))
-    expect(getMetrikaConsent()).toBe('denied')
+    await waitFor(() => expect(getMetrikaConsent()).toBe('denied'))
     expect(canSendAnalytics('app_open')).toBe(false)
   })
 

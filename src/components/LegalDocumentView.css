@@ -186,7 +186,43 @@
 }
 .profile-consents__block--framed .profile-consents__title { margin-bottom: 6px; }
 .profile-consents__block--framed .profile-consents__text { margin-bottom: 10px; }
-.profile-consents__block--framed .web-metrika-consent-text {
+/* Some global heading/button rules set -webkit-text-fill-color, which overrides color; make fill follow color. */
+.profile-consents__block--framed,
+.profile-consents__block--framed * {
+  -webkit-text-fill-color: currentColor;
+}
+/* Text must follow the card surface (--panel), not the Profile page's light heading color. */
+.profile-consents__block--framed,
+.profile-consents__block--framed .profile-consents__title,
+.profile-consents__block--framed .profile-consents__text,
+.profile-consents__block--framed .web-metrika-consent-text__summary,
+.profile-consents__block--framed .web-metrika-consent-text__title,
+.profile-consents__block--framed .web-metrika-consent-text__p {
+  color: var(--text, #1a102a);
+}
+.profile-consents__block--framed .profile-consents__text {
+  color: var(--muted, var(--text, #1a102a));
+}
+.profile-consents__block--framed .profile-consents__actions button {
+  color: var(--text, #1a102a);
+  border: 1px solid var(--border, rgba(26, 16, 42, 0.18));
+  background: transparent;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.profile-consents__block--framed .profile-consents__actions button:first-child {
+  background: linear-gradient(180deg, #f4b8ff, #d889f0);
+  color: #3a1848;
+  border-color: rgba(255, 232, 255, 0.55);
+}
+.profile-consents__block--framed .profile-consents__actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.profile-consents__block--framed .web-metrika-consent-text__summary {
+  font-weight: 650;
+}.profile-consents__block--framed .web-metrika-consent-text {
   margin: 4px 0 12px;
   border: 1px solid var(--prof-border, var(--border));
   border-radius: 14px;

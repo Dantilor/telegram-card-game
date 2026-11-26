@@ -68,3 +68,22 @@ export function subscribeMetrikaConsent(listener: (state: MetrikaConsentState) =
 export function isMetrikaConsentGranted(): boolean {
   return getMetrikaConsent() === 'granted'
 }
+
+// «Позже» is a session-only snooze of the banner. It is NOT a consent decision and never touches STORAGE_KEY.
+const POSTPONE_KEY = 'gnh_metrika_banner_later'
+
+export function isMetrikaPostponed(): boolean {
+  try {
+    return sessionStorage.getItem(POSTPONE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function postponeMetrikaConsent(): void {
+  try {
+    sessionStorage.setItem(POSTPONE_KEY, '1')
+  } catch {
+    /* ignore: banner is hidden in memory for this page view */
+  }
+}

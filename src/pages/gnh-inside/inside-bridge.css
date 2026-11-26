@@ -490,6 +490,7 @@ html:has(.gnh-inside .rt-play)::before {
 .app.app--web .gnh-inside .profile-identity,
 .app.app--web .gnh-inside .profile-pass,
 .app.app--web .gnh-inside .profile-menu__panel,
+.app.app--web .gnh-inside .profile-consents__block--framed,
 .app.app--web .gnh-inside .favorites-page__card,
 .app.app--web .gnh-inside .favorites-page__empty,
 .app.app--web .gnh-inside .premium-page__card,

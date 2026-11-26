@@ -11,6 +11,7 @@ import { disableYandexMetrika, enableYandexMetrika, hitYandexMetrika } from '../
 import { normalizeMetrikaPath } from '../../analytics/metrikaPath'
 import { useLegal } from '../../legal/LegalProvider'
 import { haptic } from '../../utils/telegram'
+import MetrikaConsentFullText from './MetrikaConsentFullText'
 import './WebMetrikaConsentBanner.css'
 
 /**
@@ -84,13 +85,14 @@ export default function WebMetrikaConsentBanner() {
   if (!isWebMetrikaFeatureEnabled() || !visible || consent !== 'unknown') return null
 
   return (
-    <div className="web-metrika-banner" role="dialog" aria-label="Согласие на аналитику">
+    <div className="web-metrika-banner" role="dialog" aria-label="Согласие на Яндекс Метрику">
       <div className="web-metrika-banner__card">
         <p className="web-metrika-banner__title">Аналитика сайта</p>
         <p className="web-metrika-banner__text">
-          Чтобы понимать, как пользуются сайтом, мы можем подключить Яндекс Метрику (счётчик 114652319).
-          Загружаются cookie Яндекса. Вебвизор, карта кликов и слежение за ссылками выключены. Отказ не мешает
-          играть и покупать Premium. Подробности — в{' '}
+          Отдельное согласие на Яндекс Метрику (счётчик 114652319). Это не согласие на собственную аналитику
+          Оператора. Cookie Яндекса загружаются только после «Разрешить Метрику». Вебвизор, карта кликов и
+          слежение за ссылками выключены. Отказ не мешает играть и покупать Premium. Полный текст — ниже;
+          подробности также в{' '}
           <button
             type="button"
             className="web-metrika-banner__link"
@@ -101,9 +103,9 @@ export default function WebMetrikaConsentBanner() {
           >
             политике конфиденциальности
           </button>
-          . Выбор можно изменить в профиле: отзыв останавливает новую отправку, но не удаляет уже переданные Яндексу
-          данные.
+          .
         </p>
+        <MetrikaConsentFullText defaultOpen />
         <div className="web-metrika-banner__actions">
           <button type="button" className="web-metrika-banner__btn web-metrika-banner__btn--primary" onClick={accept}>
             Разрешить Метрику

@@ -176,6 +176,22 @@
 .profile-privacy[open] .profile-privacy__chevron { transform: rotate(180deg); }
 .profile-consents { display: grid; gap: 22px; padding: 0 20px 20px; }
 .profile-consents__block { min-width: 0; border-top: 1px solid var(--prof-border, var(--border)); padding-top: 18px; }
+/* Standalone Metrika block in Profile: full card frame, same language as .profile-privacy. */
+.profile-consents__block--framed {
+  border: 1px solid var(--prof-border, var(--border));
+  border-radius: 20px;
+  background: var(--prof-panel, var(--panel));
+  padding: 18px 20px 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.profile-consents__block--framed .profile-consents__title { margin-bottom: 6px; }
+.profile-consents__block--framed .profile-consents__text { margin-bottom: 10px; }
+.profile-consents__block--framed .web-metrika-consent-text {
+  margin: 4px 0 12px;
+  border: 1px solid var(--prof-border, var(--border));
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.04);
+}
 .profile-consents__title { margin: 0 0 5px; font: 650 15px/1.5 'Manrope', system-ui, sans-serif; }
 .profile-consents__text { margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: var(--prof-muted, var(--muted)); }
 .profile-consents__actions { display: flex; flex-wrap: wrap; gap: 8px; }

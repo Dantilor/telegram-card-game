@@ -63,7 +63,7 @@ export default function MetrikaConsentControls() {
         : 'Решение ещё не выбрано. Перед включением прочитайте полный текст согласия ниже.'
 
   return (
-    <div className="profile-consents__block">
+    <div className="profile-consents__block profile-consents__block--framed">
       <h3 className="profile-consents__title">Яндекс Метрика</h3>
       <p className="profile-consents__text">{statusText}</p>
       {error ? <p className="profile-consents__text">{error}</p> : null}

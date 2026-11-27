@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MINIAPP_PROD_API_ORIGIN, MINIAPP_PROD_BASE } from './miniapp-production-config.mjs'
+import { MINIAPP_BUILD_NODE_ENV, withProductionBuildEnv } from './miniapp-build-mode.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 process.chdir(root)
@@ -13,8 +14,9 @@ function run(cmd, args, opts = {}) {
     stdio: 'inherit',
     // Avoid shell splitting on Windows paths with spaces (Program Files).
     shell: false,
-    env: { ...process.env, ...(opts.env || {}) },
+    // NODE_ENV is forced last so no caller/terminal value can leak into children.
     ...opts,
+    env: withProductionBuildEnv({ ...process.env, ...(opts.env || {}) }),
   })
   if (res.error) {
     console.error(res.error)
@@ -26,10 +28,18 @@ function run(cmd, args, opts = {}) {
 function runNpm(args) {
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
   console.log('>', npmCmd, args.join(' '))
-  const res = spawnSync(npmCmd, args, { stdio: 'inherit', shell: true, env: process.env })
+  const res = spawnSync(npmCmd, args, { stdio: 'inherit', shell: true, env: withProductionBuildEnv(process.env) })
   if (res.status !== 0) process.exit(res.status ?? 1)
 }
 
+// Terminal may have NODE_ENV=development; that makes Vite emit dev React (jsxDEV, DEV:true).
+// Override for this process tree only (not the OS/user environment).
+const inheritedNodeEnv = process.env.NODE_ENV
+process.env.NODE_ENV = MINIAPP_BUILD_NODE_ENV
+if (inheritedNodeEnv && inheritedNodeEnv !== MINIAPP_BUILD_NODE_ENV) {
+  console.warn(`[build-miniapp-production] terminal NODE_ENV=${inheritedNodeEnv} overridden to ${MINIAPP_BUILD_NODE_ENV} for this build`)
+}
+console.log('[build-miniapp-production] NODE_ENV=' + process.env.NODE_ENV)
 process.env.VITE_API_URL = MINIAPP_PROD_API_ORIGIN
 process.env.VITE_API_BASE = MINIAPP_PROD_API_ORIGIN
 process.env.VITE_API_BASE_URL = MINIAPP_PROD_API_ORIGIN
@@ -46,6 +56,8 @@ run(process.execPath, [
 run(process.execPath, [
   path.join(root, 'node_modules', 'vite', 'bin', 'vite.js'),
   'build',
+  '--mode',
+  'production',
   `--base=${MINIAPP_PROD_BASE}`,
 ])
 run(process.execPath, ['scripts/check-miniapp-dist.mjs', 'dist'])
@@ -58,6 +70,7 @@ const cssBytes = css ? fs.statSync(path.join(root, 'dist', 'assets', css)).size 
 console.log('[build-miniapp-production] DONE', {
   api: MINIAPP_PROD_API_ORIGIN,
   base: MINIAPP_PROD_BASE,
+  nodeEnv: process.env.NODE_ENV,
   entryJs: js,
   entryCss: css,
   jsBytes,

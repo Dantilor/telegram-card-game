@@ -11,6 +11,7 @@ import {
   MINIAPP_WEB_PROMO_URL,
   normalizeApiOrigin,
 } from './miniapp-production-config.mjs'
+import { findDevelopmentMarkers, hasViteEnvLiteral } from './miniapp-build-mode.mjs'
 
 const distDir = path.resolve(process.argv[2] || 'dist')
 
@@ -66,6 +67,25 @@ if (/VITE_GNH_SHELL\s*:\s*["']web["']/.test(allJs) || allJs.includes('VITE_GNH_S
   fail('Dist looks like WEB-shell (VITE_GNH_SHELL=web). Mini App build must stay telegram shell.')
 }
 
+// Production React/Vite output only. MODE:"production" alone is not enough:
+// NODE_ENV=development still yields MODE:"production" with DEV:!0 + jsxDEV.
+if (!hasViteEnvLiteral(allJs)) {
+  fail('Could not find inlined import.meta.env (DEV/PROD flags) in dist JS; cannot verify production mode.')
+}
+const devIssues = []
+for (const f of jsFiles) {
+  for (const issue of findDevelopmentMarkers(fs.readFileSync(path.join(assetsDir, f), 'utf8'))) {
+    devIssues.push(`${f}: ${issue}`)
+  }
+}
+if (devIssues.length) {
+  fail(
+    'Development build detected (check NODE_ENV=production for vite build):\n  ' +
+      devIssues.slice(0, 12).join('\n  ') +
+      (devIssues.length > 12 ? `\n  ...and ${devIssues.length - 12} more` : '')
+  )
+}
+
 // Ensure production API origin is present; Render may appear only as the blocked constant.
 if (!allJs.includes(MINIAPP_PROD_API_ORIGIN)) {
   fail(`Production API origin missing: ${MINIAPP_PROD_API_ORIGIN}`)
@@ -79,6 +99,7 @@ console.log('[check-miniapp-dist] OK', {
   base: MINIAPP_PROD_BASE,
   entryJs: jsMatch[1],
   entryCss: cssMatch[1],
+  mode: 'production (DEV=false, PROD=true, no jsxDEV)',
   api: MINIAPP_PROD_API_ORIGIN,
   promo: MINIAPP_WEB_PROMO_URL,
 })

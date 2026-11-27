@@ -21,11 +21,18 @@ npm run build:miniapp:production
 
 This always:
 
-1. Sets both `VITE_API_URL` and `VITE_API_BASE` to
+1. Forces `NODE_ENV=production` for the whole build process tree (overrides a terminal value such as
+   `development`; the OS/user environment is never modified)
+2. Sets both `VITE_API_URL` and `VITE_API_BASE` to
    `https://dantilor-telegram-card-game-3706.twc1.net`
-2. Runs `scripts/check-miniapp-build-env.mjs --require-prod`
-3. Runs `tsc -b` and `vite build --base=/`
-4. Runs `scripts/check-miniapp-dist.mjs` (fails if API keys missing from JS)
+3. Runs `scripts/check-miniapp-build-env.mjs --require-prod`
+4. Runs `tsc -b` and `vite build --mode production --base=/`
+5. Runs `scripts/check-miniapp-dist.mjs` (fails if API keys are missing from JS, or if the output is a
+   development build: `import.meta.env` `DEV:true`/`PROD:false`, `jsxDEV`, React `*.development.js`,
+   JSX `fileName` with local absolute paths)
+
+`MODE:"production"` alone proves nothing: with `NODE_ENV=development` Vite still prints `MODE:"production"`,
+but ships dev React (about 2x larger entry bundle). The dist check therefore inspects `DEV`/`PROD` and the JSX runtime.
 
 Do **not** publish a prepare branch after a manual `vite build` with a single
 wrong env alias.

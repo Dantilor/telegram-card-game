@@ -1,7 +1,11 @@
 {
-    "source_commit":  "658a08610b6a2cf3de678e8ca43d6c5198a276b1",
-    "prepared_at":  "2026-11-24T00:33:01.3432439+03:00",
+    "source_commit":  "f1efe1c6f5b560f5307f729131722f1d12692400",
+    "feature_commit":  "e1775ef4b6a555039b2ab9539660c83da063c2d1",
+    "source_base":  "658a08610b6a2cf3de678e8ca43d6c5198a276b1",
+    "prepared_at":  "2026-11-27T14:23:03.7771983+03:00",
     "api_url":  "https://dantilor-telegram-card-game-3706.twc1.net",
-    "note":  "devices nav hotfix: Profile /devices + home redirect fix",
-    "base":  "/"
+    "note":  "Mini App WEB promo card on home (dismissible); isolated release",
+    "base":  "/",
+    "rollback_static":  "0efa38ad56ce8c6164ed55931a5b30644287f18f",
+    "rollback_branch":  "rollback/timeweb-static-miniapp-before-web-promo-20261127"
 }

@@ -12,6 +12,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import HomeWelcomeTop from '../components/HomeWelcomeTop'
 import HomePremiumBanner from '../components/HomePremiumBanner'
 import HomeWebPromoCard from '../components/HomeWebPromoCard'
+import HomeWebSiteLink from '../components/HomeWebSiteLink'
 import LazyPremiumOverlay, { prefetchPremiumOverlay } from '../components/LazyPremiumOverlay'
 import { HOME_PICK_THUMBS } from '../assets/images'
 import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
@@ -227,6 +228,7 @@ function Home() {
                 <HomePlayIcon size="cta" />
                 Начать игру
               </Link>
+              <HomeWebSiteLink />
             </div>
           </div>
         </section>
@@ -332,6 +334,7 @@ function Home() {
                 <HomePlayIcon size="cta" />
                 Начать игру
               </Link>
+              <HomeWebSiteLink />
             </div>
           </div>
         </section>
@@ -437,6 +440,7 @@ function Home() {
                 <HomePlayIcon size="cta" />
                 Начать игру
               </Link>
+              <HomeWebSiteLink />
             </div>
           </div>
         </section>
@@ -542,6 +546,7 @@ function Home() {
                 <HomePlayIcon size="cta" />
                 Начать игру
               </Link>
+              <HomeWebSiteLink />
             </div>
           </div>
         </section>
@@ -631,6 +636,7 @@ function Home() {
             >
               Начать игру
             </Link>
+            <HomeWebSiteLink />
             <button
               type="button"
               className="btn btn--secondary home-hero__btn"

@@ -1,7 +1,12 @@
 {
-    "source_commit":  "658a08610b6a2cf3de678e8ca43d6c5198a276b1",
-    "prepared_at":  "2026-11-24T00:33:01.3432439+03:00",
+    "source_commit":  "6c6aae7886af7b3c7fbe8bffbf9872a310a245a9",
+    "feature_promo":  "f1efe1c6f5b560f5307f729131722f1d12692400",
+    "source_base":  "658a08610b6a2cf3de678e8ca43d6c5198a276b1",
+    "prepared_at":  "2026-11-27T15:24:28.7381962+03:00",
     "api_url":  "https://dantilor-telegram-card-game-3706.twc1.net",
-    "note":  "devices nav hotfix: Profile /devices + home redirect fix",
-    "base":  "/"
+    "note":  "Fix api_not_configured: inline VITE_API_URL+VITE_API_BASE; keep WEB promo card",
+    "base":  "/",
+    "rollback_static":  "0efa38ad56ce8c6164ed55931a5b30644287f18f",
+    "replaces_broken":  "938fc40e522f0e2cf65bcf5b20bc8c5dce4f4b8e",
+    "build_command":  "npm run build:miniapp:production"
 }

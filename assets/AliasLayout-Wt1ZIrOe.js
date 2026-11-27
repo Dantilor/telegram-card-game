@@ -1,0 +1,1 @@
+import{j as r,O as t}from"./index-CMUOcDvF.js";import{A as o}from"./AliasStateContext-CNd2Of-W.js";/* empty css                      */function e(){return r.jsx(o,{children:r.jsx(t,{})})}export{e as default};

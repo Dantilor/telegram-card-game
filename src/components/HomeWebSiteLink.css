@@ -1,10 +1,18 @@
+/*
+ * Hero content is a flex column (gap 0.5rem) whose CTA uses align-self: flex-start.
+ * Same alignment here => the link's clickable pill shares the CTA's left edge, with
+ * the hero's own gap (8px) as the vertical spacing. No margin patches.
+ */
 .home-web-site-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  align-self: flex-start;
+  box-sizing: border-box;
+  max-width: 100%;
   gap: 0.35rem;
-  margin: 0.45rem auto 0;
-  padding: 0.45rem 0.75rem;
+  margin: 0;
+  padding: 0.4rem 0.75rem;
   min-height: 2.5rem;
   border: 0;
   border-radius: 999px;
@@ -22,6 +30,8 @@
 }
 
 .home-web-site-link__icon {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.95em;
   line-height: 1;
 }
@@ -31,9 +41,16 @@
 }
 
 .home-web-site-link__arrow {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.95em;
   opacity: 0.75;
   line-height: 1;
+}
+
+/* Legacy fallback hero centres its stacked buttons. */
+.home-hero__actions .home-web-site-link {
+  align-self: center;
 }
 
 .home-web-site-link:active {
@@ -57,12 +74,14 @@
 [data-theme='neon-dark'] .home-web-site-link {
   color: #eef2ff;
   background: rgba(20, 16, 48, 0.42);
+  /* visible left edge so the pill reads as aligned with the CTA */
+  box-shadow: inset 0 0 0 1px rgba(160, 140, 255, 0.32);
 }
 @media (hover: hover) and (pointer: fine) {
   [data-theme='neon-dark'] .home-web-site-link:hover {
     color: #fff;
     background: rgba(110, 90, 220, 0.34);
-    box-shadow: 0 0 18px rgba(140, 110, 255, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(180, 160, 255, 0.5), 0 0 18px rgba(140, 110, 255, 0.28);
   }
 }
 
@@ -107,9 +126,7 @@
 
 @media (max-width: 380px) {
   .home-web-site-link {
-    margin-top: 0.35rem;
-    padding: 0.4rem 0.55rem;
+    padding: 0.4rem 0.6rem;
     font-size: 0.78rem;
-    min-height: 2.35rem;
   }
 }

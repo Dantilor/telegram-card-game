@@ -1,11 +1,10 @@
 {
-    "source_commit":  "878e09377ee43a450a2880c42682a16da9b36b5d",
-    "source_base_fixed":  "6c6aae7886af7b3c7fbe8bffbf9872a310a245a9",
-    "prepared_at":  "2026-11-27T16:17:29.5038191+03:00",
+    "source_commit":  "127d015be37930baad070d318e10589a868bfb7c",
+    "source_base":  "878e09377ee43a450a2880c42682a16da9b36b5d",
+    "prepared_at":  "2026-11-27T16:49:46.1260571+03:00",
     "api_url":  "https://dantilor-telegram-card-game-3706.twc1.net",
-    "note":  "Permanent Hero WEB site link under Start; keeps API URL+BASE + dismissible promo card",
+    "note":  "Align permanent Hero site link to CTA left edge (CSS-only); same chunks as previous release",
     "base":  "/",
-    "rollback_static":  "0efa38ad56ce8c6164ed55931a5b30644287f18f",
-    "previous_prepare":  "22afe46ec110b8c5e2d783aef19269d033d53117",
+    "rollback_static":  "f3c1d6f555ce6427b228b33648fd277298c18e21",
     "build_command":  "npm run build:miniapp:production"
 }

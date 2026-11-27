@@ -11,6 +11,7 @@ import { useTheme } from '../hooks/useTheme'
 import ThemeToggle from '../components/ThemeToggle'
 import HomeWelcomeTop from '../components/HomeWelcomeTop'
 import HomePremiumBanner from '../components/HomePremiumBanner'
+import HomeWebPromoCard from '../components/HomeWebPromoCard'
 import LazyPremiumOverlay, { prefetchPremiumOverlay } from '../components/LazyPremiumOverlay'
 import { HOME_PICK_THUMBS } from '../assets/images'
 import { HIGH_FETCH_PRIORITY } from '../utils/scheduleWhenIdle'
@@ -195,7 +196,9 @@ function Home() {
           <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
-        <section className="home-calm-hero" aria-labelledby="home-calm-hero-title">
+                <HomeWebPromoCard />
+
+<section className="home-calm-hero" aria-labelledby="home-calm-hero-title">
           <div className="home-calm-hero__card">
             <img
               src={heroCalm}
@@ -298,7 +301,9 @@ function Home() {
           <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
-        <section className="home-sunset-hero" aria-labelledby="home-sunset-hero-title">
+                <HomeWebPromoCard />
+
+<section className="home-sunset-hero" aria-labelledby="home-sunset-hero-title">
           <div className="home-sunset-hero__card">
             <img
               src={heroSunset}
@@ -401,7 +406,9 @@ function Home() {
           <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
-        <section className="home-light-hero" aria-labelledby="home-light-hero-title">
+                <HomeWebPromoCard />
+
+<section className="home-light-hero" aria-labelledby="home-light-hero-title">
           <div className="home-light-hero__card">
             <img
               src={lightHeroExact}
@@ -504,7 +511,9 @@ function Home() {
           <ThemeToggle onPremiumRequired={openPremiumOverlay} />
         </div>
 
-        <section className="home-neon-hero" aria-labelledby="home-neon-hero-title">
+                <HomeWebPromoCard />
+
+<section className="home-neon-hero" aria-labelledby="home-neon-hero-title">
           <div className="home-neon-hero__card">
             <img
               src={heroPortal}
@@ -604,7 +613,9 @@ function Home() {
         <ThemeToggle onPremiumRequired={openPremiumOverlay} />
       </div>
 
-      <section className="home-hero">
+              <HomeWebPromoCard />
+
+<section className="home-hero">
         <div className="home-hero__orb" aria-hidden />
         <div className="home-hero__content">
           <h1 className="home-hero__title">GameNight Host</h1>
